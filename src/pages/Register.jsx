@@ -4,6 +4,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Logo from "../assets/images/fillops-logo.png";
+import { Icon } from "@iconify/react";
+
+
 
 
 //  Validation Schema
@@ -194,50 +197,49 @@ const Register = () => {
           </div>
         </form>
 
-        {/* ===== Social Login Section ===== */}
-        <div className="mt-8">
-          <div className="flex items-center justify-center">
-            <span className="h-[1px] w-1/4 bg-gray-300"></span>
-            <span className="px-3 text-gray-400 text-sm">or sign in with</span>
-            <span className="h-[1px] w-1/4 bg-gray-300"></span>
-          </div>
 
-          <div className="flex items-center justify-center gap-6 mt-6">
-            {/* Google */}
-            <a
-              href="https://www.google.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-full border border-gray-300 hover:border-red-500 hover:bg-red-50 transition transform hover:scale-110"
-            >
-              <img
-                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                alt="Google"
-                className="h-5 w-5"
-              />
-            </a>
-
-            {/* GitHub */}
-            <a
-              href="https://github.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-full border border-gray-300 hover:border-gray-800 hover:bg-gray-100 transition transform hover:scale-110"
-            >
-              <Github className="h-5 w-5 text-gray-700" />
-            </a>
-
-            {/* LinkedIn */}
-            <a
-              href="https://www.linkedin.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-full border border-gray-300 hover:border-blue-600 hover:bg-blue-50 transition transform hover:scale-110"
-            >
-              <Linkedin className="h-5 w-5 text-blue-600" />
-            </a>
-          </div>
+      {/* ===== Social Login Section ===== */}
+      <div className="mt-8">
+        {/* Divider */}
+        <div className="flex items-center justify-center">
+          <span className="h-[1px] w-1/4 bg-gray-300"></span>
+          <span className="px-3 text-gray-400 text-sm">or sign in with</span>
+          <span className="h-[1px] w-1/4 bg-gray-300"></span>
         </div>
+
+        {/* Social Login Buttons */}
+        <div className="flex items-center justify-center gap-6 mt-6">
+          {/* Google */}
+          <a
+            href="https://www.google.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3 rounded-full border border-gray-300 hover:border-red-500 hover:bg-red-50 transition transform hover:scale-110"
+          >
+            <Icon icon="logos:google-icon" className="h-5 w-5" />
+          </a>
+
+          {/* Apple (iOS) */}
+          <a
+            href="https://www.apple.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3 rounded-full border border-gray-300 hover:border-black hover:bg-gray-100 transition transform hover:scale-110"
+          >
+            <Icon icon="logos:apple" className="h-5 w-5 text-black" />
+          </a>
+
+          {/* Facebook */}
+          <a
+            href="https://www.facebook.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3 rounded-full border border-gray-300 hover:border-blue-600 hover:bg-blue-50 transition transform hover:scale-110"
+          >
+            <Icon icon="logos:facebook" className="h-5 w-5 text-blue-600" />
+          </a>
+        </div>
+      </div>
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 mt-8">
