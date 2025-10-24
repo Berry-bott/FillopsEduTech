@@ -153,7 +153,7 @@ import ProgressCard from "../components/DashboardComponents/user/ProgressCard"
 import StudyPlanCard from "../components/DashboardComponents/user/StudyPlanCard"
 import CalendarWidget from "../components/DashboardComponents/user/CalendarWidget"
 import SubjectCard from "../components/DashboardComponents/user/SubjectCard"
-import Recommendations from "../components/DashboardComponents/user/Recommendations"
+import Recommendations from "../components/DashboardComponents/user/recommendations"
 import { BookOpen, Target, TrendingUp, Flame } from "lucide-react"
 
 export default function Dashboard({ onNavigate, learningPath, onChangePath }) {
