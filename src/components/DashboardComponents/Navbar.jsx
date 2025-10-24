@@ -1,3 +1,5 @@
+
+
 "use client"
 
 import { useState } from "react"
@@ -9,6 +11,8 @@ import {
   User as UserIcon,
   Menu,
   X,
+  BookOpen,
+  Download,
 } from "lucide-react"
 import logo from "../../assets/images/fillops-logo.png"
 
@@ -20,119 +24,107 @@ export default function Navbar({ user, currentPage, onNavigate, onLogout }) {
     { id: 2, text: "You’ve completed your English quiz!" },
   ])
 
-  const toggleDropdown = () => setShowDropdown((prev) => !prev)
-  const toggleMobileMenu = () => setShowMobileMenu((prev) => !prev)
+  const toggleDropdown = () => setShowDropdown((p) => !p)
+  const toggleMobileMenu = () => setShowMobileMenu((p) => !p)
   const isAdmin = user?.role === "admin"
 
-  // Helper for fallback avatar
   const avatarSrc =
     user?.avatar ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
       user?.name || "User"
-    )}&background=0D8ABC&color=fff`
+    )}&background=2563eb&color=fff`
 
   return (
-    <nav className="border-b border-border bg-card backdrop-blur-md sticky top-0 z-50">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-blue-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* === Left: Logo + Links === */}
         <div className="flex items-center gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <img
-              src={logo}
-              alt="Fillop"
-              className="w-8 h-8 rounded-md object-cover"
-            />
-            <h1 className="text-xl font-bold text-primary">Fillop</h1>
+            <img src={logo} alt="Fillop" className="w-8 h-8 rounded-md" />
+            <h1 className="text-xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
+              Fillop
+            </h1>
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex gap-4 ml-8">
-            {!isAdmin ? (
-              <>
-                <NavButton
-                  label="Dashboard"
-                  active={currentPage === "dashboard"}
-                  onClick={() => onNavigate?.("dashboard")}
-                />
-                <NavButton
-                  label="Community"
-                  active={currentPage === "community"}
-                  onClick={() => onNavigate?.("community")}
-                />
-              </>
-            ) : (
-              <NavButton
-                label="Admin Panel"
-                active={currentPage === "admin"}
-                onClick={() => onNavigate?.("admin")}
-              />
-            )}
+          <div className="hidden md:flex gap-4 ml-6">
+            <NavButton
+              label="Dashboard"
+              active={currentPage === "dashboard"}
+              onClick={() => onNavigate?.("dashboard")}
+            />
+            <NavButton
+              label="Community"
+              active={currentPage === "community"}
+              onClick={() => onNavigate?.("community")}
+            />
+            <NavButton
+              label="Study for WAEC/NECO"
+              icon={<BookOpen className="w-4 h-4" />}
+              onClick={() => onNavigate?.("waec")}
+            />
+            <NavButton
+              label="Study for JAMB/PUTME"
+              icon={<BookOpen className="w-4 h-4" />}
+              onClick={() => onNavigate?.("jamb")}
+            />
+            <NavButton
+              label="Install CBT Guru"
+              icon={<Download className="w-4 h-4" />}
+              highlight
+              onClick={() => alert("Installing CBT Guru...")}
+            />
           </div>
         </div>
 
         {/* === Right: Notification + Profile + Mobile === */}
         <div className="flex items-center gap-3">
           {/* 🔔 Notifications */}
-          <div className="relative">
-            <button
-              className="relative p-2 rounded-lg hover:bg-blue-100 transition"
-              onClick={() => alert("Notifications panel coming soon")}
-            >
-              <Bell className="w-6 h-6 text-blue-600" />
-              {notifications.length > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
-              )}
-            </button>
-          </div>
+          <button className="relative p-2 rounded-full hover:bg-blue-50 transition">
+            <Bell className="w-6 h-6 text-blue-600" />
+            {notifications.length > 0 && (
+              <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-white" />
+            )}
+          </button>
 
-          {/* 👤 Profile Avatar */}
+          {/* 👤 Profile */}
           <div className="relative hidden md:block">
             <button
               onClick={toggleDropdown}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-blue-100 transition"
+              className="flex items-center gap-2 p-2 rounded-lg hover:bg-blue-50 transition"
             >
               <img
                 src={avatarSrc}
                 alt="avatar"
-                className="w-8 h-8 rounded-full object-cover border border-blue-300"
+                className="w-9 h-9 rounded-full object-cover border border-blue-300"
               />
               <ChevronDown className="w-4 h-4 text-blue-600" />
             </button>
 
-            {/* Dropdown */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-border rounded-lg shadow-lg z-50">
-                <div className="px-4 py-2 border-b">
-                  <p className="font-semibold text-sm">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {user?.role}
+              <div className="absolute right-0 mt-2 w-52 bg-white border border-blue-100 rounded-xl shadow-lg overflow-hidden">
+                <div className="px-4 py-3 border-b border-blue-50">
+                  <p className="font-semibold text-sm text-gray-800">
+                    {user?.name}
                   </p>
+                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                 </div>
                 <DropdownItem
                   icon={<UserIcon className="w-4 h-4" />}
                   label="Profile"
-                  onClick={() => {
-                    onNavigate?.("profile")
-                    setShowDropdown(false)
-                  }}
+                  onClick={() => onNavigate?.("profile")}
                 />
                 <DropdownItem
                   icon={<Settings className="w-4 h-4" />}
                   label="Settings"
-                  onClick={() => {
-                    onNavigate?.("settings")
-                    setShowDropdown(false)
-                  }}
+                  onClick={() => onNavigate?.("settings")}
                 />
                 <DropdownItem
                   icon={<LogOut className="w-4 h-4" />}
                   label="Logout"
                   destructive
-                  onClick={() => {
-                    onLogout?.()
-                    setShowDropdown(false)
-                  }}
+                  onClick={onLogout}
                 />
               </div>
             )}
@@ -141,7 +133,7 @@ export default function Navbar({ user, currentPage, onNavigate, onLogout }) {
           {/* 🍔 Mobile Menu */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-lg hover:bg-blue-100 transition"
+            className="md:hidden p-2 rounded-lg hover:bg-blue-50 transition"
           >
             {showMobileMenu ? (
               <X className="w-6 h-6 text-blue-600" />
@@ -154,42 +146,19 @@ export default function Navbar({ user, currentPage, onNavigate, onLogout }) {
 
       {/* === Mobile Menu === */}
       {showMobileMenu && (
-        <div className="md:hidden bg-card border-t border-border px-4 py-4 space-y-4 animate-fadeIn">
-          {!isAdmin ? (
-            <>
-              <NavButton
-                label="Dashboard"
-                active={currentPage === "dashboard"}
-                onClick={() => {
-                  onNavigate?.("dashboard")
-                  setShowMobileMenu(false)
-                }}
-                mobile
-              />
-              <NavButton
-                label="Community"
-                active={currentPage === "community"}
-                onClick={() => {
-                  onNavigate?.("community")
-                  setShowMobileMenu(false)
-                }}
-                mobile
-              />
-            </>
-          ) : (
-            <NavButton
-              label="Admin Panel"
-              active={currentPage === "admin"}
-              onClick={() => {
-                onNavigate?.("admin")
-                setShowMobileMenu(false)
-              }}
-              mobile
-            />
-          )}
+        <div className="md:hidden bg-white border-t border-blue-100 px-4 py-4 space-y-4 animate-fadeIn">
+          <MobileLink label="Dashboard" onClick={() => onNavigate?.("dashboard")} />
+          <MobileLink label="Community" onClick={() => onNavigate?.("community")} />
+          <MobileLink label="Study for WAEC/NECO" onClick={() => onNavigate?.("waec")} />
+          <MobileLink label="Study for JAMB/PUTME" onClick={() => onNavigate?.("jamb")} />
+          <MobileLink
+            label="Install CBT Guru"
+            icon={<Download className="w-4 h-4" />}
+            highlight
+            onClick={() => alert("Installing CBT Guru...")}
+          />
 
-          {/* Mobile Profile Info */}
-          <div className="border-t border-border pt-3">
+          <div className="border-t border-blue-100 pt-3">
             <div className="flex items-center gap-3">
               <img
                 src={avatarSrc}
@@ -197,10 +166,10 @@ export default function Navbar({ user, currentPage, onNavigate, onLogout }) {
                 className="w-8 h-8 rounded-full object-cover border border-blue-300"
               />
               <div>
-                <p className="text-sm font-semibold">{user?.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {user?.role}
+                <p className="text-sm font-semibold text-gray-800">
+                  {user?.name}
                 </p>
+                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
               </div>
             </div>
             <button
@@ -216,30 +185,48 @@ export default function Navbar({ user, currentPage, onNavigate, onLogout }) {
   )
 }
 
-/* 🔹 Reusable NavButton */
-function NavButton({ label, active, onClick, mobile }) {
+/* 🔹 NavButton */
+function NavButton({ label, icon, active, highlight, onClick }) {
   const base =
-    "block w-full text-left px-4 py-2 rounded-lg transition font-medium"
+    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition"
   const activeClass = active
     ? "bg-blue-600 text-white"
-    : "text-foreground hover:bg-blue-100 hover:text-blue-700"
-  const size = mobile ? "text-base" : "text-sm"
+    : highlight
+    ? "bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-md hover:opacity-90"
+    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+
   return (
-    <button onClick={onClick} className={`${base} ${activeClass} ${size}`}>
+    <button onClick={onClick} className={`${base} ${activeClass}`}>
+      {icon}
       {label}
     </button>
   )
 }
 
-/* 🔹 Reusable DropdownItem */
-function DropdownItem({ icon, label, onClick, destructive }) {
+/* 🔹 Dropdown Item */
+function DropdownItem({ icon, label, destructive, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-blue-50 text-sm ${
-        destructive ? "text-red-600 hover:bg-red-50" : "text-foreground"
+      className={`flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-blue-50 transition ${
+        destructive ? "text-red-600 hover:bg-red-50" : "text-gray-700"
       }`}
     >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
+/* 🔹 MobileLink */
+function MobileLink({ label, icon, highlight, onClick }) {
+  const base =
+    "flex items-center gap-2 w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition"
+  const style = highlight
+    ? "bg-gradient-to-r from-blue-600 to-indigo-500 text-white"
+    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+  return (
+    <button onClick={onClick} className={`${base} ${style}`}>
       {icon}
       {label}
     </button>
