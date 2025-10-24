@@ -77,7 +77,7 @@ const Header = () => {
         variant="outline"
         size="sm"
         className="relative overflow-hidden h-10 group px-6 flex items-center justify-center"
-        onClick={() => navigate("/login")} // ✅ correct placement
+        onClick={() => navigate("/login")}
       >
         <div className="relative h-5 overflow-hidden">
           <span className="text-Graphite block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">

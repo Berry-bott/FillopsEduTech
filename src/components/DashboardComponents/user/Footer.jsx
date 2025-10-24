@@ -1,7 +1,7 @@
-import message from "../assets/messages-3.svg";
-import img1 from "../assets/Metric item.png";
-import img2 from "../assets/img.png";
-import img3 from "../assets/Metric item (1).png";
+import message from "@assets/dashboardassets/messages-3.svg";
+import img1 from "../assets/dashboardassets/Metric item.png";
+import img2 from "../assets/dashboardassets/img.png";
+import img3 from "../assets/dashboardassets/Metric item (1).png";
 import { motion } from "framer-motion";
 import CountUp from "react-countup";
 

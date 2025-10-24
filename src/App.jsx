@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { BrowserRouter,Routes, Route  } from "react-router-dom";
-import LandingPage from "./pages/LandingPage"
-import Login from "./pages/Login"
-import Register from "./pages/Register"
+import LandingPage from "@pages/LandingPage"
+import UsersDashboard from "@/pages/UserDashboard"
+import Login from "@pages/Login"
+import Register from "@pages/Register"
 
 import './App.css'
 
@@ -18,6 +19,7 @@ function App() {
       </Routes>
 
        </BrowserRouter>
+       <UsersDashboard/>
     </>
   )
 }
