@@ -25,7 +25,7 @@ const Header = () => {
               className="w-20 h-16 md:w-22 md:h-16 object-contain"
             />
             <div className="leading-none">
-              <p className="text-maincolor text-lg sm:text-2xl md:text-4xl font-bold">
+              <p className="text-primary text-lg sm:text-2xl md:text-4xl font-bold">
                 FILLOP TECH
               </p>
               <p className="text-[7px] sm:text-[10.5px]
@@ -76,11 +76,12 @@ const Header = () => {
       <Button
         variant="outline"
         size="sm"
-        className="relative overflow-hidden h-10 group px-6 flex items-center justify-center"
+        className="relative overflow-hidden h-10 group px-6 flex items-center justify-center hover:bg-green-700 "
         onClick={() => navigate("/login")}
       >
         <div className="relative h-5 overflow-hidden">
-          <span className="text-Graphite block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
+          <span className="text-Graphite block transition-transform duration-300 ease-in-out
+           group-hover:-translate-y-full">
             Login
           </span>
           <span className="absolute left-0 top-full w-full text-center transition-transform duration-300 ease-in-out group-hover:-translate-y-full text-white">
@@ -93,7 +94,7 @@ const Header = () => {
       <Button
         variant="default"
         size="sm"
-        className="relative overflow-hidden h-10 group px-6 flex items-center justify-center"
+        className="bg-primary-hover/70 relative overflow-hidden h-10 group px-6 flex items-center justify-center"
         onClick={() => navigate("/register")} // ✅ moved here
       >
         <div className="relative h-5 overflow-hidden hover:text-primary">
@@ -158,7 +159,7 @@ const Header = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="relative overflow-hidden h-10 group px-6 flex items-center justify-center"
+                className="relative overflow-hidden h-10 group px-6 flex items-center justify-center hover:bg-green-700"
               >
                 <div className="relative h-5 overflow-hidden">
                   <span className="block transition-transform duration-300 text-Graphite ease-in-out group-hover:-translate-y-full">

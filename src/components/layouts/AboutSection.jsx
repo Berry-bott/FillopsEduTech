@@ -17,9 +17,9 @@ const AboutSection = () => {
           >
             About Fillop Tech
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-foreground mb-6 leading-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-700 mb-6 leading-tight">
             Transforming Education Through
-            <span className="text-primary"> Innovation</span>
+            <span className="text-primary-hover"> Innovation</span>
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
             Fillop is a platform designed to enhance learning experiences by

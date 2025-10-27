@@ -40,7 +40,7 @@ const HeroSection = () => {
             className="mb-6 px-4 py-2 text-sm font-medium flex items-center"
           >
             <div className="relative w-full overflow-hidden ">
-              <div className="flex items-center animate-slide text-primary font-medium">
+              <div className="flex items-center animate-slide text-blue-400 font-medium">
                 <Award className="w-4 h-4 mr-2 text-yellow-500" />
                 Welcome to Fillop Study Platform! Nigeria's #1 CBT Platform
               </div>
@@ -51,7 +51,7 @@ const HeroSection = () => {
 
           <h1 className="text-5xl md:text-6xl font-merriweather font-bold text-primary-foreground mb-6 leading-tight">
             Empowering the Future of{" "}
-            <span className="inline-block min-w-[9ch] text-ring mt-2">
+            <span className="text-primary-hover inline-block min-w-[9ch] text-ring mt-2">
               <TypeAnimation
                 sequence={[
                   "Education.",
@@ -105,14 +105,16 @@ const HeroSection = () => {
             {/* Get Started Button */}
             <Button
               size="lg"
-              className="relative overflow-hidden group bg-primary hover:bg-primary-hover text-primary-foreground px-8 py-3 text-lg font-semibold shadow-elegant flex items-center justify-center"
+              className="relative overflow-hidden group bg-primary-hover hover:bg-primary-hover text-primary-foreground px-8 py-3 
+              text-lg font-semibold shadow-elegant flex items-center justify-center"
             >
               <div className="relative h-6 overflow-hidden">
                 <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
                   Get Started
                 </span>
                 <span
-                  className="absolute left-0 top-full w-full text-center transition-transform duration-300 ease-in-out
+                  className="absolute left-0 top-full w-full text-center transition-transform duration-300 
+                    ease-in-out
                 group-hover:-translate-y-full text-white"
                 >
                   Get Started
