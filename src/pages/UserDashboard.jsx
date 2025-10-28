@@ -13,7 +13,7 @@ import SystemHistory from "../components/DashboardComponents/user/index/system-h
 
 
 
-export default function CMSDashboardContent() {
+export default function UserDashboard() {
   return (
     <DashboardLayout  currentPage="dashboard" className="border-4 border-red-500">
     <div className="space-y-4 sm:space-y-6 w-full min-w-0">
@@ -32,8 +32,8 @@ export default function CMSDashboardContent() {
           <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
             community
           </button>
-          <button className="px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium">
-            Download Guru
+          <button className="px-2 py-2 border border-border text-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium">
+            Download CBT Guru
           </button>
         </div>
       </div>

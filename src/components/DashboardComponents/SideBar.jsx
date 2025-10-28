@@ -849,7 +849,7 @@ export default function SideBar() {
     const content = (
       <div
         className={cn(
-          "flex items-center py-2 text-sm rounded-md transition-colors hover:bg-gray-50 dark:hover:bg-[#1F1F23] relative group cursor-pointer",
+          "flex items-center py-2 border-2 text-sm rounded-md transition-colors hover:bg-gray-50 dark:hover:bg-[#1F1F23] relative group cursor-pointer",
           paddingLeft
         )}
         onClick={() => {
@@ -869,15 +869,15 @@ export default function SideBar() {
 
         {showText && (
           <>
-            <span className="ml-3 flex-1">{item.label}</span>
+            <span className="ml-3 flex-1 text-primary border-4">{item.label}</span>
             {item.badge && (
-              <span className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
+              <span className="px-1.5 py-0.5 border-6 border-red-300 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
                 {item.badge}
               </span>
             )}
             {hasChildren && (
               <ChevronDown
-                className={`h-3 w-3 transition-transform ${
+                className={`h-3 w-3 transition-transform  border-2${
                   isExpanded ? "rotate-180" : ""
                 }`}
               />
@@ -939,26 +939,38 @@ export default function SideBar() {
             <div className="h-full flex flex-col">
               {/* Header */}
               <div className="h-16 px-3 flex items-center border-b border-gray-200 dark:border-[#1F1F23]">
-                <Link
-                  to="/"
-                  className="flex items-center gap-3 w-full"
-                >
-                  <img
-                    src={Logo}
-                    alt="Fillop Tech"
-                    width={32}
-                    height={32}
-                    className="flex-shrink-0"
-                  />
-                  <div>
+  {showText ? (
+    <Link to="/" className="flex items-center gap-3 w-full">
+      <img
+        src={Logo}
+        alt="Fillop Tech"
+        width={32}
+        height={32}
+        className="flex-shrink-0"
+      />
+      <div>
+        <span className="text-lg font-semibold">
+          <span className="text-blue-600">Fillop</span>
+          <span className="text-gray-800 dark:text-gray-200"> Tech</span>
+        </span>
+        <p className="text-[10px] text-gray-500 dark:text-gray-400">
+          Simplifying your tech experience...
+        </p>
+      </div>
+    </Link>
+  ) : (
+    <div className="flex justify-center w-full">
+      <img
+        src={Logo}
+        alt="fillops"
+        width={32}
+        height={32}
+        className="flex-shrink-0"
+      />
+    </div>
+  )}
+</div>
 
-                  <span className="text-2xl font-semibold text-blue-900 dark:text-white">
-                 <p> Fillop Tech</p>
-                  </span>
-                  <p className="text-[11px] border-4 text-gray-100 dark:text-red-800">Simplifying your tech experience...</p>
-                  </div>
-                </Link>
-              </div>
   
               {/* Menu items */}
               <div
