@@ -80,7 +80,7 @@ export default function ExamSelector() {
           className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2"
         >
           <GraduationCap className="w-4 h-4" />
-          <span>Learning Path</span>
+          <span>Study</span>
         </Button>
 
         <Button
@@ -88,7 +88,7 @@ export default function ExamSelector() {
           className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2"
         >
           <PenTool className="w-4 h-4" />
-          <span>Take Test</span>
+          <span>Take Quiz</span>
         </Button>
 
         <Button

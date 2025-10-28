@@ -28,8 +28,8 @@ module.exports = {
   			]
   		},
   		colors: {
-  			secondaryColor: 'hsl(var(--secondary-color)  / <alpha-value>)',
-  			primaryColor: 'hsl(var(--primary-color)  / <alpha-value>)',
+			primary: 'hsl(var(--primary)  / <alpha-value>)',
+  			primaryHover: 'hsl(var(--primary-hover)  / <alpha-value>)',
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',

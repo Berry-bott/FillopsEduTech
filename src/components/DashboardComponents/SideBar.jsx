@@ -61,7 +61,7 @@ import {
 import { Link, useNavigate } from "react-router-dom"; // ✅ React Router import
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import Logo from "../../assets/images/fillops-Logo.png";
+import Logo from "../../assets/images/fillops-logo.png";
 
 
 const menuData = [
@@ -849,7 +849,7 @@ export default function SideBar() {
     const content = (
       <div
         className={cn(
-          "flex items-center py-2 border-2 text-sm rounded-md transition-colors hover:bg-gray-50 dark:hover:bg-[#1F1F23] relative group cursor-pointer",
+          "flex items-center py-2 text-sm rounded-md transition-colors hover:bg-gray-50 dark:hover:bg-[#1F1F23] relative group cursor-pointer",
           paddingLeft
         )}
         onClick={() => {
@@ -869,15 +869,15 @@ export default function SideBar() {
 
         {showText && (
           <>
-            <span className="ml-3 flex-1 text-primary border-4">{item.label}</span>
+            <span className="ml-3 flex-1 text-primary">{item.label}</span>
             {item.badge && (
-              <span className="px-1.5 py-0.5 border-6 border-red-300 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
+              <span className="px-1.5 py-0.5  text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
                 {item.badge}
               </span>
             )}
             {hasChildren && (
               <ChevronDown
-                className={`h-3 w-3 transition-transform  border-2${
+                className={`h-3 w-3 transition-transform ${
                   isExpanded ? "rotate-180" : ""
                 }`}
               />
@@ -951,12 +951,10 @@ export default function SideBar() {
                     className="flex-shrink-0"
                   />
                   <div>
-
-                  <span className="text-2xl font-semibold text-blue-900 dark:text-white">
-  Fillop Tech
-</span>
-n
-                  <p className="text-[11px] border-4 text-red-800 dark:text-red-800">Simplifying your tech experience...</p>
+                    <span className="text-lg font-semibold text-primary dark:text-white transition-opacity duration-200">
+                    Fillop Tech
+                    </span>
+                    <p className="text-[10px] text-destructive dark:text-white">Simplifying your tech experience...</p>
                   </div>
                 </Link>
               </div>
@@ -1035,10 +1033,10 @@ n
                   />
                   <div>
 
-                  <span className="text-lg font-semibold text-gray-900 dark:text-white transition-opacity duration-200">
+                  <span className="text-lg font-semibold text-primary dark:text-white transition-opacity duration-200">
                   Fillop Tech
                   </span>
-                  <p className="text-[10px] text-gray-900 dark:text-white">Simplifying your tech experience...</p>
+                  <p className="text-[10px] text-destructive dark:text-white">Simplifying your tech experience...</p>
                   </div>
 
                 </Link>
