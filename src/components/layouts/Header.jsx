@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import fillopLogo from "../../assets/images/fillops-logo.png";
+import fillopLogo from "../../assets/images/fillopsLogo.png";
 
 
 const Header = () => {
@@ -22,10 +22,10 @@ const Header = () => {
             <img
               src={fillopLogo}
               alt="Fillop Logo"
-              className="w-20 h-16 md:w-22 md:h-16 object-contain"
+              className="w-12 h-12 md:w-22 md:h-16 object-contain"
             />
-            <div className="leading-none">
-              <p className="text-primary text-lg sm:text-2xl md:text-4xl font-bold">
+            <div className="leading-none ml-4">
+              <p className="text-primary text-lg sm:text-2xl md:text-4xl font-bold ">
                 FILLOP TECH
               </p>
               <p className="text-[7px] sm:text-[10.5px]

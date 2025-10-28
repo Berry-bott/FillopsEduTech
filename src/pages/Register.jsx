@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Logo from "../assets/images/fillops-logo.png";
+import Logo from "../assets/images/fillopsLogo.png";
 import { Icon } from "@iconify/react";
 
 

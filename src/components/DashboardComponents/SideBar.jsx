@@ -61,7 +61,7 @@ import {
 import { Link, useNavigate } from "react-router-dom"; // ✅ React Router import
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import Logo from "../../assets/images/fillops-logo.png";
+import Logo from "../../assets/images/fillopsLogo.png";
 
 
 const menuData = [
