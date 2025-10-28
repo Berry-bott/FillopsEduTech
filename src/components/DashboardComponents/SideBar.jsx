@@ -939,38 +939,27 @@ export default function SideBar() {
             <div className="h-full flex flex-col">
               {/* Header */}
               <div className="h-16 px-3 flex items-center border-b border-gray-200 dark:border-[#1F1F23]">
-  {showText ? (
-    <Link to="/" className="flex items-center gap-3 w-full">
-      <img
-        src={Logo}
-        alt="Fillop Tech"
-        width={32}
-        height={32}
-        className="flex-shrink-0"
-      />
-      <div>
-        <span className="text-lg font-semibold">
-          <span className="text-blue-600">Fillop</span>
-          <span className="text-gray-800 dark:text-gray-200"> Tech</span>
-        </span>
-        <p className="text-[10px] text-gray-500 dark:text-gray-400">
-          Simplifying your tech experience...
-        </p>
-      </div>
-    </Link>
-  ) : (
-    <div className="flex justify-center w-full">
-      <img
-        src={Logo}
-        alt="fillops"
-        width={32}
-        height={32}
-        className="flex-shrink-0"
-      />
-    </div>
-  )}
-</div>
+                <Link
+                  to="/"
+                  className="flex items-center gap-3 w-full"
+                >
+                  <img
+                    src={Logo}
+                    alt="Fillop Tech"
+                    width={32}
+                    height={32}
+                    className="flex-shrink-0"
+                  />
+                  <div>
 
+                  <span className="text-2xl font-semibold text-blue-900 dark:text-white">
+  Fillop Tech
+</span>
+n
+                  <p className="text-[11px] border-4 text-red-800 dark:text-red-800">Simplifying your tech experience...</p>
+                  </div>
+                </Link>
+              </div>
   
               {/* Menu items */}
               <div
