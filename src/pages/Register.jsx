@@ -1,28 +1,37 @@
-import { Mail, Lock, User, Github, Linkedin, Globe } from "lucide-react";
+import { Mail, Lock, User, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Logo from "../assets/images/fillopsLogo.png";
+import { useState } from "react";
 import { Icon } from "@iconify/react";
-
-
-
-
-//  Validation Schema
+import { useNavigate } from "react-router-dom";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
+// Zod Schema
 const schema = z
   .object({
-    name: z.string().min(2, "Full name is required"),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6, "Please confirm your password"),
+    phoneNumber: z.string().min(10, "Phone number is required"),
+    // dateOfBirth: z.string().min(4, "Date of birth is required"),
+    // state: z.string().min(1, "State is required"),
+    // lga: z.string().min(1, "LGA is required"),
+    // residentialAddress: z.string().min(3, "Address is required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
+// Backend API
+const API_BASE = "https://fillops-server.onrender.com/api/auth";
+
 const Register = () => {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -32,10 +41,52 @@ const Register = () => {
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = (data) => {
-    console.log(" Register Data:", data);
-    reset();
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+
+  const onSubmit = async (data) => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+  
+    try {
+      // Exclude confirmPassword before sending
+      const { confirmPassword, ...payload } = data;
+  
+      const res = await fetch(`${API_BASE}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include" // optional
+      });
+  
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Registration failed");
+      }
+
+      if (res.ok) {
+        navigate("/verify-email"); // 👈 Redirect to a verification notice page
+      }
+      
+  
+      const result = await res.json();
+      setSuccess("Registration successful! You can now login.");
+      reset();
+      console.log("Backend response:", result);
+
+      // setTimeout(() => {
+      //   navigate("/login");
+      // }, 1500); // 1.5 seconds delay so user can see the success message
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+  
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-white px-6 py-12">
@@ -114,19 +165,45 @@ const Register = () => {
           </p>
         </div>
 
-        {/* ===== Form ===== */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* Name */}
+                 {/* Success/Error */}
+        {success && (
+          <p className="text-green-600 text-sm mb-4 text-center">{success}</p>
+        )}
+        {error && (
+          <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* First Name */}
           <div className="relative">
-            <User className=" absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+            <User className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
             <input
-              {...register("name")}
+              {...register("firstName")}
               type="text"
-              placeholder="Full Name"
+              placeholder="First Name"
               className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
             />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+            {errors.firstName && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.firstName.message}
+              </p>
+            )}
+          </div>
+
+          {/* Last Name */}
+          <div className="relative">
+            <User className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+            <input
+              {...register("lastName")}
+              type="text"
+              placeholder="Last Name"
+              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+            />
+            {errors.lastName && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.lastName.message}
+              </p>
             )}
           </div>
 
@@ -140,9 +217,7 @@ const Register = () => {
               className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.email.message}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
             )}
           </div>
 
@@ -156,9 +231,7 @@ const Register = () => {
               className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
             />
             {errors.password && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.password.message}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
             )}
           </div>
 
@@ -178,26 +251,104 @@ const Register = () => {
             )}
           </div>
 
-          {/* Submit */}
+          {/* Phone Number */}
+          <div className="relative">
+            <User className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+            <input
+              {...register("phoneNumber")}
+              type="tel"
+              placeholder="Phone Number"
+              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+            />
+            {errors.phoneNumber && (
+              <p className="text-red-500 text-sm mt-1">{errors.phoneNumber.message}</p>
+            )}
+          </div>
+
+          {/* Date of Birth */}
+          {/* <div className="relative">
+            <User className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+            <input
+              {...register("dateOfBirth")}
+              type="date"
+              placeholder="Date of Birth"
+              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+            />
+            {errors.dateOfBirth && (
+              <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth.message}</p>
+            )}
+          </div> */}
+
+          {/* State */}
+          {/* <div className="relative">
+            <Globe className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+            <input
+              {...register("state")}
+              type="text"
+              placeholder="State"
+              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+            />
+            {errors.state && (
+              <p className="text-red-500 text-sm mt-1">{errors.state.message}</p>
+            )}
+          </div> */}
+
+          {/* LGA */}
+          {/* <div className="relative">
+            <Globe className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+            <input
+              {...register("lga")}
+              type="text"
+              placeholder="LGA"
+              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+            />
+            {errors.lga && (
+              <p className="text-red-500 text-sm mt-1">{errors.lga.message}</p>
+            )}
+          </div> */}
+
+          {/* Residential Address */}
+          {/* <div className="relative">
+            <Globe className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+            <input
+              {...register("residentialAddress")}
+              type="text"
+              placeholder="Residential Address"
+              className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+            />
+            {errors.residentialAddress && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.residentialAddress.message}
+              </p>
+            )}
+          </div> */}
+
+          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg shadow-md transition duration-200"
-          >
-            Register
+            disabled={loading}
+            className={`w-full flex items-center justify-center gap-2 ${
+              loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+            } text-white font-semibold py-3 rounded-lg shadow-md transition duration-200`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" /> {/* 🔄 Spinner animation */}
+                    Registering...
+                  </>
+                ) : (
+                  "Register"
+                )}
           </button>
 
           {/* Already have account */}
           <div className="text-center mt-4">
-            <a
-              href="/login"
-              className="text-indigo-600 hover:underline text-sm"
-            >
+            <a href="/login" className="text-indigo-600 hover:underline text-sm">
               Already have an account? Sign in
             </a>
           </div>
         </form>
-
-
+      
       {/* ===== Social Login Section ===== */}
       <div className="mt-8">
         {/* Divider */}

@@ -51,7 +51,7 @@ const HeroSection = () => {
 
           <h1 className="text-5xl md:text-6xl font-merriweather font-bold text-primary-foreground mb-6 leading-tight">
             Empowering the Future of{" "}
-            <span className="text-primaryHover inline-block min-w-[9ch] text-ring mt-2">
+            <span className="text-primaryHover inline-block min-w-[9ch]  mt-2">
               <TypeAnimation
                 sequence={[
                   "Education.",
