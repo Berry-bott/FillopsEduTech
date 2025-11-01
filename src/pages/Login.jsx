@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import Logo from "../assets/images/fillopsLogo.png";
-import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 
 // ✅ Validation Schema
