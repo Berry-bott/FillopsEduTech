@@ -67,7 +67,7 @@ const Register = () => {
       }
 
       if (res.ok) {
-        navigate("/verify-email"); // 👈 Redirect to a verification notice page
+        navigate("/login"); // 👈 Redirect to a verification notice page
       }
       
   

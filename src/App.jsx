@@ -37,6 +37,9 @@ import Register from "@/pages/Register";
 import UserDashboard from "@/pages/UserDashboard";
 import VerifyEmail from "@/pages/VerifyEmail";
 import Profile from "@/pages/Profile";
+
+import Learning from "@/pages/Learning";
+
 // import AdminDashboard from "@/pages/AdminDashboard";
 import Unauthorized from "@/pages/Unauthorized";
 
@@ -54,7 +57,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
+
+
+          <Route path="/learning" element={<Learning />} />
+          {/* <Route path="/dashboard" element={<UserDashboard />} /> */}
 
 
           {/* 👤 User routes */}
@@ -62,7 +68,7 @@ function App() {
             path="/user/dashboard"
             element={
               <ProtectedRoute allowedRoles={["USER"]}>
-                {/* <UserDashboard /> */}
+                <UserDashboard />
               </ProtectedRoute>
             }
           />

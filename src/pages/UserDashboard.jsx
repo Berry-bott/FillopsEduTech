@@ -6,7 +6,7 @@ import PopularArticles from "../components/DashboardComponents/user/index/popula
 import ContentCategories from "../components/DashboardComponents/user/index/content-categories"
 import RecentComments from "../components/DashboardComponents/user/index/recent-comments"
 // import PublishingSchedule from "../components/DashboardComponents/user/index/publishing-schedule"
-import StudyCategories from "../components/DashboardComponents/user/index/study-categories"
+import ExamSelector from "../components/DashboardComponents/user/index/ExamSelector"
 import UserActivity from "../components/DashboardComponents/user/index/user-activities"
 import SystemHistory from "../components/DashboardComponents/user/index/system-history"
 
@@ -38,7 +38,7 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      <StudyCategories />
+      <ExamSelector />
       {/* Overview Stats */}
       <OverviewStats />
 
