@@ -29,24 +29,22 @@ const Login = () => {
   });
 
   // ✅ Submit handler
-  const onSubmit = async (data) => {
+  const onSubmit = async (formData) => {
     try {
-      const user = await login(data);
-      console.log("Login success:", user);
+      const res = await login(formData);
+      console.log("Login response:", res);
   
-      if (user && user.role) {
-        if (user.role === "admin") {
-          navigate("/admin/dashboard");
-        } else {
-          navigate("/user/dashboard");
-        }
+      // ✅ Always go to user dashboard after login success
+      if (res?.success) {
+        navigate("/user/dashboard");
       } else {
-        console.warn("No role found in response:", user);
+        console.error("Login failed:", res?.message || "Unknown error");
       }
     } catch (err) {
-      console.error("Login failed:", err);
+      console.error("Login error:", err);
     }
   };
+  
   
 
   return (

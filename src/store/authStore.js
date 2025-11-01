@@ -1,46 +1,46 @@
 import { create } from "zustand";
-import { login, logout, register } from "../api/auth";
+import { login as apiLogin, register as apiRegister, logout as apiLogout } from "../api/auth";
 
 const useAuthStore = create((set) => ({
   user: null,
   loading: false,
   error: null,
 
-  // REGISTER
+  // Register
   register: async (data) => {
     set({ loading: true, error: null });
     try {
-      const res = await register(data); // backend sets cookie automatically
-      set({ user: res.user || null, loading: false });
+      const res = await apiRegister(data);
+      set({ loading: false });
+      return res; // ✅ Return backend response
     } catch (err) {
       set({ loading: false, error: err.message });
       throw err;
     }
   },
 
-  // LOGIN
+  // Login
   login: async (credentials) => {
     set({ loading: true, error: null });
     try {
-      const res = await login(credentials); // backend sets cookie automatically
-      set({ user: res.user || null, loading: false });
+      const res = await apiLogin(credentials);
+      set({ user: res.data, loading: false });
+      return res; // ✅ Return backend response
     } catch (err) {
       set({ loading: false, error: err.message });
       throw err;
     }
   },
 
-  // LOGOUT
+  // Logout
   logout: async () => {
-    try {
-      await logout(); // backend clears cookie
-    } finally {
-      set({ user: null });
-    }
+    await apiLogout();
+    set({ user: null });
   },
 }));
 
 export default useAuthStore;
+
 
 
 

@@ -36,7 +36,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import UserDashboard from "@/pages/UserDashboard";
 import VerifyEmail from "@/pages/VerifyEmail";
-import Profile from "@/pages/Profile";
+// import Profile from "@/pages/Profile";
 
 import Learning from "@/pages/Learning";
 
