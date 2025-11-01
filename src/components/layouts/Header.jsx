@@ -3,6 +3,7 @@ import { Button } from "../ui/button";
 import { Menu, X, ChevronDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import fillopLogo from "../../assets/images/fillopsLogo.png";
+import { ThemeToggle } from "../DashboardComponents/theme-toggle"
 
 const Header = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const Header = () => {
               className="w-12 h-12  object-contain"
             />
             <div className="leading-none ml-4">
-              <p className="text-primary text-lg sm:text-2xl md:text-3xl font-bold">
+              <p className="text-primary text-lg sm:text-2xl md:text-3xl font-bold dark:text-red font-merriweather">
                 FILLOP TECH
               </p>
               <p className="text-[8px] sm:text-[10px] md:text-[11.5px] text-education-orange font-merriweather ml-[0px] 
@@ -36,6 +37,7 @@ const Header = () => {
               </p>
             </div>
           </div>
+          <ThemeToggle/>
 
           {/* ===== Search Bar (Adjustable) ===== */}
           <div className="hidden md:block w-full max-w-md mx-6 flex-1">
