@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import Logo from "../assets/images/fillopsLogo.png";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
+
 
 // ✅ Validation Schema
 const loginSchema = z.object({
@@ -30,15 +32,22 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       const user = await login(data);
-      if (user.role === "admin") {
-        navigate("/admin/dashboard");
+      console.log("Login success:", user);
+  
+      if (user && user.role) {
+        if (user.role === "admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/user/dashboard");
+        }
       } else {
-        navigate("/user/dashboard");
+        console.warn("No role found in response:", user);
       }
     } catch (err) {
       console.error("Login failed:", err);
     }
   };
+  
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
@@ -156,20 +165,37 @@ const Login = () => {
           )}
 
           {/* Login Button */}
+
           <button
+            type="submit"
+            disabled={loading}
+            className={`w-full flex items-center justify-center gap-2 ${
+              loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+            } text-white font-semibold py-3 rounded-lg shadow-md transition duration-200`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" /> {/* 🔄 Spinner animation */}
+                    Logging in..
+                  </>
+                ) : (
+                  "Log In"
+                )}
+          </button>
+          {/* <button
             type="submit"
             disabled={loading}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-md transition duration-200"
           > {loading ? 
             (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" /> {/* 🔄 Spinner animation */}
+                <Loader2 className="w-5 h-5 animate-spin" />
                 Logging in..
               </>
             ) : (
               "Log In"
             )}
-          </button>
+          </button> */}
 
           {/* Links */}
           <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
