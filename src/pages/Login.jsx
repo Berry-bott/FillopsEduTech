@@ -180,27 +180,14 @@ const Login = () => {
                   "Log In"
                 )}
           </button>
-          {/* <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-md transition duration-200"
-          > {loading ? 
-            (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Logging in..
-              </>
-            ) : (
-              "Log In"
-            )}
-          </button> */}
-
+         
           {/* Links */}
           <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
             <p className="hover:text-indigo-600">
               Forgot Password?
             </p>
-            <p onClick={() => navigate("/register")} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm cursor-pointer transition-colors duration-200"
+            <p onClick={() => navigate("/register")}
+             className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm cursor-pointer transition-colors duration-200"
             >
               Create Account
             </p>

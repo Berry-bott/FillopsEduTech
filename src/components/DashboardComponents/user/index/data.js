@@ -1,9 +1,9 @@
 // src/components/ExamSelector/data.js
 export const subjectData = {
-    jamb: ["English", "Maths", "Physics", "Chemistry", "Biology", "Government", "Literature", "Commerce"],
-    waec: ["Biology", "Chemistry", "Physics", "Maths", "English", "Literature", "Accounting", "Economics"],
-    neco: ["English", "Maths", "Biology", "Chemistry", "Physics", "Commerce", "Economics"],
-    putme: ["Use of English", "Physics", "Chemistry", "Biology", "Government", "Accounting", "Economics"],
+    JAMB: ["English", "Maths", "Physics", "Chemistry", "Biology", "Government", "Literature", "Commerce"],
+    WAEC: ["Biology", "Chemistry", "Physics", "Maths", "English", "Literature", "Accounting", "Economics"],
+    NECO: ["English", "Maths", "Biology", "Chemistry", "Physics", "Commerce", "Economics"],
+    PUTME: ["Use of English", "Physics", "Chemistry", "Biology", "Government", "Accounting", "Economics"],
   };
   
   export const topicData = {

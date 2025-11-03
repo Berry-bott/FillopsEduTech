@@ -135,6 +135,7 @@
 @layer base {
   * {
     @apply border-border;
+    /* font-weight:700; */
   }
 
   body {

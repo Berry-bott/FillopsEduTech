@@ -38,7 +38,7 @@ export default function SubjectSelector({
               onChange={(e) => setYearForSubject(subject, e.target.value)}
               className="border rounded px-2 py-1 text-sm"
             >
-              <option value="">Year</option>
+              <option value="" className="text-primary-hover">Year</option>
               <option value="random">Random</option>
               {YEARS.map((y) => (
                 <option key={y} value={String(y)}>

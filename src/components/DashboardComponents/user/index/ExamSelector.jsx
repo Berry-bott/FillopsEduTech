@@ -375,8 +375,6 @@
 
 
 
-
-
 // src/components/ExamSelector/ExamSelector.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -396,6 +394,7 @@ export default function ExamSelector() {
   const [openTopicSubject, setOpenTopicSubject] = useState(null);
   const [selectedTopics, setSelectedTopics] = useState({});
   const [topicYearFilter, setTopicYearFilter] = useState({});
+  const [errorModal, setErrorModal] = useState({ open: false, message: "" });
 
   const exams = ["JAMB", "WAEC", "NECO", "PUTME"];
 
@@ -433,7 +432,10 @@ export default function ExamSelector() {
         return next;
       }
       if (prev.length >= 9) {
-        alert("You can only select up to 9 subjects");
+        setErrorModal({
+          open: true,
+          message: "You can only select up to 9 subjects.",
+        });
         return prev;
       }
       return [...prev, subject];
@@ -459,7 +461,7 @@ export default function ExamSelector() {
 
   const handleStart = () => {
     if (selectMode === "subject" && selectedSubjects.length === 0) {
-      alert("Please select at least one subject.");
+      setErrorModal({ open: true, message: "Please select at least one subject." });
       return;
     }
 
@@ -469,7 +471,7 @@ export default function ExamSelector() {
         (arr) => Array.isArray(arr) && arr.length > 0
       )
     ) {
-      alert("Please select at least one topic.");
+      setErrorModal({ open: true, message: "Please select at least one topic." });
       return;
     }
 
@@ -505,7 +507,7 @@ export default function ExamSelector() {
   };
 
   return (
-    <div className="flex flex-col  space-y-4 py-6">
+    <div className="flex flex-col space-y-4 py-6">
       <StudyActions
         examDropdownOpen={examDropdownOpen}
         setExamDropdownOpen={setExamDropdownOpen}
@@ -537,6 +539,26 @@ export default function ExamSelector() {
         setTopicYear={setTopicYear}
         handleStart={handleStart}
       />
+
+      {/* 🔹 Error Modal */}
+      {errorModal.open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-[90%] max-w-sm p-6 text-center border border-indigo-200 dark:border-indigo-800">
+            <h2 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-2">
+              Notice
+            </h2> 
+            <p className="text-gray-700 dark:text-gray-300 mb-5">
+              {errorModal.message}
+            </p>
+            <button
+              onClick={() => setErrorModal({ open: false, message: "" })}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
