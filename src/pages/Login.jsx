@@ -197,10 +197,10 @@ const Login = () => {
 
           {/* Links */}
           <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
-            <a href="#" className="hover:text-indigo-600">
+            <a href="" className="hover:text-indigo-600">
               Forgot Password?
             </a>
-            <a href="/register" className="hover:text-indigo-600">
+            <a href="" onClick={() => navigate("/register")} className="hover:text-indigo-600">
               Create Account
             </a>
           </div>

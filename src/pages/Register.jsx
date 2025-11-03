@@ -343,7 +343,7 @@ const Register = () => {
 
           {/* Already have account */}
           <div className="text-center mt-4">
-            <a href="/login" className="text-indigo-600 hover:underline text-sm">
+            <a href="" onClick={() => navigate("/login")} className="text-indigo-600 hover:underline text-sm">
               Already have an account? Sign in
             </a>
           </div>
