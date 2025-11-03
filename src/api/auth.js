@@ -1,97 +1,56 @@
-// src/api/auth.js
-const API_BASE = "https://fillops-server.onrender.com/api/auth";
+const API_BASE = "https://fillops-server.onrender.com/api";
 
-// ✅ Register user (backend sets cookie automatically)
-export const register = async (data) => {
-  const res = await fetch(`${API_BASE}/register`, {
+// Helper for common request setup
+const headers = (token) => ({
+  "Content-Type": "application/json",
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+});
+
+// 🟢 Register
+export const registerUser = async (formData) => {
+  const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-    credentials: "include", // 👈 allows backend cookies
+    headers: headers(),
+    body: JSON.stringify(formData),
+    credentials: "include",
   });
-
-  if (!res.ok) throw new Error("Registration failed");
-
-  return res.json(); // expected { user, message }
+  return res.json();
 };
 
-// ✅ Login user (backend sets cookie automatically)
-export const login = async (credentials) => {
-  const res = await fetch(`${API_BASE}/login`, {
+// 🟢 Login
+export const loginUser = async (formData) => {
+  const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
-    credentials: "include", // 👈 cookie saved automatically
+    headers: headers(),
+    body: JSON.stringify(formData),
+    credentials: "include",
   });
-
-  if (!res.ok) throw new Error("Login failed");
-
-  return res.json(); // expected { user, message }
+  return res.json();
 };
 
-// ✅ Logout user (backend clears cookie)
-export const logout = async () => {
-  const res = await fetch(`${API_BASE}/logout`, {
-    method: "POST",
-    credentials: "include", // 👈 include cookie to clear it
+// 🟢 Get user profile
+export const getProfile = async (token) => {
+  const res = await fetch(`${API_BASE}/auth/profile`, {
+    headers: headers(token),
+    credentials: "include",
   });
-
-  if (!res.ok) throw new Error("Logout failed");
-
-  return res.json(); // expected { message }
+  return res;
 };
 
+// 🟢 Refresh access token
+export const refreshAccessToken = async () => {
+  const res = await fetch(`${API_BASE}/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return res.json();
+};
 
-
-
-
-
-// const API_BASE = "https://fillops-server.onrender.com/api/auth";
-
-// // ✅ Register user
-// export const register = async (data) => {
-//   const res = await fetch(`${API_BASE}/register`, {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify(data),
-//     // credentials: "include",
-//   });
-//   console.log("Register data sent:", data);
-
-//   if (!res.ok) throw new Error("Registration failed");
-//   return res.json();
-// };
-
-// // ✅ Login user
-// export const login = async (credentials) => {
-//   const res = await fetch(`${API_BASE}/login`, {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify(credentials),
-//     credentials: "include",
-//   });
-
-//   if (!res.ok) throw new Error("Login failed");
-//   return res.json();
-// };
-
-// // ✅ Logout user
-// export const logout = async () => {
-//   const res = await fetch(`${API_BASE}/logout`, {
-//     method: "POST",
-//     credentials: "include",
-//   });
-
-//   if (!res.ok) throw new Error("Logout failed");
-//   return res.json();
-// };
-
-// // ✅ Get current logged-in user
-// // export const getCurrentUser = async () => {
-// //   const res = await fetch(`${API_BASE}/me`, {
-// //     credentials: "include",
-// //   });
-
-// //   if (!res.ok) throw new Error("Not authenticated");
-// //   return res.json();
-// // };
+// 🟢 Logout
+export const logoutUser = async () => {
+  const res = await fetch(`${API_BASE}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return res.json();
+};

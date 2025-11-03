@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "./theme-toggle"
-import { Link } from "react-router-dom" // ✅ React Router link
+import { Link, useNavigate} from "react-router-dom" // ✅ React Router link
+import useAuthStore from "../../store/authStore"; // adjust path if needed
 
 export default function TopNav() {
   const handleMenuToggle = () => {
@@ -27,6 +28,15 @@ export default function TopNav() {
       window.setIsMobileMenuOpen(!currentState)
     }
   }
+
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();               // clear session & user
+    sessionStorage.clear();       // just in case
+    navigate("/login");           // redirect to login page
+  };
 
   return (
     <div className="flex items-center justify-between h-full px-4 lg:px-6">
@@ -124,7 +134,9 @@ export default function TopNav() {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">Sign out</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600"
+             onClick={handleLogout}
+            >Sign out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

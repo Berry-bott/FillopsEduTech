@@ -9,11 +9,12 @@ import RecentComments from "../components/DashboardComponents/user/index/recent-
 import ExamSelector from "../components/DashboardComponents/user/index/ExamSelector"
 import UserActivity from "../components/DashboardComponents/user/index/user-activities"
 import SystemHistory from "../components/DashboardComponents/user/index/system-history"
-
+import useAuthStore from "../store/authStore";
 
 
 
 export default function UserDashboard() {
+  const { user, logout } = useAuthStore();
   return (
     <DashboardLayout  currentPage="dashboard" className="border-4 border-red-500">
     <div className="space-y-4 sm:space-y-6 w-full min-w-0">
@@ -21,7 +22,7 @@ export default function UserDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="space-y-1">
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
-          Welcome back, <span className="text-primary dark:text-blue-400">Henry!</span>
+          Welcome back, <span className="text-primary dark:text-blue-400"> {user?.name || "User"} </span>
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Here’s your dashboard summary for today 

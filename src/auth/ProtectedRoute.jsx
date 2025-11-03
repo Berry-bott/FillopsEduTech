@@ -1,37 +1,35 @@
-
 // src/auth/ProtectedRoute.jsx
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react"; // optional spinner
 import useAuthStore from "../store/authStore";
 
-const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuthStore();
+export default function ProtectedRoute() {
+  const { checkAuth, isAuthenticated } = useAuthStore();
+  const [checking, setChecking] = useState(true);
 
-  if (loading) return <div>Loading...</div>;
+  useEffect(() => {
+    const verify = async () => {
+      await checkAuth(); // 🧠 Ask backend if token is still valid
+      setChecking(false);
+    };
+    verify();
+  }, [checkAuth]);
 
+  // 🔹 While verifying auth, show loading spinner
+  if (checking) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="w-20 h-20 animate-spin text-gray-600" />
+      </div>
+    );
+  }
 
-  if (!user) {
+  // 🔹 If not authenticated after checking → redirect
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // ✅ User exists, so allow access
-  return children;
-};
-
-export default ProtectedRoute;
-
-
-// import { Navigate } from "react-router-dom";
-// import useAuthStore from "../store/authStore";
-
-// export default function ProtectedRoute({ children, allowedRoles }) {
-//   const { user, loading } = useAuthStore();
-
-//   if (loading) return <div>Loading...</div>;
-
-//   if (!user) return <Navigate to="/login" replace />;
-
-//   if (allowedRoles && !allowedRoles.includes(user.role))
-//     return <Navigate to="/" replace />;
-
-//   return children;
-// }
+  // 🔹 Otherwise, show the protected content
+  return <Outlet />;
+}

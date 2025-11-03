@@ -89,7 +89,7 @@ const Register = () => {
   
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-white px-6 py-12">
+    <section className="min-h-screen flex items-center justify-center bg-white px-4 py-8">
       <motion.div
         initial={{ opacity: 0, y: 60 }}
         animate={{ opacity: 1, y: 0 }}
@@ -147,7 +147,7 @@ const Register = () => {
         </div>
 
         {/* ===== Logo ===== */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-2">
           <img
             src={Logo}
             alt="App Logo"
@@ -156,7 +156,7 @@ const Register = () => {
         </div>
 
         {/* ===== Header ===== */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <h1 className="text-3xl font-extrabold text-gray-800">
             Create Account
           </h1>

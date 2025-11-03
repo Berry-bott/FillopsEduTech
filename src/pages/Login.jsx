@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import useAuthStore from "../store/authStore";
 import Logo from "../assets/images/fillopsLogo.png";
+import useAuthStore from "../store/authStore";
 import { Loader2 } from "lucide-react";
 
 
@@ -35,7 +35,7 @@ const Login = () => {
       console.log("Login response:", res);
   
       // ✅ Always go to user dashboard after login success
-      if (res?.success) {
+      if (res.success) {
         navigate("/user/dashboard");
       } else {
         console.error("Login failed:", res?.message || "Unknown error");
@@ -48,7 +48,7 @@ const Login = () => {
   
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
+    <section className="min-h-screen flex items-center justify-center bg-white px-2 py-8">
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -106,7 +106,7 @@ const Login = () => {
         </div>
 
         {/* ===== Logo ===== */}
-        <div className="flex justify-center mb-6 mt-6">
+        <div className="flex justify-center mb-4">
           <img
             src={Logo}
             alt="App Logo"
@@ -115,7 +115,7 @@ const Login = () => {
         </div>
 
         {/* ===== Header ===== */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
           <p className="text-gray-500 mt-2">
             Sign in to continue to your dashboard

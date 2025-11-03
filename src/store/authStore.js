@@ -1,134 +1,102 @@
+// src/store/authStore.js
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { login as apiLogin, register as apiRegister, logout as apiLogout } from "../api/auth";
+import {
+  loginUser,
+  registerUser,
+  getProfile,
+  refreshAccessToken,
+  logoutUser,
+} from "../api/auth";
 
- const useAuthStore = create(
+const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
-      token: null,
+      accessToken: sessionStorage.getItem("accessToken") || null,
+      isAuthenticated: false,
       loading: false,
-      error: null,
 
-      // Register
-      register: async (data) => {
-        set({ loading: true, error: null });
+      // 🔹 Login
+      login: async (formData) => {
+        set({ loading: true });
         try {
-          const res = await apiRegister(data);
+          const res = await loginUser(formData);
+          if (res.success) {
+            const token = res.data.accessToken;
+            sessionStorage.setItem("accessToken", token);
+            set({
+              user: res.data.user,
+              accessToken: token,
+              isAuthenticated: true,
+            });
+          }
+          return res;
+        } finally {
           set({ loading: false });
-          return res;
-        } catch (err) {
-          set({ loading: false, error: err.message });
-          throw err;
         }
       },
 
-      // Login
-      login: async (credentials) => {
-        set({ loading: true, error: null });
+      // 🔹 Register
+      register: async (formData) => {
+        set({ loading: true });
         try {
-          const res = await apiLogin(credentials);
-          const token = res?.data?.token || null; // optional if backend sends token
-          const user = res?.data || null;
-          set({ user, token, loading: false });
+          const res = await registerUser(formData);
+          if (res.success) {
+            const token = res.data.accessToken;
+            sessionStorage.setItem("accessToken", token);
+            set({
+              user: res.data.user,
+              accessToken: token,
+              isAuthenticated: true,
+            });
+          }
           return res;
-        } catch (err) {
-          set({ loading: false, error: err.message });
-          throw err;
+        } finally {
+          set({ loading: false });
         }
       },
 
-      // Logout
+      // 🔹 Check if token is valid (called on refresh or route load)
+      checkAuth: async () => {
+        const token = get().accessToken;
+        if (!token) {
+          set({ isAuthenticated: false, user: null });
+          return false;
+        }
+
+        try {
+          const res = await getProfile(token);
+          if (!res.ok) throw new Error("Unauthorized");
+          const data = await res.json();
+          if (data.success) {
+            set({ user: data.data, isAuthenticated: true });
+            return true;
+          } else {
+            throw new Error("Invalid token");
+          }
+        } catch {
+          // 🔥 Token invalid → logout immediately
+          sessionStorage.removeItem("accessToken");
+          set({ user: null, accessToken: null, isAuthenticated: false });
+          return false;
+        }
+      },
+
+      // 🔹 Logout
       logout: async () => {
         try {
-          await apiLogout();
-        } finally {
-          set({ user: null, token: null });
-        }
+          await logoutUser();
+        } catch {}
+        sessionStorage.removeItem("accessToken");
+        set({ user: null, accessToken: null, isAuthenticated: false });
       },
     }),
     {
-      name: "auth-storage",
-      getStorage: () => sessionStorage, // safer than localStorage
+      name: "auth-store",
+      getStorage: () => sessionStorage,
     }
   )
 );
 
 export default useAuthStore;
-
-
-
-
-
-
-
-
-
-
-
-// import { create } from "zustand";
-// import { login, logout, register } from "../api/auth";
-
-// const useAuthStore = create((set, get) => ({
-//   user: null,
-//   loading: false,
-//   error: null,
-
-//   // Register + Auto-login
-  
-//   register: async (data) => {
-//     set({ loading: true, error: null });
-//     try {
-//       await register(data); // create user + cookie
-//       // const user = await getCurrentUser(); // fetch user details
-//       set({ user, loading: false });
-//       return user;
-//     } catch (err) {
-//       set({ loading: false, error: err.message });
-//       throw err;
-//     }
-//   },
-
-//   // Login
-//   login: async (credentials) => {
-//     set({ loading: true, error: null });
-//     try {
-//       await login(credentials);
-//       const user = await getCurrentUser();
-//       set({ user, loading: false });
-//       return user;
-//     } catch (err) {
-//       set({ loading: false, error: err.message });
-//       throw err;
-//     }
-//   },
-
-//   // Fetch current user
-//   fetchUser: async (credentials) => {
-//     try {
-//       const user = await getCurrentUser();
-//       set({ user });
-//     } catch {
-//       set({ user: null });
-//     }
-//   },
-
-//   // Auto-login on reload
-//   // initialize: async (credentials) => {
-//   //   set({ loading: true });
-//   //   try {
-//   //     const user = await getCurrentUser();
-//   //     set({ user, loading: false });
-//   //   } catch {
-//   //     set({ user: null, loading: false });
-//   //   }
-//   // },
-
-//   // Logout
-//   logout: async (credentials) => {
-//     await logout();
-//     set({ user: null });
-//   },
-// }));
-
-// export default useAuthStore;
