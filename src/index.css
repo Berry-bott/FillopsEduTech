@@ -9,7 +9,7 @@
   :root {
     --main-bluecolor:226, 71%, 33%; /* Blue-800 */
     --background:0 0% 100%;
-    /* --foreground:0 0% 3.9%; */
+    --foreground:0 0% 3.9%;
 
     --card:0 0% 100%;
     --card-foreground:0 0% 3.9%;
@@ -80,7 +80,7 @@
   }
 
   .dark {
-    --background:0 0% 3.9%;
+    --background:222 39% 11%;
     --foreground:0 0% 98%;
 
     --card:0 0% 3.9%;
@@ -89,9 +89,9 @@
     --popover:0 0% 3.9%;
     --popover-foreground:0 0% 98%;
 
-    --primary:0 0% 98%; /* Lighter blue for dark mode */
+    --primary:221 83% 33%; /* Lighter blue for dark mode */
     --primary-foreground:0 0% 9%;
-    --primary-hover: 214 84% 56%;
+    --primary-hover: 214 84% 46%;;
 
     --secondary:0 0% 14.9%;
     --secondary-foreground:0 0% 98%;
@@ -135,7 +135,6 @@
 @layer base {
   * {
     @apply border-border;
-    /* font-weight:700; */
   }
 
   body {
