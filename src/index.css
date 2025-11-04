@@ -41,11 +41,6 @@
     --input:0 0% 89.8%;
     --ring:0 0% 3.9%;
 
-    /* Custom gradients and shadows */
-    --gradient-primary: linear-gradient(135deg, hsl(214 84% 56%), hsl(214 84% 46%));
-    --gradient-hero: linear-gradient(135deg, hsl(214 84% 56% / 0.9), hsl(142 76% 36% / 0.8));
-    --shadow-elegant: 0 10px 30px -10px hsl(214 84% 56% / 0.3);
-    --shadow-card: 0 4px 20px -4px hsl(214 84% 56% / 0.1);
     
     /* Animation variables */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -80,7 +75,10 @@
   }
 
   .dark {
-    --background:222 39% 11%;
+    /* --background:223 39% 4%; */
+    --backgroundNext:220, 70%, 5%;
+    --background:222, 70%, 6%;
+    
     --foreground:0 0% 98%;
 
     --card:0 0% 3.9%;

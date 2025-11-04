@@ -105,7 +105,7 @@ export default function FeaturesSection() {
               deletionSpeed={80}
               repeat={Infinity}
               cursor={true}
-              className="block bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 text-transparent bg-clip-text drop-shadow-md"
+              className="block bg-primary dark:bg-primary-hover text-transparent bg-clip-text drop-shadow-md"
             />
           </h2>
         </motion.div>
@@ -140,7 +140,7 @@ export default function FeaturesSection() {
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-2xl md:text-3xl font-bold text-Graphite"
+              className="text-2xl md:text-3xl font-bold text-primary dark:text-primary-hover"
             >
               Welcome to Fillop Study Platform!
             </motion.h3>

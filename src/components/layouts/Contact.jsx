@@ -42,30 +42,60 @@ const ContactForm = () => {
   return (
     <section
       ref={formRef}
-      className="min-h-screen flex items-center justify-center bg-gray-50 p-6"
+      className="min-h-screen flex items-center justify-center 
+                 dark:bg-background p-6 transition-colors duration-500"
     >
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-        <h2 className="form-title text-3xl font-bold text-gray-900 mb-6 text-center">
+      <div className="w-full max-w-lg 
+                      bg-white dark:bg-gray-900 
+                      rounded-2xl shadow-2xl dark:shadow-gray-800 
+                      p-8 border border-gray-200 dark:border-gray-700
+                      transition-colors duration-500">
+        <h2 className="form-title text-3xl font-bold 
+                       text-gray-900 dark:text-gray-100 mb-6 text-center 
+                       text-shadow-sm dark:text-shadow-glow">
           Get in Touch
         </h2>
         <form className="space-y-5">
           <input
             type="text"
             placeholder="Your Name"
-            className="form-element w-full p-3 rounded-lg bg-gray-100 text-gray-900 placeholder-gray-500 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-element w-full p-3 rounded-lg 
+                       bg-gray-100 dark:bg-gray-800 
+                       text-gray-900 dark:text-gray-100 
+                       placeholder-gray-500 dark:placeholder-gray-400 
+                       border border-gray-300 dark:border-gray-700 
+                       focus:outline-none focus:ring-2 focus:ring-primary
+                       transition-colors duration-300"
           />
           <input
             type="email"
             placeholder="Your Email"
-            className="form-element w-full p-3 rounded-lg bg-gray-100 text-gray-900 placeholder-gray-500 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-element w-full p-3 rounded-lg 
+                       bg-gray-100 dark:bg-gray-800 
+                       text-gray-900 dark:text-gray-100 
+                       placeholder-gray-500 dark:placeholder-gray-400 
+                       border border-gray-300 dark:border-gray-700 
+                       focus:outline-none focus:ring-2 focus:ring-primary
+                       transition-colors duration-300"
           />
           <textarea
             rows="4"
             placeholder="Your Message"
-            className="form-element w-full p-3 rounded-lg bg-gray-100 text-gray-900 placeholder-gray-500 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            className="form-element w-full p-3 rounded-lg 
+                       bg-gray-100 dark:bg-gray-800 
+                       text-gray-900 dark:text-gray-100 
+                       placeholder-gray-500 dark:placeholder-gray-400 
+                       border border-gray-300 dark:border-gray-700 
+                       focus:outline-none focus:ring-2 focus:ring-primary
+                       resize-none transition-colors duration-300"
           />
 
-          <Button className="form-element w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-transform transform hover:scale-[1.02]">
+          <Button className="form-element w-full 
+                             bg-primary dark:bg-blue-600 
+                             hover:bg-primary-hover dark:hover:bg-blue-500 
+                             text-white font-semibold py-3 rounded-lg 
+                             shadow-md dark:shadow-blue-900 
+                             transition-transform transform hover:scale-[1.02]">
             Send Message
           </Button>
         </form>

@@ -228,7 +228,7 @@ const HeroSection = () => {
           </Badge>
 
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-6xl font-merriweather font-bold text-primary-foreground dark:text-white mb-6 leading-tight transition-colors">
+          <h1 className="text-5xl md:text-6xl font-merriweather font-bold text-primary-foreground text-white/90 mb-6 leading-tight transition-colors">
             Empowering the Future of{" "}
             <span className="text-primary-hover dark:text-primary-hover inline-block min-w-[9ch] mt-2">
               <TypeAnimation
@@ -259,20 +259,20 @@ const HeroSection = () => {
           {/* Feature Pills */}
           <div className="flex flex-wrap justify-center gap-4 mb-10">
             <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
-              <BookOpen className="w-5 h-5 text-accent" />
-              <span className="text-primary-foreground font-medium text-sm">
+              <BookOpen className="w-5 h-5 text-accent text-white/70" />
+              <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
                 WAEC/NECO CBT
               </span>
             </div>
             <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
               <Users className="w-5 h-5 text-education-orange" />
-              <span className="text-primary-foreground font-medium text-sm">
+              <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
                 JAMB/UTME Prep
               </span>
             </div>
             <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
               <Award className="w-5 h-5 text-blue-700 dark:text-blue-400" />
-              <span className="text-primary-foreground font-medium text-sm">
+              <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
                 AI-Powered Learning
               </span>
             </div>

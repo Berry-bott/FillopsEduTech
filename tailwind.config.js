@@ -157,6 +157,7 @@ module.exports = {
 		colors: {
 		  // Base color tokens linked to your CSS variables
 		  background: "hsl(var(--background))",
+		  backgroundNext: "hsl(var(--backgroundNext))",
 		  foreground: "hsl(var(--foreground))",
 		  border: "hsl(var(--border))",
 		  input: "hsl(var(--input))",
