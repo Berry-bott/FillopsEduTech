@@ -14,7 +14,10 @@ import useAuthStore from "../store/authStore";
 
 
 export default function UserDashboard() {
-  const { user, logout } = useAuthStore();
+  const firstName = useAuthStore((state) => state.user?.firstName);
+
+  console.log(firstName);
+  
   return (
     <DashboardLayout  currentPage="dashboard" className="border-4 border-red-500">
     <div className="space-y-4 sm:space-y-6 w-full min-w-0">
@@ -22,7 +25,7 @@ export default function UserDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="space-y-1">
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
-          Welcome back, <span className="text-primary dark:text-blue-400"> {user?.name || "User"} </span>
+          Welcome back, <span className="text-primary dark:text-blue-400"> {firstName || "User"} </span>
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Here’s your dashboard summary for today 

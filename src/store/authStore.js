@@ -30,6 +30,8 @@ const useAuthStore = create(
               accessToken: token,
               isAuthenticated: true,
             });
+            console.log(user);
+            
           }
           return res;
         } finally {
