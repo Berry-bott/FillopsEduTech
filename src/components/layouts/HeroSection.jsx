@@ -194,14 +194,13 @@ import hangoverImage from "../../assets/images/hero-education.jpg";
 const HeroSection = () => {
   return (
     <section
-      className="relative min-h-screen flex items-center justify-center overflow-hidden 
-      bg-background dark:bg-backround transition-colors duration-500"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background dark:bg-backround transition-colors duration-500"
     >
       {/* Background Image + Overlay */}
       <div className="absolute inset-0 border-2 border-primary-foreground/20 rounded-lg overflow-hidden">
         <img
           src={hangoverImage}
-          className="w-full h-full object-cover object-bottom"
+          className="w-full h-full object-cover object-[50%_5%]"
           alt="Education background"
         />
 

@@ -39,11 +39,11 @@ export default function TopNav() {
   };
 
   return (
-    <div className="flex items-center justify-between h-full px-4 lg:px-6">
+    <div className="flex items-center justify-between h-full px-2 lg:px-2">
       {/* ===== Left side ===== */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center ">
         {/* Desktop Menu Toggle */}
-        <Button variant="ghost" size="sm" onClick={handleMenuToggle} className="hidden lg:flex p-2" title="Toggle Menu">
+        <Button variant="ghost" size="sm" onClick={handleMenuToggle} className="hidden lg:flex " title="Toggle Menu">
           <Menu className="h-4 w-4" />
         </Button>
 

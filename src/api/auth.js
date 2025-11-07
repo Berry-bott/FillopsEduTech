@@ -30,7 +30,7 @@ export const loginUser = async (formData) => {
 
 // 🟢 Get user profile
 export const getProfile = async (token) => {
-  const res = await fetch(`${API_BASE}/auth/profile`, {
+  const res = await fetch(`${API_BASE}/users/dashboard`, {
     headers: headers(token),
     credentials: "include",
   });

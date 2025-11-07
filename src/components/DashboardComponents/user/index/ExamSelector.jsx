@@ -396,7 +396,7 @@ export default function ExamSelector() {
   const [topicYearFilter, setTopicYearFilter] = useState({});
   const [errorModal, setErrorModal] = useState({ open: false, message: "" });
 
-  const exams = ["JAMB", "WAEC", "NECO", "PUTME"];
+  const exams = ["WAEC", "JAMB", "NECO", "PUTME"];
 
   const openFor = (action) => {
     setActiveAction(action);
