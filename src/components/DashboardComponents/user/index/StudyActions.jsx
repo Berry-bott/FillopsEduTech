@@ -16,7 +16,7 @@ export default function StudyActions({
       <div className="relative inline-block">
         <Button
           onClick={() => setExamDropdownOpen((s) => !s)}
-          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2"
+          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-1"
         >
           <GraduationCap className="w-4 h-4" />
           <span>Study</span>
@@ -40,7 +40,7 @@ export default function StudyActions({
       {/* Quiz button */}
       <Button
         onClick={() => openFor("quiz")}
-        className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2"
+        className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-1"
       >
         <PenTool className="w-4 h-4" />
         <span>Take Quiz</span>
@@ -49,7 +49,7 @@ export default function StudyActions({
       {/* Exam button */}
       <Button
         onClick={() => openFor("exam")}
-        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2"
+        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-1"
       >
         <FileText className="w-4 h-4" />
         <span>Write Exam</span>
