@@ -26,13 +26,13 @@ const useAuthStore = create(
             const token = res.data.accessToken;
             sessionStorage.setItem("accessToken", token);
             set({
-              user: res.data.user,
+              user: res.data.user,  
               accessToken: token,
               isAuthenticated: true,
             });
-            console.log(user);
             
           }
+          // console.log(user);
           return res;
         } finally {
           set({ loading: false });

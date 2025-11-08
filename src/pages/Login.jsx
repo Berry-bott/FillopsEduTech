@@ -280,6 +280,8 @@ const Login = () => {
     try {
       const res = await login(formData);
       console.log("Login response:", res);
+      console.log(res.data.user);
+      
       if (res.success) {
         navigate("/user/dashboard");
       } else {
@@ -287,7 +289,7 @@ const Login = () => {
       }
     } catch (err) {
       setError("Login failed. Please try again.");
-      console.error("Login error:", err);
+      console.error("Login errors:", err);
     }
   };
 
