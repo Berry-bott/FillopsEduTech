@@ -11,7 +11,7 @@ export default function StudyActions({
   openFor,
 }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-2 md:gap-3">
       {/* Study button */}
       <div className="relative inline-block">
         <Button
@@ -49,7 +49,7 @@ export default function StudyActions({
       {/* Exam button */}
       <Button
         onClick={() => openFor("exam")}
-        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-1"
+        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-"
       >
         <FileText className="w-4 h-4" />
         <span>Write Exam</span>
