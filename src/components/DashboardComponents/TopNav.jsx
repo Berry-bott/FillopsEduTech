@@ -35,7 +35,7 @@ export default function TopNav() {
   const handleLogout = async () => {
     await logout();               // clear session & user
     sessionStorage.clear();       // just in case
-    navigate("/login");           // redirect to login page
+    navigate("/");           // redirect to login page
   };
 
   return (
