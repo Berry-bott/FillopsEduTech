@@ -12,4 +12,8 @@ export default defineConfig({
       "@pages": path.resolve(__dirname, "src/pages"),
     },
   },
+  server: {
+    port: 5173,
+    historyApiFallback: true, // 👈 Prevents 404 when refreshing on nested routes
+  },
 });
