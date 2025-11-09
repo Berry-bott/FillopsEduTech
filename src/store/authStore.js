@@ -26,13 +26,11 @@ const useAuthStore = create(
             const token = res.data.accessToken;
             sessionStorage.setItem("accessToken", token);
             set({
-              user: res.data.user,  
+              user: res.data.user,
               accessToken: token,
               isAuthenticated: true,
             });
-            
           }
-          // console.log(user);
           return res;
         } finally {
           set({ loading: false });
@@ -59,7 +57,7 @@ const useAuthStore = create(
         }
       },
 
-      // 🔹 Check if token is valid (called on refresh or route load)
+      // 🔹 Check and refresh token automatically
       checkAuth: async () => {
         const token = get().accessToken;
         if (!token) {
@@ -70,18 +68,26 @@ const useAuthStore = create(
         try {
           const res = await getProfile(token);
           if (!res.ok) throw new Error("Unauthorized");
+
           const data = await res.json();
           if (data.success) {
             set({ user: data.data, isAuthenticated: true });
             return true;
-          } else {
-            throw new Error("Invalid token");
           }
         } catch {
-          // 🔥 Token invalid → logout immediately
-          sessionStorage.removeItem("accessToken");
-          set({ user: null, accessToken: null, isAuthenticated: false });
-          return false;
+          // 🟢 Try refreshing token using HTTP-only cookie
+          const refresh = await refreshAccessToken(); // Calls /api/auth/refresh
+          if (refresh.success) {
+            const newToken = refresh.data.accessToken;
+            sessionStorage.setItem("accessToken", newToken);
+            set({ accessToken: newToken, isAuthenticated: true });
+            return await get().checkAuth(); // Retry profile
+          } else {
+            // ❌ Refresh failed → logout
+            sessionStorage.removeItem("accessToken");
+            set({ user: null, accessToken: null, isAuthenticated: false });
+            return false;
+          }
         }
       },
 
