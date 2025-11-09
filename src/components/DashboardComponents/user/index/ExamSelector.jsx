@@ -542,8 +542,8 @@ export default function ExamSelector() {
 
       {/* 🔹 Error Modal */}
       {errorModal.open && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-[90%] max-w-sm p-6 text-center border border-indigo-200 dark:border-indigo-800">
+        <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
+          <div className="bg-white dark:background rounded-2xl shadow-xl w-[90%] max-w-sm p-6 text-center border border-indigo-200 dark:border-indigo-800">
             <h2 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-2">
               Notice
             </h2> 

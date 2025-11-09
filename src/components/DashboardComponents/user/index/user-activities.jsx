@@ -134,7 +134,7 @@ const getRoleBadgeColor = (role) => {
 
 export default function UserActivity() {
   return (
-    <div className="bg-white dark:bg-[#0F0F12] rounded-xl p-6 border border-gray-200 dark:border-[#1F1F23]">
+    <div className="bg-white dark:bg-background rounded-xl p-6 border border-gray-200 dark:border-[#1F1F23]">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">User Activity</h3>
         <button className="text-sm text-primary hover:underline">View all</button>

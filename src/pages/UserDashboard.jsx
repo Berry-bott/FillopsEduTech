@@ -14,7 +14,7 @@ import useAuthStore from "../store/authStore";
 
 
 export default function UserDashboard() {
-  const firstName = useAuthStore((state) => state.user?.firstName);
+  const firstName = useAuthStore((state) => state.user);
 
   console.log(firstName);
   
@@ -33,8 +33,8 @@ export default function UserDashboard() {
       </div>
 
         <div className="flex gap-2">
-          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-            community
+          <button className="px-4 py-2 bg-primary text-primary-foreground dark:text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+            Community
           </button>
           <button className="px-2 py-2 border border-border text-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium">
             Download CBT Guru

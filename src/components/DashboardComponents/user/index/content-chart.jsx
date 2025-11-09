@@ -107,7 +107,7 @@ export default function ContentChart() {
   return (
     <div className="grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-2">
       {/* Line Chart */}
-      <div className="bg-white dark:bg-[#0F0F12] rounded-xl p-3 sm:p-6 border border-gray-200 dark:border-[#1F1F23]">
+      <div className="bg-white dark:bg-background rounded-xl p-3 sm:p-6 border border-gray-200 dark:border-[#1F1F23]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             Content Performance
@@ -124,7 +124,7 @@ export default function ContentChart() {
       </div>
 
       {/* Bar Chart */}
-      <div className="bg-white dark:bg-[#0F0F12] rounded-xl p-3 sm:p-6 border border-gray-200 dark:border-[#1F1F23]">
+      <div className="bg-white dark:bg-background rounded-xl p-3 sm:p-6 border border-gray-200 dark:border-[#1F1F23]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             Content by Category

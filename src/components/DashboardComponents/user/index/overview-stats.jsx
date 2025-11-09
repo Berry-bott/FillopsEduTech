@@ -67,7 +67,7 @@ export default function OverviewStats() {
       {stats.map((stat) => (
         <div
           key={stat.title}
-          className="bg-white dark:bg-[#0F0F12] rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200 dark:border-[#1F1F23] hover:shadow-md transition-shadow"
+          className="bg-white dark:bg-background rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200 dark:border-[#1F1F23] hover:shadow-md transition-shadow"
         >
           <div className="flex items-center justify-between pb-2">
             <div className="text-gray-600 dark:text-gray-400">{stat.icon}</div>

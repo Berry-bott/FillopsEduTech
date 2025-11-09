@@ -849,7 +849,7 @@ export default function SideBar() {
     const content = (
       <div
         className={cn(
-          "flex items-center py-2 text-sm rounded-md transition-colors hover:bg-gray-50 dark:hover:bg-[#1F1F23] relative group cursor-pointer",
+          "flex items-center py-2 text-sm rounded-md transition-colors hover:bg-blue-200 dark:hover:bg-blue-900 relative group cursor-pointer",
           paddingLeft
         )}
         onClick={() => {
@@ -869,7 +869,7 @@ export default function SideBar() {
 
         {showText && (
           <>
-            <span className="ml-3 flex-1 text-primary">{item.label}</span>
+            <span className="ml-3 flex-1 text-primary dark:text-gray-300">{item.label}</span>
             {item.badge && (
               <span className="px-1.5 py-0.5  text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
                 {item.badge}
@@ -930,7 +930,7 @@ export default function SideBar() {
           {/* Mobile sidebar overlay */}
           <nav
             className={`
-              fixed inset-y-0 left-0 z-[70] w-64 bg-white dark:bg-[#0F0F12] 
+              fixed inset-y-0 left-0 z-[70] w-64 bg-white dark:bg-background 
               border-r border-gray-200 dark:border-[#1F1F23] 
               transform transition-transform duration-300 ease-in-out
               ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
@@ -951,10 +951,10 @@ export default function SideBar() {
                     className="flex-shrink-0"
                   />
                   <div>
-                    <span className="text-lg font-semibold text-primary dark:text-white transition-opacity duration-200">
+                    <span className="text-lg font-semibold text-primary  transition-opacity duration-200">
                     Fillop Tech
                     </span>
-                    <p className="text-[10px] text-destructive dark:text-white">Simplifying your tech experience...</p>
+                    <p className="text-[10px] text-destructive">Simplifying your tech experience...</p>
                   </div>
                 </Link>
               </div>
@@ -1008,7 +1008,7 @@ export default function SideBar() {
     return (
       <nav
         className={`
-          fixed inset-y-0 left-0 z-[60] bg-white dark:bg-[#0F0F12] 
+          fixed inset-y-0 left-0 z-[60] bg-white dark:bg-background
           border-r border-gray-200 dark:border-[#1F1F23] transition-all duration-300 ease-in-out
           ${menuState === "hidden" ? "w-0 border-r-0" : getSidebarWidth()}
         `}
@@ -1033,10 +1033,10 @@ export default function SideBar() {
                   />
                   <div>
 
-                  <span className="text-lg font-semibold text-primary dark:text-white transition-opacity duration-200">
+                  <span className="text-lg font-semibold text-primary  transition-opacity duration-200">
                   Fillop Tech
                   </span>
-                  <p className="text-[10px] text-destructive dark:text-white">Simplifying your tech experience...</p>
+                  <p className="text-[10px] text-destructive/100">Simplifying your tech experience...</p>
                   </div>
 
                 </Link>
