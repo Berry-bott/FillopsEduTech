@@ -6,6 +6,7 @@ import FeaturesImage1 from "../../assets/images/featuresImage1.jpg";
 import FeaturesImage2 from "../../assets/images/featuresImage2.jpg";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import  ExpandableText  from "../ui/ExpandableText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -73,7 +74,7 @@ export default function FeaturesSection() {
   }, []);
 
   return (
-    <section className="relative py-28 bg-background overflow-hidden md:mx-8 mx-2">
+    <section className="relative py-16  bg-background overflow-hidden md:mx-8 mx-2 text-center md:text-left">
       <div className="container mx-auto px-2">
         {/* HEADER */}
         <motion.div
@@ -111,7 +112,7 @@ export default function FeaturesSection() {
         </motion.div>
 
         {/* SECTION 1 */}
-        <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+        <div className="grid md:grid-cols-2 gap-12 items-center mb-20  md:gap-4">
           {/* IMAGE */}
           <motion.div
             initial="hidden"
@@ -134,7 +135,7 @@ export default function FeaturesSection() {
             whileInView="visible"
             variants={fadeUp}
             viewport={{ once: true }}
-            className="flex flex-col gap-6 self-start"
+            className="flex flex-col gap-6 md: self-start"
           >
             <motion.h3
               initial={{ opacity: 0, x: -40 }}
@@ -144,18 +145,20 @@ export default function FeaturesSection() {
             >
               Welcome to Fillop Study Platform!
             </motion.h3>
-            <motion.p
+            <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.8 }}
-              className="text-lg text-muted-foreground leading-relaxed"
+              className="text-md text-muted-foreground leading-relaxed "
             >
-              This is our Gateway to WAEC/NECO and JAMB/UTME Success. We've
-              designed this platform to be your ultimate study partner,
-              providing comprehensive and personalized learning experience. The
-              mission is to empower every student with the tools, knowledge, and
-              confidence they need to excel in their WAEC and NECO examinations.
-            </motion.p>
+             <ExpandableText
+                  text={`This is our Gateway to WAEC/NECO and JAMB/UTME Success. We've
+                  designed this platform to be your ultimate study partner,
+                  providing comprehensive and personalized learning experience. The
+                  mission is to empower every student with the tools, knowledge, and
+                  confidence they need to excel in their WAEC and NECO examinations.`}
+                />
+            </motion.div>
           </motion.div>
         </div>
 
@@ -169,14 +172,22 @@ export default function FeaturesSection() {
             viewport={{ once: true }}
             className="flex flex-col gap-6 self-start order-2 md:order-1"
           >
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-lg text-muted-foreground leading-relaxed mt-6"
+              className="text-md text-muted-foreground leading-relaxed mt-6"
             >
-            This platform encompasses the study and hands-on practice of WAEC/NECO and those preparing to write JAMB and PUTME. This platform goes beyond just providing content; it’s an all-encompassing tool that helps students prepare effectively, track their progress, and build confidence in these exams.This is an AI-powered system that analyzes a student's performance, behavior, adapt to each candidate's unique needs, and learning style to create a custom study path making the learning process smarter and more efficient.
-            </motion.p>
+               <ExpandableText
+                  text={`
+                This platform encompasses the study and hands-on practice of WAEC/NECO and those preparing to
+                write JAMB and PUTME. This platform goes beyond just providing content; it’s an all-encompassing tool 
+                that helps students prepare effectively, track their progress, and build confidence in these exams.This
+                is an AI-powered system that analyzes a student's performance, behavior, adapt to each candidate's unique 
+                   needs, and learning style to create a custom study path making the learning process smarter and more efficient.
+                `}
+                />
+            </motion.div>
           </motion.div>
 
           {/* IMAGE */}

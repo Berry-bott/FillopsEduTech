@@ -150,9 +150,13 @@ module.exports = {
 		},
 	  },
 	  extend: {
+		screens: {
+		  "xmd": "850px",
+		},
 		fontFamily: {
 		  roboto: ["Roboto", "sans-serif"],
 		  merriweather: ["Merriweather Variable", "serif"],
+		  manrope: ["Manrope", "sans-serif"]
 		},
 		colors: {
 		  // Base color tokens linked to your CSS variables

@@ -139,6 +139,10 @@
     @apply bg-background text-foreground;
     @apply font-roboto;
   }
+  p{
+    @apply font-manrope;
+    /* font-size: 15px; */
+  }
 }
 /* merriweather-latin-wght-normal */
 @font-face {
