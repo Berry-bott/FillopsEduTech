@@ -88,10 +88,11 @@ export const loginUser = async (formData) => {
 
 // 🟢 Get user profile (backend can silently refresh)
 export const getProfile = async (token) => {
-  const res = await fetch(`${API_BASE}/users/dashboard`, {
+  const res = await fetch(`${API_BASE}/users/profile`, {
     method: "GET",
     headers: headers(token),
-    credentials: "include", // allows backend to send new access token if refreshed
+    credentials: "include",
+    // allows backend to send new access token if refreshed
   });
 
   const data = await res.json();
@@ -101,6 +102,7 @@ export const getProfile = async (token) => {
     sessionStorage.setItem("accessToken", data.data.accessToken);
   }
 
+  // console.log("this is =" data);
   return data;
 };
 

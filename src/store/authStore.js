@@ -1,110 +1,3 @@
-// // src/store/authStore.js
-// import { create } from "zustand";
-// import { persist } from "zustand/middleware";
-// import {
-//   loginUser,
-//   registerUser,
-//   getProfile,
-//   refreshAccessToken,
-//   logoutUser,
-// } from "../api/auth";
-
-// const useAuthStore = create(
-//   persist(
-//     (set, get) => ({
-//       user: null,
-//       accessToken: sessionStorage.getItem("accessToken") || null,
-//       isAuthenticated: false,
-//       loading: false,
-
-//       // 🔹 Login
-//       login: async (formData) => {
-//         set({ loading: true });
-//         try {
-//           const res = await loginUser(formData);
-//           if (res.success) {
-//             const token = res.data.accessToken;
-//             sessionStorage.setItem("accessToken", token);
-//             set({
-//               user: res.data.user,  
-//               accessToken: token,
-//               isAuthenticated: true,
-//             });
-            
-//           }
-//           // console.log(user);
-//           return res;
-//         } finally {
-//           set({ loading: false });
-//         }
-//       },
-
-//       // 🔹 Register
-//       register: async (formData) => {
-//         set({ loading: true });
-//         try {
-//           const res = await registerUser(formData);
-//           if (res.success) {
-//             const token = res.data.accessToken;
-//             sessionStorage.setItem("accessToken", token);
-//             set({
-//               user: res.data.user,
-//               accessToken: token,
-//               isAuthenticated: true,
-//             });
-//           }
-//           return res;
-//         } finally {
-//           set({ loading: false });
-//         }
-//       },
-
-//       // 🔹 Check if token is valid (called on refresh or route load)
-//       checkAuth: async () => {
-//         const token = get().accessToken;
-//         if (!token) {
-//           set({ isAuthenticated: false, user: null });
-//           return false;
-//         }
-
-//         try {
-//           const res = await getProfile(token);
-//           if (!res.ok) throw new Error("Unauthorized");
-//           const data = await res.json();
-//           if (data.success) {
-//             set({ user: data.data, isAuthenticated: true });
-//             return true;
-//           } else {
-//             throw new Error("Invalid token");
-//           }
-//         } catch {
-//           // 🔥 Token invalid → logout immediately
-//           sessionStorage.removeItem("accessToken");
-//           set({ user: null, accessToken: null, isAuthenticated: false });
-//           return false;
-//         }
-//       },
-
-//       // 🔹 Logout
-//       logout: async () => {
-//         try {
-//           await logoutUser();
-//         } catch {}
-//         sessionStorage.removeItem("accessToken");
-//         set({ user: null, accessToken: null, isAuthenticated: false });
-//       },
-//     }),
-//     {
-//       name: "auth-store",
-//       getStorage: () => sessionStorage,
-//     }
-//   )
-// );
-
-// export default useAuthStore;
-
-
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { loginUser, registerUser, getProfile, logoutUser } from "../api/auth";
@@ -113,7 +6,7 @@ const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      accessToken: sessionStorage.getItem("accessToken") || null,
+      accessToken: null,
       isAuthenticated: false,
       loading: false,
 
@@ -146,7 +39,7 @@ const useAuthStore = create(
             const token = res.data.accessToken;
             sessionStorage.setItem("accessToken", token);
             set({
-              user: res.data.user,
+              user: res.data,
               accessToken: token,
               isAuthenticated: true,
             });
@@ -173,7 +66,7 @@ const useAuthStore = create(
             const newToken = data.data.accessToken || token;
             sessionStorage.setItem("accessToken", newToken);
             set({
-              user: data.data.user,
+              user: data.data,
               accessToken: newToken,
               isAuthenticated: true,
             });

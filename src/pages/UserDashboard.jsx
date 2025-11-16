@@ -9,69 +9,143 @@ import RecentComments from "../components/DashboardComponents/user/index/recent-
 import ExamSelector from "../components/DashboardComponents/user/index/ExamSelector"
 import UserActivity from "../components/DashboardComponents/user/index/user-activities"
 import SystemHistory from "../components/DashboardComponents/user/index/system-history"
+import { useEffect } from "react";
 import useAuthStore from "../store/authStore";
 
 
 
+
 export default function UserDashboard() {
-  const firstName = useAuthStore((state) => state.user);
 
-  console.log(firstName);
+
   
+  const user = useAuthStore((state) => state.user);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth(); // This loads the correct user from token
+  }, []);
+
+
   return (
-    <DashboardLayout  currentPage="dashboard" className="border-4 border-red-500">
-    <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="space-y-1">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
-          Welcome back, <span className="text-primary dark:text-blue-400"> {firstName || "User"} </span>
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Here’s your dashboard summary for today 
-        </p>
-      </div>
+    <DashboardLayout currentPage="dashboard">
 
-        <div className="flex gap-2">
-          <button className="px-4 py-2 bg-primary text-primary-foreground dark:text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-            Community
-          </button>
-          <button className="px-2 py-2 border border-border text-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium">
-            Download CBT Guru
-          </button>
-        </div>
-      </div>
+      <div className="space-y-4 sm:space-y-6 w-full min-w-0">
 
-      <ExamSelector />
-      {/* Overview Stats */}
-      <OverviewStats />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
-      {/* Content Chart - moved here */}
-      <ContentChart />
+          <div className="space-y-1">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+              Welcome back,{" "}
+              <span className="text-primary dark:text-blue-400">
+                {user?.firstName || "User"}
+              </span>
+            </h2>
 
-      {/* User Activity & System History Row */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        <SystemHistory />
-        <UserActivity />
-      </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Here’s your dashboard summary for today
+            </p>
+          </div>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Left Column - 2/3 width on desktop */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6 w-full min-w-0">
-          <RecentPosts />
-          <PopularArticles />
-          {/* <PublishingSchedule /> */}
+          <div className="flex gap-2">
+            <button className="px-4 py-2 bg-primary text-primary-foreground dark:text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+              Community
+            </button>
+            <button className="px-2 py-2 border border-border text-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium">
+              Download CBT Guru
+            </button>
+          </div>
+
         </div>
 
-        {/* Right Column - 1/3 width on desktop */}
-        <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-          <ContentCategories />
-          <RecentComments />
+        <ExamSelector />
+        <OverviewStats />
+        <ContentChart />
+
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+          <SystemHistory />
+          <UserActivity />
         </div>
+
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 w-full min-w-0">
+            <RecentPosts />
+            <PopularArticles />
+          </div>
+
+          <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+            <ContentCategories />
+            <RecentComments />
+          </div>
+        </div>
+
       </div>
-      </div>
- </DashboardLayout>
-    
-  )
+
+    </DashboardLayout>
+  );
 }
+
+
+// export default function UserDashboard() {
+//   console.log("my useauthcoming" + + useAuthStore);
+  
+//   const user = useAuthStore((state) => state.user);
+
+  
+//   return (
+//     <DashboardLayout  currentPage="dashboard" className="border-4 border-red-500">
+//     <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+//       {/* Page Header */}
+//       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+//       <div className="space-y-1">
+//         <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+//           Welcome back, <span className="text-primary dark:text-blue-400"> {user?.firstName || "User"} </span>
+//         </h2>
+//         <p className="text-sm text-gray-500 dark:text-gray-400">
+//           Here’s your dashboard summary for today 
+//         </p>
+//       </div>
+
+//         <div className="flex gap-2">
+//           <button className="px-4 py-2 bg-primary text-primary-foreground dark:text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+//             Community
+//           </button>
+//           <button className="px-2 py-2 border border-border text-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium">
+//             Download CBT Guru
+//           </button>
+//         </div>
+//       </div>
+
+//       <ExamSelector />
+//       {/* Overview Stats */}
+//       <OverviewStats />
+
+//       {/* Content Chart - moved here */}
+//       <ContentChart />
+
+//       {/* User Activity & System History Row */}
+//       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+//         <SystemHistory />
+//         <UserActivity />
+//       </div>
+
+//       {/* Main Content Grid */}
+//       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
+//         {/* Left Column - 2/3 width on desktop */}
+//         <div className="lg:col-span-2 space-y-4 sm:space-y-6 w-full min-w-0">
+//           <RecentPosts />
+//           <PopularArticles />
+//           {/* <PublishingSchedule /> */}
+//         </div>
+
+//         {/* Right Column - 1/3 width on desktop */}
+//         <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+//           <ContentCategories />
+//           <RecentComments />
+//         </div>
+//       </div>
+//       </div>
+//  </DashboardLayout>
+    
+//   )
+// }
