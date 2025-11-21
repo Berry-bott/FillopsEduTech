@@ -102,53 +102,47 @@ const menuData = [
               },
             ],
           },
-          {
-            id: "real-time",
-            label: "Real-time",
-            href: "/dashboard/realtime",
-            icon: Activity,
-            isNew: true,
-          },
+  
         ],
       },
-      {
-        id: "analytics",
-        label: "Analytics",
-        href: "/analytics",
-        icon: BarChart2,
-        children: [
-          {
-            id: "overview",
-            label: "Overview",
-            href: "/analytics/overview",
-            icon: PieChart,
-          },
-          {
-            id: "performance",
-            label: "Performance",
-            href: "/analytics/performance",
-            icon: TrendingUp,
-          },
-          {
-            id: "study plans",
-            label: "Study Plans",
-            href: "/analytics/study-plans",
-            icon:Map,
-          }, 
-          {
-            id: " upcoming events",
-            label: " Upcoming Events",
-            href: "/analytics/audience",
-            icon: Bookmark,
-          },
-          {
-            id: "audience",
-            label: "Audience",
-            href: "/analytics/audience",
-            icon: Target,
-          },
-        ],
-      },
+      // {
+      //   id: "analytics",
+      //   label: "Analytics",
+      //   href: "/analytics",
+      //   icon: BarChart2,
+      //   children: [
+      //     {
+      //       id: "overview",
+      //       label: "Overview",
+      //       href: "/analytics/overview",
+      //       icon: PieChart,
+      //     },
+      //     {
+      //       id: "performance",
+      //       label: "Performance",
+      //       href: "/analytics/performance",
+      //       icon: TrendingUp,
+      //     },
+      //     {
+      //       id: "study plans",
+      //       label: "Study Plans",
+      //       href: "/analytics/study-plans",
+      //       icon:Map,
+      //     }, 
+      //     {
+      //       id: " upcoming events",
+      //       label: " Upcoming Events",
+      //       href: "/analytics/audience",
+      //       icon: Bookmark,
+      //     },
+      //     {
+      //       id: "audience",
+      //       label: "Audience",
+      //       href: "/analytics/audience",
+      //       icon: Target,
+      //     },
+      //   ],
+      // },
       {
         id: "history",
         label: "History",
@@ -164,126 +158,126 @@ const menuData = [
       // },
     ],
   },
-  {
-    id: "EDUCATION",
-    label: "EDUCATION",
-    items: [
-      {
-        id: "studies",
-        label: "Studies",
-        href: "/studies",
-        icon: Target,
-        badge: "3",
-        children: [
-          {
-            id: "Take Test",
-            label: "Take Test",
-            href: "/dashboard/test",
-            icon: BarChart2,
-          },
-          {
-            id: "learning Path",
-            label: "Learning Path",
-            href: "/dashboard/learning Path",
-            icon: FileText,
-            children: [
-              {
-                id: "jamb",
-                label: "Jamb",
-                href: "/dashboard/Jamb",
-                icon: Activity,
-              },
-              {
-                id: "Waec",
-                label: "Waec",
-                href: "/dashboard/Waec",
-                icon: Activity,
-              },
-              {
-                id: "Neco",
-                label: "Neco",
-                href: "/dashboard/Neco",
-                icon: Activity,
-              },
-              {
-                id: "Putme",
-                label: "Putme",
-                href: "/dashboard/Putme",
-                icon: Activity,
-              },
-            ],
-          },
-          {
-            id: "write exams",
-            label: "Write Exams",
-            href: "/dashboard/realtime",
-            icon: Bookmark,
-            isNew: true,
-          },
-        ],
-      },
+  // {
+  //   id: "EDUCATION",
+  //   label: "EDUCATION",
+  //   items: [
+  //     {
+  //       id: "studies",
+  //       label: "Studies",
+  //       href: "/studies",
+  //       icon: Target,
+  //       badge: "3",
+  //       children: [
+  //         {
+  //           id: "Take Test",
+  //           label: "Take Test",
+  //           href: "/dashboard/test",
+  //           icon: BarChart2,
+  //         },
+  //         {
+  //           id: "learning Path",
+  //           label: "Learning Path",
+  //           href: "/dashboard/learning Path",
+  //           icon: FileText,
+  //           children: [
+  //             {
+  //               id: "jamb",
+  //               label: "Jamb",
+  //               href: "/dashboard/Jamb",
+  //               icon: Activity,
+  //             },
+  //             {
+  //               id: "Waec",
+  //               label: "Waec",
+  //               href: "/dashboard/Waec",
+  //               icon: Activity,
+  //             },
+  //             {
+  //               id: "Neco",
+  //               label: "Neco",
+  //               href: "/dashboard/Neco",
+  //               icon: Activity,
+  //             },
+  //             {
+  //               id: "Putme",
+  //               label: "Putme",
+  //               href: "/dashboard/Putme",
+  //               icon: Activity,
+  //             },
+  //           ],
+  //         },
+  //         {
+  //           id: "write exams",
+  //           label: "Write Exams",
+  //           href: "/dashboard/realtime",
+  //           icon: Bookmark,
+  //           isNew: true,
+  //         },
+  //       ],
+  //     },
      
-    ],
-  },
+  //   ],
+  // },
   {
-    id: "ecommerce",
-    label: "E-commerce",
+    id: "mylibrary",
+    label: "Library",
     items: [
+      // {
+      //   id: "products",
+      //   label: "Products",
+      //   href: "/products",
+      //   icon: Package,
+      //   children: [
+      //     {
+      //       id: "all-products",
+      //       label: "All Products",
+      //       href: "/products/all",
+      //       icon: Package,
+      //     },
+      //     {
+      //       id: "categories",
+      //       label: "Categories",
+      //       href: "/products/categories",
+      //       icon: Tag,
+      //       children: [
+      //         {
+      //           id: "Jamb",
+      //           label: "JAMB",
+      //           href: "/products/categories/Jamb",
+      //           icon: Package,
+      //         },
+      //         {
+      //           id: "Waec",
+      //           label: "WAEC",
+      //           href: "/products/categories/clothing",
+      //           icon: Package,
+      //         },
+      //         {
+      //           id: "Neco",
+      //           label: "NECO",
+      //           href: "/products/categories/Neco",
+      //           icon: Package,
+      //         },
+      //       ],
+      //     },
+      //     {
+      //       id: "inventory",
+      //       label: "Inventory",
+      //       href: "/products/inventory",
+      //       icon: Database,
+      //     },
+      //     {
+      //       id: "reviews",
+      //       label: "Reviews",
+      //       href: "/products/reviews",
+      //       icon: Star,
+      //     },
+      //   ],
+      // },
       {
-        id: "products",
-        label: "Products",
-        href: "/products",
-        icon: Package,
-        children: [
-          {
-            id: "all-products",
-            label: "All Products",
-            href: "/products/all",
-            icon: Package,
-          },
-          {
-            id: "categories",
-            label: "Categories",
-            href: "/products/categories",
-            icon: Tag,
-            children: [
-              {
-                id: "Jamb",
-                label: "JAMB",
-                href: "/products/categories/Jamb",
-                icon: Package,
-              },
-              {
-                id: "Waec",
-                label: "WAEC",
-                href: "/products/categories/clothing",
-                icon: Package,
-              },
-              {
-                id: "Neco",
-                label: "NECO",
-                href: "/products/categories/Neco",
-                icon: Package,
-              },
-            ],
-          },
-          {
-            id: "inventory",
-            label: "Inventory",
-            href: "/products/inventory",
-            icon: Database,
-          },
-          {
-            id: "reviews",
-            label: "Reviews",
-            href: "/products/reviews",
-            icon: Star,
-          },
-        ],
-      },
-      {
-        id: "orders",
-        label: "Orders",
+        id: "mylibrary",
+        label: "My Library",
         href: "/orders",
         icon: ShoppingCart,
         badge: "5",
@@ -368,39 +362,32 @@ const menuData = [
     id: "finance",
     label: "Finance",
     items: [
-      {
-        id: "transactions",
-        label: "Transactions",
-        href: "/transactions",
-        icon: Wallet,
-        children: [
-          {
-            id: "all-transactions",
-            label: "All Transactions",
-            href: "/transactions/all",
-            icon: Wallet,
-          },
-          {
-            id: "income",
-            label: "Income",
-            href: "/transactions/income",
-            icon: TrendingUp,
-          },
-          {
-            id: "expenses",
-            label: "Expenses",
-            href: "/transactions/expenses",
-            icon: TrendingDown,
-          },
-        ],
-      },
-      {
-        id: "invoices",
-        label: "Invoices",
-        href: "/invoices",
-        icon: Receipt,
-        badge: "2",
-      },
+      // {
+      //   id: "transactions",
+      //   label: "Transactions",
+      //   href: "/transactions",
+      //   icon: Wallet,
+      //   children: [
+      //     {
+      //       id: "all-transactions",
+      //       label: "All Transactions",
+      //       href: "/transactions/all",
+      //       icon: Wallet,
+      //     },
+      //     {
+      //       id: "income",
+      //       label: "Income",
+      //       href: "/transactions/income",
+      //       icon: TrendingUp,
+      //     },
+      //     {
+      //       id: "expenses",
+      //       label: "Expenses",
+      //       href: "/transactions/expenses",
+      //       icon: TrendingDown,
+      //     },
+      //   ],
+      // },
       {
         id: "payments",
         label: "Payments",
@@ -427,6 +414,14 @@ const menuData = [
           },
         ],
       },
+      {
+        id: "invoices",
+        label: "Invoices",
+        href: "/invoices",
+        icon: Receipt,
+        badge: "2",
+      },
+    
     ],
   },
   // {
@@ -556,38 +551,38 @@ const menuData = [
             href: "/members/all",
             icon: Users2,
           },
-          {
-            id: "roles",
-            label: "Roles",
-            href: "/members/roles",
-            icon: Shield,
-            children: [
-              {
-                id: "admin",
-                label: "Administrators",
-                href: "/members/roles/admin",
-                icon: Shield,
-              },
-              {
-                id: "editor",
-                label: "Editors",
-                href: "/members/roles/editor",
-                icon: Edit,
-              },
-              {
-                id: "viewer",
-                label: "Viewers",
-                href: "/members/roles/viewer",
-                icon: Eye,
-              },
-            ],
-          },
-          {
-            id: "permissions",
-            label: "Permissions",
-            href: "/members/permissions",
-            icon: Lock,
-          },
+          // {
+          //   id: "roles",
+          //   label: "Roles",
+          //   href: "/members/roles",
+          //   icon: Shield,
+          //   children: [
+          //     {
+          //       id: "admin",
+          //       label: "Administrators",
+          //       href: "/members/roles/admin",
+          //       icon: Shield,
+          //     },
+          //     {
+          //       id: "editor",
+          //       label: "Editors",
+          //       href: "/members/roles/editor",
+          //       icon: Edit,
+          //     },
+          //     {
+          //       id: "viewer",
+          //       label: "Viewers",
+          //       href: "/members/roles/viewer",
+          //       icon: Eye,
+          //     },
+          //   ],
+          // },
+          // {
+          //   id: "permissions",
+          //   label: "Permissions",
+          //   href: "/members/permissions",
+          //   icon: Lock,
+          // },
         ],
       },
       {
@@ -598,16 +593,22 @@ const menuData = [
         badge: "12",
         children: [
           {
-            id: "channels",
-            label: "Channels",
-            href: "/chat/channels",
-            icon: MessagesSquare,
+            id: "chat-admin",
+            label: "Chat Admin",
+            href: "/chat/dm",
+            icon: Mail,
           },
           {
             id: "direct-messages",
             label: "Direct Messages",
             href: "/chat/dm",
             icon: Mail,
+          },
+          {
+            id: "channels",
+            label: "Channels",
+            href: "/chat/channels",
+            icon: MessagesSquare,
           },
           {
             id: "notifications",
@@ -645,111 +646,111 @@ const menuData = [
       },
     ],
   },
-  {
-    id: "tools",
-    label: "Tools & Utilities",
-    items: [
-      {
-        id: "plugins",
-        label: "Plugins",
-        href: "/plugins",
-        icon: Puzzle,
-        badge: "8",
-        children: [
-          {
-            id: "installed",
-            label: "Plugins đã cài",
-            href: "/plugins",
-            icon: Package,
-          },
-          {
-            id: "add-new",
-            label: "Thêm mới",
-            href: "/plugins",
-            icon: Plus,
-          },
-        ],
-      },
-      {
-        id: "api",
-        label: "API",
-        href: "/api",
-        icon: Code,
-        children: [
-          {
-            id: "documentation",
-            label: "Documentation",
-            href: "/api/docs",
-            icon: FileText,
-          },
-          {
-            id: "keys",
-            label: "API Keys",
-            href: "/api/keys",
-            icon: Key,
-          },
-          {
-            id: "webhooks",
-            label: "Webhooks",
-            href: "/api/webhooks",
-            icon: Zap,
-          },
-        ],
-      },
-      {
-        id: "integrations",
-        label: "Integrations",
-        href: "/integrations",
-        icon: Layers,
-        children: [
-          {
-            id: "third-party",
-            label: "Third Party",
-            href: "/integrations/third-party",
-            icon: Globe,
-          },
-          {
-            id: "plugins",
-            label: "Plugins",
-            href: "/integrations/plugins",
-            icon: Plus,
-          },
-          {
-            id: "extensions",
-            label: "Extensions",
-            href: "/integrations/extensions",
-            icon: Zap,
-          },
-        ],
-      },
-      {
-        id: "backup",
-        label: "Backup & Restore",
-        href: "/backup",
-        icon: Database,
-        children: [
-          {
-            id: "create-backup",
-            label: "Create Backup",
-            href: "/backup/create",
-            icon: Download,
-          },
-          {
-            id: "restore",
-            label: "Restore",
-            href: "/backup/restore",
-            icon: Upload,
-          },
-          {
-            id: "schedule",
-            label: "Schedule",
-            href: "/backup/schedule",
-            icon: Clock,
-          },
-        ],
-      },
-    ],
-  },
+  // {
+  //   id: "tools",
+  //   label: "Tools & Utilities",
+  //   items: [
+  //     {
+  //       id: "plugins",
+  //       label: "Plugins",
+  //       href: "/plugins",
+  //       icon: Puzzle,
+  //       badge: "8",
+  //       children: [
+  //         {
+  //           id: "installed",
+  //           label: "Plugins đã cài",
+  //           href: "/plugins",
+  //           icon: Package,
+  //         },
+  //         {
+  //           id: "add-new",
+  //           label: "Thêm mới",
+  //           href: "/plugins",
+  //           icon: Plus,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       id: "api",
+  //       label: "API",
+  //       href: "/api",
+  //       icon: Code,
+  //       children: [
+  //         {
+  //           id: "documentation",
+  //           label: "Documentation",
+  //           href: "/api/docs",
+  //           icon: FileText,
+  //         },
+  //         {
+  //           id: "keys",
+  //           label: "API Keys",
+  //           href: "/api/keys",
+  //           icon: Key,
+  //         },
+  //         {
+  //           id: "webhooks",
+  //           label: "Webhooks",
+  //           href: "/api/webhooks",
+  //           icon: Zap,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       id: "integrations",
+  //       label: "Integrations",
+  //       href: "/integrations",
+  //       icon: Layers,
+  //       children: [
+  //         {
+  //           id: "third-party",
+  //           label: "Third Party",
+  //           href: "/integrations/third-party",
+  //           icon: Globe,
+  //         },
+  //         {
+  //           id: "plugins",
+  //           label: "Plugins",
+  //           href: "/integrations/plugins",
+  //           icon: Plus,
+  //         },
+  //         {
+  //           id: "extensions",
+  //           label: "Extensions",
+  //           href: "/integrations/extensions",
+  //           icon: Zap,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       id: "backup",
+  //       label: "Backup & Restore",
+  //       href: "/backup",
+  //       icon: Database,
+  //       children: [
+  //         {
+  //           id: "create-backup",
+  //           label: "Create Backup",
+  //           href: "/backup/create",
+  //           icon: Download,
+  //         },
+  //         {
+  //           id: "restore",
+  //           label: "Restore",
+  //           href: "/backup/restore",
+  //           icon: Upload,
+  //         },
+  //         {
+  //           id: "schedule",
+  //           label: "Schedule",
+  //           href: "/backup/schedule",
+  //           icon: Clock,
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
 ]
 
 

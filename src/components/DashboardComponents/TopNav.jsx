@@ -2,7 +2,8 @@ import { Menu, Search, Bell, Settings, User, ChevronDown, Home } from "lucide-re
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge";
+import { useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,14 @@ import { Link, useNavigate} from "react-router-dom" // ✅ React Router link
 import useAuthStore from "../../store/authStore"; // adjust path if needed
 
 export default function TopNav() {
+
+    const user = useAuthStore((state) => state.user);
+    const checkAuth = useAuthStore((state) => state.checkAuth);
+  
+    useEffect(() => {
+      checkAuth(); 
+    }, []);
+
   const handleMenuToggle = () => {
     if (typeof window !== "undefined" && window.toggleMenuState) {
       window.toggleMenuState()
@@ -64,8 +73,8 @@ export default function TopNav() {
             <Home className="h-4 w-4 mr-1" />
             Dashboard
           </Link>
-          <span>/</span>
-          <span className="text-green-500 dark:text-white font-medium">User</span>
+          {/* <span>/</span>
+          <span className="text-green-500 dark:text-white font-medium">User</span> */}
         </nav>
       </div>
 
@@ -115,8 +124,11 @@ export default function TopNav() {
                 </AvatarFallback>
               </Avatar>
               <div className="hidden lg:flex flex-col items-start">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">John Doe</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Administrator</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">{user?.firstName
+              ? user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1).toLowerCase()
+              : "User"}
+            </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Students</span>
               </div>
               <ChevronDown className="hidden lg:block h-4 w-4 text-gray-500" />
             </Button>

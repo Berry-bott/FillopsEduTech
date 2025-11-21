@@ -7,6 +7,7 @@ import {
   TrendingUp,
   TrendingDown,
   Calendar,
+  Star,
   Image as ImageIcon,
 } from "lucide-react";
 
@@ -20,7 +21,7 @@ const stats = [
     description: "Published articles",
   },
   {
-    title: "Page Views",
+    title: "Articles Views",
     value: "89.2K",
     change: "+23.1%",
     changeType: "increase",
@@ -44,12 +45,12 @@ const stats = [
     description: "Active writers",
   },
   {
-    title: "Scheduled Posts",
-    value: "18",
+    title: "Reviews",
+    value: "68",
     change: "+5.3%",
     changeType: "increase",
-    icon: <Calendar className="h-4 w-4" />,
-    description: "Upcoming content",
+    icon: <Star className="h-4 w-4" />,
+    description: "Content reviews",
   },
   {
     title: "Media Files",

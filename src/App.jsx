@@ -10,6 +10,7 @@ import Register from "@/pages/Register";
 import UserDashboard from "@/pages/UserDashboard";
 import VerifyEmail from "@/pages/VerifyEmail";
 import Learning from "@/pages/Learning";
+import ExamSelector from "./components/DashboardComponents/user/index/ExamSelector";
 // import Profile from "@/pages/Profile";
 
 
@@ -33,6 +34,7 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/learning" element={<Learning />} />
+          <Route path="/exam-selector" element={<ExamSelector />} />
 
 
           {/* 👤 User routes */}
