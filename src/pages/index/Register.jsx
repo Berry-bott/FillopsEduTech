@@ -421,9 +421,9 @@ const Register = () => {
     const result = await registerUser(payload);
 
     if (result?.success) {
+      reset();
       setRegisteredEmail(payload.email);
       setShowVerifyNotice(true);
-      reset();
     }
   };
 
