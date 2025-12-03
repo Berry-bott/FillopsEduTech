@@ -118,7 +118,7 @@ const VerifyEmail = () => {
     }
 
     // Hide token immediately for security
-    window.history.replaceState({}, document.title, "/verify");
+    window.history.replaceState({}, document.title, "/verify-email");
 
     const verifyEmail = async () => {
       setStatus("loading");
