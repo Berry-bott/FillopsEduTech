@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import Sidebar from "../DashboardComponents/SideBar"
-import TopNav from "../DashboardComponents/TopNav"
+import Sidebar from "../DashboardComponents/user/SideBar"
+import TopNav from "../DashboardComponents/user/TopNav"
 import { useTheme } from "next-themes"
 import ThemeCustomizer from "../DashboardComponents/theme-customizer"
 

@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 
 // Card variants
 const cardVariants = cva(
-  "rounded-lg border bg-card text-card-foreground transition-shadow",
+  "rounded-lg border bg-card text-card-foreground transition-shadow dark:bg-background",
   {
     variants: {
       variant: {
