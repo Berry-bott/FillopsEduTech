@@ -6,7 +6,7 @@ const API_BASE = "https://fillops-server-5fuf.onrender.com/api/auth";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState("notice"); // 'notice', 'loading', 'success', 'error'
+  const [status, setStatus] = useState("notice"); 
   const [message, setMessage] = useState("");
   const token = searchParams.get("token");
   const navigate = useNavigate();
