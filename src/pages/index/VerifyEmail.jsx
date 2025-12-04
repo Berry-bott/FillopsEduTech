@@ -198,7 +198,6 @@
 
 // export default VerifyEmail;
 
-
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CheckCircle, Loader2, XCircle, Mail } from "lucide-react";
@@ -207,17 +206,18 @@ const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const verified = searchParams.get("verified");
   const reason = searchParams.get("reason");
+  const token = searchParams.get("token");
 
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Checking verification status...");
 
   useEffect(() => {
-      // Hide token immediately for security
-  if (searchParams.get("token")) {
-    window.history.replaceState({}, document.title, "/verify-email");
-  }
+    // Hide token immediately for security
+    if (token) {
+      window.history.replaceState({}, document.title, "/verify-email");
+    }
 
-    // CASE 1: Backend sent explicit success
+    // Backend indicates success
     if (verified === "true") {
       setStatus("success");
       setMessage("Email verified successfully! Redirecting to login...");
@@ -225,22 +225,24 @@ const VerifyEmail = () => {
       return;
     }
 
-    // CASE 2: Backend sent explicit failure
+    // Backend indicates failure
     if (verified === "false") {
       setStatus("error");
       setMessage(reason || "Verification failed.");
       return;
     }
 
-    // CASE 3: Backend did NOT add any query parameter
-    // Assume instant backend redirect = verification success
-    if (!verified) {
-      setStatus("success");
-      setMessage("Email verified! Redirecting to login...");
-      setTimeout(() => (window.location.href = "/login"), 500);
-      return;
-    }
-  }, [verified, reason]);
+    // No query param → assume backend verified instantly
+    // if (!verified) {
+    //   setStatus("success");
+    //   setMessage("Email verified! Redirecting to login...");
+    //   setTimeout(() => (window.location.href = "/login"), 500);
+    //   return;
+    // }
+  }, [verified, reason, token]);
+
+  // Show blank page immediately if token exists
+  if (token && status === "loading") return null;
 
   const renderIcon = () => {
     switch (status) {
