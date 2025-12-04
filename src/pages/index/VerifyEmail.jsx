@@ -122,8 +122,8 @@ const VerifyEmail = () => {
     // ✅ CASE 1: Email was already verified earlier
     if (alreadyVerified === "true") {
       setStatus("success");
-      setMessage("This email is already verified. Redirecting...");
-      setTimeout(() => (window.location.href = "/login"), 500);
+      setMessage("This email is already verified. Redirecting...SHIT O");
+      setTimeout(() => (window.location.href = "/login"), 1000);
       return;
     }
 
@@ -137,8 +137,8 @@ const VerifyEmail = () => {
     // ✅ CASE 3: Backend explicitly says verified=true
     if (verified === "true") {
       setStatus("success");
-      setMessage("Email verified! Redirecting...");
-      setTimeout(() => (window.location.href = "/login"), 500);
+      setMessage("Email verified! Redirecting... FUCK..");
+      setTimeout(() => (window.location.href = "/login"), 1000);
       return;
     }
 
@@ -146,7 +146,7 @@ const VerifyEmail = () => {
     if (!reason && !alreadyVerified && !verified) {
       setStatus("success");
       setMessage("Email verified! Redirecting...");
-      setTimeout(() => (window.location.href = "/login"), 500);
+      setTimeout(() => (window.location.href = "/login"), 1000);
       return;
     }
 
@@ -162,10 +162,10 @@ const VerifyEmail = () => {
     if (!reason) return "Verification failed. Please try again.";
 
     const map = {
-      "invalid-or-expired": "This verification link is invalid or expired.",
-      "token-not-found": "Verification token not found. It may have been used already.",
+      "invalid-or-expired": "This verification link is invalid or expired. WOW",
+      "token-not-found": "Verification token not found. It may have been used already. SHIT",
       "user-not-found": "We couldn't find a user with this email.",
-      "already-verified": "This email is already verified.",
+      "already-verified": "This email is already verified. TYPE SHIT",
       "server-error": "Server error. Please try again later."
     };
 
@@ -176,7 +176,7 @@ const VerifyEmail = () => {
     if (!reason) return "Verification Failed";
     const map = {
       "invalid-or-expired": "Link Expired",
-      "already-verified": "Already Verified"
+      "already-verified": "Already Verified SHH.."
     };
     return map[reason] || "Verification Failed";
   };
@@ -251,7 +251,7 @@ const VerifyEmail = () => {
             {status === "success"
               ? alreadyVerified === "true"
                 ? "Already Verified"
-                : "Email Verified 🎉"
+                : "Email Verified 🎉 SHIT AM FUCKED"
               : status === "error"
               ? getErrorTitle(reason)
               : "Verifying..."}
