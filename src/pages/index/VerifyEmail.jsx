@@ -1,3 +1,4 @@
+
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CheckCircle, Loader2, XCircle, Mail } from "lucide-react";
@@ -24,6 +25,7 @@ const VerifyEmail = () => {
     if (verified === "true") {
       setStatus("success");
       setMessage("Email verified successfully! Redirecting to login...");
+      console.log("Email verified successfully! Redirecting to login...");
       setTimeout(() => (window.location.href = "/login"), 500);
       return;
     }
@@ -32,6 +34,8 @@ const VerifyEmail = () => {
     if (verified === "false") {
       setStatus("error");
       setMessage(reason || "Verification failed.");
+      console.log(reason || "Verification failed.");
+      
       return;
     }
 
