@@ -9,7 +9,7 @@ const VerifyEmail = () => {
   const reason = searchParams.get("reason");
   const token = searchParams.get("token");
   console.log(reason);
-  console.log(verifiesd);
+  console.log(verified);
   
 
   const [status, setStatus] = useState("loading");
