@@ -299,239 +299,239 @@
 
 // export default VerifyEmail;
 
-import { useSearchParams, useNavigate } from "react-router-dom";
+
+
+// import { useSearchParams } from "react-router-dom";
+// import { useEffect, useState } from "react";
+// import { CheckCircle, Loader2, XCircle, Mail } from "lucide-react";
+
+// const VerifyEmail = () => {
+//   const [searchParams] = useSearchParams();
+
+//   const reason = searchParams.get("reason");
+//   const alreadyVerified = searchParams.get("alreadyVerified");
+
+//   const [status, setStatus] = useState("loading");
+//   const [message, setMessage] = useState("Checking verification status...");
+
+//   useEffect(() => {
+//     // --- 1. REMOVE ONLY TOKEN, KEEP OTHER PARAMS ---
+//     // if (searchParams.get("token")) {
+//     //   const params = new URLSearchParams(searchParams);
+//     //   params.delete("token");
+
+//     //   window.history.replaceState(
+//     //     {},
+//     //     document.title,
+//     //     `/verify-email?${params.toString()}`
+//     //   );
+//     // }
+
+//     // --- 2. CASE: Already verified ---
+//     if (alreadyVerified === "true") {
+//       setStatus("success");
+//       setMessage("Your email was already verified. Redirecting...");
+//       setTimeout(() => (window.location.href = "/login"), 800);
+//       return;
+//     }
+
+//     // --- 3. CASE: Backend returned a failure reason ---
+//     if (reason) {
+//       setStatus("error");
+//       switch (reason) {
+//         case "invalid-or-expired":
+//           setMessage("This verification link is invalid or has expired.");
+//           break;
+//         case "missing-token":
+//           setMessage("Verification token missing.");
+//           break;
+//         case "server-error":
+//           setMessage("A server error occurred. Please try again later.");
+//           break;
+//         default:
+//           setMessage(reason.replace(/-/g, " "));
+//       }
+//       return;
+//     }
+
+//     // --- 4. CASE: No params at all -> success redirect ---
+//     if (!reason && !alreadyVerified) {
+//       setStatus("success");
+//       setMessage("Email verified successfully! Redirecting to login...");
+//       setTimeout(() => (window.location.href = "/login"), 800);
+//       return;
+//     }
+
+//   }, [reason, alreadyVerified, searchParams]);
+
+//   const renderIcon = () => {
+//     switch (status) {
+//       case "loading":
+//         return <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />;
+//       case "success":
+//         return <CheckCircle className="w-12 h-12 text-green-500 animate-bounce" />;
+//       case "error":
+//         return <XCircle className="w-12 h-12 text-red-500" />;
+//       default:
+//         return <Mail className="w-12 h-12 text-gray-400" />;
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-6">
+//       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 w-full max-w-md text-center border border-gray-100 dark:border-gray-700">
+//         <div className="flex flex-col items-center space-y-4">
+//           {renderIcon()}
+
+//           {/* TITLE */}
+//           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+//             {status === "success"
+//               ? alreadyVerified === "true"
+//                 ? "Already Verified"
+//                 : "Email Verified 🎉"
+//               : status === "error"
+//               ? "Verification Failed"
+//               : "Verifying..."}
+//           </h1>
+
+//           {/* MESSAGE */}
+//           <p className="text-gray-600 dark:text-gray-400">{message}</p>
+
+//           {/* BUTTON ON ERROR */}
+//           {status === "error" && (
+//             <button
+//               onClick={() => (window.location.href = "/login")}
+//               className="mt-4 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all"
+//             >
+//               Go to Login
+//             </button>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default VerifyEmail;
+
+
+import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { CheckCircle, Loader2, XCircle, Mail, AlertCircle } from "lucide-react";
+import { CheckCircle, Loader2, XCircle, Mail, X } from "lucide-react";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  
-  // All possible parameters from backend
-  const token = searchParams.get("token");
-  const reason = searchParams.get("reason");
+
   const alreadyVerified = searchParams.get("alreadyVerified");
+  const reason = searchParams.get("reason");
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("Verifying your email...");
-  const [countdown, setCountdown] = useState(5);
-
-  // Debug logging
-  useEffect(() => {
-    console.log("Email verification parameters:", {
-      token: token ? "Present (hidden for security)" : "Not present",
-      reason,
-      alreadyVerified,
-      allParams: Object.fromEntries([...searchParams.entries()])
-    });
-  }, []);
+  const [status, setStatus] = useState("loading");
+  const [message, setMessage] = useState("Checking verification status...");
+  const [showDebug, setShowDebug] = useState(false); // New state for modal
 
   useEffect(() => {
-    // Remove token from URL for security immediately
-    if (token) {
-      console.log("Token detected, removing from URL for security");
-      window.history.replaceState({}, document.title, window.location.pathname);
+    // Show debug modal immediately if there are any query params
+    if ([...searchParams.entries()].length > 0) {
+      setShowDebug(true);
     }
 
-    // Check which scenario we're in
-    checkVerificationStatus();
-  }, [token, reason, alreadyVerified]);
+    // Hide token immediately if it's still in the URL
+    if (searchParams.get("token")) {
+      window.history.replaceState({}, document.title, "/verify-email");
+      return;
+    }
 
-  const checkVerificationStatus = () => {
-    // SCENARIO 1: Already verified (backend returns ?alreadyVerified=true)
     if (alreadyVerified === "true") {
-      console.log("Case: Email already verified");
       setStatus("success");
-      setMessage("Your email is already verified. You can now log in.");
-      startRedirect("/login", 3);
+      setMessage("This email is already verified. Redirecting to login...");
+      setTimeout(() => (window.location.href = "/login"), 1000);
       return;
     }
 
-    // SCENARIO 2: Error with specific reason (backend returns ?reason=...)
     if (reason) {
-      console.log("Case: Error - reason:", reason);
       setStatus("error");
-      
-      const errorMessages = {
-        "invalid-or-expired": "This verification link is invalid or has expired.",
-        "missing-token": "Verification link is missing a token. Please use the full link from your email.",
-        "server-error": "A server error occurred. Please try again later.",
-        // Add more reasons as needed
-      };
-      
-      setMessage(errorMessages[reason] || "Verification failed. Please try again.");
+      switch (reason) {
+        case "missing-token":
+          setMessage("Verification token is missing.");
+          break;
+        case "invalid-or-expired":
+          setMessage("Verification link is invalid or expired. Please request a new one.");
+          break;
+        case "server-error":
+          setMessage("Server error occurred. Please try again later.");
+          break;
+        default:
+          setMessage(reason.replace(/-/g, " "));
+      }
       return;
     }
 
-    // SCENARIO 3: Success - just verified (backend returns no parameters)
-    // This happens when the backend verifies the email and redirects without query params
-    console.log("Case: Success - email just verified");
+    // No params → verification success
     setStatus("success");
     setMessage("Email verified successfully! Redirecting to login...");
-    startRedirect("/login", 3);
-  };
-
-  const startRedirect = (path, seconds) => {
-    let counter = seconds;
-    setCountdown(counter);
-    
-    const timer = setInterval(() => {
-      counter--;
-      setCountdown(counter);
-      
-      if (counter <= 0) {
-        clearInterval(timer);
-        navigate(path);
-      }
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  };
-
-  const handleManualRedirect = (path) => {
-    navigate(path);
-  };
+    setTimeout(() => (window.location.href = "/login"), 1000);
+  }, [alreadyVerified, reason, searchParams]);
 
   const renderIcon = () => {
     switch (status) {
       case "loading":
-        return <Loader2 className="w-16 h-16 text-blue-500 animate-spin" />;
+        return <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />;
       case "success":
-        return <CheckCircle className="w-16 h-16 text-green-500 animate-bounce" />;
+        return <CheckCircle className="w-12 h-12 text-green-500 animate-bounce" />;
       case "error":
-        return reason === "server-error" 
-          ? <AlertCircle className="w-16 h-16 text-yellow-500 animate-pulse" />
-          : <XCircle className="w-16 h-16 text-red-500" />;
+        return <XCircle className="w-12 h-12 text-red-500" />;
       default:
-        return <Mail className="w-16 h-16 text-gray-400" />;
+        return <Mail className="w-12 h-12 text-gray-400" />;
     }
-  };
-
-  const getTitle = () => {
-    if (status === "success") {
-      return alreadyVerified === "true" 
-        ? "Already Verified ✅" 
-        : "Email Verified 🎉";
-    }
-    if (status === "error") {
-      return reason === "server-error" 
-        ? "Server Error" 
-        : "Verification Failed";
-    }
-    return "Verifying Email...";
-  };
-
-  const getHelpText = () => {
-    if (status === "error") {
-      switch (reason) {
-        case "invalid-or-expired":
-          return "Verification links are valid for 24 hours. Please request a new verification email.";
-        case "missing-token":
-          return "Make sure you're using the full link from your email. If you copied just part of it, please use the complete URL.";
-        case "server-error":
-          return "Our servers are experiencing issues. Please try again in a few minutes.";
-        default:
-          return "Please try again or contact support if the problem persists.";
-      }
-    }
-    return "";
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-6">
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 w-full max-w-md text-center border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col items-center space-y-6">
+        <div className="flex flex-col items-center space-y-4">
           {renderIcon()}
-          
-          <div className="space-y-3">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-              {getTitle()}
-            </h1>
-            
-            <p className="text-gray-600 dark:text-gray-400">
-              {message}
-            </p>
-            
-            {getHelpText() && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {getHelpText()}
-              </p>
-            )}
-            
-            {status === "success" && countdown > 0 && (
-              <p className="text-sm text-blue-600 dark:text-blue-400">
-                Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
-              </p>
-            )}
-          </div>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            {status === "success"
+              ? alreadyVerified === "true"
+                ? "Already Verified ✅"
+                : "Email Verified 🎉"
+              : status === "error"
+              ? "Verification Failed"
+              : "Verifying..."}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">{message}</p>
 
-          {/* Action Buttons */}
-          <div className="w-full space-y-3 mt-4">
-            {status === "success" && (
-              <button
-                onClick={() => handleManualRedirect("/login")}
-                className="w-full px-5 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all font-medium"
-              >
-                {alreadyVerified === "true" 
-                  ? "Continue to Login" 
-                  : `Go to Login ${countdown > 0 ? `(${countdown})` : ''}`
-                }
-              </button>
-            )}
-            
-            {status === "error" && (
-              <>
-                <button
-                  onClick={() => handleManualRedirect("/login")}
-                  className="w-full px-5 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all font-medium"
-                >
-                  Go to Login
-                </button>
-                
-                {(reason === "invalid-or-expired" || reason === "missing-token") && (
-                  <button
-                    onClick={() => handleManualRedirect("/resend-verification")}
-                    className="w-full px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-                  >
-                    Request New Verification Email
-                  </button>
-                )}
-                
-                {reason === "server-error" && (
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="w-full px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-                  >
-                    Try Again
-                  </button>
-                )}
-              </>
-            )}
-            
-            {status === "loading" && (
-              <button
-                onClick={() => handleManualRedirect("/")}
-                className="w-full px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-              >
-                Return Home
-              </button>
-            )}
-          </div>
-
-          {/* Debug Info (remove in production) */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-left w-full">
-              <p className="text-xs font-mono text-gray-600 dark:text-gray-400">
-                <strong>Debug Info:</strong><br />
-                Status: {status}<br />
-                Reason: {reason || 'none'}<br />
-                Already Verified: {alreadyVerified || 'false'}<br />
-                Token Present: {token ? 'Yes' : 'No'}
-              </p>
-            </div>
+          {status === "error" && (
+            <button
+              onClick={() => (window.location.href = "/login")}
+              className="mt-4 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all"
+            >
+              Go to Login
+            </button>
           )}
         </div>
       </div>
+
+      {/* Debug Modal */}
+      {showDebug && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-md w-full relative">
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 dark:hover:text-white"
+              onClick={() => setShowDebug(false)}
+            >
+              <X />
+            </button>
+            <h2 className="text-xl font-semibold mb-4">Debug Info</h2>
+            <div className="text-left text-sm">
+              <p><strong>alreadyVerified:</strong> {alreadyVerified || "null"}</p>
+              <p><strong>reason:</strong> {reason || "null"}</p>
+              <p><strong>All Params:</strong></p>
+              <pre className="bg-gray-100 dark:bg-gray-700 p-2 rounded">{JSON.stringify(Object.fromEntries([...searchParams.entries()]), null, 2)}</pre>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
