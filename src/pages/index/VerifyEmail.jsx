@@ -123,7 +123,7 @@ const VerifyEmail = () => {
     if (alreadyVerified === "true") {
       setStatus("success");
       setMessage("This email is already verified. Redirecting...SHIT O");
-      setTimeout(() => (window.location.href = "/login"), 1000);
+      setTimeout(() => (window.location.href = "/login"), 5000);
       return;
     }
 
@@ -138,7 +138,7 @@ const VerifyEmail = () => {
     if (verified === "true") {
       setStatus("success");
       setMessage("Email verified! Redirecting... FUCK..");
-      setTimeout(() => (window.location.href = "/login"), 1000);
+      setTimeout(() => (window.location.href = "/login"), 5000);
       return;
     }
 
@@ -146,7 +146,7 @@ const VerifyEmail = () => {
     if (!reason && !alreadyVerified && !verified) {
       setStatus("success");
       setMessage("Email verified! Redirecting...");
-      setTimeout(() => (window.location.href = "/login"), 1000);
+      setTimeout(() => (window.location.href = "/login"), 5000);
       return;
     }
 
