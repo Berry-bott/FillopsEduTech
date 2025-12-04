@@ -115,15 +115,15 @@ const VerifyEmail = () => {
     });
 
     // 🔐 Remove token from URL instantly
-    if (searchParams.get("token")) {
-      window.history.replaceState({}, document.title, "/verify-email");
-    }
+    // if (searchParams.get("token")) {
+    //   window.history.replaceState({}, document.title, "/verify-email");
+    // }
 
     // ✅ CASE 1: Email was already verified earlier
     if (alreadyVerified === "true") {
       setStatus("success");
       setMessage("This email is already verified. Redirecting...SHIT O");
-      setTimeout(() => (window.location.href = "/login"), 10000);
+      setTimeout(() => (window.location.href = "/login"), 50000);
       return;
     }
 
@@ -138,17 +138,17 @@ const VerifyEmail = () => {
     if (verified === "true") {
       setStatus("success");
       setMessage("Email verified! Redirecting... FUCK..");
-      setTimeout(() => (window.location.href = "/login"), 10000);
+      setTimeout(() => (window.location.href = "/login"), 50000);
       return;
     }
 
     // 🟢 CASE 4: No params → backend auto-verified
-    if (!reason && !alreadyVerified && !verified) {
-      setStatus("success");
-      setMessage("Email verified! Redirecting...");
-      setTimeout(() => (window.location.href = "/login"), 10000);
-      return;
-    }
+    // if (!reason && !alreadyVerified && !verified) {
+    //   setStatus("success");
+    //   setMessage("Email verified! Redirecting...");
+    //   setTimeout(() => (window.location.href = "/login"), 10000);
+    //   return;
+    // }
 
     // If nothing matched → still loading
     setStatus("loading");
