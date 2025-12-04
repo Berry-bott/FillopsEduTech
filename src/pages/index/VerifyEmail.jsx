@@ -1,4 +1,3 @@
-
 // import { useSearchParams } from "react-router-dom";
 // import { useEffect, useState } from "react";
 // import { CheckCircle, Loader2, XCircle, Mail } from "lucide-react";
@@ -7,49 +6,44 @@
 //   const [searchParams] = useSearchParams();
 //   const verified = searchParams.get("verified");
 //   const reason = searchParams.get("reason");
-//   const token = searchParams.get("token");
-//   console.log(reason);
-//   console.log(verified);
-  
+
+//   // console.log(`is reason status:`${reason}) 
+//   // console.log(`is verified status:`${verified}) 
 
 //   const [status, setStatus] = useState("loading");
 //   const [message, setMessage] = useState("Checking verification status...");
 
 //   useEffect(() => {
-//     // Hide token immediately for security
-//     if (token) {
-//       window.history.replaceState({}, document.title, "/verify-email");
-//     }
+//       // Hide token immediately for security
+//   if (searchParams.get("token")) {
+//     window.history.replaceState({}, document.title, "/verify-email");
+//   }
 
-//     // Backend indicates success
+//     // CASE 1: Backend sent explicit success
 //     if (verified === "true") {
 //       setStatus("success");
 //       setMessage("Email verified successfully! Redirecting to login...");
-//       console.log("Email verified successfully! Redirecting to login...");
 //       setTimeout(() => (window.location.href = "/login"), 500);
 //       return;
 //     }
 
-//     // Backend indicates failure
-//     if (verified === "false") {
+//     // CASE 2: Backend sent explicit failure
+//     if (verified === "false" ) {
 //       setStatus("error");
 //       setMessage(reason || "Verification failed.");
 //       console.log(reason || "Verification failed.");
-      
 //       return;
 //     }
 
-//     // No query param → assume backend verified instantly
-//     // if (!verified) {
-//     //   setStatus("success");
-//     //   setMessage("Email verified! Redirecting to login...");
-//     //   setTimeout(() => (window.location.href = "/login"), 500);
-//     //   return;
-//     // }
-//   }, [verified, reason, token]);
-
-//   // Show blank page immediately if token exists
-//   // if (token && status === "loading") return null;
+//     // CASE 3: Backend did NOT add any query parameter
+//     // Assume instant backend redirect = verification success
+//     if (!verified) {
+//       setStatus("success");
+//       setMessage("Email verified! Redirecting to login...");
+//       setTimeout(() => (window.location.href = "/login"), 500);
+//       return;
+//     }
+//   }, [verified, reason]);
 
 //   const renderIcon = () => {
 //     switch (status) {
@@ -96,53 +90,142 @@
 
 
 
-
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CheckCircle, Loader2, XCircle, Mail } from "lucide-react";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
-  const verified = searchParams.get("verified");
-  const reason = searchParams.get("reason");
 
-  // console.log(`is reason status:`${reason}) 
-  // console.log(`is verified status:`${verified}) 
+  // Get parameters sent by backend
+  const reason = searchParams.get("reason");
+  const alreadyVerified = searchParams.get("alreadyVerified");
+  const verified = searchParams.get("verified");
 
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Checking verification status...");
 
   useEffect(() => {
-      // Hide token immediately for security
-  if (searchParams.get("token")) {
-    window.history.replaceState({}, document.title, "/verify-email");
-  }
+    // 🔎 Debug to see what backend sends
+    console.log("Received params:", {
+      reason,
+      alreadyVerified,
+      verified,
+      allParams: Object.fromEntries([...searchParams.entries()])
+    });
 
-    // CASE 1: Backend sent explicit success
+    // 🔐 Remove token from URL instantly
+    if (searchParams.get("token")) {
+      window.history.replaceState({}, document.title, "/verify-email");
+    }
+
+    // ✅ CASE 1: Email was already verified earlier
+    if (alreadyVerified === "true") {
+      setStatus("success");
+      setMessage("This email is already verified. Redirecting...");
+      setTimeout(() => (window.location.href = "/login"), 500);
+      return;
+    }
+
+    // ❌ CASE 2: Backend returned error
+    if (reason) {
+      setStatus("error");
+      setMessage(getErrorMessage(reason));
+      return;
+    }
+
+    // ✅ CASE 3: Backend explicitly says verified=true
     if (verified === "true") {
       setStatus("success");
-      setMessage("Email verified successfully! Redirecting to login...");
+      setMessage("Email verified! Redirecting...");
       setTimeout(() => (window.location.href = "/login"), 500);
       return;
     }
 
-    // CASE 2: Backend sent explicit failure
-    if (verified === "false") {
-      setStatus("error");
-      setMessage(reason || "Verification failed.");
-      console.log(reason || "Verification failed.");
-      return;
-    }
-
-    // CASE 3: Backend did NOT add any query parameter
-    // Assume instant backend redirect = verification success
-    if (!verified) {
+    // 🟢 CASE 4: No params → backend auto-verified
+    if (!reason && !alreadyVerified && !verified) {
       setStatus("success");
-      setMessage("Email verified! Redirecting to login...");
+      setMessage("Email verified! Redirecting...");
       setTimeout(() => (window.location.href = "/login"), 500);
       return;
     }
-  }, [verified, reason]);
+
+    // If nothing matched → still loading
+    setStatus("loading");
+    setMessage("Processing verification...");
+  }, [reason, alreadyVerified, verified, searchParams]);
+
+  // ---------------------------------------------------------
+  // ERROR MESSAGE HELPERS
+  // ---------------------------------------------------------
+  const getErrorMessage = (reason) => {
+    if (!reason) return "Verification failed. Please try again.";
+
+    const map = {
+      "invalid-or-expired": "This verification link is invalid or expired.",
+      "token-not-found": "Verification token not found. It may have been used already.",
+      "user-not-found": "We couldn't find a user with this email.",
+      "already-verified": "This email is already verified.",
+      "server-error": "Server error. Please try again later."
+    };
+
+    return map[reason] || reason.replace(/-/g, " ");
+  };
+
+  const getErrorTitle = (reason) => {
+    if (!reason) return "Verification Failed";
+    const map = {
+      "invalid-or-expired": "Link Expired",
+      "already-verified": "Already Verified"
+    };
+    return map[reason] || "Verification Failed";
+  };
+
+  const getErrorHelpText = (reason) => {
+    if (!reason) return "Please try again or contact support.";
+
+    const map = {
+      "invalid-or-expired": "Request a new verification email.",
+      "already-verified": "You can log in now.",
+      "user-not-found": "Make sure you registered with the correct email."
+    };
+
+    return map[reason] || "Please try again or contact support.";
+  };
+
+  const getActionButtons = (reason) => {
+    if (reason === "invalid-or-expired") {
+      return (
+        <div className="flex flex-col gap-3 w-full">
+          <button
+            onClick={() => (window.location.href = "/login")}
+            className="px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all"
+          >
+            Go to Login
+          </button>
+          <button
+            onClick={() => (window.location.href = "/resend-verification")}
+            className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+          >
+            Resend Verification Email
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <button
+        onClick={() => (window.location.href = "/login")}
+        className="mt-4 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all"
+      >
+        Go to Login
+      </button>
+    );
+  };
+
+  // ---------------------------------------------------------
+  // RENDER UI
+  // ---------------------------------------------------------
 
   const renderIcon = () => {
     switch (status) {
@@ -161,23 +244,48 @@ const VerifyEmail = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-6">
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 w-full max-w-md text-center border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col items-center space-y-4">
+          
           {renderIcon()}
+
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
             {status === "success"
-              ? "Email Verified 🎉"
+              ? alreadyVerified === "true"
+                ? "Already Verified"
+                : "Email Verified 🎉"
               : status === "error"
-              ? "Verification Failed"
+              ? getErrorTitle(reason)
               : "Verifying..."}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">{message}</p>
+
+          <div className="space-y-3">
+            <p className="text-gray-600 dark:text-gray-400">
+              {status === "error" ? getErrorMessage(reason) : message}
+            </p>
+
+            {status === "error" && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {getErrorHelpText(reason)}
+              </p>
+            )}
+          </div>
 
           {status === "error" && (
+            <div className="mt-6 w-full">{getActionButtons(reason)}</div>
+          )}
+
+          {status === "success" && alreadyVerified === "true" && (
             <button
               onClick={() => (window.location.href = "/login")}
               className="mt-4 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all"
             >
-              Go to Login
+              Continue to Login
             </button>
+          )}
+
+          {status === "success" && !alreadyVerified && (
+            <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+              You will be redirected shortly...
+            </p>
           )}
         </div>
       </div>
