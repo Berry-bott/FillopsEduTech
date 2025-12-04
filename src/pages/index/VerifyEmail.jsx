@@ -106,8 +106,8 @@ const VerifyEmail = () => {
   const verified = searchParams.get("verified");
   const reason = searchParams.get("reason");
 
-  console.log("the reason:"reason) 
-  console.log("is verified status:"verified) 
+  // console.log(`is reason status:`${reason}) 
+  // console.log(`is verified status:`${verified}) 
 
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Checking verification status...");
