@@ -353,7 +353,7 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/authStore"; 
-import { checkVerificationStatus } from "./verifyEmail";
+import checkVerificationStatus  from "./verifyEmail";
 import { useToast } from "@/components/ui/use-toast"; 
 
 

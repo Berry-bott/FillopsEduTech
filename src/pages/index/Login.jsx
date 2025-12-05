@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Logo from "../../assets/images/fillopsLogo.png";
 import useAuthStore from "../../store/authStore";
-import { checkVerificationStatus } from "./verifyEmail";
+import  checkVerificationStatus  from "./verifyEmail";
 import { useToast } from "@/components/ui/use-toast"; 
 
 
