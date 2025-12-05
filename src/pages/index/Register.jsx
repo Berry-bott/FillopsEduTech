@@ -352,7 +352,10 @@ import Logo from "../../assets/images/fillopsLogo.png";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
-import useAuthStore from "../../store/authStore";
+import useAuthStore from "../../store/authStore"; 
+import { checkVerificationStatus } from "./verifyEmail";
+import { useToast } from "@/components/ui/use-toast"; 
+
 
 // ✅ Schema
 const schema = z
@@ -401,6 +404,14 @@ const Register = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showVerifyNotice, setShowVerifyNotice] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+
+
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    checkVerificationStatus(searchParams, toast);
+  }, []);
 
   // Use auth store
   const { register: registerUser, loading, error, success, clearMessages } =

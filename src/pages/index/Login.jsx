@@ -8,6 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Logo from "../../assets/images/fillopsLogo.png";
 import useAuthStore from "../../store/authStore";
+import { checkVerificationStatus } from "./verifyEmail";
+import { useToast } from "@/components/ui/use-toast"; 
+
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -27,6 +30,14 @@ const Login = () => {
   } = useForm({
     resolver: zodResolver(loginSchema),
   });
+
+  
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    checkVerificationStatus(searchParams, toast);
+  }, []);
 
 
   const onSubmit = async (formData) => {
