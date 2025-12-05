@@ -19,7 +19,7 @@ import Learning from "@/pages/user/Learning";
 import Register from "@/pages/index/Register";
 import QuizPage from "@/pages/user/QuizPage";
 import ExamsPage from "@/pages/user/ExamsPage";
-import VerifyEmail from "@/pages/index/VerifyEmail";
+// import VerifyEmail from "@/pages/index/VerifyEmail";
 import LandingPage from "@/pages/index/LandingPage";
 import Unauthorized from "@/pages/index/Unauthorized";
 import UserDashboard from "@/pages/user/UserDashboard";
@@ -41,7 +41,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
+          {/* <Route path="/verify-email" element={<VerifyEmail />} /> */}
           <Route path="/learning" element={<Learning />} />
           <Route path="/QuizPage" element={<QuizPage />} />
           <Route path="/ExamsPage" element={<ExamsPage />} />

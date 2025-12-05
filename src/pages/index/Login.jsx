@@ -1,16 +1,15 @@
+
 import { Icon } from "@iconify/react";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Logo from "../../assets/images/fillopsLogo.png";
 import useAuthStore from "../../store/authStore";
-import  checkVerificationStatus  from "./verifyEmail";
-import { useToast } from "@/components/ui/use-toast"; 
-
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -19,6 +18,8 @@ const loginSchema = z.object({
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login, loading } = useAuthStore();
@@ -31,40 +32,35 @@ const Login = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  
-  const [searchParams] = useSearchParams();
-  const { toast } = useToast();
-
+  // 🔥 RUNS ONCE → handles backend redirect messages
   useEffect(() => {
-    checkVerificationStatus(searchParams, toast);
-  }, []);
+    const verified = searchParams.get("verified");
 
+    if (verified === "true") {
+      toast({
+        title: "Email Verified 🎉",
+        description: "You can now log in to your account.",
+      });
+    }
+
+  }, []);
 
   const onSubmit = async (formData) => {
     setError("");
-  
+
     try {
       const res = await login(formData);
-      
-      console.log("Login response:", res);
-  
+
       if (res?.success) {
         navigate("/user/dashboard");
         return;
       }
-  
-      // Backend error message
+
       setError(res?.message || "Invalid email or password");
-  
     } catch (error) {
-      console.error("Login error:", error);
-  
-      // Fetch does NOT have error.response
       setError("Network error. Please check your connection.");
     }
-  };
-  
-
+  };  
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-white dark:bg-background px-3 py-6 transition-colors duration-300">

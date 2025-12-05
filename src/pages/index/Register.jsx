@@ -342,22 +342,117 @@
 
 // export default Register;
 
+// import { useSearchParams } from "react-router-dom";
+// import { Mail, Lock, User, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
+// import { motion } from "framer-motion";
+// import { useForm } from "react-hook-form";
+// import { z } from "zod";
+// import { zodResolver } from "@hookform/resolvers/zod";
+// import Logo from "../../assets/images/fillopsLogo.png";
+// import { useState, useEffect } from "react";
+// import { Icon } from "@iconify/react";
+// import { useNavigate } from "react-router-dom";
+// import useAuthStore from "../../store/authStore"; 
+// import checkVerificationStatus  from "./verifyEmail";
+// import { useToast } from "@/components/ui/use-toast"; 
 
-import { Mail, Lock, User, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
+
+// // ✅ Schema
+// const schema = z
+//   .object({
+//     firstName: z.string().min(1, "First name is required"),
+//     lastName: z.string().min(1, "Last name is required"),
+//     email: z.string().email("Invalid email address"),
+//     password: z.string().min(6, "Password must be at least 6 characters"),
+//     confirmPassword: z.string().min(6, "Please confirm your password"),
+//     phoneNumber: z.string().min(10, "Phone number is required"),
+//   })
+//   .refine((data) => data.password === data.confirmPassword, {
+//     message: "Passwords do not match",
+//     path: ["confirmPassword"],
+//   });
+
+// // ✅ Email Verification Notice Component
+// const EmailVerificationNotice = ({ email }) => {
+//   return (
+//     <motion.div
+//       initial={{ opacity: 0, y: 40 }}
+//       animate={{ opacity: 1, y: 0 }}
+//       transition={{ duration: 0.7 }}
+//       className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-2xl p-6 text-center w-full max-w-md"
+//     >
+//       <MailCheck className="mx-auto h-12 w-12 text-indigo-600" />
+//       <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-3">
+//         Verify Your Email
+//       </h2>
+//       <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm leading-relaxed">
+//         We’ve sent a verification link to:
+//       </p>
+//       <p className="text-indigo-600 dark:text-indigo-400 font-semibold mt-1">
+//         {email}
+//       </p>
+//       <p className="text-gray-500 dark:text-gray-400 text-xs mt-4">
+//         Please check your inbox or spam folder and click the link to activate your account.
+//       </p>
+//     </motion.div>
+//   );
+// };
+
+// const Register = () => {
+//   const navigate = useNavigate();
+//   const [showPassword, setShowPassword] = useState(false);
+//   const [showConfirm, setShowConfirm] = useState(false);
+//   const [showVerifyNotice, setShowVerifyNotice] = useState(false);
+//   const [registeredEmail, setRegisteredEmail] = useState("");
+
+
+//   const [searchParams] = useSearchParams();
+//   const { toast } = useToast();
+
+//   useEffect(() => {
+//     checkVerificationStatus(searchParams, toast);
+//   }, []);
+
+//   // Use auth store
+//   const { register: registerUser, loading, error, success, clearMessages } =
+//     useAuthStore();
+
+//   const {
+//     register,
+//     handleSubmit,
+//     formState: { errors },
+//     reset,
+//   } = useForm({ resolver: zodResolver(schema) });
+
+//   const onSubmit = async (data) => {
+//     clearMessages?.();
+
+//     const { confirmPassword, ...payload } = data;
+
+//     const result = await registerUser(payload);
+
+//     if (result?.success) {
+//       reset();
+//       setRegisteredEmail(payload.email);
+//       setShowVerifyNotice(true);
+//     }
+//   };
+
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Mail, Lock, User, Eye, EyeOff, MailCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Logo from "../../assets/images/fillopsLogo.png";
-import { useState } from "react";
 import { Icon } from "@iconify/react";
-import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/authStore"; 
-import checkVerificationStatus  from "./verifyEmail";
-import { useToast } from "@/components/ui/use-toast"; 
+import { useToast } from "@/components/ui/use-toast";
 
-
-// ✅ Schema
+// ----------------------------------------
+// VALIDATION
+// ----------------------------------------
 const schema = z
   .object({
     firstName: z.string().min(1, "First name is required"),
@@ -372,7 +467,9 @@ const schema = z
     path: ["confirmPassword"],
   });
 
-// ✅ Email Verification Notice Component
+// ----------------------------------------
+// EMAIL VERIFICATION NOTICE COMPONENT
+// ----------------------------------------
 const EmailVerificationNotice = ({ email }) => {
   return (
     <motion.div
@@ -382,15 +479,19 @@ const EmailVerificationNotice = ({ email }) => {
       className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-2xl p-6 text-center w-full max-w-md"
     >
       <MailCheck className="mx-auto h-12 w-12 text-indigo-600" />
+
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-3">
         Verify Your Email
       </h2>
+
       <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm leading-relaxed">
         We’ve sent a verification link to:
       </p>
+
       <p className="text-indigo-600 dark:text-indigo-400 font-semibold mt-1">
         {email}
       </p>
+
       <p className="text-gray-500 dark:text-gray-400 text-xs mt-4">
         Please check your inbox or spam folder and click the link to activate your account.
       </p>
@@ -398,24 +499,27 @@ const EmailVerificationNotice = ({ email }) => {
   );
 };
 
+// ----------------------------------------
+// MAIN REGISTER COMPONENT
+// ----------------------------------------
 const Register = () => {
   const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showVerifyNotice, setShowVerifyNotice] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
-
-
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  useEffect(() => {
-    checkVerificationStatus(searchParams, toast);
-  }, []);
 
-  // Use auth store
-  const { register: registerUser, loading, error, success, clearMessages } =
-    useAuthStore();
+  const {
+    register: registerUser,
+    loading,
+    error,
+    success,
+    clearMessages,
+  } = useAuthStore();
 
   const {
     register,
@@ -424,6 +528,33 @@ const Register = () => {
     reset,
   } = useForm({ resolver: zodResolver(schema) });
 
+
+  // 🔥 RUNS ONCE → handles backend redirect messages
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    const reason = searchParams.get("reason");
+
+
+    if (errorParam === "verification_failed?reason=invalid-or-expired") {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed ❌",
+        description: "Your verification link is invalid or expired.",
+      });
+    }
+
+    if (reason) {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed ❌",
+        description: reason.replace(/-/g, " "),
+      });
+    }
+  }, []);
+
+  // ----------------------------------------
+  // SUBMIT REGISTER FORM
+  // ----------------------------------------
   const onSubmit = async (data) => {
     clearMessages?.();
 
@@ -435,8 +566,25 @@ const Register = () => {
       reset();
       setRegisteredEmail(payload.email);
       setShowVerifyNotice(true);
+
+      toast({
+        title: "Registration Successful",
+        description: "Check your email to verify your account 🔐",
+      });
     }
   };
+
+  // ----------------------------------------
+  // SHOW EMAIL VERIFICATION PAGE IF NEEDED
+  // ----------------------------------------
+  if (showVerifyNotice) {
+    return <EmailVerificationNotice email={registeredEmail} />;
+  }
+
+
+
+
+
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-white dark:bg-background px-3 py-6 transition-colors duration-300">
