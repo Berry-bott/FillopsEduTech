@@ -58,7 +58,6 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
             
 
-
           {/* 👤 User routes */}
           <Route element={<ProtectedRoute />}>
           <Route path="/user/dashboard" element={<UserDashboard />} />

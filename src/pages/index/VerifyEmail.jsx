@@ -421,19 +421,12 @@ import { CheckCircle, Loader2, XCircle, Mail, X } from "lucide-react";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
-
-  const alreadyVerified = searchParams.get("alreadyVerified");
   const reason = searchParams.get("reason");
-
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Checking verification status...");
-  const [showDebug, setShowDebug] = useState(false); // New state for modal
 
   useEffect(() => {
-    // Show debug modal immediately if there are any query params
-    if ([...searchParams.entries()].length > 0) {
-      setShowDebug(true);
-    }
+   
 
     // Hide token immediately if it's still in the URL
     if (searchParams.get("token")) {
@@ -441,12 +434,6 @@ const VerifyEmail = () => {
       return;
     }
 
-    if (alreadyVerified === "true") {
-      setStatus("success");
-      setMessage("This email is already verified. Redirecting to login...");
-      setTimeout(() => (window.location.href = "/login"), 1000);
-      return;
-    }
 
     if (reason) {
       setStatus("error");
@@ -467,9 +454,9 @@ const VerifyEmail = () => {
     }
 
     // No params → verification success
-    setStatus("success");
-    setMessage("Email verified successfully! Redirecting to login...");
-    setTimeout(() => (window.location.href = "/login"), 1000);
+    // setStatus("success");
+    // setMessage("Email verified successfully! Redirecting to login...");
+    // setTimeout(() => (window.location.href = "/login"), 1000);
   }, [alreadyVerified, reason, searchParams]);
 
   const renderIcon = () => {
@@ -511,27 +498,6 @@ const VerifyEmail = () => {
           )}
         </div>
       </div>
-
-      {/* Debug Modal */}
-      {showDebug && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-md w-full relative">
-            <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 dark:hover:text-white"
-              onClick={() => setShowDebug(false)}
-            >
-              <X />
-            </button>
-            <h2 className="text-xl font-semibold mb-4">Debug Info</h2>
-            <div className="text-left text-sm">
-              <p><strong>alreadyVerified:</strong> {alreadyVerified || "null"}</p>
-              <p><strong>reason:</strong> {reason || "null"}</p>
-              <p><strong>All Params:</strong></p>
-              <pre className="bg-gray-100 dark:bg-gray-700 p-2 rounded">{JSON.stringify(Object.fromEntries([...searchParams.entries()]), null, 2)}</pre>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

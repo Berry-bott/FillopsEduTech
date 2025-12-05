@@ -146,6 +146,12 @@ const menuData = [
             href: "/orders/processing",
             icon: Timer,
           },
+          {
+            id: "chart",
+            label: "chart",
+            href: "/orders/processing",
+            icon: Timer,
+          },
         
          
         ],
