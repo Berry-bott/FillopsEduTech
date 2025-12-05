@@ -80,52 +80,86 @@
 
 // export default VerifyEmail;
 
-
-
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CheckCircle, Loader2, XCircle, Mail } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
 
-  const verified = searchParams.get("verified"); 
+  const verified = searchParams.get("verified");
+  const error = searchParams.get("error"); 
   const reason = searchParams.get("reason");
 
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Checking verification status...");
 
   useEffect(() => {
-    // If backend says verified=true
+    // -------------------------------------
+    // SUCCESS (EXACT URL: ?verified=true)
+    // -------------------------------------
     if (verified === "true") {
       setStatus("success");
-      setMessage("Your email has been successfully verified. Redirecting...");
+      setMessage("Your email has been verified successfully.");
+
+      toast({
+        title: "Email Verified 🎉",
+        description: "You can now log in to your account.",
+      });
+
       return;
     }
 
-    // If backend sends an error reason
+    // -------------------------------------
+    // FAILED (EXACT URL you pasted)
+    // error = "verification_failed?reason=invalid-or-expired"
+    // reason = null
+    // -------------------------------------
+    if (error === "verification_failed?reason=invalid-or-expired") {
+      setStatus("error");
+      setMessage("Verification link is invalid or expired.");
+
+      toast({
+        variant: "destructive",
+        title: "Verification Failed ❌",
+        description: "Your verification link is invalid or expired.",
+      });
+
+      return;
+    }
+
+    // -------------------------------------
+    // If backend ever sends ?reason=value
+    // -------------------------------------
     if (reason) {
       setStatus("error");
+
+      toast({
+        variant: "destructive",
+        title: "Email Verification Failed",
+        description: reason.replace(/-/g, " "),
+      });
+
       switch (reason) {
-        case "missing-token":
-          setMessage("Verification token is missing.");
-          break;
         case "invalid-or-expired":
           setMessage("Verification link is invalid or expired.");
           break;
-        case "server-error":
-          setMessage("A server error occurred. Please try again.");
+        case "missing-token":
+          setMessage("Verification token is missing.");
           break;
         default:
           setMessage(reason.replace(/-/g, " "));
       }
+
       return;
     }
 
-    // Otherwise still checking
+    // DEFAULT
     setStatus("loading");
     setMessage("Checking verification status...");
-  }, [verified, reason]);
+  }, [verified, error, reason, toast]);
 
   const renderIcon = () => {
     switch (status) {
@@ -150,7 +184,7 @@ const VerifyEmail = () => {
             {status === "success"
               ? "Email Verified 🎉"
               : status === "error"
-              ? "Verification link is invalid or expired. Please request a new one.❌"
+              ? "Verification link is invalid or expired. Please request a new one. ❌"
               : "Verifying..."}
           </h1>
 
