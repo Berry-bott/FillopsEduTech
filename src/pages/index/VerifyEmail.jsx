@@ -429,17 +429,16 @@ const VerifyEmail = () => {
    
 
     // Hide token immediately if it's still in the URL
-    if (searchParams.get("token")) {
-      window.history.replaceState({}, document.title, "/verify-email");
-      return;
-    }
-
+    // if (searchParams.get("token")) {
+    //   window.history.replaceState({}, document.title, "/verify-email");
+    //   return;
+    // }
 
     if (reason) {
       setStatus("error");
       switch (reason) {
         case "missing-token":
-          setMessage("Verification token is missing.");
+          setMessage("Verification token is missing."); n
           break;
         case "invalid-or-expired":
           setMessage("Verification link is invalid or expired. Please request a new one.");
@@ -457,7 +456,7 @@ const VerifyEmail = () => {
     // setStatus("success");
     // setMessage("Email verified successfully! Redirecting to login...");
     // setTimeout(() => (window.location.href = "/login"), 1000);
-  }, [alreadyVerified, reason, searchParams]);
+  }, [reason, searchParams]);
 
   const renderIcon = () => {
     switch (status) {
@@ -478,24 +477,20 @@ const VerifyEmail = () => {
         <div className="flex flex-col items-center space-y-4">
           {renderIcon()}
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-            {status === "success"
-              ? alreadyVerified === "true"
-                ? "Already Verified ✅"
-                : "Email Verified 🎉"
-              : status === "error"
-              ? "Verification Failed"
+            { status === "error"
+              ? "Verification link is invalid or expired. Please request a new one."
               : "Verifying..."}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">{message}</p>
 
-          {status === "error" && (
+          {/* {status === "error" && (
             <button
               onClick={() => (window.location.href = "/login")}
               className="mt-4 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all"
             >
               Go to Login
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </div>
