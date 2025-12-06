@@ -462,7 +462,7 @@ const Register = () => {
       clearMessages?.(); // Clear store messages
       
       let title = "Error";
-      let description = "Something went wrong. Please try again.";
+      let description = "Your verification link is invalid or has expired. Please request a new verification email.";
       
       // Customize messages based on error reason
       if (errorParam === "verification_failed") {
@@ -537,16 +537,6 @@ const Register = () => {
     );
   }
 
-  // ADD THIS TEST BUTTON TO CHECK IF TOASTS WORK
-  const testToast = () => {
-    console.log("Testing toast...");
-    toast({
-      title: "Test Toast 🎉",
-      description: "If you see this, toast system is working!",
-      variant: "default",
-    });
-  };
-
   return (
     <section className="min-h-screen flex items-center justify-center bg-white dark:bg-background px-3 py-6 transition-colors duration-300">
       <motion.div
@@ -573,15 +563,6 @@ const Register = () => {
             Join us and access your dashboard instantly
           </p>
         </div>
-
-        {/* 🔴 TEST BUTTON - REMOVE AFTER TESTING */}
-        <button
-          type="button"
-          onClick={testToast}
-          className="w-full mb-4 p-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-md transition duration-200"
-        >
-          🔴 TEST TOAST SYSTEM
-        </button>
 
         {/* Error & Success Messages */}
         {success && (
