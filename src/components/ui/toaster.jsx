@@ -1,26 +1,43 @@
-import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast"
-import { useToast } from "@/components/ui/use-toast"
 
-export function Toaster() {
-  const { toasts } = useToast()
-
-  return (
-    <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
-        return (
-          <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
+    import React from "react";
+    import { useToast } from "./use-toast";
+    
+    export  function Toaster() {
+      const { toasts, dismiss } = useToast();
+    
+      return (
+        <div className="fixed bottom-4 right-4 space-y-3 z-50">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className="bg-primary dark:bg-slate-50 dark:text-gray-800 text-white p-4 rounded shadow-lg w-72 relative overflow-hidden"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  {toast.title && <p className="font-semibold">{toast.title}</p>}
+                  {toast.description && (
+                    <p className="text-sm opacity-70">{toast.description}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => dismiss(toast.id)}
+                  className="text-white text-xl ml-2 hover:text-gray-300 dark:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+    
+              {/* Progress bar */}
+              <div
+                className="absolute bottom-0 left-0 h-1 dark:bg-indigo-500 bg-white"
+                style={{
+                  width: `${toast.progress ?? 100}%`,
+                  transition: "width 0.1s linear",
+                }}
+              />
             </div>
-            {action}
-            <ToastClose />
-          </Toast>
-        )
-      })}
-      <ToastViewport />
-    </ToastProvider>
-  )
-}
+          ))}
+        </div>
+      );
+    }
+    

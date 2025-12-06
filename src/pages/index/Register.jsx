@@ -537,6 +537,8 @@ const Register = () => {
     );
   }
 
+
+
   return (
     <section className="min-h-screen flex items-center justify-center bg-white dark:bg-background px-3 py-6 transition-colors duration-300">
       <motion.div
@@ -563,6 +565,7 @@ const Register = () => {
             Join us and access your dashboard instantly
           </p>
         </div>
+
 
         {/* Error & Success Messages */}
         {success && (
