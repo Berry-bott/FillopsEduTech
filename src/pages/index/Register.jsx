@@ -528,63 +528,67 @@ const Register = () => {
     reset,
   } = useForm({ resolver: zodResolver(schema) });
 
+// ----------------------------------------
+// HANDLE REDIRECT MESSAGES (error + verified)
+// ----------------------------------------
+useEffect(() => {
+  const verified = searchParams.get("verified");
+  const errorParam = searchParams.get("error");
+  const reason = searchParams.get("reason");
 
-  // 🔥 RUNS ONCE → handles backend redirect messages
-  useEffect(() => {
-    const errorParam = searchParams.get("error");
-    const reason = searchParams.get("reason");
-
-
-    if (errorParam === "verification_failed?reason=invalid-or-expired") {
-      toast({
-        variant: "destructive",
-        title: "Verification Failed ❌",
-        description: "Your verification link is invalid or expired.",
-      });
-    }
-
-    if (reason) {
-      toast({
-        variant: "destructive",
-        title: "Verification Failed ❌",
-        description: reason.replace(/-/g, " "),
-      });
-    }
-  }, []);
-
-  // ----------------------------------------
-  // SUBMIT REGISTER FORM
-  // ----------------------------------------
-  const onSubmit = async (data) => {
+  // ✅ If user returns from email link with verified=true
+  if (verified === "true") {
+    reset();
     clearMessages?.();
 
-    const { confirmPassword, ...payload } = data;
+    toast({
+      title: "Email Verified 🎉",
+      description: "You can now log in to your account.",
+    });
+  }
 
-    const result = await registerUser(payload);
+  // ❌ Verification failed
+  if (errorParam === "verification_failed") {
+    const message =
+      reason === "invalid-or-expired"
+        ? "Your verification link is invalid or expired."
+        : reason?.replace(/-/g, " ") || "Verification failed.";
 
-    if (result?.success) {
-      reset();
-      setRegisteredEmail(payload.email);
-      setShowVerifyNotice(true);
+    toast({
+      variant: "destructive",
+      title: "Verification Failed ❌",
+      description: message,
+    });
+  }
+}, []);
 
-      toast({
-        title: "Registration Successful",
-        description: "Check your email to verify your account 🔐",
-      });
-    }
-  };
+
+const onSubmit = async (data) => {
+  clearMessages?.();
+
+  const { confirmPassword, ...payload } = data;
+
+  const result = await registerUser(payload);
+
+  if (result?.success) {
+    reset();
+    setRegisteredEmail(payload.email);
+    setShowVerifyNotice(true);
+
+    toast({
+      title: "Registration Successful",
+      description: "Check your email to verify your account 🔐",
+    });
+  }
+};
 
   // ----------------------------------------
   // SHOW EMAIL VERIFICATION PAGE IF NEEDED
   // ----------------------------------------
+
   if (showVerifyNotice) {
     return <EmailVerificationNotice email={registeredEmail} />;
   }
-
-
-
-
-
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-white dark:bg-background px-3 py-6 transition-colors duration-300">
