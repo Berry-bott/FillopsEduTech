@@ -549,6 +549,8 @@ useEffect(() => {
 
   // ❌ Verification failed
   if (errorParam === "verification_failed") {
+    reset();
+    clearMessages?.();
     const message =
       reason === "invalid-or-expired"
         ? "Your verification link is invalid or expired."
@@ -561,7 +563,6 @@ useEffect(() => {
     });
   }
 }, []);
-
 
 const onSubmit = async (data) => {
   clearMessages?.();
@@ -581,15 +582,12 @@ const onSubmit = async (data) => {
     });
   }
 };
-
   // ----------------------------------------
   // SHOW EMAIL VERIFICATION PAGE IF NEEDED
   // ----------------------------------------
-
   if (showVerifyNotice) {
     return <EmailVerificationNotice email={registeredEmail} />;
   }
-
   return (
     <section className="min-h-screen flex items-center justify-center bg-white dark:bg-background px-3 py-6 transition-colors duration-300">
       {showVerifyNotice ? (
