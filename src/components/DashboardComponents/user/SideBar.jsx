@@ -128,35 +128,31 @@ const menuData = [
         badge: "5",
         children: [
           {
-            id: "paid-orders",
-            label: "paid Orders",
-            href: "/orders/all",
-            icon: ShoppingCart,
+            id: "library",
+            label: " Library",
+            href: "/ Library",
+            icon: Package,
           },
           {
-            id: "pending",
-            label: "Pending",
-            href: "/orders/pending",
-            icon: Clock,
-            badge: "3",
+            id: "mychart",
+            label: "MyChart",
+            href: "/orders/processing",
+            icon: Timer,
           },
+          // {
+          //   id: "paid-orders",
+          //   label: "paid Orders",
+          //   href: "/orders/all",
+          //   icon: ShoppingCart,
+          // },
+         
           {
             id: "processing",
             label: "Processing",
             href: "/orders/processing",
             icon: Timer,
           },
-          {
-
-
-
-
-            
-            id: "chart",
-            label: "chart",
-            href: "/orders/processing",
-            icon: Timer,
-          },
+        
         
          
         ],
@@ -210,8 +206,8 @@ const menuData = [
     ],
   },
   {
-    id: "finance",
-    label: "Finance",
+    id: "subcriptions",
+    label: "Subcriptions",
     items: [
     
       {
@@ -221,8 +217,8 @@ const menuData = [
         icon: CreditCard,
         children: [
           {
-            id: "order-orders",
-            label: "Order Methods",
+            id: "paymentMethods",
+            label: "Payment Methods",
             href: "/payments/methods",
             icon: CreditCard,
           },
@@ -237,6 +233,13 @@ const menuData = [
             label: "Refunds",
             href: "/payments/refunds",
             icon: Minus,
+          },
+          {
+            id: "pending",
+            label: "Pending",
+            href: "/orders/pending",
+            icon: Clock,
+            badge: "3",
           },
         ],
       },
@@ -281,9 +284,9 @@ const menuData = [
             icon: Mail,
           },
           {
-            id: "channels",
-            label: "Channels",
-            href: "/chat/channels",
+            id: "community",
+            label: "Community",
+            href: "/chat/community",
             icon: MessagesSquare,
           },
           {

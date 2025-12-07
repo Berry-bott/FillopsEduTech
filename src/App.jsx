@@ -114,7 +114,6 @@ import LecturerDashboard from "@/pages/lecturer/LecturerDashboard";
 import ExamSelector from "./components/DashboardComponents/user/ExamSelector";
 import "./App.css";
 
-import TestToast from "./pages/index/TestToast";
 
 function App() {
   return (
@@ -135,7 +134,6 @@ function App() {
           <Route path="/ExamsPage" element={<ExamsPage />} />
           <Route path="/exam-selector" element={<ExamSelector />} />
           <Route path="/lecturer/dashboard" element={<LecturerDashboard />} />
-          <Route path="/test-toast" element={<TestToast />} />
 
           {/* SUPA ADMIN ROUTES */}
           <Route path="/manage-users" element={<UsersPage />} />

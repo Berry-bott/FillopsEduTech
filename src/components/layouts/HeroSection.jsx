@@ -307,7 +307,8 @@ const HeroSection = () => {
             >
               <div className="relative h-6 overflow-hidden">
                 <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
-                  Download CBT Guru
+                 
+                  <a href="https://cbt.filloptech.com/" className="text-white no-underline"> Download CBT Guru</a>
                 </span>
                 <span
                   className="absolute left-0 top-full w-full text-center transition-transform duration-300 ease-in-out
