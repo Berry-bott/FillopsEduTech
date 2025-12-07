@@ -6,7 +6,7 @@
       const { toasts, dismiss } = useToast();
     
       return (
-        <div className="fixed bottom-4 right-4 space-y-3 z-50">
+        <div className="fixed bottom-4 right-4 space-y-3 z-[10000]">
           {toasts.map((toast) => (
             <div
               key={toast.id}

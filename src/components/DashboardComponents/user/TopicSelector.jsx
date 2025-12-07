@@ -1,319 +1,88 @@
-// // src/components/ExamSelector/TopicSelector.jsx
-// import React, { useState } from "react";
+// import React, { useState, useEffect } from "react";
+// import useAuthStore from "../../../store/authStore";
 
 // export default function TopicSelector({
-//   selectedExam,
-//   subjectData,
-//   topicData,
-//   topicYears,
-//   openTopicSubject,
-//   setOpenTopicSubject,
-//   topicYearFilter,
-//   selectedTopics,
-//   setTopicYear,
-//   toggleTopic,
-//   fetchTopicsForSubject,
+//   selectedTopics = {},    // Default to empty object
+//   toggleTopic = () => {}, // Default no-op
 // }) {
-//   const subjects = subjectData || []; // ✅ corrected
-//   const [warning, setWarning] = useState({ message: "", show: false });
+//   const { accessToken } = useAuthStore();
+//   const [openSubject, setOpenSubject] = useState(null);
+//   const [allTopics, setAllTopics] = useState([]);
+//   const [loading, setLoading] = useState(false);
 
-//   const hasSelectedTopics = Object.values(selectedTopics).some(
-//     (arr) => Array.isArray(arr) && arr.length > 0
+//   // Fetch all topics once
+//   useEffect(() => {
+//     if (!accessToken) return;
+
+//     const fetchAllTopics = async () => {
+//       setLoading(true);
+//       try {
+//         const res = await fetch(`https://fillops-server-5fuf.onrender.com/api/topics`, {
+//           headers: { Authorization: `Bearer ${accessToken}` },
+//         });
+//         const json = await res.json();
+//         setAllTopics(json.data || []); // Save all topics
+//       } catch (err) {
+//         console.error("Failed to fetch topics:", err);
+//         setAllTopics([]);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchAllTopics();
+//   }, [accessToken]);
+
+//   // Extract unique subjects from topics
+//   const subjects = Array.from(
+//     new Map(allTopics.map(t => [t.module.subject.id, t.module.subject])).values()
 //   );
 
-//   const handleHoverLocked = () => {
-//     if (hasSelectedTopics) {
-//       setWarning({
-//         message: "You can only select topics from one subject.",
-//         show: true,
-//       });
-//       setTimeout(() => setWarning({ message: "", show: false }), 3000);
-//     }
-//   };
-
-//   const handleTopicClick = (subjectId, topicId) => {
-//     const isCurrentSubjectSelected =
-//       selectedTopics[subjectId]?.length > 0 || !hasSelectedTopics;
-
-//     if (!isCurrentSubjectSelected) {
-//       setWarning({
-//         message: "You can only select topics from one subject.",
-//         show: true,
-//       });
-//       setTimeout(() => setWarning({ message: "", show: false }), 3000);
-//       return;
-//     }
-
-//     toggleTopic(subjectId, topicId);
-//   };
+//   if (loading) return <p>Loading subjects and topics...</p>;
+//   if (!subjects.length) return <p>No subjects available.</p>;
 
 //   return (
-//     <div className="max-h-[460px] overflow-y-auto space-y-4 relative">
-//       <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-//         Select topics by clicking on them — only one subject can have selected
-//         topics at a time.
-//       </p>
-
-//       {/* Warning */}
-//       {warning.show && (
-//         <div className="fixed w-[400px] top-20 left-1/2 transform -translate-x-1/2 z-50">
-//           <div className="bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 px-6 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fadeIn scale-100 transition-transform duration-300">
-//             <span>{warning.message}</span>
-//           </div>
-//         </div>
-//       )}
-
+//     <div className="space-y-4 relative">
 //       {subjects.map((subject) => {
-//         const isOpen = openTopicSubject === subject.id;
-//         const isLocked = hasSelectedTopics && !selectedTopics[subject.id];
-//         const topics = topicData[subject.id] || [];
+//         const isOpen = openSubject === subject.id;
+//         const topics = allTopics.filter(t => t.module.subject.id === subject.id);
 
 //         return (
 //           <div
 //             key={subject.id}
-//             className={`relative border rounded-xl p-3 transition-all duration-200 
-//               ${isOpen ? "bg-indigo-50 dark:bg-gray-700 shadow-md" : ""}
-//               ${isLocked ? "opacity-50 pointer-events-auto" : ""}
-//             `}
-//             onMouseEnter={() => {
-//               if (isLocked) {
-//                 handleHoverLocked();
-//               } else {
-//                 setOpenTopicSubject(subject.id);
-//                 // ✅ fetch topics if not already loaded
-//                 if (!topicData[subject.id] || topicData[subject.id].length === 0) {
-//                   fetchTopicsForSubject(subject.id);
-//                 }
-//               }
-//             }}
-//             onMouseLeave={() => !isLocked && setOpenTopicSubject(null)}
+//             className="relative border rounded-xl p-4 bg-white dark:bg-gray-800 shadow-sm transition"
+//             onMouseEnter={() => setOpenSubject(subject.id)}
+//             onMouseLeave={() => setOpenSubject(null)}
 //           >
-//             {/* Subject header */}
-//             <div className="flex items-center justify-between">
-//               <div className="font-medium text-gray-800 dark:text-gray-100">
-//                 {subject.name}
-//               </div>
-
-//               <select
-//                 value={topicYearFilter[subject.id] || ""}
-//                 onChange={(e) => setTopicYear(subject.id, null, e.target.value)}
-//                 className="border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 transition"
-//                 disabled={isLocked}
-//               >
-//                 <option value="">Year (All)</option>
-//                 <option value="random">Random</option>
-//                 {topics.length > 0 &&
-//                   topics.map((t) =>
-//                     topicYears[t.id]?.map((y) => (
-//                       <option key={`${t.id}-${y}`} value={y}>
-//                         {y}
-//                       </option>
-//                     ))
-//                   )}
-//               </select>
+//             <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+//               {subject.subjectName}
 //             </div>
 
-//             {/* Topics grid */}
 //             {isOpen && (
-//               <div className="absolute left-0 top-12 w-full z-40 bg-white dark:bg-gray-800 border border-indigo-100 dark:border-indigo-800 rounded-xl shadow-xl p-4 mt-2 animate-fadeIn transition-all duration-300">
-//                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto">
-//                   {topics.length > 0 ? (
-//                     topics.map((topic) => {
-//                       const isSelected =
-//                         selectedTopics[subject.id]?.includes(topic.id) || false;
+//               <div className="absolute left-0 top-full mt-2 w-full bg-white dark:bg-gray-900 border rounded-xl shadow-lg p-3 z-50">
+//                 {topics.length > 0 ? (
+//                   <div className="max-h-64 overflow-y-auto flex flex-wrap gap-2 p-1">
+//                     {topics.map((topic) => {
+//                       const isSelected = selectedTopics[subject.id]?.includes(topic.id) || false;
 //                       return (
 //                         <button
 //                           key={topic.id}
-//                           onClick={() =>
-//                             handleTopicClick(subject.id, topic.id)
-//                           }
-//                           className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-//                             ${isSelected
-//                               ? "bg-indigo-600 text-white shadow-md"
-//                               : "bg-indigo-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-gray-600"
-//                             }`}
-//                         >
-//                           {topic.name}
-//                         </button>
-//                       );
-//                     })
-//                   ) : (
-//                     <div className="col-span-2 text-xs text-gray-500 text-center">
-//                       Loading topics...
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
-//             )}
-//           </div>
-//         );
-//       })}
-//     </div>
-//   );
-// }
-
-
-// // src/components/ExamSelector/TopicSelector.jsx
-// import React, { useState } from "react";
-
-// export default function TopicSelector({
-//   selectedExam,
-//   // subjectData,     
-//   topicData,
-//   topicYears,
-//   openTopicSubject,
-//   setOpenTopicSubject,
-//   topicYearFilter,
-//   selectedTopics,
-//   setTopicYear,
-//   toggleTopic,
-//   fetchTopicsForSubject,
-// }) {
-//   console.log("Subjects Data:", topicData);
-
-
-//   // ✅ FIXED — always an array
-//   // const subjects = subjectData?.data || [];
-//   const topics = topicData?.data || [];
-//   console.log(topics);
-//   // console.log(subjects);
-  
-
-//   const [warning, setWarning] = useState({ message: "", show: false });
-
-//   const hasSelectedTopics = Object.values(selectedTopics).some(
-//     (arr) => Array.isArray(arr) && arr.length > 0
-//   );
-
-//   const handleHoverLocked = () => {
-//     if (hasSelectedTopics) {
-//       setWarning({
-//         message: "You can only select topics from one subject.",
-//         show: true,
-//       });
-//       setTimeout(() => setWarning({ message: "", show: false }), 3000);
-//     }
-//   };
-
-//   const handleTopicClick = (subjectId, topicId) => {
-//     const isCurrentSubjectSelected =
-//       selectedTopics[subjectId]?.length > 0 || !hasSelectedTopics;
-
-//     if (!isCurrentSubjectSelected) {
-//       setWarning({
-//         message: "You can only select topics from one subject.",
-//         show: true,
-//       });
-//       setTimeout(() => setWarning({ message: "", show: false }), 3000);
-//       return;
-//     }
-
-//     toggleTopic(subjectId, topicId);
-//   };
-
-//   return (
-//     <div className="max-h-[460px] overflow-y-auto space-y-4 relative">
-//       <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-//         Select topics by clicking on them — only one subject can have selected topics at a time.
-//       </p>
-
-//       {/* Warning */}
-//       {warning.show && (
-//         <div className="fixed w-[400px] top-20 left-1/2 transform -translate-x-1/2 z-50">
-//           <div className="bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 px-6 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fadeIn scale-100 transition-transform duration-300">
-//             <span>{warning.message}</span>
-//           </div>
-//         </div>
-//       )}
-
-//       {subjects.length === 0 && (
-//         <p className="text-center text-gray-500 dark:text-gray-400">No subjects available.</p>
-//       )}
-
-//       {subjects.map((subject) => {
-//         const isOpen = openTopicSubject === subject.id;
-//         const isLocked = hasSelectedTopics && !selectedTopics[subject.id];
-//         const topics = topicData[subject.id] || [];
-
-//         return (
-//           <div
-//             key={subject.id}
-//             className={`relative border rounded-xl p-3 transition-all duration-200 
-//               ${isOpen ? "bg-indigo-50 dark:bg-gray-700 shadow-md" : ""}
-//               ${isLocked ? "opacity-50 pointer-events-auto" : ""}
-//             `}
-//             onMouseEnter={() => {
-//               if (isLocked) {
-//                 handleHoverLocked();
-//               } else {
-//                 setOpenTopicSubject(subject.id);
-
-//                 // Fetch topics only if not already fetched
-//                 if (!topicData[subject.id] || topicData[subject.id].length === 0) {
-//                   fetchTopicsForSubject(subject.id);
-//                 }
-//               }
-//             }}
-//             onMouseLeave={() => !isLocked && setOpenTopicSubject(null)}
-//           >
-//             {/* Subject header */}
-//             <div className="flex items-center justify-between">
-//               <div className="font-medium text-gray-800 dark:text-gray-100">
-//                 {subject.subjectName} 
-//               </div>
-
-//               <select
-//                 value={topicYearFilter[subject.id] || ""}
-//                 onChange={(e) => setTopicYear(subject.id, null, e.target.value)}
-//                 className="border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 transition"
-//                 disabled={isLocked}
-//               >
-//                 <option value="">Year (All)</option>
-//                 <option value="random">Random</option>
-
-//                 {/* List all years from all topics */}
-//                 {topics.length > 0 &&
-//                   topics.map((t) =>
-//                     topicYears[t.id]?.map((y) => (
-//                       <option key={`${t.id}-${y}`} value={y}>
-//                         {y}
-//                       </option>
-//                     ))
-//                   )}
-//               </select>
-//             </div>
-
-//             {/* Topics grid */}
-//             {isOpen && (
-//               <div className="absolute left-0 top-12 w-full z-40 bg-white dark:bg-gray-800 border border-indigo-100 dark:border-indigo-800 rounded-xl shadow-xl p-4 mt-2 animate-fadeIn transition-all duration-300">
-//                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto">
-//                   {topics.length > 0 ? (
-//                     topics.map((topic) => {
-//                       const isSelected =
-//                         selectedTopics[subject.id]?.includes(topic.id) || false;
-
-//                       return (
-//                         <button
-//                           key={topic.id}
-//                           onClick={() => handleTopicClick(subject.id, topic.id)}
-//                           className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+//                           onClick={() => toggleTopic(subject.id, topic.id)}
+//                           className={`flex-1 min-w-[180px] text-center px-3 py-2 rounded-lg text-sm font-medium transition-all
 //                             ${
 //                               isSelected
 //                                 ? "bg-indigo-600 text-white shadow-md"
-//                                 : "bg-indigo-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-gray-600"
-//                             }
-//                           `}
+//                                 : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+//                             }`}
 //                         >
-//                           {topic.name}
+//                           {topic.topicName}
 //                         </button>
 //                       );
-//                     })
-//                   ) : (
-//                     <div className="col-span-2 text-xs text-gray-500 text-center">
-//                       Loading topics...
-//                     </div>
-//                   )}
-//                 </div>
+//                     })}
+//                   </div>
+//                 ) : (
+//                   <div className="text-center text-gray-500 py-2">No topics available.</div>
+//                 )}
 //               </div>
 //             )}
 //           </div>
@@ -324,137 +93,101 @@
 // }
 
 
-// src/components/ExamSelector/TopicSelector.jsx
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
+import useAuthStore from "../../../store/authStore";
 
 export default function TopicSelector({
-  selectedExam,
-  subjectData,
-  topicData,
-  topicYears,
-  openTopicSubject,
-  setOpenTopicSubject,
-  topicYearFilter,
-  selectedTopics,
-  setTopicYear,
-  toggleTopic,
-  fetchTopicsForSubject,
+  selectedTopics = {},    // Default to empty object
+  toggleTopic = () => {}, // Default no-op
 }) {
-  const subjects = subjectData?.data || [];
-  const [warning, setWarning] = useState({ message: "", show: false });
+  const { accessToken } = useAuthStore();
+  const [openSubject, setOpenSubject] = useState(null);
+  const [allTopics, setAllTopics] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const hasSelectedTopics = Object.values(selectedTopics).some(
-    (arr) => Array.isArray(arr) && arr.length > 0
+  // Fetch all topics once
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const fetchAllTopics = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`https://fillops-server-5fuf.onrender.com/api/topics`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const json = await res.json();
+        setAllTopics(json.data || []); // Save all topics
+      } catch (err) {
+        console.error("Failed to fetch topics:", err);
+        setAllTopics([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllTopics();
+  }, [accessToken]);
+
+  // Extract unique subjects from topics
+  const subjects = Array.from(
+    new Map(allTopics.map(t => [t.module.subject.id, t.module.subject])).values()
   );
 
-  const handleHoverLocked = () => {
-    if (hasSelectedTopics) {
-      setWarning({ message: "You can only select topics from one subject.", show: true });
-      setTimeout(() => setWarning({ message: "", show: false }), 3000);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10">
+        <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
+        <p className="text-gray-700 dark:text-gray-300">Loading subjects and topics...</p>
+      </div>
+    );
+  }
+  
 
-  const handleTopicClick = (subjectId, topicId) => {
-    const isCurrentSubjectSelected =
-      selectedTopics[subjectId]?.length > 0 || !hasSelectedTopics;
-
-    if (!isCurrentSubjectSelected) {
-      setWarning({ message: "You can only select topics from one subject.", show: true });
-      setTimeout(() => setWarning({ message: "", show: false }), 3000);
-      return;
-    }
-    toggleTopic(subjectId, topicId);
-  };
+  if (!subjects.length) return <p>No subjects available.</p>;
 
   return (
-    <div className="max-h-[460px] overflow-y-auto space-y-4 relative">
-      <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-        Select topics by clicking on them — only one subject can have selected topics at a time.
-      </p>
-
-      {warning.show && (
-        <div className="fixed w-[400px] top-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 px-6 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fadeIn scale-100 transition-transform duration-300">
-            <span>{warning.message}</span>
-          </div>
-        </div>
-      )}
-
+    <div className="space-y-4 relative overflow-y-auto">
       {subjects.map((subject) => {
-        const isOpen = openTopicSubject === subject.id;
-        const isLocked = hasSelectedTopics && !selectedTopics[subject.id];
-        const topics = topicData[subject.id] || [];
+        const isOpen = openSubject === subject.id;
+        const topics = allTopics.filter(t => t.module.subject.id === subject.id);
 
         return (
           <div
             key={subject.id}
-            className={`relative border rounded-xl p-3 transition-all duration-200 
-              ${isOpen ? "bg-indigo-50 dark:bg-gray-700 shadow-md" : ""}
-              ${isLocked ? "opacity-50 pointer-events-auto" : ""}
-            `}
-            onMouseEnter={() => {
-              if (isLocked) handleHoverLocked();
-              else {
-                setOpenTopicSubject(subject.id);
-                if (!topicData[subject.id] || topicData[subject.id].length === 0) {
-                  fetchTopicsForSubject(subject.id);
-                }
-              }
-            }}
-            onMouseLeave={() => !isLocked && setOpenTopicSubject(null)}
+            className="relative border rounded-xl p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:bg-slate-400"
+            onMouseEnter={() => setOpenSubject(subject.id)}
+            onMouseLeave={() => setOpenSubject(null)}
           >
-            {/* Subject header */}
-            <div className="flex items-center justify-between">
-              <div className="font-medium text-gray-800 dark:text-gray-100">{subject.name}</div>
-
-              <select
-                value={topicYearFilter[subject.id] || ""}
-                onChange={(e) => setTopicYear(subject.id, null, e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 transition"
-                disabled={isLocked}
-              >
-                <option value="">Year (All)</option>
-                <option value="random">Random</option>
-                {topics.length > 0 &&
-                  topics.map((t) =>
-                    topicYears[t.id]?.map((y) => (
-                      <option key={`${t.id}-${y}`} value={y}>
-                        {y}
-                      </option>
-                    ))
-                  )}
-              </select>
+            <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              {subject.subjectName}
             </div>
 
-            {/* Topics grid */}
             {isOpen && (
-              <div className="absolute left-0 top-12 w-full z-40 bg-white dark:bg-gray-800 border border-indigo-100 dark:border-indigo-800 rounded-xl shadow-xl p-4 mt-2 animate-fadeIn transition-all duration-300">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[260px] overflow-y-auto">
-                  {topics.length > 0 ? (
-                    topics.map((topic) => {
-                      const isSelected =
-                        selectedTopics[subject.id]?.includes(topic.id) || false;
+              <div className="absolute left-0 top-18 mt-4 w-full bg-white dark:bg-gray-900 border rounded-xl shadow-lg p-3 z-50">
+                {topics.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-1">
+                    {topics.map((topic) => {
+                      const isSelected = selectedTopics[subject.id]?.includes(topic.id) || false;
                       return (
                         <button
                           key={topic.id}
-                          onClick={() => handleTopicClick(subject.id, topic.id)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                          onClick={() => toggleTopic(subject.id, topic.id)}
+                          className={`text-center px-1 py-2 rounded-lg text-sm font-medium transition-all
                             ${
                               isSelected
                                 ? "bg-indigo-600 text-white shadow-md"
-                                : "bg-indigo-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-gray-600"
-                            }`}
-                        >
-                          {topic.name}
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+                              }`}
+                          >
+                          {topic.topicName}
                         </button>
                       );
-                    })
-                  ) : (
-                    <div className="col-span-2 text-xs text-gray-500 text-center">
-                      Loading topics...
-                    </div>
-                  )}
-                </div>
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-2">No topics available.</div>
+                )}
               </div>
             )}
           </div>
@@ -463,3 +196,4 @@ export default function TopicSelector({
     </div>
   );
 }
+

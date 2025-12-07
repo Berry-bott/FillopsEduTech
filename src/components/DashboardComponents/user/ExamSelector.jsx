@@ -322,69 +322,66 @@
 // }
 
 
-// src/components/ExamSelector/ExamSelector.jsx
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
+
+
+
+
+
+
+
+
+
+
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import StudyActions from "./StudyActions";
 import StudyDialog from "./StudyDialog";
-import useAuthStore from "../../../store/authStore";
+import { useToast } from "@/components/ui/use-toast";
 
-/**
- * ExamSelector handles:
- * - Choosing an exam (WAEC, JAMB, etc.)
- * - Loading subjects and topics
- * - Storing user selections
- * - Starting learning / quiz / exam sessions
- */
+
+
 export default function ExamSelector() {
   const navigate = useNavigate();
-  const { accessToken } = useAuthStore();
-
-  // UI State
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [examDropdownOpen, setExamDropdownOpen] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
   const [selectMode, setSelectMode] = useState(null);
 
-  // Subject State
-  const [subjectData, setSubjectData] = useState([]);
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [subjectYears, setSubjectYears] = useState({});
-  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [subjectData, setSubjectData] = useState([]);
 
-  // Topic State
-  const [topicData, setTopicData] = useState({});
-  const [topicYears, setTopicYears] = useState({});
-  const [openTopicSubject, setOpenTopicSubject] = useState(null);
   const [selectedTopics, setSelectedTopics] = useState({});
   const [topicYearFilter, setTopicYearFilter] = useState({});
-  const [loadingTopics, setLoadingTopics] = useState({});
+  const [topicData, setTopicData] = useState({});
+  const [openTopicSubject, setOpenTopicSubject] = useState(null);
 
   const [questions, setQuestions] = useState({});
-  const [apiError, setApiError] = useState(null);
 
   const exams = ["WAEC", "JAMB", "NECO", "PUTME"];
 
-  /** ---------------------------------------------------
-   * Reset all selection states
-   * --------------------------------------------------- */
   const resetSelections = () => {
+    setSelectedExam(null);
+    setSelectMode(null);
     setSelectedSubjects([]);
     setSubjectYears({});
     setSelectedTopics({});
     setTopicYearFilter({});
-    setTopicData({});
-    setTopicYears({});
     setSubjectData([]);
-    setApiError(null);
+    setTopicData({});
+    setOpenTopicSubject(null);
+    setQuestions({});
   };
 
-  /** ---------------------------------------------------
-   * Called when user clicks the big STUDY / QUIZ / EXAM button
-   * Opens modal and resets previous selection
-   * --------------------------------------------------- */
+  const onSelectExam = (exam) => {
+    setSelectedExam(exam);  // save exam
+    setSelectMode(null);     // reset selection mode
+    setOpen(true);           // open modal
+  };
+
   const openFor = (action) => {
     setActiveAction(action);
     resetSelections();
@@ -392,174 +389,52 @@ export default function ExamSelector() {
     setExamDropdownOpen(false);
   };
 
-  /** ---------------------------------------------------
-   * When user selects an exam → fetch all subjects
-   * --------------------------------------------------- */
-  const onSelectExam = async (exam) => {
-    if (!accessToken) return setApiError("Not authenticated.");
-
-    resetSelections();
-    setSelectedExam(exam);
-    setLoadingSubjects(true);
-
-    try {
-      const res = await fetch(
-        `https://fillops-server-5fuf.onrender.com/api/subjects?category=${exam}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-
-      if (!res.ok) throw new Error("Failed to fetch subjects");
-
-      setSubjectData(await res.json());
-    } catch {
-      setApiError("Failed to load subjects");
-    } finally {
-      setLoadingSubjects(false);
-    }
-  };
-
-  /** ---------------------------------------------------
-   * When user selects a year for a subject → fetch Q&A
-   * --------------------------------------------------- */
-  const setYearForSubject = async (subjectId, year) => {
-    setSubjectYears((prev) => ({ ...prev, [subjectId]: year }));
-
-    try {
-      const res = await fetch(
-        `https://fillops-server-5fuf.onrender.com/api/subjects/${subjectId}/questions?category=${selectedExam}&year=${year}`
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        setQuestions((prev) => ({ ...prev, [subjectId]: data }));
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  /** ---------------------------------------------------
-   * Fetch topics for a subject on hover
-   * --------------------------------------------------- */
-  const fetchTopicsForSubject = async (subjectId) => {
-    if (!accessToken) return;
-
-    setLoadingTopics((prev) => ({ ...prev, [subjectId]: true }));
-
-    try {
-      const res = await fetch(
-        `https://fillops-server-5fuf.onrender.com/api/topics?subjectId=${subjectId}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-
-      if (!res.ok) throw new Error("Failed to fetch topics");
-
-      const topics = await res.json();
-      setTopicData((prev) => ({ ...prev, [subjectId]: topics }));
-
-      // Fetch available years for each topic
-      const yearsObj = {};
-      for (let topic of topics) {
-        try {
-          const qRes = await fetch(
-            `https://fillops-server-5fuf.onrender.com/api/topics/${topic.id}/questions?category=${selectedExam}`,
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-          );
-
-          const qData = await qRes.json();
-          yearsObj[topic.id] = [...new Set(qData.map((q) => q.year))];
-        } catch {
-          yearsObj[topic.id] = [];
-        }
-      }
-
-      setTopicYears((prev) => ({ ...prev, ...yearsObj }));
-    } catch (err) {
-      console.log(err);
-      setTopicData((prev) => ({ ...prev, [subjectId]: [] }));
-    } finally {
-      setLoadingTopics((prev) => ({ ...prev, [subjectId]: false }));
-    }
-  };
-
-  /** ---------------------------------------------------
-   * Toggle subject selection (max 4)
-   * --------------------------------------------------- */
-  const toggleSubject = (subjectId) => {
-    setSelectedSubjects((prev) => {
-      if (prev.includes(subjectId)) return prev.filter((id) => id !== subjectId);
-      if (prev.length >= 4) return prev;
-      return [...prev, subjectId];
-    });
-  };
-
-  /** ---------------------------------------------------
-   * Toggle topic selection
-   * Restriction: Topics can only be selected from ONE subject at a time
-   * --------------------------------------------------- */
-  const toggleTopic = (subjectId, topicId) => {
-    setSelectedTopics((prev) => {
-      const currentlySelectedSubject = Object.keys(prev).find(
-        (s) => prev[s]?.length > 0
-      );
-
-      // If user tries selecting topics from a 2nd subject → block
-      if (currentlySelectedSubject && currentlySelectedSubject !== subjectId)
-        return prev;
-
-      const list = prev[subjectId] || [];
-      const newList = list.includes(topicId)
-        ? list.filter((id) => id !== topicId)
-        : [...list, topicId];
-
-      return { ...prev, [subjectId]: newList };
-    });
-  };
-
-  /** ---------------------------------------------------
-   * Set year filter for topics of a subject
-   * --------------------------------------------------- */
-  const setTopicYear = (subjectId, topicId, year) => {
-    setTopicYearFilter((prev) => ({
-      ...prev,
-      [subjectId]: { ...(prev[subjectId] || {}), [topicId]: year },
-    }));
-  };
-
-  /** ---------------------------------------------------
-   * User clicks START → generate payload → navigate
-   * --------------------------------------------------- */
   const handleStart = () => {
+    // ✅ Validation
+    if (selectMode === "subject" && selectedSubjects.length === 0) return;
+    if (
+      selectMode === "topic" &&
+      !Object.values(selectedTopics).some((arr) => arr.length > 0)
+    )
+      return;
+
+
     const payload = {
       exam: selectedExam,
       mode: selectMode,
-      subjects: selectedSubjects,
-      subjectYears,
-      topics: selectedTopics,
-      topicYears: topicYearFilter,
+      subjects: selectMode === "subject" ? selectedSubjects : undefined,
+      subjectYears: selectMode === "subject" ? subjectYears : undefined,
+      topics: selectMode === "topic" ? selectedTopics : undefined,
+      topicYears: selectMode === "topic" ? topicYearFilter : undefined,
       questions,
+      timestamp: new Date().toISOString(),
     };
 
     localStorage.setItem("studySelections", JSON.stringify(payload));
+    setOpen(false);
 
     if (activeAction === "study") navigate("/learning");
     if (activeAction === "quiz") navigate("/quiz");
     if (activeAction === "exam") navigate("/exams");
+  };
 
-    setOpen(false);
+  
+  const clearAllTopics = () => {
+    setSelectedTopics({});
   };
 
   return (
     <div className="flex flex-col space-y-4 py-6">
-      <StudyActions
-        examDropdownOpen={examDropdownOpen}
-        setExamDropdownOpen={setExamDropdownOpen}
-        exams={exams}
-        onSelectExam={onSelectExam}
-        openFor={openFor}
-      />
+     <StudyActions
+      examDropdownOpen={examDropdownOpen}
+      setExamDropdownOpen={setExamDropdownOpen}
+      exams={exams}
+      onSelectExam={onSelectExam} 
+      openFor={openFor}
+    />
 
-      <StudyDialog
+
+      {/* <StudyDialog
         open={open}
         setOpen={setOpen}
         activeAction={activeAction}
@@ -569,23 +444,108 @@ export default function ExamSelector() {
         setSelectMode={setSelectMode}
         exams={exams}
         subjectData={subjectData}
-        selectedSubjects={selectedSubjects}
-        toggleSubject={toggleSubject}
-        subjectYears={subjectYears}
-        setYearForSubject={setYearForSubject}
         topicData={topicData}
-        topicYears={topicYears}
+        selectedSubjects={selectedSubjects}
+        subjectYears={subjectYears}
         selectedTopics={selectedTopics}
-        toggleTopic={toggleTopic}
+        clearAllTopics={clearAllTopics}
+        toggleSubject={(id) =>
+          setSelectedSubjects((prev) => {
+            if (prev.includes(id)) {
+              return prev.filter((x) => x !== id); // deselect
+            } else if (prev.length < 4) {
+              return [...prev, id]; // add only if less than 4
+            } else {
+              // optional: show toast
+              toast({
+                title: "Limit reached",
+                description: "You can select up to 4 subjects only",
+                variant: "destructive",
+              });
+              return prev;
+            }
+          })
+        }
+        
+        toggleTopic={(subjectId, topicId) => {
+          setSelectedTopics((prev) => {
+            const arr = prev[subjectId] || [];
+            const exists = arr.includes(topicId);
+            return { ...prev, [subjectId]: exists ? arr.filter((x) => x !== topicId) : [...arr, topicId] };
+          });
+        }}
+        
+        setYearForSubject={(subId, year) =>
+          setSubjectYears((prev) => ({ ...prev, [subId]: year }))
+        }
+        setTopicYear={(subId, topicId, year) =>
+          setTopicYearFilter((prev) => ({
+            ...prev,
+            [subId]: { ...(prev[subId] || {}), [topicId]: year },
+          }))
+        }
         openTopicSubject={openTopicSubject}
         setOpenTopicSubject={setOpenTopicSubject}
-        topicYearFilter={topicYearFilter}
-        setTopicYear={setTopicYear}
-        loadingSubjects={loadingSubjects}
-        loadingTopics={loadingTopics}
-        fetchTopicsForSubject={fetchTopicsForSubject}
         handleStart={handleStart}
+      /> */}
+      <StudyDialog
+      open={open}
+      setOpen={setOpen}
+      activeAction={activeAction}
+      selectedExam={selectedExam}
+      setSelectedExam={setSelectedExam}
+      selectMode={selectMode}
+      setSelectMode={setSelectMode}
+      exams={exams}
+      subjectData={subjectData}
+      topicData={topicData}
+      selectedSubjects={selectedSubjects}
+      subjectYears={subjectYears}
+      selectedTopics={selectedTopics}
+      clearAllTopics={clearAllTopics}
+      toggleSubject={(id) => {
+        if (selectedSubjects.includes(id)) {
+          // Deselect
+          setSelectedSubjects(prev => prev.filter(x => x !== id));
+        } else if (selectedSubjects.length < 4) {
+          // Add subject if under limit
+          setSelectedSubjects(prev => [...prev, id]);
+        } else {
+          // Show toast safely outside setState
+          toast({
+            title: "Limit reached",
+            description: "You can select up to 4 subjects only",
+            variant: "destructive",
+            className: "z-[9999]", // ensures it appears above modals
+          });
+        }
+      }}
+
+      toggleTopic={(subjectId, topicId) => {
+        setSelectedTopics(prev => {
+          const arr = prev[subjectId] || [];
+          const exists = arr.includes(topicId);
+          return { 
+            ...prev, 
+            [subjectId]: exists ? arr.filter(x => x !== topicId) : [...arr, topicId] 
+          };
+        });
+      }}
+
+      setYearForSubject={(subId, year) =>
+        setSubjectYears(prev => ({ ...prev, [subId]: year }))
+      }
+      setTopicYear={(subId, topicId, year) =>
+        setTopicYearFilter(prev => ({
+          ...prev,
+          [subId]: { ...(prev[subId] || {}), [topicId]: year },
+        }))
+      }
+      openTopicSubject={openTopicSubject}
+      setOpenTopicSubject={setOpenTopicSubject}
+      handleStart={handleStart}
       />
+
     </div>
   );
 }

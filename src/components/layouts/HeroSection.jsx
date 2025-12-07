@@ -312,12 +312,15 @@ const HeroSection = () => {
                   Download CBT Guru
                 </span>
                   </a>
+                  <a href="https://cbt.filloptech.com" className="no-underline"> 
                 <span
                   className="absolute left-0 top-full w-full text-center transition-transform duration-300 ease-in-out
                    group-hover:-translate-y-full text-white"
                 >
                   Get App Now
                 </span>
+                </a>
+
               </div>
             </Button>
           </div>
