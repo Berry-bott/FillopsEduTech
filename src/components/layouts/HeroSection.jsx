@@ -306,10 +306,12 @@ const HeroSection = () => {
               className="relative overflow-hidden group border-2 border-primary-foreground/30 text-primary hover:bg-primary-foreground/10 px-8 py-3 text-lg font-semibold backdrop-blur-sm flex items-center justify-center dark:text-blue-300 dark:border-blue-300 transition-colors"
             >
               <div className="relative h-6 overflow-hidden">
+                  <a href="https://cbt.filloptech.com" className="no-underline"> 
                 <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
                  
-                  <a href="https://cbt.filloptech.com/" className="text-white no-underline"> Download CBT Guru</a>
+                  Download CBT Guru
                 </span>
+                  </a>
                 <span
                   className="absolute left-0 top-full w-full text-center transition-transform duration-300 ease-in-out
                    group-hover:-translate-y-full text-white"
