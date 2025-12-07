@@ -278,7 +278,7 @@ const menuData = [
             icon: Mail,
           },
           {
-            id: "direct-messages",
+            id: "DM Tutor",
             label: "Direct Messages",
             href: "/chat/dm",
             icon: Mail,
