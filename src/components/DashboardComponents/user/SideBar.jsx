@@ -82,36 +82,37 @@ const menuData = [
             href: "/dashboard/analytics",
             icon: BarChart2,
           },
-          {
-            id: "reports",
-            label: "Reports",
-            href: "/dashboard/reports",
-            icon: FileText,
-            children: [
-              {
-                id: "user-reports",
-                label: "User Reports",
-                href: "/dashboard/reports/users",
-                icon: Users2,
-              },
-              {
-                id: "financial-reports",
-                label: "Financial Reports",
-                href: "/dashboard/reports/financial",
-                icon: DollarSign,
-              },
-              {
-                id: "other-reports",
-                label: "Other Reports",
-                href: "/dashboard/reports/other",
-                icon: UserPlus,
-              },
-            ],
-          },
+         
   
         ],
       },
     
+    ],
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    href: "/dashboard/reports",
+    icon: FileText,
+    children: [
+      {
+        id: "user-reports",
+        label: "User Reports",
+        href: "/dashboard/reports/users",
+        icon: Users2,
+      },
+      {
+        id: "financial-reports",
+        label: "Financial Reports",
+        href: "/dashboard/reports/financial",
+        icon: DollarSign,
+      },
+      {
+        id: "other-reports",
+        label: "Other Reports",
+        href: "/dashboard/reports/other",
+        icon: UserPlus,
+      },
     ],
   },
 
