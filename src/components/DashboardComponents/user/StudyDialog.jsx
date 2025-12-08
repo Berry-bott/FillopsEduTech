@@ -195,6 +195,7 @@ export default function StudyDialog(props) {
     topicData,
     selectedSubjects,
     subjectYears,
+    topicYears,
     toggleSubject,
     setYearForSubject,
     selectedTopics,
@@ -254,7 +255,7 @@ export default function StudyDialog(props) {
       <DialogContent className="max-w-3xl p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
         <DialogHeader>
           <DialogTitle className="text-lg md:text-xl font-semibold text-primary dark:text-gray-100">
-            {activeAction === "learning"
+            {activeAction === "study"
               ? "Study - Setup"
               : activeAction === "quiz"
               ? "Quiz - Setup"
@@ -338,8 +339,8 @@ export default function StudyDialog(props) {
             selectedExam={selectedExam}
             selectedTopics={selectedTopics}
             toggleTopic={handleToggleTopic}   
-            topicYearFilter={topicYearFilter}
             setTopicYear={setTopicYear}
+            topicYears={topicYears}
             clearAllTopics={clearAllTopics}
           />
           </div>)}

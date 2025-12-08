@@ -55,21 +55,17 @@ export default function StudyActions({
             }
           `}
         >
-          {exams.map((ex, index) => (
-            <button
-              key={ex}
-              style={{
-                transitionDelay: examDropdownOpen ? `${index * 40}ms` : "0ms",
-              }}
-              className="w-full text-left px-4 py-3 capitalize font-inter text-sm 
-                         transition-all duration-200 
-                         hover:bg-blue-50/80 dark:hover:bg-blue-500/10 
-                         hover:text-blue-600 dark:hover:text-blue-300"
-              onClick={() => onSelectExam(ex)}
-            >
-              {ex}
-            </button>
-          ))}
+        {exams.map((ex, index) => (
+          <button
+            key={ex}
+            style={{
+              transitionDelay: examDropdownOpen ? `${index * 40}ms` : "0ms",
+            }}
+            className="w-full text-left px-4 py-3 capitalize font-inter text-sm transition-all duration-200 hover:bg-blue-50/80 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-300"
+            onClick={() => onSelectExam(ex)}
+          > {ex}
+          </button>
+        ))}
         </div>
       </div>
 

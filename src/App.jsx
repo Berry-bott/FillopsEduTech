@@ -103,9 +103,9 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 
 // 🧩 Pages
 import Login from "@/pages/index/Login";
-import Learning from "@/pages/user/Learning";
 import Register from "@/pages/index/Register";
 import QuizPage from "@/pages/user/QuizPage";
+import StudyPage from "@/pages/user/StudyPage";
 import ExamsPage from "@/pages/user/ExamsPage";
 import LandingPage from "@/pages/index/LandingPage";
 import Unauthorized from "@/pages/index/Unauthorized";
@@ -130,9 +130,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/learning" element={<Learning />} />
-          <Route path="/QuizPage" element={<QuizPage />} />
-          <Route path="/ExamsPage" element={<ExamsPage />} />
+          <Route path="/study" element={<StudyPage />} />
+          <Route path="/quiz" element={<QuizPage />} />
+          <Route path="/exam" element={<ExamsPage />} />
           <Route path="/exam-selector" element={<ExamSelector />} />
           <Route path="/lecturer/dashboard" element={<LecturerDashboard />} />
 
