@@ -416,6 +416,16 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 import { useEffect, useState } from "react";
 import PageNav from "../../components/DashboardComponents/PageNav";
 import useAuthStore from "../../store/authStore";
@@ -429,6 +439,7 @@ export default function StudyPage() {
   const [subjectNames, setSubjectNames] = useState({});
   const [topicNames, setTopicNames] = useState({});
 
+
   const saved = JSON.parse(localStorage.getItem("studySelections"));
   console.log("📦 Local Storage Data:", saved);
   
@@ -441,16 +452,20 @@ export default function StudyPage() {
 
   // Fetch questions
   const fetchQuestions = async (type, id, year) => {
+    let url = "";
     try {
       setLoading(true);
       const category = saved.exam;
 
-      let url = !year
-        ? `https://fillops-server-5fuf.onrender.com/api/${type}/${id}/questions?random=true&category=${category}`
-        : `https://fillops-server-5fuf.onrender.com/api/${type}/${id}/questions?category=${category}&year=${year}`;
+      if (year && year !== "random") {
+        url = `https://fillops-server-5fuf.onrender.com/api/${type}/${id}/questions?category=${category}&year=${year}`
+      } else {
+        url = `https://fillops-server-5fuf.onrender.com/api/${type}/${id}/questions?random=true&category=${category}`;
+      }
+    
 
       const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { Authorization: `Bearer ${accessToken}`},
       });
       const data = await res.json();
 
@@ -472,6 +487,7 @@ export default function StudyPage() {
       setLoading(false);
     }
   };
+
 
 // Fetch subject names
 const fetchSubjectNames = async () => {
@@ -504,13 +520,50 @@ const fetchSubjectNames = async () => {
 };
 
 // Fetch topic names
+// const fetchTopicNames = async () => {
+//   if (!saved?.topics) return;
+
+//   try {
+//     const names = {};
+
+//     const topicEntries = Object.entries(saved.topics);
+
+//   await Promise.all(
+//       topicEntries.flatMap(([subjectId, topicIds]) =>
+        
+//         topicIds.map(async (topicId) => {
+//           try {
+//             const res = await fetch(
+//               `https://fillops-server-5fuf.onrender.com/api/topics/${topicId}`,
+//               { headers: { Authorization: `Bearer ${accessToken}` } }
+//             );
+//             const data = await res.json();
+//             console.log(data);
+//             console.log("📚 Fetching topics for subject:", subjectId) 
+
+//             // Handle wrapped or root response
+//             names[topicId] = data.topicName || data.data?.topicName || topicId;
+//           } catch (err) {
+//             console.error("❌ Topic fetch error:", err);
+//             names[topicId] = topicId;
+//           }
+//         })
+//       )
+//     );
+
+//     setTopicNames(names);
+//   } catch (err) {
+//     console.error("❌ Error fetching topic names:", err);
+//   }
+// };
 const fetchTopicNames = async () => {
   if (!saved?.topics) return;
 
   try {
     const names = {};
+    const subjectForTopic = {}; // NEW
 
-    const topicEntries = Object.entries(saved.topics); // [[subjectId, [topicIds]]]
+    const topicEntries = Object.entries(saved.topics);
 
     await Promise.all(
       topicEntries.flatMap(([subjectId, topicIds]) =>
@@ -520,9 +573,19 @@ const fetchTopicNames = async () => {
               `https://fillops-server-5fuf.onrender.com/api/topics/${topicId}`,
               { headers: { Authorization: `Bearer ${accessToken}` } }
             );
+
             const data = await res.json();
-            // Handle wrapped or root response
-            names[topicId] = data.topicName || data.data?.topicName || topicId;
+            console.log("🔍 Topic API:", data);
+
+            const topic = data.data || data;
+
+            names[topicId] = topic.topicName;
+
+            // extract subject name inside module → subject
+            if (topic.module?.subject?.subjectName) {
+              subjectForTopic[topicId] = topic.module.subject.subjectName;
+            }
+
           } catch (err) {
             console.error("❌ Topic fetch error:", err);
             names[topicId] = topicId;
@@ -532,10 +595,12 @@ const fetchTopicNames = async () => {
     );
 
     setTopicNames(names);
+    setSubjectNames((prev) => ({ ...prev, ...subjectForTopic })); // MERGE
   } catch (err) {
     console.error("❌ Error fetching topic names:", err);
   }
 };
+
 
 
   // Load defaults and names
@@ -572,29 +637,36 @@ const fetchTopicNames = async () => {
     const topics = saved.topics || {};
     const subjects = saved.subjects || [];
   
+    /** -------------------------------
+     * 🔵 TOPIC MODE
+     --------------------------------*/
     if (isTopicMode) {
       const subjectId = Object.keys(topics)[0];
       const topicList = topics[subjectId] || [];
   
-      // Determine subject name: from first topic's module, fallback to subjectNames
+      // Determine subjectName from first topic
       let subjectName = "Subject";
+  
       if (topicList.length > 0) {
         const firstTopicId = topicList[0];
-        const firstTopic = saved.topicObjects?.[firstTopicId]; // assume you have full topic objects stored
-        if (firstTopic?.module?.subject?.subjectName) {
-          subjectName = firstTopic.module.subject.subjectName;
-        } else if (subjectNames[subjectId]) {
-          subjectName = subjectNames[subjectId];
-        }
-      } else if (subjectNames[subjectId]) {
-        subjectName = subjectNames[subjectId];
+  
+        // Priority:
+        // 1. subjectNames mapped by topicId (from module.subjectName)
+        // 2. subjectNames mapped by subjectId (from your subject fetch)
+        subjectName =
+          subjectNames[firstTopicId] ||
+          subjectNames[subjectId] ||
+          "Subject";
       }
   
       return (
         <div className="mb-6 flex flex-wrap gap-2">
+          {/* Subject Button */}
           <button className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow">
             {subjectName}
           </button>
+  
+          {/* Topic Buttons */}
           {topicList.map((topicId) => (
             <button
               key={topicId}
@@ -614,11 +686,14 @@ const fetchTopicNames = async () => {
       );
     }
   
-    // Subject mode
+    /** -------------------------------
+     * 🔵 SUBJECT MODE
+     --------------------------------*/
     return (
       <div className="flex flex-wrap gap-2 mb-6">
         {subjects.map((subjectId) => (
           <div key={subjectId} className="relative group">
+            {/* SUBJECT BUTTON */}
             <button
               onClick={() => {
                 setActiveId(subjectId);
@@ -632,10 +707,11 @@ const fetchTopicNames = async () => {
               {subjectNames[subjectId] || "Subject"}
             </button>
   
-            {/* Hover topics if any */}
+            {/* HOVER TOPIC DROPDOWN */}
             {topics[subjectId] && topics[subjectId].length > 0 && (
               <div className="absolute hidden group-hover:block bg-white border p-3 rounded-lg shadow-lg w-56 z-20">
                 <p className="font-semibold mb-2 text-sm">Topics</p>
+  
                 {topics[subjectId].map((topicId) => (
                   <button
                     key={topicId}
@@ -656,6 +732,7 @@ const fetchTopicNames = async () => {
       </div>
     );
   };
+  
   
 
   if (!saved) return <p>No study selections found.</p>;
