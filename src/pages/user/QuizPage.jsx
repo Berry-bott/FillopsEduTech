@@ -1,38 +1,59 @@
-import PageNav from "../../components/DashboardComponents/PageNav";
-import React, { useEffect, useState, useRef } from "react";
+import { useState } from "react";
+// import PageNav from "../../components/DashboardComponents/PageNav";
+import useAuthStore from "../../store/authStore";
+
+import Header from "../../components/DashboardComponents/user/study-component/subjectHeader";
+import QuestionCard from "../../components/DashboardComponents/user/study-component/QuestionCard";
+// import ProgressBar from "./ProgressBar";
 
 export default function QuizPage() {
-  const [navProps, setNavProps] = useState({
-    exams: "",
-    mood: ""
-  });
-  const [studyData, setStudyData] = useState(null);
+  const { accessToken } = useAuthStore();
 
-  useEffect(() => {
-    const raw = localStorage.getItem("studySelections");
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw);
-      setStudyData(parsed);
-      console.log("Parsed study data:", parsed);
-  
-      // Extract exam type and mode for the navbar
-      const examType = parsed.exam || "JAMB";
-      const studyMode = "Quiz"; 
-  
-      setNavProps({
-        exams: examType,
-        mood: studyMode
-      });
-  
-    } catch {
-      setStudyData(null);
-    }
-  }, []);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [activeId, setActiveId] = useState(null);
+  const [subjectNames, setSubjectNames] = useState({});
+  const [topicNames, setTopicNames] = useState({});
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  return(
-    <>
-      <PageNav exams={navProps.exams} mood={navProps.mood} />
-    </>
-  )
+  const saved = JSON.parse(localStorage.getItem("studySelections"));
+  if (!saved) return <p>No study selections found.</p>;
+
+  const q = questions[currentIndex];
+
+  return (
+    <div className="p-4">
+ 
+
+      <Header
+        saved={saved}
+        activeId={activeId}
+        setActiveId={setActiveId}
+        setQuestions={setQuestions}
+        setLoading={setLoading}
+        subjectNames={subjectNames}
+        setSubjectNames={setSubjectNames}
+        topicNames={topicNames}
+        setTopicNames={setTopicNames}
+        accessToken={accessToken}
+        setCurrentIndex={setCurrentIndex}
+      />
+
+      {/* <ProgressBar current={currentIndex + 1} total={questions.length} /> */}
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <QuestionCard
+          q={q}
+          currentIndex={currentIndex}
+          total={questions.length}
+          selectedOptions={selectedOptions}
+          setSelectedOptions={setSelectedOptions}
+          setCurrentIndex={setCurrentIndex}
+        />
+      )}
+    </div>
+  );
 }

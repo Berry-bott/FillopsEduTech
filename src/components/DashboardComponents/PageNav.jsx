@@ -27,12 +27,12 @@ const PageNav = ({ exams, mood }) => {
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-      <div className="max-w-7xl mx-auto px-2">
+      <div className="max-w-7xl mx-auto px-">
         <div className="flex justify-between items-center h-16">
 
           <span className='flex gap-4 '>
           {/* Logo Section */}
-          <div className="flex items-center border-r-2 px-4">
+          <div className="flex items-center border-r-2 px-">
             <Link to="/" className="flex items-center gap-3">
               <img
                 src={Logo}
@@ -42,10 +42,10 @@ const PageNav = ({ exams, mood }) => {
                 className="flex-shrink-0"
               />
               <div>
-                <span className="text-2xl font-semibold text-primary   duration-200">
+                <span className="md:text-2xl font-semibold text-primary  duration-200">
                   Fillop Tech
                 </span>
-                <p className="text-[8px] text-destructive/100 ">
+                <p className="text-[6.5px] text-destructive/100 ">
                   Simplifying your tech experience...
                 </p>
               </div>
