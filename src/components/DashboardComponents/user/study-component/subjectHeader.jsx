@@ -187,7 +187,7 @@ export default function Header({
                 setActiveId(topicId);
                 fetchQuestions("topics", topicId, saved.topicYears?.[topicId]);
               }}
-              className={`px-1 py-1 md:px-4 md:py-4 rounded-lg shadow text-white text-[10px] ${
+              className={`px-1 py-1 md:px-4 md:py-2 rounded-lg shadow text-white text-[10px] ${
                 activeId === topicId ? "bg-primary" : "bg-primary-hover"
               }`}
             >
@@ -224,7 +224,7 @@ export default function Header({
                 saved.subjectYears?.[subjectId]
               );
             }}
-            className={`px-4 py-2 rounded-lg shadow text-white ${
+            className={`px-1 py-1 md:px-4 md:py-2 rounded-lg shadow text-white text-[10px] ${
               activeId === subjectId ? "bg-blue-700" : "bg-blue-500"
             }`}
           >

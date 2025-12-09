@@ -77,6 +77,9 @@
 //   }
   
 
+
+
+
 import { useState } from "react";
 
 export default function QuestionCard({
@@ -97,6 +100,16 @@ export default function QuestionCard({
     setSelectedOptions((prev) => ({ ...prev, [q.id]: opt }));
     setShowExplanation(false); // hide explanation until user clicks
   };
+
+
+  const handleNext = () => {
+    if (currentIndex === total - 1) {
+      onFinishSubject?.(); // go to next subject/topic
+    } else {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+  
 
   const userChoice = selectedOptions[q.id];
   const isCorrect = userChoice === q.correctAnswer;
