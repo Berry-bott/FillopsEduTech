@@ -110,6 +110,10 @@ import ExamsPage from "@/pages/user/ExamsPage";
 import LandingPage from "@/pages/index/LandingPage";
 import Unauthorized from "@/pages/index/Unauthorized";
 import UserDashboard from "@/pages/user/UserDashboard";
+import SummaryPage from "@/pages/user/SummaryPage";
+import PreferencePage from "@/pages/user/PreferencePage";
+
+
 import LecturerDashboard from "@/pages/lecturer/LecturerDashboard";
 import ExamSelector from "./components/DashboardComponents/user/ExamSelector";
 import "./App.css";
@@ -133,6 +137,10 @@ function App() {
           <Route path="/study" element={<StudyPage />} />
           <Route path="/quiz" element={<QuizPage />} />
           <Route path="/exam" element={<ExamsPage />} />
+
+          <Route path="/preference" element={<PreferencePage />} />
+          <Route path="/summary" element={<SummaryPage />} />
+
           <Route path="/exam-selector" element={<ExamSelector />} />
           <Route path="/lecturer/dashboard" element={<LecturerDashboard />} />
 

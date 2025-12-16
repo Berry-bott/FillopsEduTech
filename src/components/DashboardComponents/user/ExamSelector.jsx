@@ -1,14 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StudyActions from "./StudyActions";
@@ -39,18 +28,7 @@ export default function ExamSelector() {
 
   const exams = ["WAEC", "JAMB", "NECO", "PUTME"];
 
-  // const resetSelections = () => {
-  //   setSelectedExam(null);
-  //   setSelectMode(null);
-  //   setSelectedSubjects([]);
-  //   setSubjectYears({});
-  //   setSelectedTopics({});
-  //   setTopicYearFilter({});
-  //   setSubjectData([]);
-  //   setTopicData({});
-  //   setOpenTopicSubject(null);
-  //   setQuestions({});
-  // };
+
 
   const resetSelections = (keepExam = false) => {
     if (!keepExam) setSelectedExam(null); // optional reset of exam

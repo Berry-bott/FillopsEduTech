@@ -6,6 +6,9 @@ import AboutSection from '../../components/layouts/AboutSection'
 import Contact from '../../components/layouts/Contact'
 import Footer from '../../components/layouts/Footer'
 
+
+
+
 const LandingPage = ()=>  {
 
   return (

@@ -258,3 +258,49 @@
 .animate-fadeIn {
   animation: fadeIn 0.4s ease-in-out;
 }
+
+
+
+/* @keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+} */
+ 
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fades-in {
+  animation: slideInFromTop 0.4s ease-out;
+} 
+
+@keyframes slideOutToTop {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+.animate-fades-out {
+  animation: slideOutToTop 0.4s ease-out;
+} 

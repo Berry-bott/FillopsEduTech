@@ -52,7 +52,8 @@ const Login = () => {
       const res = await login(formData);
 
       if (res?.success) {
-        navigate("/user/dashboard");
+        // navigate("/user/dashboard");
+        navigate("/preference");
         return;
       }
 
