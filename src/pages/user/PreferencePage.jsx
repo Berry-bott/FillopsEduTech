@@ -8,8 +8,8 @@ const API_URL = "https://fillops-server-5fuf.onrender.com/api/subjects";
 const EXAMS = {
   waec: { label: "WAEC", limit: 9 },
   neco: { label: "NECO", limit: 9 },
-  jamb: { label: "JAMB", limit: 5 },
-  putme: { label: "PUTME", limit: 5 },
+  jamb: { label: "JAMB", limit: 4 },
+  putme: { label: "PUTME", limit: 4 },
 };
 
 const INTERESTS = ["Science", "Arts", "Commecial", "Business"];
