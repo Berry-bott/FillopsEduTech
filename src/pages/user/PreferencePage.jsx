@@ -380,7 +380,7 @@ export default function PreferencePage() {
       {step === 3 &&
         slideIn(
           <div className="mb-10">
-            <p className="text-center text-primary-hover mb-6 mt-10">
+            <p className="text-center text-primary-hover mb-6 -mt-4">
               What are your goals?
             </p>
             <div className="flex gap-4 flex-wrap justify-center">
@@ -400,7 +400,7 @@ export default function PreferencePage() {
                 </button>
               ))}
             </div>
-            <div className="mt-20 text-center flex justify-between">
+            <div className="mt-8 text-center flex justify-between">
               <button
                 onClick={prevStep}
                 className="bg-destructive text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"
