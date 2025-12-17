@@ -119,7 +119,7 @@ export default function PreferencePage() {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubjects, setSelectedSubjects] = useState(() => {
     const saved = localStorage.getItem("prefSubjects");
-    console.log(saved);
+  
     return saved ? JSON.parse(saved) : {};
   });
 
@@ -422,7 +422,7 @@ export default function PreferencePage() {
       {step === 4 &&
         slideIn(
           <div>
-            <h2 className="text-center text-primary-hover mb-6 mt-20">
+            <h2 className="text-center text-primary-hover mb-6 mt-2">
                {examConfig.label} — select up to {examConfig.limit} subjects
             </h2>
 
@@ -460,7 +460,7 @@ export default function PreferencePage() {
               </p>
             )}
 
-            <div className="mt-20 text-center flex justify-between">
+            <div className="mt-10 text-center flex justify-between">
               <button
                 onClick={prevStep}
                 className="bg-destructive text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"

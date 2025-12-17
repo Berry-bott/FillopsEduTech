@@ -1,185 +1,173 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { loginUser, registerUser, getProfile, logoutUser } from "../api/auth";
 
-const useAuthStore = create(
-  persist(
-    (set, get) => ({
-      user: null,
-      accessToken: null,
-      isAuthenticated: false,
-      loading: false,
-      error: "",
-      success: "",
+const useAuthStore = create((set, get) => ({
+  // ----------------------
+  // STATE (MEMORY ONLY)
+  // ----------------------
+  user: null,
+  accessToken: null,   // 🔐 memory only
+  isAuthenticated: false,
+  loading: false,
+  error: "",
+  success: "",
 
-      // Email verification state
-      verificationPending: false,
-      emailToVerify: "",
+  verificationPending: false,
+  emailToVerify: "",
 
-      // Clear previous messages
-      clearMessages: () => set({ error: "", success: "" }),
+  // ----------------------
+  // HELPERS
+  // ----------------------
+  clearMessages: () => set({ error: "", success: "" }),
 
-      // 🔹 LOGIN ---------------------------------------------------------
-      login: async (formData) => {
-        set({ loading: true, error: "", success: "" });
-        try {
-          const res = await loginUser(formData);
+  // ----------------------
+  // LOGIN
+  // ----------------------
+  login: async (formData) => {
+    set({ loading: true, error: "", success: "" });
 
-          if (res.success) {
-            const token = res.data.accessToken;
+    try {
+      const res = await loginUser(formData);
+      if (!res.success) {
+        set({ error: res.message || "Login failed" });
+        return res;
+      }
 
-            sessionStorage.setItem("accessToken", token);
+      // ✅ Store access token in memory only
+      set({
+        user: res.data.user,
+        accessToken: res.data.accessToken,
+        isAuthenticated: true,
+      });
 
-            set({
-              user: res.data.user,
-              accessToken: token,
-              isAuthenticated: true,
-            });
-          } else {
-            set({ error: res.message });
-          }
-
-          return res;
-        } finally {
-          set({ loading: false });
-        }
-      },
-
-      // 🔹 REGISTER ------------------------------------------------------
-      register: async (formData) => {
-        set({ loading: true, error: "", success: "" });
-
-        try {
-          const res = await registerUser(formData);
-
-          if (!res.success) {
-            set({ error: res.message || "Registration failed" });
-            return res;
-          }
-
-          // Do NOT auto-login user (backend requires email verification)
-          set({
-            success: "Registration successful! Please verify your email.",
-            verificationPending: true,
-            emailToVerify: res.data.email, // store email to verify
-          });
-
-          return res;
-        } finally {
-          set({ loading: false });
-        }
-      },
-
-      // 🔹 CHECK EMAIL VERIFICATION --------------------------------------
-      checkEmailVerification: async () => {
-        const email = get().emailToVerify;
-        if (!email) return false;
-
-        try {
-          const response = await fetch(
-            `https://fillops-server-5fuf.onrender.com/api/auth/check-verification?email=${email}`
-          );
-          const res = await response.json();
-
-          if (res.verified) {
-            // Email verified
-            set({
-              verificationPending: false,
-              success: "Email verified successfully! You can now login.",
-            });
-
-            return true;
-          }
-        } catch (err) {
-          console.error("Error checking verification:", err);
-        }
-
-        return false;
-      },
-
-      // 🔹 Silent refresh (unchanged) --------------------------------------
-      silentRefresh: async () => {
-        try {
-          const res = await fetch(
-            "https://fillops-server-5fuf.onrender.com/api/auth/refresh",
-            {
-              method: "POST",
-              credentials: "include",
-            }
-          );
-
-          if (res.ok) {
-            const data = await res.json();
-            const newToken = data.accessToken;
-
-            sessionStorage.setItem("accessToken", newToken);
-
-            set({
-              accessToken: newToken,
-              isAuthenticated: true,
-              user: data.user || get().user,
-            });
-
-            return true;
-          }
-        } catch (err) {
-          console.warn("Silent refresh failed:", err);
-        }
-        return false;
-      },
-
-      // 🔹 CHECK AUTH -----------------------------------------------------
-      checkAuth: async () => {
-        const token = get().accessToken;
-
-        // Try access token
-        if (token) {
-          try {
-            const data = await getProfile(token);
-
-            if (data.success) {
-              set({
-                user: data.data,
-                isAuthenticated: true,
-              });
-              return true;
-            }
-          } catch (err) {
-            console.warn("Access token invalid:", err);
-          }
-        }
-
-        // Try silent refresh
-        const refreshed = await get().silentRefresh();
-        if (refreshed) return true;
-
-        // Clear session
-        sessionStorage.removeItem("accessToken");
-        set({ user: null, accessToken: null, isAuthenticated: false });
-        return false;
-      },
-
-      // 🔹 LOGOUT ---------------------------------------------------------
-      logout: async () => {
-        try {
-          await logoutUser();
-        } catch (err) {
-          console.error("Logout error:", err);
-        } finally {
-          sessionStorage.removeItem("accessToken");
-          set({ user: null, accessToken: null, isAuthenticated: false });
-        }
-      },
-    }),
-
-    {
-      name: "auth-store",
-      getStorage: () => sessionStorage,
+      return res;
+    } catch {
+      set({ error: "Login error" });
+      return { success: false };
+    } finally {
+      set({ loading: false });
     }
-  )
-);
+  },
+
+  // ----------------------
+  // REGISTER
+  // ----------------------
+  register: async (formData) => {
+    set({ loading: true, error: "", success: "" });
+    try {
+      const res = await registerUser(formData);
+      if (!res.success) {
+        set({ error: res.message || "Registration failed" });
+        return res;
+      }
+
+      set({
+        success: "Registration successful! Please verify your email.",
+        verificationPending: true,
+        emailToVerify: res.data.email,
+      });
+
+      return res;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // ----------------------
+  // CHECK EMAIL VERIFICATION
+  // ----------------------
+  checkEmailVerification: async () => {
+    const email = get().emailToVerify;
+    if (!email) return false;
+
+    try {
+      const res = await fetch(
+        `https://fillops-server-5fuf.onrender.com/api/auth/check-verification?email=${email}`
+      );
+      const data = await res.json();
+
+      if (data.verified) {
+        set({
+          verificationPending: false,
+          success: "Email verified successfully! You can now login.",
+        });
+        return true;
+      }
+    } catch (err) {
+      console.error("Verification check failed:", err);
+    }
+    return false;
+  },
+
+  // ----------------------
+  // SILENT REFRESH (COOKIE BASED)
+  // ----------------------
+  silentRefresh: async () => {
+    try {
+      const res = await fetch(
+        "https://fillops-server-5fuf.onrender.com/api/auth/refresh",
+        { method: "POST", credentials: "include" } // 🍪 HttpOnly refresh cookie
+      );
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      set({
+        accessToken: data.accessToken,
+        user: data.user || get().user,
+        isAuthenticated: true,
+      });
+
+      return true;
+    } catch (err) {
+      console.warn("Silent refresh failed:", err);
+      return false;
+    }
+  },
+
+  // ----------------------
+  // CHECK AUTH (ON APP LOAD)
+  // ----------------------
+  checkAuth: async () => {
+    const token = get().accessToken;
+
+    // 1️⃣ Try current memory token
+    if (token) {
+      try {
+        const res = await getProfile(token);
+        if (res.success) {
+          set({ user: res.data, isAuthenticated: true });
+          return true;
+        }
+      } catch {
+        // expired → try refresh
+      }
+    }
+
+    // 2️⃣ Try silent refresh
+    const refreshed = await get().silentRefresh();
+    if (refreshed) return true;
+
+    // 3️⃣ Not authenticated
+    set({ user: null, accessToken: null, isAuthenticated: false });
+    return false;
+  },
+
+  // ----------------------
+  // LOGOUT
+  // ----------------------
+  logout: async () => {
+    try {
+      await logoutUser(); // clears refresh token cookie
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      set({ user: null, accessToken: null, isAuthenticated: false });
+    }
+  },
+}));
 
 export default useAuthStore;
+
 
 
 
