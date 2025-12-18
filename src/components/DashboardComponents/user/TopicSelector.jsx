@@ -82,7 +82,7 @@ export default function TopicSelector({
     return (
       <div className="flex flex-col items-center justify-center py-10">
         <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
-        <p className="text-gray-700 dark:text-gray-300">Loading subjects and topics...</p>
+        <p className="text-white-700 dark:text-gray-300">Loading subjects and topics...</p>
       </div>
     );
 
@@ -117,7 +117,7 @@ export default function TopicSelector({
           >
             {/* SUBJECT TITLE + YEAR DROPDOWN */}
             <div className="flex justify-between items-center gap-3">
-              <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              <div className="text-lg font-semibold text-gray-800 dark:text-primary">
                 {subject.subjectName}
               </div>
 
@@ -136,7 +136,7 @@ export default function TopicSelector({
 
                   console.log(`📌 Selected year for subject ${subject.subjectName}:`, y);
                 }}
-                className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white"
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 <option value="" disabled>Select Year</option>
                 <option value="random">Random</option>

@@ -1180,7 +1180,7 @@ export default function studyPage() {
     };
   }, []);
 
-  if (!saved) return <p>No study selections found.</p>;
+  // if (!saved) return <p>No study selections found.</p>;
 
   return (
     <div className="p-4">

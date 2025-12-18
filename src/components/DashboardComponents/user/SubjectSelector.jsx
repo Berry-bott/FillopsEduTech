@@ -399,14 +399,14 @@ export default function SubjectSelector({
 
   return (
     <div>
-      <p className="text-sm font-medium mb-3">
+      <p className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
         Select Number of subjects for{" "}
         <span className="font-semibold">{selectedExam.toUpperCase()}</span>
       </p>
 
       {/* ================= LOADING ================= */}
       {loading && (
-        <div className="flex flex-col items-center justify-center py-10">
+        <div className="flex flex-col items-center justify-center py-10 text-gray-700 dark:text-gray-300">
           <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin" />
           <p>Loading subjects...</p>
         </div>
@@ -429,7 +429,7 @@ export default function SubjectSelector({
                   onCheckedChange={() => toggleSubject(subject.id)}
                   className="h-6 w-6 rounded border-gray-300 dark:border-gray-500 text-blue-600 dark:text-blue-400"
                 />
-                <span className="text-gray-800 dark:text-gray-100 font-medium">
+                <span className="text-gray-800 dark:text-primary font-medium">
                   {subject.subjectName}
                 </span>
               </div>

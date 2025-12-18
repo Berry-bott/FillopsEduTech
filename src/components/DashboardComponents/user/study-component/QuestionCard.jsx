@@ -181,7 +181,7 @@ export default function QuestionCard() {
   // Render actual question
   // ----------------------------
   return (
-    <section className='py-20'>
+    <section className='py-0'>
     {/* Back to Dashboard */}
     <div className="p-2">
       <button
@@ -193,11 +193,11 @@ export default function QuestionCard() {
     </div>
   
     {/* MAIN LAYOUT */}
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] md:gap-6 gap-20 ">
       
       {/* ================= LEFT: QUESTION ================= */}
       <main className="relative">
-        <div className="border border-gray-300 p-4 rounded-lg pb-28 overflow-y-auto">
+        <div className="border border-gray-300 p-4 rounded-lg  overflow-y-auto">
           <div
             className="transition-opacity duration-500 ease-in-out"
             style={{ opacity: visible ? 1 : 0 }}
@@ -259,14 +259,12 @@ export default function QuestionCard() {
               </p>
             )}
           </div>
-        </div>
-  
-        {/* Navigation */}
-        <div className="fixed bottom-0 left-0 z-50 right-0 bg-white py-3 px-4 flex justify-between border-t">
+            {/* Navigation */}
+        <div className=" z-50 right-0 pt-20 px-4 flex justify-between border-t">
           <button
             disabled={currentIndex === 0}
             onClick={() => setCurrentIndex(currentIndex - 1)}
-            className={`px-8 py-2 rounded-lg ${
+            className={`px-8 py-2 dark:bg-transparent dark:border-2 rounded-lg ${
               currentIndex === 0
                 ? 'bg-gray-400 text-white'
                 : 'bg-red-500 text-white'
@@ -284,29 +282,32 @@ export default function QuestionCard() {
               : 'Next'}
           </button>
         </div>
+        </div>
+  
+      
       </main>
   
       {/* ================= RIGHT: PAYMENT ================= */}
-      <div className="min-h-screen flex items-center justify-center relative -top-28 right-0 bg-background ">
-      <Card className="w-[500px] h-[600px] overflow-hidden flex flex-col border-2 border-border shadow-2xl">
+      <div className="min-h-screen flex items-center justify-center relative -top-16 right-0">
+      <Card className="w-[500px]  overflow-hidden flex flex-col border-2 border-border shadow-2xl">
         {/* Header */}
         <div className="p-6 border-b border-border bg-gradient-to-br from-primary/5 to-accent/5">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Crown className="size-8 text-accent" />
-            <h1 className="text-2xl font-bold">Go Premium</h1>
+            <Crown className="size-8 text-education-orange" />
+            <h1 className="text-2xl font-bold text-primary">Go Premium</h1>
           </div>
           <p className="text-center text-sm text-muted-foreground text-balance">Unlock unlimited learning potential</p>
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 p-4 space-y-4">
           {/* Premium Features */}
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Sparkles className="size-5 text-accent" />
+            <h2 className="text-lg text-primary-hover font-semibold flex items-center gap-2">
+              <Sparkles className="size-5 text-education-orange" />
               Premium Benefits
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-2 text-muted-foreground">
               {[
                 "Unlimited access to 10,000+ courses",
                 "Premium exclusive content",
@@ -316,7 +317,7 @@ export default function QuestionCard() {
                 "Priority 24h support",
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-2">
-                  <Check className="size-4 text-accent flex-shrink-0 mt-0.5" />
+                  <Check className="size-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <span className="text-sm">{feature}</span>
                 </div>
               ))}
@@ -324,27 +325,26 @@ export default function QuestionCard() {
           </div>
 
           {/* Pricing Card */}
-          <Card className="p-6 bg-gradient-to-br from-accent/10 to-primary/5 border-2 border-accent/50 relative">
-            <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground text-xs">
+          <Card className="p-4 bg-gradient-to-br from-accent/10 to-primary/5 border-2 border-accent/50 relative">
+            <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-accent text-primary-hover text-xs hover:text-white">
               Most Popular
             </Badge>
             <div className="text-center space-y-4 mt-2">
               <div>
                 <div className="text-sm text-muted-foreground mb-1">Premium Plan</div>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-bold bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent">
-                    $29
+                  <span className="text-4xl font-bold bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent">
+                    #500
                   </span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-xs text-accent mt-2">Save $50 with annual billing</p>
               </div>
 
               <div className="pt-4 space-y-2">
                 <Button className="w-full" size="lg">
                   Start Premium Trial
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">7-day free trial • Cancel anytime</p>
+                {/* <p className="text-xs text-muted-foreground text-center">7-day free trial • Cancel anytime</p> */}
               </div>
             </div>
           </Card>
@@ -352,29 +352,20 @@ export default function QuestionCard() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border">
             <div className="text-center">
-              <div className="text-xl font-bold text-accent">10K+</div>
+              <div className="text-xl font-bold text-education-orange">10K+</div>
               <div className="text-xs text-muted-foreground">Courses</div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-accent">500K+</div>
+              <div className="text-xl font-bold text-sidebar-ring">500K+</div>
               <div className="text-xs text-muted-foreground">Learners</div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-accent">95%</div>
+              <div className="text-xl font-bold text-destructive">95%</div>
               <div className="text-xs text-muted-foreground">Satisfied</div>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-border bg-muted/30 text-center">
-          <p className="text-xs text-muted-foreground">
-            Already premium?{" "}
-            <a href="#" className="text-accent hover:underline">
-              Sign in
-            </a>
-          </p>
-        </div>
       </Card>
     </div>
     </div>
