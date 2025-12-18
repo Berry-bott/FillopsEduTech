@@ -264,7 +264,7 @@ export default function QuestionCard() {
           <button
             disabled={currentIndex === 0}
             onClick={() => setCurrentIndex(currentIndex - 1)}
-            className={`px-8 py-2 dark:bg-transparent dark:border-2 rounded-lg ${
+            className={`px-8 py-2 dark:bg-transparent dark:border-2new commit rounded-lg ${
               currentIndex === 0
                 ? 'bg-gray-400 text-white'
                 : 'bg-red-500 text-white'

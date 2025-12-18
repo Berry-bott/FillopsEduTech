@@ -132,14 +132,14 @@ export default function ExamSelector() {
         if (selectedSubjects.includes(id)) {
           // Deselect
           setSelectedSubjects(prev => prev.filter(x => x !== id));
-        } else if (selectedSubjects.length < 4) {
+        } else if (selectedSubjects.length < 9) {
           // Add subject if under limit
           setSelectedSubjects(prev => [...prev, id]);
         } else {
           // Show toast safely outside setState
           toast({
             title: "Limit reached",
-            description: "You can select up to 4 subjects only",
+            description: "You can select up to 9 or 4 subjects only",
             variant: "destructive",
             className: "z-[9999]", // ensures it appears above modals
           });
