@@ -59,57 +59,126 @@
 
 
 
+// const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+
+// // 🧩 Helper to build headers
+// const headers = (token) => ({
+//   "Content-Type": "application/json",
+//   ...(token ? { Authorization: `Bearer ${token}` } : {}),
+// });
+
+// // 🟢 Register
+// export const registerUser = async (formData) => {
+//   const res = await fetch(`${API_BASE}/auth/register`, {
+//     method: "POST",
+//     headers: headers(),
+//     body: JSON.stringify(formData),
+//     credentials: "include", // sends cookie
+//   });
+//   return res.json();
+// };
+
+// // 🟢 Login
+// export const loginUser = async (formData) => {
+//   const res = await fetch(`${API_BASE}/auth/login`, {
+//     method: "POST",
+//     headers: headers(),
+//     body: JSON.stringify(formData),
+//     credentials: "include", // backend sets refresh cookie
+//   });
+//   return res.json();
+// };
+
+// // 🟢 Get user profile (backend can silently refresh)
+// export const getProfile = async (token) => {
+//   const res = await fetch(`${API_BASE}/users/profile`, {
+//     method: "GET",
+//     headers: headers(token),
+//     credentials: "include",
+//     // allows backend to send new access token if refreshed
+//   });
+
+//   const data = await res.json();
+
+//   // If backend returns a new token, save it
+//   if (data?.data?.accessToken) {
+//     sessionStorage.setItem("accessToken", data.data.accessToken);
+//   }
+
+//   // console.log("this is =" data);
+//   return data;
+// };
+
+// // 🟢 Logout
+// export const logoutUser = async () => {
+//   const res = await fetch(`${API_BASE}/auth/logout`, {
+//     method: "POST",
+//     credentials: "include",
+//   });
+//   return res.json();
+// };
+
+// // 🟢 Refresh token
+// export const refreshToken = async (token) => {
+//   const res = await fetch(`${API_BASE}/auth/refresh`, {
+//     method: "POST",
+//     headers: headers(token),
+//     credentials: "include", // backend sends new access token
+//   });
+//   return res.json();
+// };
+
+
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 
-// 🧩 Helper to build headers
+// Helper
 const headers = (token) => ({
   "Content-Type": "application/json",
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 });
 
-// 🟢 Register
+// 🔹 Register
 export const registerUser = async (formData) => {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify(formData),
-    credentials: "include", // sends cookie
+    credentials: "include",
   });
   return res.json();
 };
 
-// 🟢 Login
+// 🔹 Login (sets refresh cookie)
 export const loginUser = async (formData) => {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify(formData),
-    credentials: "include", // backend sets refresh cookie
+    credentials: "include",
   });
   return res.json();
 };
 
-// 🟢 Get user profile (backend can silently refresh)
+// 🔹 Profile
 export const getProfile = async (token) => {
   const res = await fetch(`${API_BASE}/users/profile`, {
     method: "GET",
     headers: headers(token),
     credentials: "include",
-    // allows backend to send new access token if refreshed
   });
-
-  const data = await res.json();
-
-  // If backend returns a new token, save it
-  if (data?.data?.accessToken) {
-    sessionStorage.setItem("accessToken", data.data.accessToken);
-  }
-
-  // console.log("this is =" data);
-  return data;
+  return res.json();
 };
 
-// 🟢 Logout
+// 🔹 Refresh access token (uses refresh cookie)
+export const refreshAccessToken = async () => {
+  const res = await fetch(`${API_BASE}/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return res.json();
+};
+
+// 🔹 Logout
 export const logoutUser = async () => {
   const res = await fetch(`${API_BASE}/auth/logout`, {
     method: "POST",

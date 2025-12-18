@@ -200,13 +200,253 @@
 
 
 
+
+
+
+
+
+
+// import { create } from "zustand";
+// import useAuthStore from "./authStore";
+
+// export const useStudyStore = create((set, get) => ({
+//   // ------------------------------
+//   // STATE
+//   // ------------------------------
+//   saved: null,
+//   questions: [],
+//   loading: false,
+//   selectedOptions: {},
+//   activeId: null,
+//   currentIndex: 0,
+//   subjectNames: {},
+//   topicNames: {},
+
+//   // ------------------------------
+//   // SYNC LOCAL STORAGE
+//   // ------------------------------
+//   syncSaved: async () => {
+//     try {
+//       const saved = JSON.parse(localStorage.getItem("studySelections"));
+//       console.log("🔄 syncSaved()", saved);
+//       if (!saved) return null;
+
+//       set({ saved });
+//       // fetch names after saved is ready
+//       await Promise.all([
+//         get().fetchSubjectNames(),
+//         get().fetchTopicNames(),
+//       ]);
+
+//       // set first active item
+//       const firstId =
+//         saved.mode === "subject"
+//           ? saved.subjects?.[0]
+//           : Object.values(saved.topics || {})[0]?.[0];
+
+//       if (firstId) get().changeActive(firstId);
+
+//       return saved;
+//     } catch (e) {
+//       console.error("❌ syncSaved failed", e);
+//       return null;
+//     }
+//   },
+
+//   // ------------------------------
+//   // RESET STORE
+//   // ------------------------------
+//   reset: () =>
+//     set({
+//       saved: null,
+//       questions: [],
+//       loading: false,
+//       selectedOptions: {},
+//       activeId: null,
+//       currentIndex: 0,
+//       subjectNames: {},
+//       topicNames: {},
+//     }),
+
+//   // ------------------------------
+//   // SETTERS
+//   // ------------------------------
+//   setActiveId: (id) => {
+//     console.log("🎯 setActiveId:", id);
+//     set({ activeId: id, currentIndex: 0 });
+//   },
+
+//   setSelectedOption: (qId, opt) =>
+//     set((state) => ({
+//       selectedOptions: { ...state.selectedOptions, [qId]: opt },
+//     })),
+
+//   setCurrentIndex: (index) =>
+//     set((state) => ({ currentIndex: Math.max(0, Math.min(index, state.questions.length - 1)) })),
+
+//   // ------------------------------
+//   // NAVIGATION
+//   // ------------------------------
+//   next: () => {
+//     const { currentIndex, questions, saved, activeId } = get();
+//     if (currentIndex < questions.length - 1) {
+//       set({ currentIndex: currentIndex + 1 });
+//     } else {
+//       // move to next subject/topic
+//       if (!saved) return;
+//       const ids =
+//         saved.mode === "subject"
+//           ? saved.subjects
+//           : Object.values(saved.topics || {})[0];
+//       const currentPos = ids.indexOf(activeId);
+//       const nextId = ids[currentPos + 1];
+//       if (nextId) get().changeActive(nextId);
+//     }
+//   },
+
+//   // ------------------------------
+//   // FETCH QUESTIONS
+//   // ------------------------------
+//   fetchQuestions: async (type, id, year) => {
+//     const { saved } = get();
+//     if (!saved) return;
+
+//     console.log("📥 fetchQuestions", { type, id, year });
+
+//     set({ loading: true });
+
+//     try {
+//       const base = "https://fillops-server-5fuf.onrender.com/api";
+//       const url =
+//         year && year !== "random"
+//           ? `${base}/${type}/${id}/questions?category=${saved.exam}&year=${year}`
+//           : `${base}/${type}/${id}/questions?random=true&category=${saved.exam}`;
+
+//       const token = useAuthStore.getState().accessToken;
+//       console.log("🔗 Fetching from URL:", token);
+//       const res = await fetch(url, {
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+
+//       const data = await res.json();
+
+//       set({
+//         questions: data.data || [],
+//         currentIndex: 0,
+//         selectedOptions: {},
+//         loading: false,
+//       });
+//     } catch (e) {
+//       console.error("❌ fetchQuestions error", e);
+//       set({ questions: [], loading: false });
+//     }
+//   },
+
+//   // ------------------------------
+//   // FETCH SUBJECT NAMES
+//   // ------------------------------
+//   fetchSubjectNames: async () => {
+//     const { saved } = get();
+//     if (!saved?.subjects) return;
+
+//     console.log("📘 fetchSubjectNames");
+
+//     const names = {};
+//     await Promise.all(
+//       saved.subjects.map(async (id) => {
+//         try {
+//           const res = await fetch(
+//             `https://fillops-server-5fuf.onrender.com/api/subjects/${id}`,
+//             {
+//               headers: {
+//                 Authorization: `Bearer ${useAuthStore.getState().accessToken}`,
+//               },
+//             }
+//           );
+//           const data = await res.json();
+//           names[id] = data.subjectName || id;
+//         } catch {
+//           names[id] = id;
+//         }
+//       })
+//     );
+
+//     set({ subjectNames: names });
+//   },
+
+//   // ------------------------------
+//   // FETCH TOPIC NAMES
+//   // ------------------------------
+  // fetchTopicNames: async () => {
+  //   const { saved } = get();
+  //   if (!saved?.topics) return;
+
+  //   console.log("📙 fetchTopicNames");
+
+  //   const topicNames = {};
+  //   const subjectNames = {};
+
+  //   await Promise.all(
+  //     Object.entries(saved.topics).flatMap(([_, topicIds]) =>
+  //       topicIds.map(async (topicId) => {
+  //         try {
+  //           const res = await fetch(
+  //             `https://fillops-server-5fuf.onrender.com/api/topics/${topicId}`,
+  //             {
+  //               headers: {
+  //                 Authorization: `Bearer ${useAuthStore.getState().accessToken}`,
+  //               },
+  //             }
+  //           );
+  //           const raw = await res.json();
+  //           const topic = raw.data || raw;
+
+  //           topicNames[topicId] = topic.topicName || topicId;
+
+  //           if (topic.module?.subject?.subjectName) {
+  //             subjectNames[topicId] = topic.module.subject.subjectName;
+  //           }
+  //         } catch {
+  //           topicNames[topicId] = topicId;
+  //         }
+  //       })
+  //     )
+  //   );
+
+  //   set((state) => ({
+  //     topicNames,
+  //     subjectNames: { ...state.subjectNames, ...subjectNames },
+  //   }));
+  // },
+
+//   // ------------------------------
+//   // CHANGE ACTIVE SUBJECT/TOPIC
+//   // ------------------------------
+//   changeActive: (id) => {
+//     const { saved } = get();
+//     if (!saved) return;
+
+//     console.log("🔁 changeActive:", id);
+//     set({ activeId: id, currentIndex: 0 });
+
+//     if (saved.mode === "subject") {
+//       get().fetchQuestions("subjects", id, saved.subjectYears?.[id]);
+//     } else {
+//       get().fetchQuestions("topics", id, saved.topicYears?.[id]);
+//     }
+//   },
+// }));
+
+
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 
+const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+
 export const useStudyStore = create((set, get) => ({
-  // ------------------------------
+  // =============================
   // STATE
-  // ------------------------------
+  // =============================
   saved: null,
   questions: [],
   loading: false,
@@ -216,23 +456,20 @@ export const useStudyStore = create((set, get) => ({
   subjectNames: {},
   topicNames: {},
 
-  // ------------------------------
+  // =============================
   // SYNC LOCAL STORAGE
-  // ------------------------------
+  // =============================
   syncSaved: async () => {
     try {
       const saved = JSON.parse(localStorage.getItem("studySelections"));
-      console.log("🔄 syncSaved()", saved);
       if (!saved) return null;
 
       set({ saved });
-      // fetch names after saved is ready
-      await Promise.all([
-        get().fetchSubjectNames(),
-        get().fetchTopicNames(),
-      ]);
 
-      // set first active item
+      // fetch names
+      await Promise.all([get().fetchSubjectNames(), get().fetchTopicNames()]);
+
+      // set first active
       const firstId =
         saved.mode === "subject"
           ? saved.subjects?.[0]
@@ -241,15 +478,15 @@ export const useStudyStore = create((set, get) => ({
       if (firstId) get().changeActive(firstId);
 
       return saved;
-    } catch (e) {
-      console.error("❌ syncSaved failed", e);
+    } catch (err) {
+      console.error("❌ syncSaved failed", err);
       return null;
     }
   },
 
-  // ------------------------------
-  // RESET STORE
-  // ------------------------------
+  // =============================
+  // RESET
+  // =============================
   reset: () =>
     set({
       saved: null,
@@ -262,67 +499,57 @@ export const useStudyStore = create((set, get) => ({
       topicNames: {},
     }),
 
-  // ------------------------------
+  // =============================
   // SETTERS
-  // ------------------------------
-  setActiveId: (id) => {
-    console.log("🎯 setActiveId:", id);
-    set({ activeId: id, currentIndex: 0 });
-  },
+  // =============================
+  setActiveId: (id) => set({ activeId: id, currentIndex: 0 }),
 
   setSelectedOption: (qId, opt) =>
-    set((state) => ({
-      selectedOptions: { ...state.selectedOptions, [qId]: opt },
-    })),
+    set((s) => ({ selectedOptions: { ...s.selectedOptions, [qId]: opt } })),
 
   setCurrentIndex: (index) =>
-    set((state) => ({ currentIndex: Math.max(0, Math.min(index, state.questions.length - 1)) })),
+    set((s) => ({
+      currentIndex: Math.max(0, Math.min(index, s.questions.length - 1)),
+    })),
 
-  // ------------------------------
+  // =============================
   // NAVIGATION
-  // ------------------------------
+  // =============================
   next: () => {
     const { currentIndex, questions, saved, activeId } = get();
     if (currentIndex < questions.length - 1) {
       set({ currentIndex: currentIndex + 1 });
-    } else {
-      // move to next subject/topic
-      if (!saved) return;
-      const ids =
-        saved.mode === "subject"
-          ? saved.subjects
-          : Object.values(saved.topics || {})[0];
-      const currentPos = ids.indexOf(activeId);
-      const nextId = ids[currentPos + 1];
-      if (nextId) get().changeActive(nextId);
+      return;
     }
+
+    if (!saved) return;
+
+    const ids =
+      saved.mode === "subject"
+        ? saved.subjects
+        : Object.values(saved.topics || {})[0];
+
+    const nextId = ids[ids.indexOf(activeId) + 1];
+    if (nextId) get().changeActive(nextId);
   },
 
-  // ------------------------------
-  // FETCH QUESTIONS
-  // ------------------------------
+  // =============================
+  // FETCH QUESTIONS (AUTO REFRESH)
+  // =============================
   fetchQuestions: async (type, id, year) => {
     const { saved } = get();
     if (!saved) return;
 
-    console.log("📥 fetchQuestions", { type, id, year });
-
     set({ loading: true });
 
     try {
-      const base = "https://fillops-server-5fuf.onrender.com/api";
       const url =
         year && year !== "random"
-          ? `${base}/${type}/${id}/questions?category=${saved.exam}&year=${year}`
-          : `${base}/${type}/${id}/questions?random=true&category=${saved.exam}`;
+          ? `${API_BASE}/${type}/${id}/questions?category=${saved.exam}&year=${year}`
+          : `${API_BASE}/${type}/${id}/questions?random=true&category=${saved.exam}`;
 
-      const token = useAuthStore.getState().accessToken;
-      console.log("🔗 Fetching from URL:", token);
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
+      const { fetchWithAuth } = useAuthStore.getState();
+      const data = await fetchWithAuth(url);
 
       set({
         questions: data.data || [],
@@ -330,37 +557,29 @@ export const useStudyStore = create((set, get) => ({
         selectedOptions: {},
         loading: false,
       });
-    } catch (e) {
-      console.error("❌ fetchQuestions error", e);
+    } catch (err) {
+      console.error("❌ fetchQuestions failed", err);
       set({ questions: [], loading: false });
     }
   },
 
-  // ------------------------------
+  // =============================
   // FETCH SUBJECT NAMES
-  // ------------------------------
+  // =============================
   fetchSubjectNames: async () => {
     const { saved } = get();
-    if (!saved?.subjects) return;
-
-    console.log("📘 fetchSubjectNames");
+    if (!saved?.subjects?.length) return;
 
     const names = {};
+    const { fetchWithAuth } = useAuthStore.getState();
+
     await Promise.all(
-      saved.subjects.map(async (id) => {
+      saved.subjects.map(async (subjectId) => {
         try {
-          const res = await fetch(
-            `https://fillops-server-5fuf.onrender.com/api/subjects/${id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${useAuthStore.getState().accessToken}`,
-              },
-            }
-          );
-          const data = await res.json();
-          names[id] = data.subjectName || id;
+          const res = await fetchWithAuth(`${API_BASE}/subjects/${subjectId}`);
+          names[subjectId] = res?.data?.subjectName || subjectId;
         } catch {
-          names[id] = id;
+          names[subjectId] = subjectId;
         }
       })
     );
@@ -368,37 +587,29 @@ export const useStudyStore = create((set, get) => ({
     set({ subjectNames: names });
   },
 
-  // ------------------------------
-  // FETCH TOPIC NAMES
-  // ------------------------------
+  // =============================
+  // FETCH TOPIC NAMES (WITH SUBJECT LINK)
+  // =============================
   fetchTopicNames: async () => {
     const { saved } = get();
     if (!saved?.topics) return;
 
-    console.log("📙 fetchTopicNames");
-
     const topicNames = {};
     const subjectNames = {};
+    const { fetchWithAuth } = useAuthStore.getState();
 
     await Promise.all(
-      Object.entries(saved.topics).flatMap(([_, topicIds]) =>
+      Object.entries(saved.topics).flatMap(([subjectId, topicIds]) =>
         topicIds.map(async (topicId) => {
           try {
-            const res = await fetch(
-              `https://fillops-server-5fuf.onrender.com/api/topics/${topicId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${useAuthStore.getState().accessToken}`,
-                },
-              }
-            );
-            const raw = await res.json();
-            const topic = raw.data || raw;
+            const res = await fetchWithAuth(`${API_BASE}/topics/${topicId}`);
+            const data = res?.data || {};
 
-            topicNames[topicId] = topic.topicName || topicId;
+            topicNames[topicId] = data.topicName || topicId;
 
-            if (topic.module?.subject?.subjectName) {
-              subjectNames[topicId] = topic.module.subject.subjectName;
+            // Make sure subjectName for this topic is correctly set
+            if (data.module?.subject?.subjectName) {
+              subjectNames[subjectId] = data.module.subject.subjectName;
             }
           } catch {
             topicNames[topicId] = topicId;
@@ -407,20 +618,19 @@ export const useStudyStore = create((set, get) => ({
       )
     );
 
-    set((state) => ({
+    set((s) => ({
       topicNames,
-      subjectNames: { ...state.subjectNames, ...subjectNames },
+      subjectNames: { ...s.subjectNames, ...subjectNames },
     }));
   },
 
-  // ------------------------------
-  // CHANGE ACTIVE SUBJECT/TOPIC
-  // ------------------------------
+  // =============================
+  // CHANGE ACTIVE
+  // =============================
   changeActive: (id) => {
     const { saved } = get();
     if (!saved) return;
 
-    console.log("🔁 changeActive:", id);
     set({ activeId: id, currentIndex: 0 });
 
     if (saved.mode === "subject") {
