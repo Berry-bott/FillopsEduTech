@@ -177,7 +177,7 @@ export default function QuestionCard() {
       <div className="p-2">
         <button
           onClick={() => navigate("/user/dashboard")}
-          className="underline text-blue-600"
+          className=" text-white p-2 rounded text-[11px] bg-primary hover:bg-primary-hover"
         >
           ← Back to Dashboard
         </button>
@@ -290,7 +290,7 @@ export default function QuestionCard() {
         {/* ================= RIGHT: PAYMENT ================= */}
         <aside>
           {paymentLocked && (
-            <div className="fixed top-24 right-0 w-96 z-[9999]">
+            <div className="fixed top-16 right-0 w-96 z-[9999]">
               <InitializePayment />
             </div>
           )}

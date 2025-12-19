@@ -1060,9 +1060,9 @@ export const useStudyStore = create((set, get) => ({
         `${API_BASE}/payments/initialize`,
         { method: "POST" }
       );
-
       set({ paymentLoading: false });
-      window.location.href = data.data.authorization_url;
+      console.log( data.data.authorization_url)
+      window.location.href = data.data.authorizationUrl;
     } catch (err) {
       console.error("❌ payment init failed", err);
       set({ paymentLoading: false });
