@@ -8,7 +8,7 @@ import { Check, Crown, Sparkles } from "lucide-react"
 export default function InitializePayment(){
     return(
         <div>
-        <Card className="overflow-hidden flex flex-col border-2 border-border shadow-2xl">
+        <Card className="overflow-y-auto flex flex-col border-2 border-border shadow-2xl">
                 {/* Header */}
                 <div className="p-6 border-b border-border bg-gradient-to-br from-primary/5 to-accent/5">
                 <div className="flex items-center justify-center gap-2 mb-3">

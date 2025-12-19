@@ -290,7 +290,7 @@ export default function QuestionCard() {
         {/* ================= RIGHT: PAYMENT ================= */}
         <aside>
           {paymentLocked && (
-            <div className="fixed top-24 right-0 w-96 z-[99999]">
+            <div className="fixed top-24 right-0 w-96 z-[9999]">
               <InitializePayment />
             </div>
           )}
