@@ -259,12 +259,12 @@ export default function Header() {
       <div className="p-4 space-y-4">
         <div className='flex justify-between items-center '>
         <div>
-          <div className="h-8 w-48 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
-          <div className="h-8 w-48 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
+          <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
+          <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
         </div>
-        <div className='p-4 space-y-4'>
-        <div className="h-8 w-40 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
-        <div className="h-8 w-40 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
+        <div >
+        <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
+        <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
         </div>
         </div>
         <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(skeletonCount, 4)}, 1fr)` }}>
