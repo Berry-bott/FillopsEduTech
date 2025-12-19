@@ -184,7 +184,7 @@ export default function QuestionCard() {
       </div>
 
       {/* Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
         {/* ================= LEFT: QUESTION ================= */}
         <main>
           <div className="border border-gray-300 rounded-lg p-4">
@@ -290,7 +290,7 @@ export default function QuestionCard() {
         {/* ================= RIGHT: PAYMENT ================= */}
         <aside>
           {paymentLocked && (
-            <div className="fixed top-16 right-0 w-96 z-[9999]">
+            <div className="fixed top-16 right-0 w-full md:w-96 z-[9999]">
               <InitializePayment />
             </div>
           )}

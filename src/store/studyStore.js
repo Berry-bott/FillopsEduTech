@@ -775,28 +775,11 @@ export const useStudyStore = create((set, get) => ({
     // 5️⃣ No next subject/topic → end of study
     console.log("✅ Study completed");
   },
-  
-  // next: () => {
-  //   const {
-  //     currentIndex,
-  //     questions,
-  //     paymentLocked,
-  //   } = get();
 
-  //   if (paymentLocked) return;
-
-  //   if (currentIndex < questions.length - 1) {
-  //     set({ currentIndex: currentIndex + 1 });
-  //   } else {
-  //     // fetch next question
-  //     get().fetchNextQuestion();
-  //     set({ currentIndex: currentIndex + 1 });
-  //   }
-  // },
 
   // =============================
   // FETCH ONE QUESTION (LIMITED)
-  // =============================
+  // ============================
 
   prefetchQuestions: async () => {
     const { saved, activeId, questions, paymentLocked, currentIndex } = get();
@@ -857,56 +840,7 @@ export const useStudyStore = create((set, get) => ({
         return;
       }
     }
-  }
-,  
-  
-  
-
-  // prefetchQuestions: async () => {
-  //   const { saved, activeId, questions, paymentLocked, loading } = get();
-  //   if (!saved || !activeId || paymentLocked || loading) return;
-  
-  //   const remaining = questions.length - get().currentIndex - 1;
-  
-  //   // only prefetch when buffer is low
-  //   if (remaining > 1) return;
-  
-  //   set({ loading: true });
-  
-  //   try {
-  //     const skip = questions.length;
-  //     const limit = BUFFER_SIZE;
-  
-  //     const base =
-  //       saved.mode === "subject"
-  //         ? `subjects/${activeId}`
-  //         : `topics/${activeId}`;
-  
-  //     const year =
-  //       saved.mode === "subject"
-  //         ? saved.subjectYears?.[activeId]
-  //         : saved.topicYears?.[activeId];
-  
-  //     const url =
-  //       year && year !== "random"
-  //         ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}&limit=${limit}&skip=${skip}`
-  //         : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true&limit=${limit}&skip=${skip}`;
-  
-  //     const { fetchWithAuth } = useAuthStore.getState();
-  //     const data = await fetchWithAuth(url);
-  
-  //     set((s) => ({
-  //       questions: [...s.questions, ...(data.data || [])],
-  //       loading: false,
-  //     }));
-  //   } catch (err) {
-  //     if (err?.status === 403) {
-  //       set({ paymentLocked: true, loading: false });
-  //       return;
-  //     }
-  //     set({ loading: false });
-  //   }
-  // },
+  }, 
 
   // fetchNextQuestion: async () => {
   //   const { saved, activeId, questions, paymentLocked } = get();
