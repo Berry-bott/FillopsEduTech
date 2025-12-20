@@ -183,7 +183,7 @@ export default function PageNav() {
       setExamType(localStorage.getItem("exams") || "JAMB");
       setStudyMode(localStorage.getItem("studyMode") || "Learning");
       setReady(true);
-    }, 10000); // allows skeleton to appear
+    }, 1000); // allows skeleton to appear
 
     return () => clearTimeout(timer);
   }, []);
@@ -198,7 +198,7 @@ export default function PageNav() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   /* ===============================

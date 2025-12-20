@@ -648,57 +648,414 @@
 
 
 
+// import { create } from "zustand";
+// import useAuthStore from "./authStore";
+
+// const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+// const BUFFER_SIZE = 100; // how many questions ahead
+
+// export const useStudyStore = create((set, get) => ({
+//   // =============================
+//   // STATE
+//   // =============================
+//   saved: null,
+//   questions: [],
+//   loading: false,
+//   selectedOptions: {},
+//   activeId: null,
+//   currentIndex: 0,
+//   subjectNames: {},
+//   topicNames: {},
+
+//   // 🔐 payment
+//   paymentLocked: false,
+//   paymentLoading: false,
+
+//   // =============================
+//   // SYNC LOCAL STORAGE
+//   // =============================
+//   syncSaved: async () => {
+//     try {
+//       const saved = JSON.parse(localStorage.getItem("studySelections"));
+//       if (!saved) return null;
+
+//       set({ saved });
+
+//       await Promise.all([
+//         get().fetchSubjectNames(),
+//         get().fetchTopicNames(),
+//       ]);
+
+//       const firstId =
+//         saved.mode === "subject"
+//           ? saved.subjects?.[0]
+//           : Object.values(saved.topics || {})[0]?.[0];
+
+//       if (firstId) get().changeActive(firstId);
+
+//       return saved;
+//     } catch (err) {
+//       console.error("❌ syncSaved failed", err);
+//       return null;
+//     }
+//   },
+
+//   // =============================
+//   // RESET
+//   // =============================
+//   reset: () =>
+//     set({
+//       saved: null,
+//       questions: [],
+//       loading: false,
+//       selectedOptions: {},
+//       activeId: null,
+//       currentIndex: 0,
+//       subjectNames: {},
+//       topicNames: {},
+//       paymentLocked: false,
+//     }),
+
+//   // =============================
+//   // SETTERS
+//   // =============================
+//   setSelectedOption: (qId, opt) =>
+//     set((s) => ({
+//       selectedOptions: { ...s.selectedOptions, [qId]: opt },
+//     })),
+
+//   // =============================
+//   // NAVIGATION (SAFE)
+//   // =============================
+//   next: async () => {
+//     const {
+//       currentIndex,
+//       questions,
+//       saved,
+//       activeId,
+//       paymentLocked,
+//     } = get();
+  
+//     if (paymentLocked) return;
+  
+//     // 1️⃣ Still have questions locally → move instantly
+//     if (currentIndex < questions.length - 1) {
+//       set({ currentIndex: currentIndex + 1 });
+//       get().prefetchQuestions(); // background
+//       return;
+//     }
+  
+//     // 2️⃣ We are at the end → try prefetch
+//     await get().prefetchQuestions();
+  
+//     const updated = get();
+  
+//     // 3️⃣ If new questions arrived → move
+//     if (updated.currentIndex < updated.questions.length - 1) {
+//       set({ currentIndex: updated.currentIndex + 1 });
+//       return;
+//     }
+  
+//     // 4️⃣ Still no questions → subject/topic exhausted
+//     if (!saved) return;
+  
+//     const ids =
+//       saved.mode === "subject"
+//         ? saved.subjects
+//         : Object.values(saved.topics || {})[0];
+  
+//     const currentPos = ids.indexOf(activeId);
+//     const nextId = ids[currentPos + 1];
+  
+//     if (nextId) {
+//       get().changeActive(nextId);
+//       return;
+//     }
+  
+//     // 5️⃣ No next subject/topic → end of study
+//     console.log("✅ Study completed");
+//   },
+
+
+//   // =============================
+//   // FETCH ONE QUESTION (LIMITED)
+//   // ============================
+//   prefetchQuestions: async () => {
+//     const { saved, activeId, questions, paymentLocked, currentIndex } = get();
+//     if (!saved || !activeId || paymentLocked) return;
+  
+//     const remaining = questions.length - currentIndex - 1;
+//     if (remaining >= BUFFER_SIZE) return;
+  
+//     const { fetchWithAuth } = useAuthStore.getState();
+  
+//     try {
+//       const skip = questions.length;
+//       const limit = BUFFER_SIZE;
+  
+//       const base =
+//         saved.mode === "subject"
+//           ? `subjects/${activeId}`
+//           : `topics/${activeId}`;
+  
+//       const year =
+//         saved.mode === "subject"
+//           ? saved.subjectYears?.[activeId]
+//           : saved.topicYears?.[activeId];
+  
+//       const url =
+//         year && year !== "random"
+//           ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}&limit=${limit}&skip=${skip}`
+//           : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true&limit=${limit}&skip=${skip}`;
+  
+//       const data = await fetchWithAuth(url);
+  
+//       // ✅ CHECK BACKEND RESPONSE
+//       if (
+//         data?.code === "PAYMENT_REQUIRED" || 
+//         data?.status === 403 || 
+//         (data?.data && data.data.code === "PAYMENT_REQUIRED")
+//       ) {
+//         set({ paymentLocked: true });
+//         console.log("🔥 Payment required detected:", data);
+//         return;
+//       }
+  
+//       // ✅ SAFE ARRAY CHECK
+//       if (Array.isArray(data?.data)) {
+//         set((s) => ({
+//           questions: [...s.questions, ...data.data],
+//         }));
+//       }
+//     } catch (err) {
+//       console.log("PAYMENT ERROR:", err);
+  
+//       if (
+//         err?.status === 403 ||
+//         err?.response?.status === 403 ||
+//         err?.message?.includes("403")
+//       ) {
+//         set({ paymentLocked: true });
+//         return;
+//       }
+//     }
+//   }, 
+
+//   // fetchNextQuestion: async () => {
+//   //   const { saved, activeId, questions, paymentLocked } = get();
+//   //   if (!saved || !activeId || paymentLocked) return;
+
+//   //   set({ loading: true });
+
+//   //   try {
+//   //     const skip = questions.length;
+//   //     const limit = 1;
+
+//   //     const base =
+//   //       saved.mode === "subject"
+//   //         ? `subjects/${activeId}`
+//   //         : `topics/${activeId}`;
+
+//   //     const year =
+//   //       saved.mode === "subject"
+//   //         ? saved.subjectYears?.[activeId]
+//   //         : saved.topicYears?.[activeId];
+
+//   //     const url =
+//   //       year && year !== "random"
+//   //         ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}&limit=${limit}&skip=${skip}`
+//   //         : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true&limit=${limit}&skip=${skip}`;
+
+//   //     const { fetchWithAuth } = useAuthStore.getState();
+//   //     const data = await fetchWithAuth(url);
+
+//   //     set((s) => ({
+//   //       questions: [...s.questions, ...(data.data || [])],
+//   //       loading: false,
+//   //     }));
+//   //   } catch (err) {
+//   //     if (err?.status === 403) {
+//   //       // 🚫 free limit reached
+//   //       set({ paymentLocked: true, loading: false });
+//   //       return;
+//   //     }
+
+//   //     console.error("❌ fetchNextQuestion failed", err);
+//   //     set({ loading: false });
+//   //   }
+//   // },
+
+//   // =============================
+//   // CHANGE ACTIVE (RESET QUESTIONS)
+//   // =============================
+//   // changeActive: (id) => {
+//   //   const { saved } = get();
+//   //   if (!saved) return;
+
+//   //   set({
+//   //     activeId: id,
+//   //     questions: [],
+//   //     currentIndex: 0,
+//   //     selectedOptions: {},
+//   //     paymentLocked: false,
+//   //   });
+
+//   //   get().fetchNextQuestion();
+//   // },
+
+//   changeActive: (id) => {
+//     const { saved } = get();
+//     if (!saved) return;
+  
+//     set({
+//       activeId: id,
+//       questions: [],
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       paymentLocked: false,
+//     });
+  
+//     // fetch initial buffer
+//     get().prefetchQuestions();
+//   },
+  
+
+//   // =============================
+//   // SUBJECT NAMES
+//   // =============================
+//   fetchSubjectNames: async () => {
+//     const { saved } = get();
+//     if (!saved?.subjects?.length) return;
+
+//     const names = {};
+//     const { fetchWithAuth } = useAuthStore.getState();
+
+//     await Promise.all(
+//       saved.subjects.map(async (id) => {
+//         try {
+//           const res = await fetchWithAuth(`${API_BASE}/subjects/${id}`);
+//           names[id] = res?.data?.subjectName || id;
+//         } catch {
+//           names[id] = id;
+//         }
+//       })
+//     );
+
+//     set({ subjectNames: names });
+//   },
+
+  // // =============================
+  // // TOPIC NAMES
+  // // =============================
+  // fetchTopicNames: async () => {
+  //   const { saved } = get();
+  //   if (!saved?.topics) return;
+
+  //   const topicNames = {};
+  //   const subjectNames = {};
+  //   const { fetchWithAuth } = useAuthStore.getState();
+
+  //   await Promise.all(
+  //     Object.entries(saved.topics).flatMap(([subjectId, topicIds]) =>
+  //       topicIds.map(async (topicId) => {
+  //         try {
+  //           const res = await fetchWithAuth(`${API_BASE}/topics/${topicId}`);
+  //           const data = res?.data || {};
+
+  //           topicNames[topicId] = data.topicName || topicId;
+
+  //           if (data.module?.subject?.subjectName) {
+  //             subjectNames[subjectId] =
+  //               data.module.subject.subjectName;
+  //           }
+  //         } catch {
+  //           topicNames[topicId] = topicId;
+  //         }
+  //       })
+  //     )
+  //   );
+
+  //   set((s) => ({
+  //     topicNames,
+  //     subjectNames: { ...s.subjectNames, ...subjectNames },
+  //   }));
+  // },
+
+  // // =============================
+  // // PAYMENTS
+  // // =============================
+  // initializePayment: async () => {
+  //   set({ paymentLoading: true });
+
+  //   try {
+  //     const { fetchWithAuth } = useAuthStore.getState();
+  //     const data = await fetchWithAuth(
+  //       `${API_BASE}/payments/initialize`,
+  //       { method: "POST" }
+  //     );
+  //     set({ paymentLoading: false });
+  //     console.log( data.data.authorization_url)
+  //     window.location.href = data.data.authorizationUrl;
+  //   } catch (err) {
+  //     console.error("❌ payment init failed", err);
+  //     set({ paymentLoading: false });
+  //   }
+  // },
+// }));
+
+
+
+
+
+
+
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
-const BUFFER_SIZE = 100; // how many questions ahead
 
 export const useStudyStore = create((set, get) => ({
   // =============================
   // STATE
   // =============================
   saved: null,
-  questions: [],
-  loading: false,
-  selectedOptions: {},
+  questionsByUnit: {},
   activeId: null,
   currentIndex: 0,
+  selectedOptions: {},
   subjectNames: {},
   topicNames: {},
-
-  // 🔐 payment
+  loading: false,
   paymentLocked: false,
   paymentLoading: false,
 
   // =============================
-  // SYNC LOCAL STORAGE
+  // SYNC SAVED SELECTION
   // =============================
   syncSaved: async () => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("studySelections"));
-      if (!saved) return null;
+    const saved = JSON.parse(localStorage.getItem("studySelections"));
+    if (!saved) return;
 
-      set({ saved });
+    set({ saved });
 
-      await Promise.all([
-        get().fetchSubjectNames(),
-        get().fetchTopicNames(),
-      ]);
+    await Promise.all([
+      get().fetchSubjectNames(),
+      get().fetchTopicNames(),
+    ]);
 
-      const firstId =
-        saved.mode === "subject"
-          ? saved.subjects?.[0]
-          : Object.values(saved.topics || {})[0]?.[0];
+    const firstId =
+      saved.mode === "subject"
+        ? saved.subjects?.[0]
+        : Object.values(saved.topics || {})[0]?.[0];
 
-      if (firstId) get().changeActive(firstId);
-
-      return saved;
-    } catch (err) {
-      console.error("❌ syncSaved failed", err);
-      return null;
-    }
+    if (firstId) get().changeActive(firstId);
   },
+
+  setCurrentIndex: (index) =>
+    set({
+      currentIndex: Math.max(0, index),
+    }),
+  
 
   // =============================
   // RESET
@@ -706,15 +1063,20 @@ export const useStudyStore = create((set, get) => ({
   reset: () =>
     set({
       saved: null,
-      questions: [],
-      loading: false,
-      selectedOptions: {},
+      questionsByUnit: {},
       activeId: null,
       currentIndex: 0,
-      subjectNames: {},
-      topicNames: {},
+      selectedOptions: {},
       paymentLocked: false,
     }),
+
+  // =============================
+  // DERIVED QUESTIONS
+  // =============================
+  getQuestions: () => {
+    const { activeId, questionsByUnit } = get();
+    return questionsByUnit[activeId] || [];
+  },
 
   // =============================
   // SETTERS
@@ -725,220 +1087,112 @@ export const useStudyStore = create((set, get) => ({
     })),
 
   // =============================
-  // NAVIGATION (SAFE)
+  // CHANGE ACTIVE (FETCH ALL ONCE)
   // =============================
-  next: async () => {
-    const {
-      currentIndex,
-      questions,
-      saved,
-      activeId,
-      paymentLocked,
-    } = get();
-  
-    if (paymentLocked) return;
-  
-    // 1️⃣ Still have questions locally → move instantly
-    if (currentIndex < questions.length - 1) {
-      set({ currentIndex: currentIndex + 1 });
-      get().prefetchQuestions(); // background
-      return;
-    }
-  
-    // 2️⃣ We are at the end → try prefetch
-    await get().prefetchQuestions();
-  
-    const updated = get();
-  
-    // 3️⃣ If new questions arrived → move
-    if (updated.currentIndex < updated.questions.length - 1) {
-      set({ currentIndex: updated.currentIndex + 1 });
-      return;
-    }
-  
-    // 4️⃣ Still no questions → subject/topic exhausted
-    if (!saved) return;
-  
-    const ids =
-      saved.mode === "subject"
-        ? saved.subjects
-        : Object.values(saved.topics || {})[0];
-  
-    const currentPos = ids.indexOf(activeId);
-    const nextId = ids[currentPos + 1];
-  
-    if (nextId) {
-      get().changeActive(nextId);
-      return;
-    }
-  
-    // 5️⃣ No next subject/topic → end of study
-    console.log("✅ Study completed");
-  },
-
-
-  // =============================
-  // FETCH ONE QUESTION (LIMITED)
-  // ============================
-
-  prefetchQuestions: async () => {
-    const { saved, activeId, questions, paymentLocked, currentIndex } = get();
-    if (!saved || !activeId || paymentLocked) return;
-  
-    const remaining = questions.length - currentIndex - 1;
-    if (remaining >= BUFFER_SIZE) return;
-  
-    const { fetchWithAuth } = useAuthStore.getState();
-  
-    try {
-      const skip = questions.length;
-      const limit = BUFFER_SIZE;
-  
-      const base =
-        saved.mode === "subject"
-          ? `subjects/${activeId}`
-          : `topics/${activeId}`;
-  
-      const year =
-        saved.mode === "subject"
-          ? saved.subjectYears?.[activeId]
-          : saved.topicYears?.[activeId];
-  
-      const url =
-        year && year !== "random"
-          ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}&limit=${limit}&skip=${skip}`
-          : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true&limit=${limit}&skip=${skip}`;
-  
-      const data = await fetchWithAuth(url);
-  
-      // ✅ CHECK BACKEND RESPONSE
-      if (
-        data?.code === "PAYMENT_REQUIRED" || 
-        data?.status === 403 || 
-        (data?.data && data.data.code === "PAYMENT_REQUIRED")
-      ) {
-        set({ paymentLocked: true });
-        console.log("🔥 Payment required detected:", data);
-        return;
-      }
-  
-      // ✅ SAFE ARRAY CHECK
-      if (Array.isArray(data?.data)) {
-        set((s) => ({
-          questions: [...s.questions, ...data.data],
-        }));
-      }
-    } catch (err) {
-      console.log("PAYMENT ERROR:", err);
-  
-      if (
-        err?.status === 403 ||
-        err?.response?.status === 403 ||
-        err?.message?.includes("403")
-      ) {
-        set({ paymentLocked: true });
-        return;
-      }
-    }
-  }, 
-
-  // fetchNextQuestion: async () => {
-  //   const { saved, activeId, questions, paymentLocked } = get();
-  //   if (!saved || !activeId || paymentLocked) return;
-
-  //   set({ loading: true });
-
-  //   try {
-  //     const skip = questions.length;
-  //     const limit = 1;
-
-  //     const base =
-  //       saved.mode === "subject"
-  //         ? `subjects/${activeId}`
-  //         : `topics/${activeId}`;
-
-  //     const year =
-  //       saved.mode === "subject"
-  //         ? saved.subjectYears?.[activeId]
-  //         : saved.topicYears?.[activeId];
-
-  //     const url =
-  //       year && year !== "random"
-  //         ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}&limit=${limit}&skip=${skip}`
-  //         : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true&limit=${limit}&skip=${skip}`;
-
-  //     const { fetchWithAuth } = useAuthStore.getState();
-  //     const data = await fetchWithAuth(url);
-
-  //     set((s) => ({
-  //       questions: [...s.questions, ...(data.data || [])],
-  //       loading: false,
-  //     }));
-  //   } catch (err) {
-  //     if (err?.status === 403) {
-  //       // 🚫 free limit reached
-  //       set({ paymentLocked: true, loading: false });
-  //       return;
-  //     }
-
-  //     console.error("❌ fetchNextQuestion failed", err);
-  //     set({ loading: false });
-  //   }
-  // },
-
-  // =============================
-  // CHANGE ACTIVE (RESET QUESTIONS)
-  // =============================
-  // changeActive: (id) => {
-  //   const { saved } = get();
-  //   if (!saved) return;
-
-  //   set({
-  //     activeId: id,
-  //     questions: [],
-  //     currentIndex: 0,
-  //     selectedOptions: {},
-  //     paymentLocked: false,
-  //   });
-
-  //   get().fetchNextQuestion();
-  // },
-
-  changeActive: (id) => {
-    const { saved } = get();
+  changeActive: async (id) => {
+    const { saved, questionsByUnit } = get();
     if (!saved) return;
   
     set({
       activeId: id,
-      questions: [],
       currentIndex: 0,
       selectedOptions: {},
       paymentLocked: false,
+      loading: true,
     });
   
-    // fetch initial buffer
-    get().prefetchQuestions();
+    // Already fetched → do nothing
+    if (questionsByUnit[id]) {
+      set({ loading: false });
+      return;
+    }
+  
+    try {
+      const { fetchWithAuth } = useAuthStore.getState();
+      const base = saved.mode === "subject" ? `subjects/${id}` : `topics/${id}`;
+      const year = saved.mode === "subject" ? saved.subjectYears?.[id] : saved.topicYears?.[id];
+      const url = year && year !== "random"
+        ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}`
+        : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true`;
+  
+      const res = await fetchWithAuth(url);
+  
+      // Payment required
+      if (res?.code === "PAYMENT_REQUIRED" || res?.status === 403) {
+        set({ paymentLocked: true, loading: false });
+        // Always set empty questions so UI renders payment
+        set((s) => ({
+          questionsByUnit: { ...s.questionsByUnit, [id]: [] }
+        }));
+        return;
+      }
+  
+      // Set fetched questions
+      set((s) => ({
+        questionsByUnit: { ...s.questionsByUnit, [id]: Array.isArray(res?.data) ? res.data : [] },
+        loading: false,
+      }));
+    } catch (err) {
+      console.error("❌ fetch questions failed", err);
+      set((s) => ({
+        questionsByUnit: { ...s.questionsByUnit, [id]: [] },
+        paymentLocked: err?.status === 403 || err?.response?.status === 403 ? true : false,
+        loading: false,
+      }));
+    }
   },
   
+
+  // =============================
+  // NAVIGATION (NO BLINKING)
+  // =============================
+  next: () => {
+    const { saved, activeId, currentIndex, paymentLocked } = get();
+    if (paymentLocked) return;
+
+    const questions = get().getQuestions();
+
+    // move locally
+    if (currentIndex < questions.length - 1) {
+      set({ currentIndex: currentIndex + 1 });
+      return;
+    }
+
+    // move to next subject/topic
+    const ids =
+      saved.mode === "subject"
+        ? saved.subjects
+        : Object.values(saved.topics || {})[0];
+
+    const pos = ids.indexOf(activeId);
+    const nextId = ids[pos + 1];
+
+    if (nextId) {
+      get().changeActive(nextId);
+    } else {
+      console.log("✅ Study completed");
+    }
+  },
+
+  prev: () =>
+    set((s) => ({
+      currentIndex: Math.max(0, s.currentIndex - 1),
+    })),
 
   // =============================
   // SUBJECT NAMES
   // =============================
   fetchSubjectNames: async () => {
     const { saved } = get();
-    if (!saved?.subjects?.length) return;
+    if (!saved?.subjects) return;
 
-    const names = {};
     const { fetchWithAuth } = useAuthStore.getState();
+    const names = {};
 
     await Promise.all(
       saved.subjects.map(async (id) => {
-        try {
-          const res = await fetchWithAuth(`${API_BASE}/subjects/${id}`);
-          names[id] = res?.data?.subjectName || id;
-        } catch {
-          names[id] = id;
-        }
+        const res = await fetchWithAuth(`${API_BASE}/subjects/${id}`);
+        names[id] = res?.data?.subjectName || id;
       })
     );
 
@@ -981,8 +1235,7 @@ export const useStudyStore = create((set, get) => ({
       subjectNames: { ...s.subjectNames, ...subjectNames },
     }));
   },
-
-  // =============================
+   // =============================
   // PAYMENTS
   // =============================
   initializePayment: async () => {

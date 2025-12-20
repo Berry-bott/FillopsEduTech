@@ -1187,9 +1187,8 @@ export default function studyPage() {
       <Header />
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-10">
+        <div className="flex flex-col items-center justify-center py-60">
           <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin"></div>
-          <p>Loading...</p>
         </div>
       ) : (
         <QuestionCard />
