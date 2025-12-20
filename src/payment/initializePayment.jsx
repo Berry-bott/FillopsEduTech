@@ -80,6 +80,7 @@ export default function InitializePayment() {
               // onClick={initializePayment}
               onClick={() => {
                 navigate("/checkout")
+              console.log("navigating")
               }}
               // disabled={paymentLoading}
             >
