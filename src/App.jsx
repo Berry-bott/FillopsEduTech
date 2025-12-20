@@ -119,6 +119,7 @@ import LandingPage from "@/pages/index/LandingPage";
 import Unauthorized from "@/pages/index/Unauthorized";
 import UserDashboard from "@/pages/user/UserDashboard";
 import PreferencePage from "@/pages/user/PreferencePage";
+import CheckoutPage from "./Payment/CheckoutPage";
 
 
 import LecturerDashboard from "@/pages/lecturer/LecturerDashboard";
@@ -145,6 +146,7 @@ function App() {
           <Route path="/study" element={<StudyPage />} />
           <Route path="/quiz" element={<QuizPage />} />
           <Route path="/exam" element={<ExamsPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
 
           <Route path="/preference" element={<PreferencePage />} />
           <Route path="/exam-selector" element={<ExamSelector />} />

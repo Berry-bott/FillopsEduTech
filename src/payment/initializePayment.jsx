@@ -3,9 +3,15 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Check, Crown, Sparkles } from "lucide-react"
 import { useStudyStore } from "@/store/studyStore"
+import { useNavigate, useLocation, Link } from "react-router-dom";
+
 
 export default function InitializePayment() {
   const { initializePayment, paymentLoading } = useStudyStore();
+  const navigate = useNavigate();
+
+
+
 
   return (
     <Card className="flex flex-col h-[91vh] border-2 border-border shadow-2xl">
@@ -72,9 +78,12 @@ export default function InitializePayment() {
               className="w-full"
               size="lg"
               // onClick={initializePayment}
+              onClick={() => {
+                navigate("/checkout")
+              }}
               disabled={paymentLoading}
             >
-              {paymentLoading ? "Redirecting..." : "Subscribe Now!"}
+              {paymentLoading ? "Redirecting..." : "Subscribe Now"}
             </Button>
           </div>
         </Card>

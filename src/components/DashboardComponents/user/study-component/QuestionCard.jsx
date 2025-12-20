@@ -316,7 +316,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudyStore } from "../../../../store/studyStore";
-import InitializePayment from "../../../../payments/initializePayment";
+import InitializePayment from "../../../../payment/initializePayment";
 
 export default function QuestionCard() {
   const navigate = useNavigate();

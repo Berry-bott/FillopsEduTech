@@ -1,15 +1,15 @@
-"use client"
-
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { useStudyStore } from "@/store/studyStore"
 import { CreditCard, Check, ShieldCheck, Star, Sparkles } from "lucide-react"
 
-export function CheckoutForm() {
-  const [selectedPayment, setSelectedPayment] = useState<"card" | "paypal">("card")
+export default function CheckoutPage() {
+   const { initializePayment, paymentLoading } = useStudyStore();
+  const [selectedPayment, setSelectedPayment] = useState("card")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
@@ -306,8 +306,10 @@ export function CheckoutForm() {
                   </div>
 
                   {/* Purchase Button */}
-                  <Button className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
-                    Complete Purchase
+                  <Button 
+                   onClick={initializePayment}
+                  className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
+                    {paymentLoading ? "Redirecting..." : "Complete Purchase"}
                   </Button>
 
                   {/* Money Back Guarantee */}
