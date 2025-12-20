@@ -180,7 +180,9 @@ export default function PageNav() {
   =============================== */
   useEffect(() => {
     const timer = setTimeout(() => {
-      setExamType(localStorage.getItem("exams") || "JAMB");
+      const saved = JSON.parse(localStorage.getItem("studySelections"));
+     console.log(saved)
+      setExamType(saved.exam);
       setStudyMode(localStorage.getItem("studyMode") || "Learning");
       setReady(true);
     }, 1000); // allows skeleton to appear
@@ -190,8 +192,7 @@ export default function PageNav() {
 
   const navigationItems = [
     { name: "Dashboard", path: "/user/dashboard" },
-    { name: "Study", path: "/user/study" },
-    { name: "Practice", path: "/user/practice" },
+    { name: "Study", path: "" },
   ];
 
   const isActive = (path) => location.pathname === path;
