@@ -150,21 +150,21 @@
   //           )}, 1fr)`,
   //         }}
   //       >
-  //         {topicList.map((topicId, idx) => (
-  //           <button
-  //             key={topicId}
-  //             onClick={() => changeActive(topicId)}
-  //             className={`px-2 py-2 rounded-lg shadow text-white text-xs transition-opacity duration-500
-  //               ${idx < visibleCount ? "opacity-100" : "opacity-0"}
-  //               ${
-  //                 activeId === topicId
-  //                   ? "bg-primary"
-  //                   : "bg-primary-hover"
-  //               }`}
-  //           >
-  //             {topicNames[topicId] || "Topic"}
-  //           </button>
-  //         ))}
+          // {topicList.map((topicId, idx) => (
+          //   <button
+          //     key={topicId}
+          //     onClick={() => changeActive(topicId)}
+          //     className={`px-2 py-2 rounded-lg shadow text-white text-xs transition-opacity duration-500
+          //       ${idx < visibleCount ? "opacity-100" : "opacity-0"}
+          //       ${
+          //         activeId === topicId
+          //           ? "bg-primary"
+          //           : "bg-primary-hover"
+          //       }`}
+          //   >
+          //     {topicNames[topicId] || "Topic"}
+          //   </button>
+          // ))}
   //       </div>
   //     </main>
   //   );
@@ -219,14 +219,9 @@ export default function Header() {
     subjectNames,
     topicNames,
     activeId,
-    changeActive,
-    //     subjectNames,
-    //     topicNames,
-    //     activeId,
-    //     changeActive,
   } = useStudyStore();
   
-
+  const { paymentLocked } = useStudyStore();
   const [ready, setReady] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
 
@@ -384,17 +379,14 @@ export default function Header() {
             )}, 1fr)`,
           }}
         >
-          {topicList.map((topicId, idx) => (
+           {topicList.map((topicId, idx) => (
             <button
               key={topicId}
-              onClick={() => changeActive(topicId)}
+              onClick={() => !paymentLocked && changeActive(topicId)}
               className={`px-2 py-2 rounded-lg shadow text-white text-xs transition-opacity duration-500
                 ${idx < visibleCount ? "opacity-100" : "opacity-0"}
-                ${
-                  activeId === topicId
-                    ? "bg-primary"
-                    : "bg-primary-hover"
-                }`}
+                ${activeId === topicId ? "bg-primary" : "bg-primary-hover"}
+                ${paymentLocked ? "cursor-not-allowed opacity-80" : ""}`}
             >
               {topicNames[topicId] || "Topic"}
             </button>
@@ -418,20 +410,19 @@ export default function Header() {
         }}
       >
         {saved.subjects?.map((subjectId, idx) => (
-          <button
-            key={subjectId}
-            onClick={() => changeActive(subjectId)}
-            className={`px-2 py-2 rounded-lg shadow text-white text-xs transition-opacity duration-500
-              ${idx < visibleCount ? "opacity-100" : "opacity-0"}
-              ${
-                activeId === subjectId
-                  ? "bg-blue-700"
-                  : "bg-blue-500"
-              }`}
-          >
-            {subjectNames?.[subjectId] || "Subject"}
-          </button>
+            <button
+              key={subjectId}
+              onClick={() => !paymentLocked && changeActive(subjectId)}
+              disabled={paymentLocked}
+              className={`px-2 py-2 rounded-lg shadow text-white text-xs transition-opacity duration-500
+                ${idx < visibleCount ? "opacity-100" : "opacity-0"}
+                ${activeId === subjectId ? "bg-blue-700" : "bg-blue-500"}
+                ${paymentLocked ? "cursor-not-allowed opacity-80" : ""}`}
+            >
+              {subjectNames?.[subjectId] || "Subject"}
+            </button>
         ))}
+
       </div>
 
       <hr className="m-4 border" />

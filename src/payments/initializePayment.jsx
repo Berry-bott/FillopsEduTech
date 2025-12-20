@@ -8,7 +8,7 @@ export default function InitializePayment() {
   const { initializePayment, paymentLoading } = useStudyStore();
 
   return (
-    <Card className="flex flex-col h-[89vh] border-2 border-border shadow-2xl">
+    <Card className="flex flex-col h-[91vh] border-2 border-border shadow-2xl">
       
       {/* HEADER */}
       <div className="p-5 border-b bg-gradient-to-br from-primary/5 to-accent/5">
@@ -71,10 +71,10 @@ export default function InitializePayment() {
             <Button
               className="w-full"
               size="lg"
-              onClick={initializePayment}
+              // onClick={initializePayment}
               disabled={paymentLoading}
             >
-              {paymentLoading ? "Redirecting..." : "Start Premium"}
+              {paymentLoading ? "Redirecting..." : "Subscribe Now!"}
             </Button>
           </div>
         </Card>
