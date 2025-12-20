@@ -7,7 +7,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 
 
 export default function InitializePayment() {
-  const { initializePayment, paymentLoading } = useStudyStore();
+  // const { initializePayment, paymentLoading } = useStudyStore();
   const navigate = useNavigate();
 
 
@@ -81,9 +81,9 @@ export default function InitializePayment() {
               onClick={() => {
                 navigate("/checkout")
               }}
-              disabled={paymentLoading}
+              // disabled={paymentLoading}
             >
-              {paymentLoading ? "Redirecting..." : "Subscribe Now"}
+               Subscribe Now!
             </Button>
           </div>
         </Card>
