@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { useStudyStore } from "@/store/studyStore"
 import { CreditCard, Check, ShieldCheck, Star, Sparkles } from "lucide-react"
 
-export default function CheckoutPage() {
+export default function checkoutPage() {
    const { initializePayment, paymentLoading } = useStudyStore();
   const [selectedPayment, setSelectedPayment] = useState("card")
 
