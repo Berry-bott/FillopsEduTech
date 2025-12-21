@@ -219,6 +219,7 @@ export default function Header() {
     subjectNames,
     topicNames,
     activeId,
+    changeActive,
   } = useStudyStore();
   
   const { paymentLocked } = useStudyStore();

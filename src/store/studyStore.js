@@ -1111,9 +1111,11 @@ export const useStudyStore = create((set, get) => ({
       const { fetchWithAuth } = useAuthStore.getState();
       const base = saved.mode === "subject" ? `subjects/${id}` : `topics/${id}`;
       const year = saved.mode === "subject" ? saved.subjectYears?.[id] : saved.topicYears?.[id];
-      const url = year && year !== "random"
-        ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}`
-        : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true`;
+      const url =
+            year && year !== "random"
+            ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}&limit=5`
+            : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true&limit=5`;
+
   
       const res = await fetchWithAuth(url);
   
