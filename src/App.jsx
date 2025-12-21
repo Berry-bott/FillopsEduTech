@@ -119,7 +119,7 @@ import LandingPage from "@/pages/index/LandingPage";
 import Unauthorized from "@/pages/index/Unauthorized";
 import UserDashboard from "@/pages/user/UserDashboard";
 import PreferencePage from "@/pages/user/PreferencePage";
-import CheckoutPage from "./payment/checkoutPage";
+import CheckoutPage from "./payment/Checkout";
 
 
 import LecturerDashboard from "@/pages/lecturer/LecturerDashboard";
