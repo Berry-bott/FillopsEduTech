@@ -84,7 +84,7 @@ export default function InitializePayment() {
               }}
               // disabled={paymentLoading}
             >
-               Subscribe Now!
+               Subscribe Now now my boy!
             </Button>
           </div>
         </Card>
