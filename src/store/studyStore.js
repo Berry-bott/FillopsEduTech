@@ -1009,57 +1009,286 @@
 
 
 
+// import { create } from "zustand";
+// import useAuthStore from "./authStore";
+
+// const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+
+// export const useStudyStore = create((set, get) => ({
+//   // =============================
+//   // STATE
+//   // =============================
+//   saved: null,
+//   questionsByUnit: {},
+//   activeId: null,
+//   currentIndex: 0,
+//   selectedOptions: {},
+//   subjectNames: {},
+//   topicNames: {},
+//   loading: false,
+//   paymentLocked: false,
+//   paymentLoading: false,
+
+//   // =============================
+//   // SYNC SAVED SELECTION
+//   // =============================
+//   syncSaved: async () => {
+//     const saved = JSON.parse(localStorage.getItem("studySelections"));
+//     console.log("🔄 syncSaved()", saved);
+//     if (!saved) return;
+
+//     set({ saved });
+
+//     await Promise.all([
+//       get().fetchSubjectNames(),
+//       get().fetchTopicNames(),
+//     ]);
+
+//     const firstId =
+//       saved.mode === "subject"
+//         ? saved.subjects?.[0]
+//         : Object.values(saved.topics || {})[0]?.[0];
+
+//     if (firstId) get().changeActive(firstId);
+//   },
+
+//   setCurrentIndex: (index) =>
+//     set({
+//       currentIndex: Math.max(0, index),
+//     }),
+  
+
+//   // =============================
+//   // RESET
+//   // =============================
+//   reset: () =>
+//     set({
+//       saved: null,
+//       questionsByUnit: {},
+//       activeId: null,
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       paymentLocked: false,
+//     }),
+
+//   // =============================
+//   // DERIVED QUESTIONS
+//   // =============================
+//   getQuestions: () => {
+//     const { activeId, questionsByUnit } = get();
+//     return questionsByUnit[activeId] || [];
+//   },
+
+//   // =============================
+//   // SETTERS
+//   // =============================
+//   setSelectedOption: (qId, opt) =>
+//     set((s) => ({
+//       selectedOptions: { ...s.selectedOptions, [qId]: opt },
+//     })),
+
+//   // =============================
+//   // CHANGE ACTIVE (FETCH ALL ONCE)
+//   // =============================
+//   changeActive: async (id) => {
+//     const { saved, questionsByUnit } = get();
+//     if (!saved) return;
+  
+//     set({
+//       activeId: id,
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       paymentLocked: false,
+//       loading: true,
+//     });
+  
+//     // Already fetched → do nothing
+//     if (questionsByUnit[id]) {
+//       set({ loading: false });
+//       return;
+//     }
+  
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const base = saved.mode === "subject" ? `subjects/${id}` : `topics/${id}`;
+//       const year = saved.mode === "subject" ? saved.subjectYears?.[id] : saved.topicYears?.[id];
+//       const url =
+//             year && year !== "random"
+//             ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}&limit=20`
+//             : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true&limit=5`;
+
+  
+//       const res = await fetchWithAuth(url);
+  
+//       // Payment required
+//       if (res?.code === "PAYMENT_REQUIRED" || res?.status === 403) {
+//         set({ paymentLocked: true, loading: false });
+//         // Always set empty questions so UI renders payment
+//         set((s) => ({
+//           questionsByUnit: { ...s.questionsByUnit, [id]: [] }
+//         }));
+//         return;
+//       }
+  
+//       // Set fetched questions
+//       set((s) => ({
+//         questionsByUnit: { ...s.questionsByUnit, [id]: Array.isArray(res?.data) ? res.data : [] },
+//         loading: false,
+//       }));
+//     } catch (err) {
+//       console.error("❌ fetch questions failed", err);
+//       set((s) => ({
+//         questionsByUnit: { ...s.questionsByUnit, [id]: [] },
+//         paymentLocked: err?.status === 403 || err?.response?.status === 403 ? true : false,
+//         loading: false,
+//       }));
+//     }
+//   },
+  
+
+//   // =============================
+//   // NAVIGATION (NO BLINKING)
+//   // =============================
+//   next: () => {
+//     const { saved, activeId, currentIndex, paymentLocked } = get();
+//     if (paymentLocked) return;
+
+//     const questions = get().getQuestions();
+
+//     // move locally
+//     if (currentIndex < questions.length - 1) {
+//       set({ currentIndex: currentIndex + 1 });
+//       return;
+//     }
+
+//     // move to next subject/topic
+//     const ids =
+//       saved.mode === "subject"
+//         ? saved.subjects
+//         : Object.values(saved.topics || {})[0];
+
+//     const pos = ids.indexOf(activeId);
+//     const nextId = ids[pos + 1];
+
+//     if (nextId) {
+//       get().changeActive(nextId);
+//     } else {
+//       console.log("✅ Study completed");
+//     }
+//   },
+
+//   prev: () =>
+//     set((s) => ({
+//       currentIndex: Math.max(0, s.currentIndex - 1),
+//     })),
+
+//   // =============================
+//   // SUBJECT NAMES
+//   // =============================
+//   fetchSubjectNames: async () => {
+//     const { saved } = get();
+//     if (!saved?.subjects) return;
+
+//     const { fetchWithAuth } = useAuthStore.getState();
+//     const names = {};
+
+//     await Promise.all(
+//       saved.subjects.map(async (id) => {
+//         const res = await fetchWithAuth(`${API_BASE}/subjects/${id}`);
+//         names[id] = res?.data?.subjectName || id;
+//       })
+//     );
+
+//     set({ subjectNames: names });
+//   },
+
+//   // =============================
+//   // TOPIC NAMES
+//   // =============================
+//   fetchTopicNames: async () => {
+//     const { saved } = get();
+//     if (!saved?.topics) return;
+
+//     const topicNames = {};
+//     const subjectNames = {};
+//     const { fetchWithAuth } = useAuthStore.getState();
+
+//     await Promise.all(
+//       Object.entries(saved.topics).flatMap(([subjectId, topicIds]) =>
+//         topicIds.map(async (topicId) => {
+//           try {
+//             const res = await fetchWithAuth(`${API_BASE}/topics/${topicId}`);
+//             const data = res?.data || {};
+
+//             topicNames[topicId] = data.topicName || topicId;
+
+//             if (data.module?.subject?.subjectName) {
+//               subjectNames[subjectId] =
+//                 data.module.subject.subjectName;
+//             }
+//           } catch {
+//             topicNames[topicId] = topicId;
+//           }
+//         })
+//       )
+//     );
+
+//     set((s) => ({
+//       topicNames,
+//       subjectNames: { ...s.subjectNames, ...subjectNames },
+//     }));
+//   },
+//    // =============================
+//   // PAYMENTS
+//   // =============================
+//   initializePayment: async () => {
+//     set({ paymentLoading: true });
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const data = await fetchWithAuth(
+//         `${API_BASE}/payments/initialize`,
+//         { method: "POST" }
+//       );
+//       set({ paymentLoading: false });
+//       console.log( data.data.authorization_url)
+//       window.location.href = data.data.authorizationUrl;
+//     } catch (err) {
+//       console.error("❌ payment init failed", err);
+//       set({ paymentLoading: false });
+//     }
+//   },
+// }));
+
+
+
+
+
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+const BATCH_SIZE = 5;
 
 export const useStudyStore = create((set, get) => ({
-  // =============================
-  // STATE
-  // =============================
+  // ================= STATE =================
   saved: null,
-  questionsByUnit: {},
   activeId: null,
-  currentIndex: 0,
-  selectedOptions: {},
-  subjectNames: {},
-  topicNames: {},
-  loading: false,
-  paymentLocked: false,
-  paymentLoading: false,
 
-  // =============================
-  // SYNC SAVED SELECTION
-  // =============================
-  syncSaved: async () => {
-    const saved = JSON.parse(localStorage.getItem("studySelections"));
-    if (!saved) return;
-
-    set({ saved });
-
-    await Promise.all([
-      get().fetchSubjectNames(),
-      get().fetchTopicNames(),
-    ]);
-
-    const firstId =
-      saved.mode === "subject"
-        ? saved.subjects?.[0]
-        : Object.values(saved.topics || {})[0]?.[0];
-
-    if (firstId) get().changeActive(firstId);
+  units: {
+    // [id]: { items: [], skip: 0, exhausted: false }
   },
 
-  setCurrentIndex: (index) =>
-    set({
-      currentIndex: Math.max(0, index),
-    }),
-  
+  currentIndex: 0,
+  selectedOptions: {},
 
-  // =============================
-  // RESET
-  // =============================
+  loading: false,
+  paymentLocked: false,
+
+
+  //   // =============================
+//   // RESET
+//   // =============================
   reset: () =>
     set({
       saved: null,
@@ -1070,109 +1299,116 @@ export const useStudyStore = create((set, get) => ({
       paymentLocked: false,
     }),
 
-  // =============================
-  // DERIVED QUESTIONS
-  // =============================
-  getQuestions: () => {
-    const { activeId, questionsByUnit } = get();
-    return questionsByUnit[activeId] || [];
+
+
+
+  // ================= INIT =================
+  syncSaved: async () => {
+    const saved = JSON.parse(localStorage.getItem("studySelections"));
+    if (!saved) return;
+
+    set({ saved });
+
+    const firstId =
+      saved.mode === "subject"
+        ? saved.subjects?.[0]
+        : Object.values(saved.topics || {})[0]?.[0];
+
+    if (firstId) {
+      await get().changeActive(firstId);
+    }
   },
 
-  // =============================
-  // SETTERS
-  // =============================
-  setSelectedOption: (qId, opt) =>
-    set((s) => ({
-      selectedOptions: { ...s.selectedOptions, [qId]: opt },
-    })),
+  // ================= HELPERS =================
+  getUnit: () => {
+    const { activeId, units } = get();
+    return units[activeId] || { items: [], skip: 0, exhausted: false };
+  },
 
-  // =============================
-  // CHANGE ACTIVE (FETCH ALL ONCE)
-  // =============================
-  changeActive: async (id) => {
-    const { saved, questionsByUnit } = get();
-    if (!saved) return;
-  
-    set({
-      activeId: id,
-      currentIndex: 0,
-      selectedOptions: {},
-      paymentLocked: false,
-      loading: true,
-    });
-  
-    // Already fetched → do nothing
-    if (questionsByUnit[id]) {
-      set({ loading: false });
-      return;
-    }
-  
+  getQuestions: () => get().getUnit().items,
+
+  // ================= FETCH =================
+  fetchMore: async () => {
+    const { saved, activeId, units } = get();
+    if (!saved || !activeId) return;
+
+    const unit = units[activeId] || { items: [], skip: 0, exhausted: false };
+    if (unit.exhausted) return;
+
+    set({ loading: true });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const base = saved.mode === "subject" ? `subjects/${id}` : `topics/${id}`;
-      const year = saved.mode === "subject" ? saved.subjectYears?.[id] : saved.topicYears?.[id];
-      const url =
-            year && year !== "random"
-            ? `${API_BASE}/${base}/questions?category=${saved.exam}&year=${year}&limit=5`
-            : `${API_BASE}/${base}/questions?category=${saved.exam}&random=true&limit=5`;
 
-  
+      const base =
+        saved.mode === "subject"
+          ? `subjects/${activeId}`
+          : `topics/${activeId}`;
+
+      const url = `${API_BASE}/${base}/questions?category=${saved.exam}&limit=${BATCH_SIZE}&skip=${unit.skip}`;
+
       const res = await fetchWithAuth(url);
-  
-      // Payment required
-      if (res?.code === "PAYMENT_REQUIRED" || res?.status === 403) {
+
+      // 🔒 PAYMENT REQUIRED
+      if (res?.status === 403 || res?.code === "PAYMENT_REQUIRED") {
         set({ paymentLocked: true, loading: false });
-        // Always set empty questions so UI renders payment
-        set((s) => ({
-          questionsByUnit: { ...s.questionsByUnit, [id]: [] }
-        }));
         return;
       }
-  
-      // Set fetched questions
+
+      const data = Array.isArray(res?.data) ? res.data : [];
+
       set((s) => ({
-        questionsByUnit: { ...s.questionsByUnit, [id]: Array.isArray(res?.data) ? res.data : [] },
+        units: {
+          ...s.units,
+          [activeId]: {
+            items: [...unit.items, ...data],
+            skip: unit.skip + data.length,
+            exhausted: data.length < BATCH_SIZE,
+          },
+        },
         loading: false,
       }));
     } catch (err) {
-      console.error("❌ fetch questions failed", err);
-      set((s) => ({
-        questionsByUnit: { ...s.questionsByUnit, [id]: [] },
-        paymentLocked: err?.status === 403 || err?.response?.status === 403 ? true : false,
-        loading: false,
-      }));
+      if (err?.status === 403) {
+        set({ paymentLocked: true });
+      }
+      set({ loading: false });
     }
   },
-  
 
-  // =============================
-  // NAVIGATION (NO BLINKING)
-  // =============================
-  next: () => {
-    const { saved, activeId, currentIndex, paymentLocked } = get();
-    if (paymentLocked) return;
+  // ================= ACTIVE =================
+  changeActive: async (id) => {
+    set({
+      activeId: id,
+      currentIndex: 0,
+      paymentLocked: false,
+    });
 
-    const questions = get().getQuestions();
+    set((s) => ({
+      units: {
+        ...s.units,
+        [id]: { items: [], skip: 0, exhausted: false },
+      },
+    }));
 
-    // move locally
-    if (currentIndex < questions.length - 1) {
+    await get().fetchMore();
+  },
+
+  // ================= NAV =================
+  next: async () => {
+    const { currentIndex } = get();
+    const unit = get().getUnit();
+
+    if (currentIndex < unit.items.length - 1) {
       set({ currentIndex: currentIndex + 1 });
       return;
     }
 
-    // move to next subject/topic
-    const ids =
-      saved.mode === "subject"
-        ? saved.subjects
-        : Object.values(saved.topics || {})[0];
+    await get().fetchMore();
 
-    const pos = ids.indexOf(activeId);
-    const nextId = ids[pos + 1];
-
-    if (nextId) {
-      get().changeActive(nextId);
-    } else {
-      console.log("✅ Study completed");
+    const updated = get().getUnit();
+    if (updated.items.length > unit.items.length) {
+      set({ currentIndex: currentIndex + 1 });
     }
   },
 
@@ -1181,80 +1417,15 @@ export const useStudyStore = create((set, get) => ({
       currentIndex: Math.max(0, s.currentIndex - 1),
     })),
 
-  // =============================
-  // SUBJECT NAMES
-  // =============================
-  fetchSubjectNames: async () => {
-    const { saved } = get();
-    if (!saved?.subjects) return;
-
-    const { fetchWithAuth } = useAuthStore.getState();
-    const names = {};
-
-    await Promise.all(
-      saved.subjects.map(async (id) => {
-        const res = await fetchWithAuth(`${API_BASE}/subjects/${id}`);
-        names[id] = res?.data?.subjectName || id;
-      })
-    );
-
-    set({ subjectNames: names });
-  },
-
-  // =============================
-  // TOPIC NAMES
-  // =============================
-  fetchTopicNames: async () => {
-    const { saved } = get();
-    if (!saved?.topics) return;
-
-    const topicNames = {};
-    const subjectNames = {};
-    const { fetchWithAuth } = useAuthStore.getState();
-
-    await Promise.all(
-      Object.entries(saved.topics).flatMap(([subjectId, topicIds]) =>
-        topicIds.map(async (topicId) => {
-          try {
-            const res = await fetchWithAuth(`${API_BASE}/topics/${topicId}`);
-            const data = res?.data || {};
-
-            topicNames[topicId] = data.topicName || topicId;
-
-            if (data.module?.subject?.subjectName) {
-              subjectNames[subjectId] =
-                data.module.subject.subjectName;
-            }
-          } catch {
-            topicNames[topicId] = topicId;
-          }
-        })
-      )
-    );
-
-    set((s) => ({
-      topicNames,
-      subjectNames: { ...s.subjectNames, ...subjectNames },
-    }));
-  },
-   // =============================
-  // PAYMENTS
-  // =============================
+  // ================= PAYMENT =================
   initializePayment: async () => {
-    set({ paymentLoading: true });
+    const { fetchWithAuth } = useAuthStore.getState();
 
-    try {
-      const { fetchWithAuth } = useAuthStore.getState();
-      const data = await fetchWithAuth(
-        `${API_BASE}/payments/initialize`,
-        { method: "POST" }
-      );
-      set({ paymentLoading: false });
-      console.log( data.data.authorization_url)
-      window.location.href = data.data.authorizationUrl;
-    } catch (err) {
-      console.error("❌ payment init failed", err);
-      set({ paymentLoading: false });
-    }
+    const res = await fetchWithAuth(
+      `${API_BASE}/payments/initialize`,
+      { method: "POST" }
+    );
+
+    window.location.href = res.data.authorizationUrl;
   },
 }));

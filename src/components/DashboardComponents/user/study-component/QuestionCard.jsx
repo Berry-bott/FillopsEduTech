@@ -338,6 +338,7 @@ export default function QuestionCard() {
   const questions = getQuestions();
   const q = questions?.[currentIndex] ?? null;
   
+  
   // if (!q) return null;
 
   const [visible, setVisible] = useState(false);

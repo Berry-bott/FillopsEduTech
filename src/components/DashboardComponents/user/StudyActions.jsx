@@ -1,7 +1,8 @@
 // src/components/ExamSelector/StudyActions.jsx
 import React, { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, PenTool, FileText } from "lucide-react";
+import { GraduationCap, PenTool, FileText, Shield, } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function StudyActions({
   examDropdownOpen,
@@ -11,7 +12,7 @@ export default function StudyActions({
   openFor,
 }) {
   const dropdownRef = useRef(null);
-
+  const navigate = useNavigate();
   // 🔥 Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
@@ -71,11 +72,11 @@ export default function StudyActions({
 
       {/* Quiz button */}
       <Button
-        onClick={() => openFor("quiz")}
+        onClick={() => navigate ("/quiz")}
         className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2 px-4"
       >
         <PenTool className="w-4 h-4" />
-        <span>Take Quiz</span>
+        <span>Daily Quiz</span>
       </Button>
 
       {/* Exam button */}
@@ -84,7 +85,15 @@ export default function StudyActions({
         className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2 px-4"
       >
         <FileText className="w-4 h-4" />
-        <span>Write Exam</span>
+        <span>Take Exam</span>
+      </Button>
+      {/* Exam button */}
+      <Button
+        onClick={() => openFor("professional")}
+        className="bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2 px-4"
+      >
+        < Shield className="w-4 h-4" />
+        <span>Join Professional Courses </span>
       </Button>
     </div>
   );

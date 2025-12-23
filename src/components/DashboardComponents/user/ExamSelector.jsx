@@ -93,7 +93,6 @@ export default function ExamSelector() {
     setOpen(false);
 
     if (activeAction === "study") navigate("/study");
-    if (activeAction === "quiz") navigate("/quiz");
     if (activeAction === "exam") navigate("/exam");
   };
 
