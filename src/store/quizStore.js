@@ -222,7 +222,7 @@ export const useQuizStore = create((set, get) => ({
           subjects[Math.floor(Math.random() * subjects.length)];
 
         const res = await fetchWithAuth(
-          `${API_BASE}/subjects/${subjectId}/questions?random=true&limit=1`
+          `${API_BASE}/subjects/${subjectId}/questions?random=true&limit=10`
         );
 
         if (res?.data?.length) {

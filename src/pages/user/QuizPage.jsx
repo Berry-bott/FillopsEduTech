@@ -271,7 +271,7 @@ export default function QuizPage() {
     initQuiz();
   }, []);
 
-  if (loading) return <p className="p-4">Loading quiz...</p>;
+  if (loading) return <p className="p-4">Loading quiz... shit</p>;
   if (!questions.length) return <p className="p-4">No question available</p>;
 
   // ================= RESULT PAGE =================
