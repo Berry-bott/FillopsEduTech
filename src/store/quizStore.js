@@ -1,132 +1,315 @@
+// import { create } from "zustand";
+// import useAuthStore from "./authStore";
+
+// const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+// const TOTAL_QUESTIONS = 10;
+
+// const getTodayKey = () => {
+//   const d = new Date();
+//   return `quiz-${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+// };
+
+// export const useQuizStore = create((set, get) => ({
+//   questions: [],
+//   currentIndex: 0,
+//   selectedOptions: {},
+//   loading: false,
+//   finished: false,
+//   report: [],
+
+//   // ---------------- INIT QUIZ ----------------
+//   initQuiz: async () => {
+//     const todayKey = getTodayKey();
+//     const cached = JSON.parse(localStorage.getItem(todayKey));
+
+//     if (cached?.length === TOTAL_QUESTIONS) {
+//       set({
+//         questions: cached,
+//         currentIndex: 0,
+//         selectedOptions: {},
+//         finished: false,
+//         report: [],
+//         loading: false,
+//       });
+//       return;
+//     }
+
+//     set({
+//       questions: [],
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       finished: false,
+//       report: [],
+//       loading: true,
+//     });
+
+//     await get().fetchQuestions();
+//   },
+
+//   // ---------------- FETCH QUESTIONS ----------------
+//   fetchQuestions: async () => {
+//     try {
+//       const stored = JSON.parse(localStorage.getItem("prefSubjects") || "{}");
+//       const subjects = Object.values(stored).flat();
+
+//       if (!subjects.length) {
+//         set({ loading: false });
+//         return;
+//       }
+
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const questions = [];
+
+//       while (questions.length < TOTAL_QUESTIONS) {
+//         const subject =
+//           subjects[Math.floor(Math.random() * subjects.length)];
+
+//         const res = await fetchWithAuth(
+//           `${API_BASE}/subjects/${subject.id}/questions?random=true&limit=1`
+//         );
+
+//         if (res?.data?.length) {
+//           const q = res.data[0];
+
+//           // prevent duplicates
+//           if (!questions.find((x) => x.id === q.id)) {
+//             questions.push(q);
+//           }
+//         }
+//       }
+
+//       const todayKey = getTodayKey();
+//       localStorage.setItem(todayKey, JSON.stringify(questions));
+
+//       set({
+//         questions,
+//         loading: false,
+//       });
+//     } catch (err) {
+//       console.error("Quiz fetch failed", err);
+//       set({ loading: false });
+//     }
+//   },
+
+//   // ---------------- NAVIGATION ----------------
+//   next: () =>
+//     set((s) => ({
+//       currentIndex: Math.min(
+//         s.currentIndex + 1,
+//         s.questions.length - 1
+//       ),
+//     })),
+
+//   prev: () =>
+//     set((s) => ({
+//       currentIndex: Math.max(0, s.currentIndex - 1),
+//     })),
+
+//   // ---------------- ANSWER ----------------
+//   answer: (qId, option) =>
+//     set((s) => ({
+//       selectedOptions: { ...s.selectedOptions, [qId]: option },
+//     })),
+
+//   // ---------------- SUBMIT ----------------
+//   submit: () => {
+//     const { questions, selectedOptions } = get();
+
+//     const report = questions.map((q) => ({
+//       id: q.id,
+//       question: q.question,
+//       selected: selectedOptions[q.id] || null,
+//       correct: q.correct,
+//       isCorrect: selectedOptions[q.id] === q.correct,
+//       explanation: q.explanation,
+//     }));
+
+//     set({
+//       finished: true,
+//       report,
+//     });
+//   },
+
+//   // ---------------- RESET ----------------
+//   reset: () =>
+//     set({
+//       questions: [],
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       finished: false,
+//       report: [],
+//     }),
+// }));
+
+
+
+
+
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
-const BUFFER_LIMIT = 4; // fetch 5 questions per request
 const TOTAL_QUESTIONS = 10;
+
+const getTodayKey = () => {
+  const d = new Date();
+  return `quiz-${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+};
 
 export const useQuizStore = create((set, get) => ({
   questions: [],
-  buffer: [],
   currentIndex: 0,
   selectedOptions: {},
   loading: false,
-  paymentLocked: false,
   finished: false,
-  fetchedCount: 0,
-  report: [],
 
+  report: [],
+  score: 0,
+  percentage: 0,
+  grade: "",
+
+  // ---------------- INIT ----------------
   initQuiz: async () => {
+    const todayKey = getTodayKey();
+    const cached = JSON.parse(localStorage.getItem(todayKey));
+
+    if (cached?.length === TOTAL_QUESTIONS) {
+      set({
+        questions: cached,
+        currentIndex: 0,
+        selectedOptions: {},
+        finished: false,
+        report: [],
+        score: 0,
+        percentage: 0,
+        grade: "",
+        loading: false,
+      });
+      return;
+    }
+
     set({
       questions: [],
-      buffer: [],
       currentIndex: 0,
       selectedOptions: {},
-      loading: true,
-      paymentLocked: false,
       finished: false,
-      fetchedCount: 0,
       report: [],
+      score: 0,
+      percentage: 0,
+      grade: "",
+      loading: true,
     });
 
-    await get().fetchBuffer();
-
-    const { buffer } = get();
-    if (buffer.length) {
-      set({
-        questions: [buffer[0]],
-        buffer: buffer.slice(1),
-        currentIndex: 0,
-      });
-    }
-
-    set({ loading: false });
+    await get().fetchQuestions();
   },
 
-  fetchBuffer: async () => {
-    const stored = JSON.parse(localStorage.getItem("prefSubjects") || "{}");
-    const subjects = Object.values(stored).flat();
-    if (!subjects.length) return;
-
-    set({ loading: true });
+  // ---------------- FETCH QUESTIONS ----------------
+  fetchQuestions: async () => {
     try {
-      const { fetchWithAuth } = useAuthStore.getState();
-      const newQuestions = [];
+      const stored = JSON.parse(localStorage.getItem("prefSubjects") || "{}");
+      const subjects = Object.values(stored).flat(); // ARRAY OF IDS
 
-      for (let i = 0; i < BUFFER_LIMIT; i++) {
-        const subject = subjects[Math.floor(Math.random() * subjects.length)];
+      if (!subjects.length) {
+        set({ loading: false });
+        return;
+      }
+
+      const { fetchWithAuth } = useAuthStore.getState();
+      const questions = [];
+
+      while (questions.length < TOTAL_QUESTIONS) {
+        const subjectId =
+          subjects[Math.floor(Math.random() * subjects.length)];
+
         const res = await fetchWithAuth(
-          `${API_BASE}/subjects/${subject.id}/questions?random=true&limit=1`
+          `${API_BASE}/subjects/${subjectId}/questions?random=true&limit=1`
         );
 
-        // Payment UI only if backend responds 403
-        if (res?.status === 403 || res?.code === "PAYMENT_REQUIRED") {
-          set({ paymentLocked: true, loading: false });
-          return;
+        if (res?.data?.length) {
+          const q = res.data[0];
+
+          if (!questions.find((x) => x.id === q.id)) {
+            questions.push(q);
+          }
         }
-
-        if (res?.data?.length) newQuestions.push(res.data[0]);
       }
 
-      set(state => ({
-        buffer: [...state.buffer, ...newQuestions],
-        fetchedCount: state.fetchedCount + newQuestions.length,
+      localStorage.setItem(getTodayKey(), JSON.stringify(questions));
+
+      set({
+        questions,
         loading: false,
-      }));
+      });
     } catch (err) {
-      set({
-        paymentLocked: err?.status === 403 || err?.response?.status === 403,
-        loading: false,
-      });
+      console.error("Quiz fetch failed", err);
+      set({ loading: false });
     }
   },
 
-  next: async () => {
-    const { buffer, questions, currentIndex } = get();
+  // ---------------- NAV ----------------
+  next: () =>
+    set((s) => ({
+      currentIndex: Math.min(s.currentIndex + 1, s.questions.length - 1),
+    })),
 
-    if (buffer.length) {
-      const nextQ = buffer[0];
-      set({
-        questions: [...questions, nextQ],
-        buffer: buffer.slice(1),
-        currentIndex: currentIndex + 1,
-      });
+  prev: () =>
+    set((s) => ({
+      currentIndex: Math.max(0, s.currentIndex - 1),
+    })),
 
-      // Prefetch next buffer if empty
-      if (get().buffer.length === 0) {
-        await get().fetchBuffer(); // will trigger paymentLocked if 403
-      }
-    }
-  },
+  // ---------------- ANSWER ----------------
+  answer: (qId, option) =>
+    set((s) => ({
+      selectedOptions: { ...s.selectedOptions, [qId]: option },
+    })),
 
-  prev: () => set(s => ({
-    currentIndex: Math.max(0, s.currentIndex - 1)
-  })),
-
-  answer: (qId, option) => set(s => ({
-    selectedOptions: { ...s.selectedOptions, [qId]: option }
-  })),
-
+  // ---------------- SUBMIT ----------------
   submit: () => {
     const { questions, selectedOptions } = get();
-    const report = questions.map(q => ({
-      id: q.id,
-      question: q.question,
-      selected: selectedOptions[q.id] || "None",
-      correct: q.correct,
-      isCorrect: q.correct === selectedOptions[q.id],
-      explanation: q.explanation,
-    }));
-    set({ finished: true, report });
+    let score = 0;
+
+    const report = questions.map((q) => {
+      const selected = selectedOptions[q.id] || null;
+      const isCorrect = selected === q.correct;
+
+      if (isCorrect) score++;
+
+      return {
+        id: q.id,
+        question: q.text, // ✅ CORRECT FIELD
+        selected,
+        correct: q.correct,
+        isCorrect,
+        explanation: q.explanation,
+      };
+    });
+
+    const percentage = Math.round((score / questions.length) * 100);
+
+    let grade = "Poor";
+    if (percentage >= 80) grade = "Excellent";
+    else if (percentage >= 60) grade = "Good";
+    else if (percentage >= 40) grade = "Fair";
+
+    set({
+      finished: true,
+      report,
+      score,
+      percentage,
+      grade,
+    });
   },
 
-  initializePayment: async () => {
-    try {
-      const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(`${API_BASE}/payments/initialize`, { method: "POST" });
-      window.location.href = res.data.authorizationUrl;
-    } catch (err) {
-      console.error("Payment failed", err);
-    }
-  },
+  // ---------------- RESET ----------------
+  reset: () =>
+    set({
+      questions: [],
+      currentIndex: 0,
+      selectedOptions: {},
+      finished: false,
+      report: [],
+      score: 0,
+      percentage: 0,
+      grade: "",
+    }),
 }));
