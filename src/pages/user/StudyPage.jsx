@@ -1171,11 +1171,11 @@ export default function studyPage() {
   const saved = useStudyStore((s) => s.saved);
 
   useEffect(() => {
-    console.log('📘 QuizPage mounted → sync store');
+    console.log('📘 studyPage mounted → sync store');
     init();
 
     return () => {
-      console.log('🧹 QuizPage unmounted → reset store');
+      console.log('🧹 studyPage unmounted → reset store');
       reset();
     };
   }, []);

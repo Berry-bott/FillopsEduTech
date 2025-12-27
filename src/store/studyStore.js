@@ -1278,8 +1278,7 @@ const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 const REQUEST_LIMIT = 20; // always request 20
 
 export const useStudyStore = create((set, get) => ({
-  // ---------------- STATE ----------------
-  saved: null,              // selections from localStorage
+  // ---------------- STATE ---------------- // selections from localStorage
   activeId: null,           // current subject/topic ID
   units: {},                // { [id]: { items, skip, exhausted } }
   currentIndex: 0,

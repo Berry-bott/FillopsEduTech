@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { usePaymentStore } from "@/store/paymentStore"
+import { useToast } from "@/components/ui/use-toast";
 import { Check, ShieldCheck, Star, Sparkles, Clock } from "lucide-react"
 
 export default function Checkout() {
@@ -18,7 +19,7 @@ export default function Checkout() {
     initializePayment,
     checkStatus,
   } = usePaymentStore()
-
+  const { toast } = useToast();
   const [selectedSubjects, setSelectedSubjects] = useState({})
   const [subjectsByCategory, setSubjectsByCategory] = useState({})
   const [hoveredSubject, setHoveredSubject] = useState(null)
@@ -118,14 +119,32 @@ export default function Checkout() {
     })
 
     try {
-      await initializePayment({
+    const result =  await initializePayment({
         plan: firstPlanId,
         subjects: planData.subjects,
         amount: totalAmount,
       })
+
+        // ✅ Simple toast for already paid
+        if (result?.alreadyPaid) {
+          toast({
+            title: "Already Subscribed!",
+            description: result.message || "You already have an active subscription!",
+          });
+          
+          setTimeout(() => navigate("/user/dashboard"), 2000);
+          return;
+        }
+
+      
     } catch (error) {
-      console.error("Payment initialization failed:", error)
-      alert("Payment failed. Please try again.")
+      console.error("Payment initialization failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Payment Failed",
+        description: error.message || "Failed to initialize payment. Please try again.",
+      });
+      // alert("Payment failed. Please try again.")
     }
   }
 
