@@ -1162,7 +1162,7 @@
 import { useEffect } from 'react';
 import Header from '../../components/DashboardComponents/user/study-component/Header';
 import QuestionCard from '../../components/DashboardComponents/user/study-component/QuestionCard';
-import { useStudyStore } from '../../store/studyStore';
+import { useStudyStore } from '@/store/paymentStore';
 
 export default function studyPage() {
   const init = useStudyStore((s) => s.syncSaved);
