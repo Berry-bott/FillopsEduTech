@@ -587,7 +587,7 @@
 
 import Header from '../../components/DashboardComponents/user/study-component/Header';
 import QuestionCard from '../../components/DashboardComponents/user/study-component/QuestionCard';
-import { useStudyStore } from '../../store/studyStore';
+import { useStudyStore } from '@/store/studyStore';
 import { useState, useEffect, useRef } from 'react';
 import { Clock, Calculator, BarChart3, Printer, RotateCcw, X } from 'lucide-react';
 
@@ -596,6 +596,7 @@ import { Clock, Calculator, BarChart3, Printer, RotateCcw, X } from 'lucide-reac
 export default function ExamsPage() {
 
   const init = useStudyStore((s) => s.syncSaved);
+
   const reset = useStudyStore((s) => s.reset);
   const loading = useStudyStore((s) => s.loading);
   const saved = useStudyStore((s) => s.saved);
