@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Check, Crown, Sparkles } from "lucide-react"
-import { useStudyStore } from "@/store/studyStore"
 import { useNavigate, useLocation, Link } from "react-router-dom";
 
 
