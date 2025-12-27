@@ -1546,20 +1546,20 @@ export const useStudyStore = create((set, get) => ({
   },
 
   // ---------------- PAYMENT ----------------
-  initializePayment: async () => {
-    set({ paymentLoading: true });
+  // initializePayment: async () => {
+  //   set({ paymentLoading: true });
 
-    try {
-      const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(
-        `${API_BASE}/payments/initialize`,
-        { method: "POST" }
-      );
+  //   try {
+  //     const { fetchWithAuth } = useAuthStore.getState();
+  //     const res = await fetchWithAuth(
+  //       `${API_BASE}/payments/initialize`,
+  //       { method: "POST" }
+  //     );
 
-      window.location.href = res.data.authorizationUrl;
-    } catch (err) {
-      console.error("Payment init failed", err);
-      set({ paymentLoading: false });
-    }
-  },
+  //     window.location.href = res.data.authorizationUrl;
+  //   } catch (err) {
+  //     console.error("Payment init failed", err);
+  //     set({ paymentLoading: false });
+  //   }
+  // },
 }));

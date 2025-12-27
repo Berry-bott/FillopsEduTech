@@ -121,6 +121,7 @@ import Unauthorized from "@/pages/index/Unauthorized";
 import UserDashboard from "@/pages/user/UserDashboard";
 import PreferencePage from "@/pages/user/PreferencePage";
 import CheckoutPage from "./payment/Checkout";
+import PaymentVerification from "./payment/PaymentVerification";
 
 
 import LecturerDashboard from "@/pages/lecturer/LecturerDashboard";
@@ -149,6 +150,7 @@ function App() {
           <Route path="/quiz-result" element={<QuizReport />} />
           <Route path="/exam" element={<ExamsPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/payment/verify" element={<PaymentVerification />} />
 
           <Route path="/preference" element={<PreferencePage />} />
           <Route path="/exam-selector" element={<ExamSelector />} />

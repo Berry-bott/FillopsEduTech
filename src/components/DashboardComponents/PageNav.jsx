@@ -157,11 +157,22 @@
 
 // export default PageNav;
 
-// components/PageNav.jsx
+
+
+
+
+
+
+
+
+
+
+
 import { useEffect, useState } from "react";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Crown, Calendar } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
+import { usePaymentStore } from "@/store/paymentStore";
 import Logo from "../../assets/images/fillopsLogo.png";
 import { ThemeToggle } from "../DashboardComponents/theme-toggle";
 
@@ -169,6 +180,7 @@ export default function PageNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const { paid, expiresAt, checkStatus } = usePaymentStore();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [examType, setExamType] = useState("");
@@ -176,19 +188,23 @@ export default function PageNav() {
   const [ready, setReady] = useState(false);
 
   /* ===============================
-     LOAD LOCAL STORAGE (SAFE)
+     LOAD LOCAL STORAGE & CHECK PAYMENT STATUS
   =============================== */
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const saved = JSON.parse(localStorage.getItem("studySelections"));
-     console.log(saved)
-      setExamType(saved.exam);
+      console.log(saved);
+      setExamType(saved?.exam || "");
       setStudyMode(localStorage.getItem("studyMode") || "Learning");
+      
+      // Check payment status
+      await checkStatus();
+      
       setReady(true);
-    }, 1000); // allows skeleton to appear
+    }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [checkStatus]);
 
   const navigationItems = [
     { name: "Dashboard", path: "/user/dashboard" },
@@ -202,8 +218,30 @@ export default function PageNav() {
     navigate("/");
   };
 
+  // Format expiry date
+  const formatExpiry = (dateString) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const daysLeft = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysLeft < 0) return "Expired";
+      if (daysLeft === 0) return "Expires today";
+      if (daysLeft === 1) return "1 day left";
+      if (daysLeft <= 7) return `${daysLeft} days left`;
+      
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return "";
+    }
+  };
+
   /* ===============================
-     SKELETON NAV (ALWAYS EXITS)
+     SKELETON NAV
   =============================== */
   if (!ready) {
     return (
@@ -231,31 +269,31 @@ export default function PageNav() {
   =============================== */
   return (
     <nav className="fixed top-0 left-0 right-0 z-[9999999] bg-white dark:bg-gray-800 shadow border-b">
-      <div className="max-w-7xl mx-auto px-4 md:px-0">    
+      <div className="max-w-7xl mx-auto px-4 md:px-0">
         <div className="h-16 flex items-center justify-between">
-
           {/* LEFT */}
           <div className="flex items-center gap-2 md:gap-6">
-                     {/* Logo Section */}
-           <div className="flex items-center border-r-2 pr-2 md:pr-6 dark:border-gray-700">
-             <Link to="/" className="flex items-center gap-3">
-               <img
-                src={Logo}
-                alt="Fillop Tech"
-                width={32}
-                height={32}
-                className="flex-shrink-0"
-              />
-              <div>
-                <span className="md:text-2xl font-semibold text-primary  duration-200">
-                  Fillop Tech
-                </span>
-                <p className="text-[7.5px] text-destructive/100 dark:text-red-500 ">
-                  Simplifying your tech experience...
-                </p>
-              </div>
-            </Link>
-          </div>
+            {/* Logo Section */}
+            <div className="flex items-center border-r-2 pr-2 md:pr-6 dark:border-gray-700">
+              <Link to="/" className="flex items-center gap-3">
+                <img
+                  src={Logo}
+                  alt="Fillop Tech"
+                  width={32}
+                  height={32}
+                  className="flex-shrink-0"
+                />
+                <div>
+                  <span className="md:text-2xl font-semibold text-primary duration-200">
+                    Fillop Tech
+                  </span>
+                  <p className="text-[7.5px] text-destructive/100 dark:text-red-500">
+                    Simplifying your tech experience...
+                  </p>
+                </div>
+              </Link>
+            </div>
+
             {/* Exam Info */}
             <div>
               <p className="text-[11px] font-semibold text-red-500">
@@ -266,6 +304,41 @@ export default function PageNav() {
               </p>
             </div>
 
+            {/* Payment Status Badge (Desktop) */}
+            {paid && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-700 rounded-full">
+                <Crown className="h-3.5 w-3.5 text-yellow-600 dark:text-yellow-400" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-300">
+                    Premium
+                  </span>
+                  {expiresAt && (
+                    <>
+                      <span className="text-xs text-yellow-600 dark:text-yellow-400">•</span>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3 text-yellow-600 dark:text-yellow-400" />
+                        <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                          {formatExpiry(expiresAt)}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Free User Badge (Desktop) */}
+            {!paid && (
+              <Link
+                to="/checkout"
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-full hover:shadow-md transition-all"
+              >
+                <Crown className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                  Upgrade to Premium
+                </span>
+              </Link>
+            )}
           </div>
 
           {/* RIGHT */}
@@ -285,7 +358,7 @@ export default function PageNav() {
             {/* Logout */}
             <button
               onClick={handleLogout}
-              className="hidden sm:block text-gray-600 hover:text-red-600"
+              className="hidden sm:block text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
             >
               <LogOut className="h-4 w-4" />
             </button>
@@ -302,10 +375,41 @@ export default function PageNav() {
 
         {/* MOBILE MENU */}
         {isMenuOpen && (
-          <div className="md:hidden border-t py-2">
-            {/* <div className="px-3 py-2 text-sm font-semibold">
-              {examType} — {studyMode} Mode
-            </div> */}
+          <div className="md:hidden border-t py-2 dark:border-gray-700">
+            {/* Payment Status (Mobile) */}
+            <div className="px-3 py-2 mb-2">
+              {paid ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                  <Crown className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-300">
+                      Premium Active
+                    </p>
+                    {expiresAt && (
+                      <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                        {formatExpiry(expiresAt)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  to="/checkout"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-lg"
+                >
+                  <Crown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                      Upgrade to Premium
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400">
+                      Unlock unlimited access
+                    </p>
+                  </div>
+                </Link>
+              )}
+            </div>
 
             {navigationItems.map((item) => (
               <button
@@ -316,8 +420,8 @@ export default function PageNav() {
                 }}
                 className={`block w-full text-left px-3 py-2 rounded-md ${
                   isActive(item.path)
-                    ? "bg-blue-50 text-blue-600"
-                    : "hover:bg-gray-100"
+                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
                 {item.name}
@@ -326,7 +430,7 @@ export default function PageNav() {
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 text-red-600"
+              className="flex items-center gap-2 px-3 py-2 text-red-600 dark:text-red-400"
             >
               <LogOut className="h-4 w-4" />
               Logout
