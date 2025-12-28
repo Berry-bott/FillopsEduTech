@@ -1,4 +1,4 @@
-import { useQuizStore } from "../../store/quizStore";
+import { useQuizStore } from "@/store/quizStore";
 
 export default function QuizReport() {
   const { score, percentage, grade, report } = useQuizStore();
