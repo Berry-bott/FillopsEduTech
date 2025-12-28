@@ -222,7 +222,7 @@
 
 
 import { useEffect, useState } from "react";
-import { useQuizStore } from "@/store/quizStore";
+import { useQuizStore } from "../../store/quizStore";
 
 function PieChart({ percentage }) {
   const r = 50;

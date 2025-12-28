@@ -1,7 +1,7 @@
 // pages/PaymentVerification.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { usePaymentStore } from "@/store/paymentStore";
+import { usePaymentStore } from "../store/PaymentStore";
 
 export default function PaymentVerification() {
   const [searchParams] = useSearchParams();
