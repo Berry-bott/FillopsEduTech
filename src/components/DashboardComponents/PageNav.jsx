@@ -172,7 +172,7 @@ import { useEffect, useState } from "react";
 import { Menu, X, User, LogOut, Crown, Calendar } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
-import { usePaymentStore } from "../../ store/paymentStore";
+import { usePaymentStore } from "../../store/paymentStore";
 import Logo from "../../assets/images/fillopsLogo.png";
 import { ThemeToggle } from "../DashboardComponents/theme-toggle";
 
