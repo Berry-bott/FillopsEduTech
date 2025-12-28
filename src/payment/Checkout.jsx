@@ -52,7 +52,8 @@ export default function Checkout() {
     setSelectedSubjects((prev) => {
       const newSelection = { ...prev }
       
-      const pricePerSubject = plan.price || 0
+      const pricePerSubject = plan.pricePerSubject || 0
+      console.log(pricePerSubject)
       
       newSelection[subjectId] = {
         name: subjectName,
@@ -348,7 +349,7 @@ export default function Checkout() {
                                 </div>
                                 <div className="text-right">
                                   <div className="text-sm font-bold text-primary">
-                                    {plan.priceFormatted}
+                                  {plan.pricePerSubjectFormatted} 
                                   </div>
                                   {/* <div className="text-xs text-muted-foreground">
                                     full access
