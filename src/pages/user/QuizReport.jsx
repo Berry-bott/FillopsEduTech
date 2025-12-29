@@ -1,46 +1,458 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuizStore } from "../../store/quizStore";
 
-export default function QuizReport() {
-  const { score, percentage, grade, report } = useQuizStore();
+export default function QuizResultsPage() {
+  const navigate = useNavigate();
+  const { result, reset, fetchStats } = useQuizStore();
+  const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    if (!result) {
+      navigate("/quiz");
+    } else {
+      fetchStats();
+    }
+  }, [result, navigate, fetchStats]);
+
+  if (!result) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate stats
+  const questions = result.questions || [];
+  const correctCount = result.correctCount || questions.filter(q => q.userAnswer === q.correctAnswer).length || 0;
+  const wrongCount = result.wrongCount || (result.totalQuestions - correctCount) || 0;
+  const totalQuestions = result.totalQuestions || questions.length || 10;
+  const score = result.score || correctCount;
+  const percentage = result.percentage || Math.round((correctCount / totalQuestions) * 100);
+
+  console.log("Result data:", result);
+  console.log("Questions:", questions);
+  console.log("Stats - Correct:", correctCount, "Wrong:", wrongCount, "Total:", totalQuestions);
+
+  const getGradeColor = (pct) => {
+    if (pct >= 80) return "text-green-600";
+    if (pct >= 60) return "text-blue-600";
+    if (pct >= 40) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const getGradeText = (pct) => {
+    if (pct >= 80) return "Excellent";
+    if (pct >= 60) return "Good";
+    if (pct >= 40) return "Fair";
+    return "Needs Improvement";
+  };
+
+  const handleReturnHome = () => {
+    reset();
+    navigate("/");
+  };
 
   return (
-    <div className="p-4 space-y-6">
-      <h1 className="text-2xl font-bold">Quiz Result</h1>
-
-      <div className="p-4 rounded bg-gray-100">
-        <p>Score: {score} / {report.length}</p>
-        <p>Percentage: {percentage}%</p>
-        <p className="font-semibold">Grade: {grade}</p>
-      </div>
-
-      <hr />
-
-      {report.map((q, idx) => (
-        <div key={q.id} className="space-y-2">
-          <p className="font-semibold">
-            {idx + 1}. {q.question}
-          </p>
-
-          <p>Your Answer: {q.selected || "None"}</p>
-          <p>Correct Answer: {q.correct}</p>
-
-          <p
-            className={
-              q.isCorrect ? "text-green-600" : "text-red-600"
-            }
-          >
-            {q.isCorrect ? "Correct" : "Wrong"}
-          </p>
-
-          {q.explanation && (
-            <p className="text-sm text-gray-600">
-              Explanation: {q.explanation}
+    <div className="min-h-screen bg-gray-50 p-4 py-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        
+        {/* Main Results Card */}
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
+            <p className={`text-2xl font-semibold ${getGradeColor(percentage)}`}>
+              {getGradeText(percentage)}
             </p>
-          )}
+          </div>
 
-          <hr />
+          {/* Score Display */}
+          <div className="flex justify-center mb-8">
+            <div className="text-center">
+              <div className={`text-7xl font-bold ${getGradeColor(percentage)} mb-2`}>
+                {percentage}%
+              </div>
+              <div className="text-2xl text-gray-600 font-semibold">
+                {score} / {totalQuestions}
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-green-50 rounded-xl border border-green-200">
+              <div className="text-3xl font-bold text-green-600">{correctCount}</div>
+              <div className="text-sm text-gray-600 font-medium mt-1">Correct</div>
+            </div>
+            <div className="text-center p-4 bg-red-50 rounded-xl border border-red-200">
+              <div className="text-3xl font-bold text-red-600">{wrongCount}</div>
+              <div className="text-sm text-gray-600 font-medium mt-1">Wrong</div>
+            </div>
+            <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="text-3xl font-bold text-blue-600">
+                {Math.floor((result.timeSpent || 0) / 60)}:{String((result.timeSpent || 0) % 60).padStart(2, "0")}
+              </div>
+              <div className="text-sm text-gray-600 font-medium mt-1">Time</div>
+            </div>
+          </div>
         </div>
-      ))}
+
+        {/* Questions Review Card */}
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Review Answers</h2>
+          
+          {questions.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No questions to review</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {questions.map((q, idx) => {
+              const qId = q._id || q.id || q.questionId || idx;
+              const isExpanded = expandedId === qId;
+              const isCorrect = q.userAnswer === q.correctAnswer;
+
+              return (
+                <div
+                  key={qId}
+                  className="border-2 rounded-xl p-5 hover:shadow-md transition-shadow"
+                  style={{ borderColor: isCorrect ? "#10b981" : "#ef4444" }}
+                >
+                  {/* Question Header */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white ${
+                      isCorrect ? "bg-green-500" : "bg-red-500"
+                    }`}>
+                      {isCorrect ? "✓" : "✗"}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold text-gray-700">Q{idx + 1}</span>
+                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                          isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        }`}>
+                          {isCorrect ? "Correct" : "Wrong"}
+                        </span>
+                      </div>
+                      <p className="text-gray-900 font-medium">{q.question}</p>
+                    </div>
+                  </div>
+
+                  {/* Answers */}
+                  <div className="ml-12 space-y-3">
+                    <div>
+                      <span className="text-sm text-gray-500 font-medium">Your answer:</span>
+                      <div className={`mt-1 px-4 py-2 rounded-lg font-semibold inline-block ${
+                        isCorrect 
+                          ? "bg-green-50 text-green-700 border border-green-200" 
+                          : "bg-red-50 text-red-700 border border-red-200"
+                      }`}>
+                        {q.userAnswer || "Not answered"}
+                      </div>
+                    </div>
+
+                    {!isCorrect && (
+                      <div>
+                        <span className="text-sm text-gray-500 font-medium">Correct answer:</span>
+                        <div className="mt-1 px-4 py-2 rounded-lg font-semibold bg-green-50 text-green-700 border border-green-200 inline-block">
+                          {q.correctAnswer}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Explanation */}
+                  {q.explanation && (
+                    <div className="ml-12 mt-4">
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : qId)}
+                        className="text-blue-600 font-semibold text-sm hover:text-blue-700 flex items-center gap-1"
+                      >
+                        <svg 
+                          className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                        {isExpanded ? "Hide" : "Show"} explanation
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-sm text-gray-700 leading-relaxed">{q.explanation}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <button
+            onClick={handleReturnHome}
+            className="py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg"
+          >
+            Dashboard
+          </button>
+          <button
+            onClick={() => navigate("/quiz/history")}
+            className="py-4 bg-white text-gray-700 border-2 border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors shadow-lg"
+          >
+            📚 History
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="py-4 bg-white text-gray-700 border-2 border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors shadow-lg"
+          >
+            🖨️ Print
+          </button>
+        </div>
+
+        {/* Footer Message */}
+        <div className="text-center text-gray-600 py-4">
+          <p className="font-medium">Great job! Come back tomorrow for a new quiz 🚀</p>
+        </div>
+      </div>
     </div>
   );
 }
+
+
+
+
+// import { useEffect, useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import { useQuizStore } from "../../store/quizStore";
+
+// export default function QuizResultsPage() {
+//   const navigate = useNavigate();
+//   const { result, reset, fetchStats } = useQuizStore();
+//   const [expandedId, setExpandedId] = useState(null);
+
+//   useEffect(() => {
+//     if (!result) {
+//       navigate("/quiz");
+//     } else {
+//       fetchStats();
+//     }
+//   }, [result, navigate, fetchStats]);
+
+//   if (!result) {
+//     return (
+//       <div className="flex items-center justify-center min-h-screen bg-gray-50">
+//         <div className="text-center">
+//           <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+//           <p className="text-gray-600">Loading results...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // Calculate stats
+//   const questions = result.questions || [];
+//   const correctCount = result.correctCount || questions.filter(q => q.userAnswer === q.correctAnswer).length || 0;
+//   const wrongCount = result.wrongCount || (result.totalQuestions - correctCount) || 0;
+//   const totalQuestions = result.totalQuestions || questions.length || 10;
+//   const score = result.score || correctCount;
+//   const percentage = result.percentage || Math.round((correctCount / totalQuestions) * 100);
+
+//   console.log("Result data:", result);
+//   console.log("Questions:", questions);
+//   console.log("Stats - Correct:", correctCount, "Wrong:", wrongCount, "Total:", totalQuestions);
+
+//   const getGradeColor = (pct) => {
+//     if (pct >= 80) return "text-green-600";
+//     if (pct >= 60) return "text-blue-600";
+//     if (pct >= 40) return "text-yellow-600";
+//     return "text-red-600";
+//   };
+
+//   const getGradeText = (pct) => {
+//     if (pct >= 80) return "Excellent";
+//     if (pct >= 60) return "Good";
+//     if (pct >= 40) return "Fair";
+//     return "Needs Improvement";
+//   };
+
+//   const handleReturnHome = () => {
+//     reset();
+//     navigate("/");
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gray-50 p-4 py-8">
+//       <div className="max-w-4xl mx-auto space-y-6">
+        
+//         {/* Main Results Card */}
+//         <div className="bg-white rounded-2xl shadow-lg p-8">
+//           {/* Header */}
+//           <div className="text-center mb-8">
+//             <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
+//             <p className={`text-2xl font-semibold ${getGradeColor(percentage)}`}>
+//               {getGradeText(percentage)}
+//             </p>
+//           </div>
+
+//           {/* Score Display */}
+//           <div className="flex justify-center mb-8">
+//             <div className="text-center">
+//               <div className={`text-7xl font-bold ${getGradeColor(percentage)} mb-2`}>
+//                 {percentage}%
+//               </div>
+//               <div className="text-2xl text-gray-600 font-semibold">
+//                 {score} / {totalQuestions}
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Stats Grid */}
+//           <div className="grid grid-cols-3 gap-4">
+//             <div className="text-center p-4 bg-green-50 rounded-xl border border-green-200">
+//               <div className="text-3xl font-bold text-green-600">{correctCount}</div>
+//               <div className="text-sm text-gray-600 font-medium mt-1">Correct</div>
+//             </div>
+//             <div className="text-center p-4 bg-red-50 rounded-xl border border-red-200">
+//               <div className="text-3xl font-bold text-red-600">{wrongCount}</div>
+//               <div className="text-sm text-gray-600 font-medium mt-1">Wrong</div>
+//             </div>
+//             <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
+//               <div className="text-3xl font-bold text-blue-600">
+//                 {Math.floor((result.timeSpent || 0) / 60)}:{String((result.timeSpent || 0) % 60).padStart(2, "0")}
+//               </div>
+//               <div className="text-sm text-gray-600 font-medium mt-1">Time</div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Questions Review Card */}
+//         <div className="bg-white rounded-2xl shadow-lg p-8">
+//           <h2 className="text-2xl font-bold text-gray-900 mb-6">Review Answers</h2>
+          
+//           {questions.length === 0 ? (
+//             <div className="text-center py-8 text-gray-500">
+//               <p>No questions to review</p>
+//             </div>
+//           ) : (
+//             <div className="space-y-4">
+//               {questions.map((q, idx) => {
+//               const qId = q._id || q.id || q.questionId || idx;
+//               const isExpanded = expandedId === qId;
+//               const isCorrect = q.userAnswer === q.correctAnswer;
+
+//               return (
+//                 <div
+//                   key={qId}
+//                   className="border-2 rounded-xl p-5 hover:shadow-md transition-shadow"
+//                   style={{ borderColor: isCorrect ? "#10b981" : "#ef4444" }}
+//                 >
+//                   {/* Question Header */}
+//                   <div className="flex items-start gap-4 mb-4">
+//                     <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white ${
+//                       isCorrect ? "bg-green-500" : "bg-red-500"
+//                     }`}>
+//                       {isCorrect ? "✓" : "✗"}
+//                     </div>
+//                     <div className="flex-1">
+//                       <div className="flex items-center gap-2 mb-2">
+//                         <span className="font-semibold text-gray-700">Q{idx + 1}</span>
+//                         <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+//                           isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+//                         }`}>
+//                           {isCorrect ? "Correct" : "Wrong"}
+//                         </span>
+//                       </div>
+//                       <p className="text-gray-900 font-medium">{q.question}</p>
+//                     </div>
+//                   </div>
+
+//                   {/* Answers */}
+//                   <div className="ml-12 space-y-3">
+//                     <div>
+//                       <span className="text-sm text-gray-500 font-medium">Your answer:</span>
+//                       <div className={`mt-1 px-4 py-2 rounded-lg font-semibold inline-block ${
+//                         isCorrect 
+//                           ? "bg-green-50 text-green-700 border border-green-200" 
+//                           : "bg-red-50 text-red-700 border border-red-200"
+//                       }`}>
+//                         {q.userAnswer || "Not answered"}
+//                       </div>
+//                     </div>
+
+//                     {!isCorrect && (
+//                       <div>
+//                         <span className="text-sm text-gray-500 font-medium">Correct answer:</span>
+//                         <div className="mt-1 px-4 py-2 rounded-lg font-semibold bg-green-50 text-green-700 border border-green-200 inline-block">
+//                           {q.correctAnswer}
+//                         </div>
+//                       </div>
+//                     )}
+//                   </div>
+
+//                   {/* Explanation */}
+//                   {q.explanation && (
+//                     <div className="ml-12 mt-4">
+//                       <button
+//                         onClick={() => setExpandedId(isExpanded ? null : qId)}
+//                         className="text-blue-600 font-semibold text-sm hover:text-blue-700 flex items-center gap-1"
+//                       >
+//                         <svg 
+//                           className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+//                           fill="none" 
+//                           stroke="currentColor" 
+//                           viewBox="0 0 24 24"
+//                         >
+//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+//                         </svg>
+//                         {isExpanded ? "Hide" : "Show"} explanation
+//                       </button>
+
+//                       {isExpanded && (
+//                         <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+//                           <p className="text-sm text-gray-700 leading-relaxed">{q.explanation}</p>
+//                         </div>
+//                       )}
+//                     </div>
+//                   )}
+//                 </div>
+//               );
+//             })}
+//           </div>
+//           )}
+//         </div>
+
+//         {/* Action Buttons */}
+//         <div className="flex gap-4">
+//           <button
+//             onClick={handleReturnHome}
+//             className="flex-1 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg"
+//           >
+//             Return to Dashboard
+//           </button>
+//           <button
+//             onClick={() => window.print()}
+//             className="flex-1 py-4 bg-white text-gray-700 border-2 border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors shadow-lg"
+//           >
+//             Print Results
+//           </button>
+//         </div>
+
+//         {/* Footer Message */}
+//         <div className="text-center text-gray-600 py-4">
+//           <p className="font-medium">Great job! Come back tomorrow for a new quiz 🚀</p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }

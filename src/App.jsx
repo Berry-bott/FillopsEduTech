@@ -114,6 +114,7 @@ import Login from "@/pages/index/Login";
 import Register from "@/pages/index/Register";
 import QuizPage from "@/pages/user/QuizPage";
 import QuizReport from "@/pages/user/QuizReport";
+import QuizHistoryPage from "@/pages/user/QuizHistoryPage ";
 import StudyPage from "@/pages/user/StudyPage";
 import ExamsPage from "@/pages/user/ExamsPage";
 import LandingPage from "@/pages/index/LandingPage";
@@ -147,12 +148,12 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/study" element={<StudyPage />} />
           <Route path="/quiz" element={<QuizPage />} />
-          <Route path="/quiz-result" element={<QuizReport />} />
+          <Route path="/quiz/results" element={<QuizReport />} />
+          <Route path="/quiz/history" element={<QuizHistoryPage />} />
           <Route path="/exam" element={<ExamsPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/payment/verify" element={<PaymentVerification />} />
-
-          <Route path="/preference" element={<PreferencePage />} />
+          <Route path="/onboarding" element={<PreferencePage />} />
           <Route path="/exam-selector" element={<ExamSelector />} />
           <Route path="/lecturer/dashboard" element={<LecturerDashboard />} />
 

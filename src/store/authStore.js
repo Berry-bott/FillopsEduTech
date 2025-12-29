@@ -43,6 +43,8 @@ const useAuthStore = create(
           const { accessToken, user } = res.data;
 
           sessionStorage.setItem("accessToken", accessToken);
+          console.log("🍪 All cookies after login:", document.cookie);
+          console.log("📦 Login response:", res);
 
           set({
             user,
@@ -135,6 +137,7 @@ const useAuthStore = create(
 
         // Try refresh
         const refreshed = await get().refreshAccessToken();
+        console.log("🔄 Refresh result:", refreshed);
         if (refreshed) return true;
 
         // Logout fallback

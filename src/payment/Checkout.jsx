@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import useAuthStore from "@/store/authStore";
 import { usePaymentStore } from "@/store/PaymentStore"
 import { useToast } from "@/components/ui/use-toast";
 import { Check, ShieldCheck, Star, Sparkles, Clock } from "lucide-react"
 
 export default function Checkout() {
+  const { accessToken } = useAuthStore();
   const {
     plans: apiPlans,
     loading: paymentLoading,
@@ -26,6 +28,10 @@ export default function Checkout() {
   const [promoCode, setPromoCode] = useState("")
   const [initialLoading, setInitialLoading] = useState(true)
 
+  const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+
+  
+
   // Ensure plans is always an array and extract from correct path
   const plansList = Array.isArray(apiPlans?.plans) ? apiPlans.plans : 
                     Array.isArray(apiPlans) ? apiPlans : []
@@ -41,11 +47,51 @@ export default function Checkout() {
     loadData()
   }, [])
 
-  // Load subjects from localStorage
+
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("prefSubjects") || "{}")
-    setSubjectsByCategory(stored)
-  }, [])
+    if (!accessToken) return;
+  
+    const loadSubjectsFromPreferences = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/preferences`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+  
+        if (!res.ok) throw new Error("Failed to fetch preferences");
+  
+        const data = await res.json();
+  
+        const preferences = data.data?.preferences || {};
+        const selectedSubjects = preferences.selectedSubjects || {};
+  
+        /**
+         * Convert API response to:
+         * {
+         *   WAEC: [{ id, name }],
+         *   NECO: [{ id, name }]
+         * }
+         */
+        const formatted = {};
+  
+        Object.entries(selectedSubjects).forEach(([exam, subjects]) => {
+          formatted[exam] = subjects.map((s) => ({
+            id: s.id || s._id,
+            name: s.name || s.subjectName || "Unknown Subject",
+          }));
+        });
+  
+        setSubjectsByCategory(formatted);
+      } catch (err) {
+        console.error("Failed to load subjects:", err);
+        setSubjectsByCategory({});
+      }
+    };
+  
+    loadSubjectsFromPreferences();
+  }, [accessToken]);
+  
 
   // Handle subject + plan selection
   const selectSubjectWithPlan = (subjectId, subjectName, category, plan) => {
