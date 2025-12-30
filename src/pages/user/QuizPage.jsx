@@ -720,7 +720,7 @@ export default function QuizPage() {
           {/* Action Button */}
           <div className="space-y-3">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/user/dashboard")}
               className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg"
             >
               Return to Dashboard
@@ -779,7 +779,7 @@ export default function QuizPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg">Loading your quiz...</p>
+          <p className="text-lg">Loading your daily quiz...</p>
         </div>
       </div>
     );

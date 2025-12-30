@@ -56,7 +56,7 @@ export default function QuizHistoryPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading history...</p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function QuizHistoryPage() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/user/dashboard")}
             className="text-blue-600 hover:text-blue-700 font-semibold mb-4 flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

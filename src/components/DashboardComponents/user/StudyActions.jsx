@@ -31,7 +31,7 @@ export default function StudyActions({
   }, [examDropdownOpen]);
 
   return (
-    <div className="flex gap-2 md:gap-6">
+    <div className="flex flex-wrap gap-2 md:gap-6">
       {/* Study button */}
       <div className="relative inline-block" ref={dropdownRef}>
         <Button
@@ -89,11 +89,17 @@ export default function StudyActions({
       </Button>
       {/* Exam button */}
       <Button
-        onClick={() => openFor("professional")}
-        className="bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2 px-4"
+        // onClick={() =>{} }
+        className="bg-red-600 hover:bg-red-700"
       >
-        < Shield className="w-4 h-4" />
-        <span>Join Professional Courses </span>
+       <a  href="https://filloptech.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="  flex items-center space-x-2 px-4 rounded-lg py-2 cursor-pointer"
+        >
+        <Shield className="w-4 h-4" />
+        <span>Join Professional Courses</span>
+      </a>
       </Button>
     </div>
   );

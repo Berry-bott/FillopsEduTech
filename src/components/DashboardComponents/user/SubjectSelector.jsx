@@ -460,8 +460,6 @@
 // }
 
 
-
-
 import React, { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import useAuthStore from "../../../store/authStore";
@@ -545,6 +543,7 @@ export default function SubjectSelector({
         return res.json();
       })
       .then((data) => {
+        console.log("🟢 Fetched subjects with years:", data);
         const apiSubjects = data.data || [];
 
         setSubjects((prev) =>
@@ -555,9 +554,21 @@ export default function SubjectSelector({
                 localSubj.subjectName?.toLowerCase()
             );
 
-            const years = apiMatch
-              ? [...new Set(apiMatch.question.map((q) => q.year))]
-              : [];
+            console.log(`🔍 Matching ${localSubj.subjectName}:`, apiMatch);
+
+            // Handle different possible response structures
+            let years = [];
+            if (apiMatch) {
+              // Check for questions array in different possible locations
+              const questions = apiMatch.question || apiMatch.questions || [];
+              
+              if (Array.isArray(questions) && questions.length > 0) {
+                // Extract unique years from questions
+                years = [...new Set(questions.map((q) => q.year).filter(Boolean))];
+              }
+            }
+
+            console.log(`📅 Years for ${localSubj.subjectName}:`, years);
 
             return { ...localSubj, years };
           })
@@ -623,17 +634,22 @@ export default function SubjectSelector({
                   onChange={(e) =>
                     setYearForSubject(subject.id, e.target.value)
                   }
-                  className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
+                  disabled={subject.years.length === 0}
+                  className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="" disabled>
-                    Select Year
+                    {subject.years.length === 0 ? "No years available" : "Select Year"}
                   </option>
-                  <option value="random">Random</option>
-                  {subject.years.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
+                  {subject.years.length > 0 && (
+                    <>
+                      <option value="random">Random</option>
+                      {subject.years.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
               </div>
             ))

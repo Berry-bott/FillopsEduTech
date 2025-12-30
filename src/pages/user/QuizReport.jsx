@@ -54,7 +54,7 @@ export default function QuizResultsPage() {
 
   const handleReturnHome = () => {
     reset();
-    navigate("/");
+    navigate("/user/dashboard");
   };
 
   return (
@@ -72,28 +72,28 @@ export default function QuizResultsPage() {
           </div>
 
           {/* Score Display */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-4">
             <div className="text-center">
               <div className={`text-7xl font-bold ${getGradeColor(percentage)} mb-2`}>
                 {percentage}%
               </div>
-              <div className="text-2xl text-gray-600 font-semibold">
-                {score} / {totalQuestions}
+              <div className="text-2xl text-gray-600 font-semibold bg-gray-100 inline-block px-4 rounded-lg">
+                {score}/{totalQuestions}
               </div>
             </div>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-green-50 rounded-xl border border-green-200">
+            <div className="text-center p-2 bg-green-50 rounded-xl border border-green-200">
               <div className="text-3xl font-bold text-green-600">{correctCount}</div>
-              <div className="text-sm text-gray-600 font-medium mt-1">Correct</div>
+              <div className="text-sm text-gray-600 font-medium mt-">Correct</div>
             </div>
-            <div className="text-center p-4 bg-red-50 rounded-xl border border-red-200">
+            <div className="text-center p-2 bg-red-50 rounded-xl border border-red-200">
               <div className="text-3xl font-bold text-red-600">{wrongCount}</div>
               <div className="text-sm text-gray-600 font-medium mt-1">Wrong</div>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <div className="text-center p-2 bg-blue-50 rounded-xl border border-blue-200">
               <div className="text-3xl font-bold text-blue-600">
                 {Math.floor((result.timeSpent || 0) / 60)}:{String((result.timeSpent || 0) % 60).padStart(2, "0")}
               </div>
@@ -103,11 +103,11 @@ export default function QuizResultsPage() {
         </div>
 
         {/* Questions Review Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white rounded-2xl shadow-lg p-2">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Review Answers</h2>
           
           {questions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-6 text-gray-500">
               <p>No questions to review</p>
             </div>
           ) : (
@@ -120,11 +120,11 @@ export default function QuizResultsPage() {
               return (
                 <div
                   key={qId}
-                  className="border-2 rounded-xl p-5 hover:shadow-md transition-shadow"
+                  className="border-2 rounded-xl p-4 hover:shadow-md transition-shadow"
                   style={{ borderColor: isCorrect ? "#10b981" : "#ef4444" }}
                 >
                   {/* Question Header */}
-                  <div className="flex items-start gap-4 mb-4">
+                  <div className="flex items-start gap-4 mb-2">
                     <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white ${
                       isCorrect ? "bg-green-500" : "bg-red-500"
                     }`}>
@@ -168,7 +168,7 @@ export default function QuizResultsPage() {
 
                   {/* Explanation */}
                   {q.explanation && (
-                    <div className="ml-12 mt-4">
+                    <div className="ml-8 mt-4">
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : qId)}
                         className="text-blue-600 font-semibold text-sm hover:text-blue-700 flex items-center gap-1"
@@ -185,7 +185,7 @@ export default function QuizResultsPage() {
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
                           <p className="text-sm text-gray-700 leading-relaxed">{q.explanation}</p>
                         </div>
                       )}
