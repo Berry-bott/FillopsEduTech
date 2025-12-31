@@ -188,22 +188,86 @@ export const usePaymentStore = create((set, get) => ({
       const { fetchWithAuth } = useAuthStore.getState();
       const res = await fetchWithAuth(`${API_BASE}/payments/status`);
 
-      console.log("✅ Payment status response:", res);
+      console.log("✅ Full Payment status response:", JSON.stringify(res, null, 2));
       console.log("📊 Status data:", res?.data);
 
-      const isPaid = !!res?.data?.paid;
-      const expiry = res?.data?.expiresAt || null;
+      const data = res?.data;
+      
+      if (!data) {
+        console.error("❌ No data in response!");
+        set({ paid: false, expiresAt: null });
+        return { paid: false, expiresAt: null };
+      }
 
-      console.log("💾 Setting payment state:", { paid: isPaid, expiresAt: expiry });
+      console.log("🔍 Subscriptions object:", data.subscriptions);
+      console.log("🔍 Type of subscriptions:", typeof data.subscriptions);
+      console.log("🔍 Subscriptions keys:", Object.keys(data.subscriptions || {}));
+      
+      // Check if user has any active subscriptions
+      const activeSubscriptions = data?.subscriptions?.active || [];
+      const lifetimeSubscriptions = data?.subscriptions?.lifetime || [];
+      const totalActive = data?.subscriptions?.totalActive || 0;
+      
+      console.log("🔍 Active subscriptions array:", activeSubscriptions);
+      console.log("🔍 Active subscriptions length:", activeSubscriptions.length);
+      console.log("🔍 Lifetime subscriptions:", lifetimeSubscriptions);
+      console.log("🔍 Lifetime length:", lifetimeSubscriptions.length);
+      console.log("🔍 Total active count:", totalActive);
+
+      const hasActiveSubscription = activeSubscriptions.length > 0 || 
+                                     lifetimeSubscriptions.length > 0 || 
+                                     totalActive > 0;
+
+      console.log("✅ Has active subscription?", hasActiveSubscription);
+
+      let isPaid = hasActiveSubscription;
+      let expiry = null;
+
+      if (hasActiveSubscription) {
+        // Get expiry from first active subscription
+        if (activeSubscriptions.length > 0) {
+          const firstSub = activeSubscriptions[0];
+          console.log("📅 First subscription object:", firstSub);
+          expiry = firstSub?.expiresAt || firstSub?.expiry || firstSub?.expiryDate || null;
+          console.log("📅 Extracted expiry:", expiry);
+        }
+        
+        // If no expiry and has lifetime, set to far future
+        if (!expiry && lifetimeSubscriptions.length > 0) {
+          expiry = "2099-12-31T23:59:59.000Z";
+          console.log("♾️ Lifetime subscription - setting far future expiry");
+        }
+      }
+
+      // Fallback: check if there's a direct paid field
+      if (!isPaid && data?.paid !== undefined) {
+        console.log("🔄 Checking fallback paid field:", data.paid);
+        isPaid = !!data.paid;
+        expiry = data.expiresAt || null;
+      }
+
+      console.log("💾 FINAL - Setting payment state:", { 
+        paid: isPaid, 
+        expiresAt: expiry,
+        activeCount: activeSubscriptions.length,
+        lifetimeCount: lifetimeSubscriptions.length
+      });
 
       set({
         paid: isPaid,
         expiresAt: expiry,
       });
+
+      // Verify the state was set
+      const currentState = get();
+      console.log("✅ State after set:", { paid: currentState.paid, expiresAt: currentState.expiresAt });
+
+      return { paid: isPaid, expiresAt: expiry };
     } catch (error) {
       console.error("❌ Payment status check failed:", error);
-      console.log("Setting to unpaid due to error");
+      console.error("❌ Error stack:", error.stack);
       set({ paid: false, expiresAt: null });
+      return { paid: false, expiresAt: null };
     }
   },
 
@@ -305,12 +369,30 @@ export const usePaymentStore = create((set, get) => ({
       const res = await fetchWithAuth(`${API_BASE}/payments/verify/${reference}`);
       
       console.log("✅ Verification response:", res);
+      console.log("✅ Verification data:", res?.data);
 
-      if (!res.success) {
+      // Check if verification was successful
+      if (!res.success && !res?.data?.success) {
         throw new Error(res.message || "Verification failed");
       }
 
+      // IMPORTANT: Update payment status immediately
+      if (res?.data?.paid !== undefined) {
+        console.log("💾 Updating payment status from verify response");
+        set({
+          paid: res.data.paid,
+          expiresAt: res.data.expiresAt || null,
+        });
+      }
+
+      // Also fetch fresh status from backend
+      console.log("🔄 Fetching fresh payment status...");
       await get().checkStatus();
+
+      console.log("✅ Final payment state:", { 
+        paid: get().paid, 
+        expiresAt: get().expiresAt 
+      });
 
       set({ loading: false });
       return res;

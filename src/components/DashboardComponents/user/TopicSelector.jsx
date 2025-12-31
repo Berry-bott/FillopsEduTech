@@ -1,47 +1,488 @@
+// import React, { useState, useEffect } from "react";
+// import useAuthStore from "../../../store/authStore";
+
+
+
+
+
+// export default function TopicSelector({
+//   selectedTopics = {},
+//   toggleTopic = () => {},
+//   setTopicYear = () => {}, // now receives subjectId + year
+// }) {
+//   const { accessToken } = useAuthStore();
+
+//   const [openSubject, setOpenSubject] = useState(null);
+//   const [allTopics, setAllTopics] = useState([]);
+//   const [loading, setLoading] = useState(false);
+
+//   // Contains { subjectId: year }
+//   const [subjectYears, setSubjectYears] = useState(() => {
+//     try {
+//       const saved = JSON.parse(localStorage.getItem("studySelections"));
+//       return saved?.subjectYears || {};
+//     } catch (e) {
+//       return {};
+//     }
+//   });
+
+//   // Fetch Topics
+//   useEffect(() => {
+//     if (!accessToken) return;
+
+//     const fetchAllTopics = async () => {
+//       setLoading(true);
+//       try {
+//         console.log("➡️ Fetching /api/topics ...");
+//         const res = await fetch(`https://fillops-server-5fuf.onrender.com/api/topics`, {
+//           headers: { Authorization: `Bearer ${accessToken}` },
+//         });
+
+//         const json = await res.json();
+//         console.log("📥 /api/topics response:", json);
+
+//         setAllTopics(json.data || []);
+//       } catch (err) {
+//         console.error("❌ Failed to fetch topics:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchAllTopics();
+//   }, [accessToken]);
+
+//   // Save YEAR to localStorage under subject
+//   const persistYear = (subjectId, year) => {
+//     try {
+//       const saved = JSON.parse(localStorage.getItem("studySelections")) || {};
+
+//       const updated = {
+//         ...saved,
+//         subjectYears: {
+//           ...(saved.subjectYears || {}),
+//           [subjectId]: year,
+//         },
+//       };
+
+//       localStorage.setItem("studySelections", JSON.stringify(updated));
+
+//       console.log("💾 Persisted subjectYears:", updated.subjectYears);
+//     } catch (err) {
+//       console.error("❌ Failed to save subjectYears", err);
+//     }
+//   };
+
+//   // Extract subjects
+//   const subjects = Array.from(
+//     new Map(allTopics.map((t) => [t.module.subject.id, t.module.subject])).values()
+//   );
+
+//   if (loading)
+//     return (
+//       <div className="flex flex-col items-center justify-center py-10">
+//         <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
+//         <p className="text-white-700 dark:text-gray-300">Loading subjects and topics...</p>
+//       </div>
+//     );
+
+//   if (!subjects.length) return <p>No subjects available.</p>;
+
+//   return (
+//     <div className="space-y-4 relative overflow-y-auto">
+//       {subjects.map((subject) => {
+//         const isOpen = openSubject === subject.id;
+
+//         const topics = allTopics.filter(
+//           (t) => t.module.subject.id === subject.id
+//         );
+
+//         // Collect available years from ALL topics of this subject
+//         const availableYears = Array.from(
+//           new Set(
+//             topics
+//               .flatMap((t) => (t.question || []).map((q) => q.year))
+//               .filter(Boolean)
+//           )
+//         );
+
+//         const selectedYear = subjectYears[subject.id] || "";
+
+//         return (
+//           <div
+//             key={subject.id}
+//             className="relative border rounded-xl p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:bg-slate-400"
+//             onMouseEnter={() => setOpenSubject(subject.id)}
+//             onMouseLeave={() => setOpenSubject(null)}
+//           >
+//             {/* SUBJECT TITLE + YEAR DROPDOWN */}
+//             <div className="flex justify-between items-center gap-3">
+//               <div className="text-lg font-semibold text-gray-800 dark:text-primary">
+//                 {subject.subjectName}
+//               </div>
+
+//               {/* YEAR SELECT placed beside subject name */}
+//               <select
+//                 value={selectedYear}
+//                 onChange={(e) => {
+//                   const y = e.target.value;
+
+//                   setSubjectYears((prev) => ({ ...prev, [subject.id]: y }));
+
+//                   persistYear(subject.id, y);
+
+//                   // notify parent
+//                   setTopicYear(subject.id, y);
+
+//                   console.log(`📌 Selected year for subject ${subject.subjectName}:`, y);
+//                 }}
+//                 className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
+//               >
+//                 <option value="" disabled>Select Year</option>
+//                 <option value="random">Random</option>
+//                 {availableYears.length === 0 ? (
+//                   <option value="random">Random</option>
+//                 ) : (
+//                   availableYears.map((yr) => (
+//                     <option key={yr} value={yr}>
+//                       {yr}
+//                     </option>
+//                   ))
+//                 )}
+//               </select>
+//             </div>
+
+//             {/* TOPIC DROPDOWN (unchanged) */}
+//             {isOpen && (
+//               <div className="absolute left-0 top-18 mt-4 w-full bg-white dark:bg-gray-900 border rounded-xl shadow-lg p-3 z-50">
+//                 {topics.length > 0 ? (
+//                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-1">
+//                     {topics.map((topic) => {
+//                       const isSelected =
+//                         selectedTopics[subject.id]?.includes(topic.id) || false;
+
+//                       return (
+//                         <button
+//                           key={topic.id}
+//                           onClick={() => toggleTopic(subject.id, topic.id)}
+//                           className={`text-center px-1 py-2 rounded-lg text-sm font-medium transition-all
+//                             ${
+//                               isSelected
+//                                 ? "bg-indigo-600 text-white shadow-md"
+//                                 : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+//                             }`}
+//                         >
+//                           {topic.topicName}
+//                         </button>
+//                       );
+//                     })}
+//                   </div>
+//                 ) : (
+//                   <div className="text-center text-gray-500 py-2">
+//                     No topics available.
+//                   </div>
+//                 )}
+//               </div>
+//             )}
+//           </div>
+//         );
+//       })}
+//     </div>
+//   );
+// }
+
+
+
+// import React, { useState, useEffect } from "react";
+// import useAuthStore from "@/store/authStore";
+
+// export default function TopicSelector({
+//   selectedTopics = {},
+//   toggleTopic = () => {},
+//   setTopicYear = () => {},
+// }) {
+//   const { accessToken } = useAuthStore();
+
+//   const [openSubject, setOpenSubject] = useState(null);
+//   const [allSubjects, setAllSubjects] = useState([]);
+//   const [loading, setLoading] = useState(false);
+
+//   // Contains { subjectId: year }
+//   const [subjectYears, setSubjectYears] = useState({});
+
+//   // Fetch Topics from the correct endpoint
+//   useEffect(() => {
+//     if (!accessToken) return;
+
+//     const fetchAllTopics = async () => {
+//       setLoading(true);
+//       try {
+//         console.log("➡️ Fetching /api/users/my-topics ...");
+//         const res = await fetch(`https://fillops-server-5fuf.onrender.com/api/users/my-topics`, {
+//           headers: { Authorization: `Bearer ${accessToken}` },
+//         });
+
+//         const json = await res.json();
+//         console.log("📥 /api/users/my-topics response:", json);
+
+//         // Transform the API response into the structure we need
+//         const subjects = json.data || [];
+//         setAllSubjects(subjects);
+        
+//         console.log("✅ Loaded subjects:", subjects.length);
+//       } catch (err) {
+//         console.error("❌ Failed to fetch topics:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchAllTopics();
+//   }, [accessToken]);
+
+//   // Update year and notify parent
+//   const handleYearChange = (subjectId, year) => {
+//     setSubjectYears((prev) => ({ ...prev, [subjectId]: year }));
+    
+//     // Notify parent component
+//     setTopicYear(subjectId, year);
+    
+//     console.log(`📌 Selected year for subject ${subjectId}:`, year);
+//   };
+
+//   if (loading)
+//     return (
+//       <div className="flex flex-col items-center justify-center py-10">
+//         <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
+//         <p className="text-gray-700 dark:text-gray-300">Loading subjects and topics...</p>
+//       </div>
+//     );
+
+//   if (!allSubjects.length) 
+//     return (
+//       <div className="text-center py-8">
+//         <p className="text-gray-500 dark:text-gray-400">No subjects available.</p>
+//       </div>
+//     );
+
+//   return (
+//     <div className="space-y-4 relative overflow-y-auto max-h-[600px] p-2">
+//       {allSubjects.map((subject) => {
+//         const isOpen = openSubject === subject.subjectId;
+
+//         // Get all topics from all modules for this subject
+//         const allTopics = subject.modules.flatMap(module => 
+//           module.topics.map(topic => ({
+//             ...topic,
+//             moduleId: module.moduleId,
+//             moduleName: module.moduleName,
+//           }))
+//         );
+
+//         // Extract available years from topics
+//         const availableYearsSet = new Set();
+//         allTopics.forEach(topic => {
+//           if (topic.availableYears) {
+//             topic.availableYears.forEach(year => availableYearsSet.add(year));
+//           }
+//         });
+//         const availableYears = Array.from(availableYearsSet).sort((a, b) => b - a);
+
+//         const selectedYear = subjectYears[subject.subjectId] || "";
+
+//         return (
+//           <div
+//             key={subject.subjectId}
+//             className="relative border rounded-xl p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:bg-slate-50 dark:hover:bg-gray-700"
+//             onMouseEnter={() => setOpenSubject(subject.subjectId)}
+//             onMouseLeave={() => setOpenSubject(null)}
+//           >
+//             {/* SUBJECT TITLE + YEAR DROPDOWN */}
+//             <div className="flex justify-between items-center gap-3">
+//               <div className="flex items-center gap-3">
+//                 <span className="text-2xl">{subject.icon}</span>
+//                 <div>
+//                   <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+//                     {subject.subjectName}
+//                   </div>
+//                   <div className="text-xs text-gray-500 dark:text-gray-400">
+//                     {subject.totalTopics} topics available
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* YEAR SELECT placed beside subject name */}
+//               <select
+//                 value={selectedYear}
+//                 onChange={(e) => handleYearChange(subject.subjectId, e.target.value)}
+//                 className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
+//               >
+//                 <option value="" disabled>Select Year</option>
+//                 <option value="random">Random</option>
+//                 {availableYears.length === 0 ? (
+//                   <option value="random">Random (No specific years)</option>
+//                 ) : (
+//                   availableYears.map((yr) => (
+//                     <option key={yr} value={yr}>
+//                       {yr}
+//                     </option>
+//                   ))
+//                 )}
+//               </select>
+//             </div>
+
+//             {/* TOPIC DROPDOWN - Now organized by modules */}
+//             {isOpen && (
+//               <div className="absolute left-0 top-full mt-2 w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4 z-50 max-h-96 overflow-y-auto">
+//                 {subject.modules.length > 0 ? (
+//                   <div className="space-y-4">
+//                     {subject.modules.map(module => (
+//                       <div key={module.moduleId} className="space-y-2">
+//                         <h4 className="font-bold text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 pb-2">
+//                           📚 {module.moduleName}
+//                         </h4>
+//                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+//                           {module.topics.map((topic) => {
+//                             const isSelected =
+//                               selectedTopics[subject.subjectId]?.includes(topic.topicId) || false;
+
+//                             return (
+//                               <button
+//                                 key={topic.topicId}
+//                                 onClick={() => toggleTopic(subject.subjectId, topic.topicId)}
+//                                 className={`text-center px-2 py-2.5 rounded-lg text-xs font-medium transition-all border
+//                                   ${
+//                                     isSelected
+//                                       ? "bg-indigo-600 text-white shadow-md border-indigo-700"
+//                                       : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
+//                                   }`}
+//                                 title={`${topic.questionCount} questions`}
+//                               >
+//                                 <div className="font-semibold">{topic.topicName}</div>
+//                                 <div className="text-xs opacity-75 mt-1">
+//                                   {topic.questionCount} Qs
+//                                 </div>
+//                               </button>
+//                             );
+//                           })}
+//                         </div>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 ) : (
+//                   <div className="text-center text-gray-500 py-4">
+//                     No topics available for this subject.
+//                   </div>
+//                 )}
+//               </div>
+//             )}
+//           </div>
+//         );
+//       })}
+
+//       {/* Debug Info */}
+//       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+//         <p className="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">
+//           📊 Debug Info:
+//         </p>
+//         <div className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
+//           <p>Total subjects: <strong>{allSubjects.length}</strong></p>
+//           {allSubjects.map(s => {
+//             const totalTopics = s.modules.reduce((sum, m) => sum + m.topics.length, 0);
+//             return (
+//               <p key={s.subjectId}>
+//                 {s.subjectName}: <strong>{totalTopics} topics</strong> across {s.modules.length} modules
+//               </p>
+//             );
+//           })}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
 import React, { useState, useEffect } from "react";
-import useAuthStore from "../../../store/authStore";
-
-
-
-
+import useAuthStore from "@/store/authStore";
 
 export default function TopicSelector({
   selectedTopics = {},
   toggleTopic = () => {},
-  setTopicYear = () => {}, // now receives subjectId + year
+  setTopicYear = () => {},
 }) {
   const { accessToken } = useAuthStore();
 
   const [openSubject, setOpenSubject] = useState(null);
-  const [allTopics, setAllTopics] = useState([]);
+  const [allSubjects, setAllSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [subjectYears, setSubjectYears] = useState({});
 
-  // Contains { subjectId: year }
-  const [subjectYears, setSubjectYears] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("studySelections"));
-      return saved?.subjectYears || {};
-    } catch (e) {
-      return {};
-    }
-  });
-
-  // Fetch Topics
+  // Fetch Topics and deduplicate subjects
   useEffect(() => {
     if (!accessToken) return;
 
     const fetchAllTopics = async () => {
       setLoading(true);
       try {
-        console.log("➡️ Fetching /api/topics ...");
-        const res = await fetch(`https://fillops-server-5fuf.onrender.com/api/topics`, {
+        console.log("➡️ Fetching /api/users/my-topics ...");
+        const res = await fetch(`https://fillops-server-5fuf.onrender.com/api/users/my-topics`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         const json = await res.json();
-        console.log("📥 /api/topics response:", json);
+        console.log("📥 /api/users/my-topics response:", json);
 
-        setAllTopics(json.data || []);
+        const subjects = json.data || [];
+
+        // Deduplicate subjects by name and collect all unique topics
+        const subjectMap = new Map();
+        
+        subjects.forEach(subject => {
+          const subjectKey = subject.subjectName;
+          
+          if (subjectMap.has(subjectKey)) {
+            // Subject already exists, add topics
+            const existing = subjectMap.get(subjectKey);
+            
+            // Collect all topics from all modules
+            subject.modules.forEach(module => {
+              module.topics.forEach(topic => {
+                // Use topicName as key to avoid duplicates
+                const topicKey = topic.topicName;
+                if (!existing.topicsMap.has(topicKey)) {
+                  existing.topicsMap.set(topicKey, topic);
+                }
+              });
+            });
+          } else {
+            // New subject, create topics map
+            const topicsMap = new Map();
+            subject.modules.forEach(module => {
+              module.topics.forEach(topic => {
+                topicsMap.set(topic.topicName, topic);
+              });
+            });
+            
+            subjectMap.set(subjectKey, {
+              ...subject,
+              topicsMap,
+            });
+          }
+        });
+
+        // Convert topicsMap to array for each subject
+        const deduplicatedSubjects = Array.from(subjectMap.values()).map(subject => ({
+          ...subject,
+          allTopics: Array.from(subject.topicsMap.values()),
+        }));
+        
+        setAllSubjects(deduplicatedSubjects);
+        
+        console.log("✅ Loaded subjects:", deduplicatedSubjects.length);
+        console.log("📋 Subjects:", deduplicatedSubjects.map(s => s.subjectName));
       } catch (err) {
         console.error("❌ Failed to fetch topics:", err);
       } finally {
@@ -52,134 +493,114 @@ export default function TopicSelector({
     fetchAllTopics();
   }, [accessToken]);
 
-  // Save YEAR to localStorage under subject
-  const persistYear = (subjectId, year) => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("studySelections")) || {};
-
-      const updated = {
-        ...saved,
-        subjectYears: {
-          ...(saved.subjectYears || {}),
-          [subjectId]: year,
-        },
-      };
-
-      localStorage.setItem("studySelections", JSON.stringify(updated));
-
-      console.log("💾 Persisted subjectYears:", updated.subjectYears);
-    } catch (err) {
-      console.error("❌ Failed to save subjectYears", err);
-    }
+  // Update year and notify parent
+  const handleYearChange = (subjectId, year) => {
+    setSubjectYears((prev) => ({ ...prev, [subjectId]: year }));
+    setTopicYear(subjectId, year);
+    console.log(`📌 Selected year for subject ${subjectId}:`, year);
   };
-
-  // Extract subjects
-  const subjects = Array.from(
-    new Map(allTopics.map((t) => [t.module.subject.id, t.module.subject])).values()
-  );
 
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center py-10">
         <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
-        <p className="text-white-700 dark:text-gray-300">Loading subjects and topics...</p>
+        <p className="text-gray-700 dark:text-gray-300">Loading subjects and topics...</p>
       </div>
     );
 
-  if (!subjects.length) return <p>No subjects available.</p>;
+  if (!allSubjects.length) 
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500 dark:text-gray-400">No subjects available.</p>
+      </div>
+    );
 
   return (
-    <div className="space-y-4 relative overflow-y-auto">
-      {subjects.map((subject) => {
-        const isOpen = openSubject === subject.id;
+    <div className="space-y-4 relative overflow-y-auto max-h-[600px] p-2">
+      {allSubjects.map((subject) => {
+        const isOpen = openSubject === subject.subjectId;
 
-        const topics = allTopics.filter(
-          (t) => t.module.subject.id === subject.id
-        );
+        // Use the deduplicated topics
+        const allTopics = subject.allTopics || [];
 
-        // Collect available years from ALL topics of this subject
-        const availableYears = Array.from(
-          new Set(
-            topics
-              .flatMap((t) => (t.question || []).map((q) => q.year))
-              .filter(Boolean)
-          )
-        );
+        // Extract available years from topics
+        const availableYearsSet = new Set();
+        allTopics.forEach(topic => {
+          if (topic.availableYears) {
+            topic.availableYears.forEach(year => availableYearsSet.add(year));
+          }
+        });
+        const availableYears = Array.from(availableYearsSet).sort((a, b) => b - a);
 
-        const selectedYear = subjectYears[subject.id] || "";
+        const selectedYear = subjectYears[subject.subjectId] || "";
 
         return (
           <div
-            key={subject.id}
-            className="relative border rounded-xl p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:bg-slate-400"
-            onMouseEnter={() => setOpenSubject(subject.id)}
+            key={subject.subjectId}
+            className="relative border rounded-xl p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:bg-slate-50 dark:hover:bg-gray-700"
+            onMouseEnter={() => setOpenSubject(subject.subjectId)}
             onMouseLeave={() => setOpenSubject(null)}
           >
             {/* SUBJECT TITLE + YEAR DROPDOWN */}
             <div className="flex justify-between items-center gap-3">
-              <div className="text-lg font-semibold text-gray-800 dark:text-primary">
-                {subject.subjectName}
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{subject.icon}</span>
+                <div>
+                  <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                    {subject.subjectName}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {allTopics.length} topics available
+                  </div>
+                </div>
               </div>
 
-              {/* YEAR SELECT placed beside subject name */}
+              {/* YEAR SELECT */}
               <select
                 value={selectedYear}
-                onChange={(e) => {
-                  const y = e.target.value;
-
-                  setSubjectYears((prev) => ({ ...prev, [subject.id]: y }));
-
-                  persistYear(subject.id, y);
-
-                  // notify parent
-                  setTopicYear(subject.id, y);
-
-                  console.log(`📌 Selected year for subject ${subject.subjectName}:`, y);
-                }}
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
+                onChange={(e) => handleYearChange(subject.subjectId, e.target.value)}
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 <option value="" disabled>Select Year</option>
                 <option value="random">Random</option>
-                {availableYears.length === 0 ? (
-                  <option value="random">Random</option>
-                ) : (
-                  availableYears.map((yr) => (
-                    <option key={yr} value={yr}>
-                      {yr}
-                    </option>
-                  ))
-                )}
+                {availableYears.map((yr) => (
+                  <option key={yr} value={yr}>
+                    {yr}
+                  </option>
+                ))}
               </select>
             </div>
 
-            {/* TOPIC DROPDOWN (unchanged) */}
+            {/* TOPIC DROPDOWN - No modules, just topics */}
             {isOpen && (
-              <div className="absolute left-0 top-18 mt-4 w-full bg-white dark:bg-gray-900 border rounded-xl shadow-lg p-3 z-50">
-                {topics.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-1">
-                    {topics.map((topic) => {
+              <div className="absolute left-0 top-[70px] mt-2 w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4 z-50 max-h-96 overflow-y-auto">
+                {allTopics.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {allTopics.map((topic) => {
                       const isSelected =
-                        selectedTopics[subject.id]?.includes(topic.id) || false;
+                        selectedTopics[subject.subjectId]?.includes(topic.topicId) || false;
 
                       return (
                         <button
-                          key={topic.id}
-                          onClick={() => toggleTopic(subject.id, topic.id)}
-                          className={`text-center px-1 py-2 rounded-lg text-sm font-medium transition-all
+                          key={topic.topicId}
+                          onClick={() => toggleTopic(subject.subjectId, topic.topicId)}
+                          className={`text-center px-2 py-2.5 rounded-lg text-xs font-medium transition-all border
                             ${
                               isSelected
-                                ? "bg-indigo-600 text-white shadow-md"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                ? "bg-indigo-600 text-white shadow-md border-indigo-700"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
                             }`}
+                          title={`${topic.questionCount} questions`}
                         >
-                          {topic.topicName}
+                          <div className="font-semibold">{topic.topicName}</div>
+                          
                         </button>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-500 py-2">
-                    No topics available.
+                  <div className="text-center text-gray-500 py-4">
+                    No topics available for this subject.
                   </div>
                 )}
               </div>

@@ -896,14 +896,14 @@ export default function QuizPage() {
           </div>
 
           {/* Explanation */}
-          {feedback && feedback.explanation && (
+          {/* {feedback && feedback.explanation && (
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm font-semibold text-blue-900 mb-1">
                 Explanation:
               </p>
               <p className="text-sm text-blue-800">{feedback.explanation}</p>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Navigation */}
