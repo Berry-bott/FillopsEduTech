@@ -1159,35 +1159,105 @@
 
 
 
+// import { useEffect } from 'react';
+// import Header from '../../components/DashboardComponents/user/study-component/Header';
+// import QuestionCard from '../../components/DashboardComponents/user/study-component/QuestionCard';
+// import { useStudyStore } from '../../store/studyStore';
+
+// export default function studyPage() {
+//   const init = useStudyStore((s) => s.syncSaved);
+//   const reset = useStudyStore((s) => s.reset);
+//   const loading = useStudyStore((s) => s.loading);
+//   const saved = useStudyStore((s) => s.saved);
+
+//   useEffect(() => {
+//     console.log('📘 studyPage mounted → sync store');
+//     init();
+
+//     return () => {
+//       console.log('🧹 studyPage unmounted → reset store');
+//       reset();
+//     };
+//   }, []);
+
+//   // if (!saved) return <p>No study selections found.</p>;
+
+//   return (
+//     <div className="p-4">
+//       <Header />
+
+//       {loading ? (
+//           <div className="h-[400px] flex items-center justify-center">
+//           <div className="text-center">
+//             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+//           </div>
+//         </div>
+//       ) : (
+//         <QuestionCard />
+//       )}
+//     </div>
+//   );
+// }
+
+
+
+
+
 import { useEffect } from 'react';
 import Header from '../../components/DashboardComponents/user/study-component/Header';
 import QuestionCard from '../../components/DashboardComponents/user/study-component/QuestionCard';
 import { useStudyStore } from '../../store/studyStore';
 
-export default function studyPage() {
+export default function StudyPage() {
   const init = useStudyStore((s) => s.syncSaved);
   const reset = useStudyStore((s) => s.reset);
   const loading = useStudyStore((s) => s.loading);
-  const saved = useStudyStore((s) => s.saved);
+  const startStudySession = useStudyStore((s) => s.startStudySession);
+  const endStudySession = useStudyStore((s) => s.endStudySession);
+  const sessionActive = useStudyStore((s) => s.sessionActive);
 
   useEffect(() => {
-    console.log('📘 studyPage mounted → sync store');
-    init();
+    console.log('📘 StudyPage mounted → sync store');
+    
+    const initAndStartSession = async () => {
+      // FIRST: Initialize and load saved data
+      const savedData = await init();
+      
+      console.log('📦 Saved data returned:', savedData);
+      
+      // THEN: Start study session by passing the saved data directly
+      if (savedData && !sessionActive) {
+        console.log('🚀 Starting study session with data...');
+        const sessionId = await startStudySession(savedData); // Pass savedData here
+        if (sessionId) {
+          console.log('✅ Session started with ID:', sessionId);
+        } else {
+          console.warn('⚠️ Failed to start session');
+        }
+      } else if (!savedData) {
+        console.warn('⚠️ No saved data, cannot start session');
+      }
+    };
+
+    initAndStartSession();
 
     return () => {
-      console.log('🧹 studyPage unmounted → reset store');
+      console.log('🧹 StudyPage unmounted → end session and reset store');
+      
+      // End session when leaving page
+      if (sessionActive) {
+        endStudySession();
+      }
       reset();
     };
   }, []);
-
-  // if (!saved) return <p>No study selections found.</p>;
 
   return (
     <div className="p-4">
       <Header />
 
       {loading ? (
-          <div className="h-[400px] flex items-center justify-center">
+        <div className="h-[400px] flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
