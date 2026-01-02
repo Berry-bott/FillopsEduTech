@@ -1271,21 +1271,309 @@
 
 
 
+// import { create } from "zustand";
+// import useAuthStore from "./authStore";
+
+// const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+// const REQUEST_LIMIT = 20; // always request 20
+
+// export const useStudyStore = create((set, get) => ({
+//   // ---------------- STATE ---------------- // selections from localStorage
+//   activeId: null,           // current subject/topic ID
+//   units: {},                // { [id]: { items, skip, exhausted } }
+//   currentIndex: 0,
+//   selectedOptions: {},
+//   subjectNames: {},
+//   topicNames: {},
+
+//   loading: false,
+//   paymentLocked: false,
+//   paymentLoading: false,
+
+//   // ---------------- RESET ----------------
+//   reset: () =>
+//     set({
+//       saved: null,
+//       activeId: null,
+//       units: {},
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       paymentLocked: false,
+//     }),
+
+//   // ---------------- LOAD SAVED ----------------
+//   syncSaved: async () => {
+//     const saved = JSON.parse(localStorage.getItem("studySelections"));
+//     console.log(saved);
+    
+//     console.log(`saved is ${saved}`);
+    
+//     if (!saved) return;
+
+//     set({ saved });
+
+//     if (saved.mode === "subject") {
+//       await get().fetchSubjectNames();
+//     } else {
+//       await get().fetchTopicNames();
+//     }
+
+//     const firstId =
+//       saved.mode === "subject"
+//         ? saved.subjects?.[0]
+//         : Object.values(saved.topics || {})[0]?.[0];
+
+//     if (firstId) {
+//       await get().changeActive(firstId);
+//     }
+//   },
+
+//   // ---------------- HELPERS ----------------
+//   getOrderedIds: () => {
+//     const { saved } = get();
+//     if (!saved) return [];
+
+//     if (saved.mode === "subject") {
+//       return saved.subjects || [];
+//     }
+
+//     return Object.values(saved.topics || {}).flat();
+//   },
+
+//   getUnit: () => {
+//     const { activeId, units } = get();
+//     return (
+//       units[activeId] || {
+//         items: [],
+//         skip: 0,
+//         exhausted: false,
+//       }
+//     );
+//   },
+
+//   getQuestions: () => get().getUnit().items,
+
+//   // ---------------- SELECTION ----------------
+//   setSelectedOption: (questionId, optionId) =>
+//     set((s) => ({
+//       selectedOptions: {
+//         ...s.selectedOptions,
+//         [questionId]: optionId,
+//       },
+//     })),
+
+//   // ---------------- FETCH QUESTIONS ----------------
+//   fetchMoreQuestions: async () => {
+//     const { saved, activeId, units } = get();
+//     if (!saved || !activeId) return;
+
+//     const unit = units[activeId] || {
+//       items: [],
+//       skip: 0,
+//       exhausted: false,
+//     };
+
+//     if (unit.exhausted || get().paymentLocked) return;
+
+//     set({ loading: true });
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+
+//       const basePath =
+//         saved.mode === "subject"
+//           ? `subjects/${activeId}`
+//           : `topics/${activeId}`;
+
+//       const year = saved.mode === "subject" ? saved.subjectYears?.[activeId] : saved.topicYears?.[activeId];
+//       const url =
+//             year && year !== "random"
+//             ? `${API_BASE}/${basePath}/questions?category=${saved.exam}&year=${year}&limit=${REQUEST_LIMIT}&skip=${unit.skip}`
+//             : `${API_BASE}/${basePath}/questions?category=${saved.exam}&random=true&limit=${REQUEST_LIMIT}&skip=${unit.skip}`;
+           
+            
+//       console.log("📥 Fetching:", url);
+
+//       const res = await fetchWithAuth(url);
+
+//       // ---- PAYMENT LOCK ----
+//       if (res?.status === 403 || res?.code === "PAYMENT_REQUIRED") {
+//         set({ paymentLocked: true, loading: false });
+//         return;
+//       }
+
+//       const data = Array.isArray(res?.data) ? res.data : [];
+
+//       set((s) => ({
+//         units: {
+//           ...s.units,
+//           [activeId]: {
+//             items: [...unit.items, ...data],
+//             skip: unit.skip + data.length,
+//             exhausted: data.length < REQUEST_LIMIT,
+//           },
+//         },
+//         loading: false,
+//       }));
+//     } catch (err) {
+//       console.error("❌ Fetch failed:", err);
+//       set({
+//         paymentLocked: err?.status === 403,
+//         loading: false,
+//       });
+//     }
+//   },
+
+//   // ---------------- CHANGE ACTIVE ----------------
+//   changeActive: async (id) => {
+//     set({
+//       activeId: id,
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       paymentLocked: false,
+//     });
+
+//     set((s) => ({
+//       units: {
+//         ...s.units,
+//         [id]: {
+//           items: [],
+//           skip: 0,
+//           exhausted: false,
+//         },
+//       },
+//     }));
+
+//     await get().fetchMoreQuestions();
+//   },
+
+//   // ---------------- NAVIGATION ----------------
+//   next: async () => {
+//     const { currentIndex, paymentLocked } = get();
+//     if (paymentLocked) return;
+
+//     const unit = get().getUnit();
+
+//     // Move within fetched questions
+//     if (currentIndex < unit.items.length - 1) {
+//       set({ currentIndex: currentIndex + 1 });
+//       return;
+//     }
+
+//     // Try to fetch more
+//     if (!unit.exhausted) {
+//       const before = unit.items.length;
+//       await get().fetchMoreQuestions();
+//       const after = get().getUnit().items.length;
+
+//       if (after > before) {
+//         set({ currentIndex: currentIndex + 1 });
+//         return;
+//       }
+//     }
+
+//     // Move to next subject/topic
+//     await get().goToNextUnit();
+//   },
+
+//   prev: () =>
+//     set((s) => ({
+//       currentIndex: Math.max(0, s.currentIndex - 1),
+//     })),
+
+//   // ---------------- NEXT SUBJECT/TOPIC ----------------
+//   goToNextUnit: async () => {
+//     const ids = get().getOrderedIds();
+//     const { activeId } = get();
+
+//     const idx = ids.indexOf(activeId);
+//     if (idx === -1) return;
+
+//     const nextId = ids[idx + 1];
+//     if (!nextId) return;
+
+//     await get().changeActive(nextId);
+//   },
+
+//   // ---------------- SUBJECT / TOPIC NAMES ----------------
+//   fetchSubjectNames: async () => {
+//     const { saved } = get();
+//     if (!saved?.subjects) return;
+
+//     const { fetchWithAuth } = useAuthStore.getState();
+//     const names = {};
+
+//     await Promise.all(
+//       saved.subjects.map(async (id) => {
+//         try {
+//           const res = await fetchWithAuth(`${API_BASE}/users/my-subjects/${id}`);
+//           names[id] = res?.data?.subjectName || id;
+//         } catch {
+//           names[id] = id;
+//         }
+//       })
+//     );
+
+//     set({ subjectNames: names });
+//   },
+
+//   fetchTopicNames: async () => {
+//     const { saved } = get();
+//     if (!saved?.topics) return;
+
+//     const { fetchWithAuth } = useAuthStore.getState();
+//     const topicNames = {};
+//     const subjectNames = {};
+
+//     await Promise.all(
+//       Object.entries(saved.topics).flatMap(([subjectId, topicIds]) =>
+//         topicIds.map(async (topicId) => {
+//           try {
+//             const res = await fetchWithAuth(`${API_BASE}/users/my-subjects/${topicId}`);
+//             topicNames[topicId] = res?.data?.topicName || topicId;
+
+//             if (res?.data?.module?.subject?.subjectName) {
+//               subjectNames[subjectId] =
+//                 res.data.module.subject.subjectName;
+//             }
+//           } catch {
+//             topicNames[topicId] = topicId;
+//           }
+//         })
+//       )
+//     );
+
+//     set((s) => ({
+//       topicNames,
+//       subjectNames: { ...s.subjectNames, ...subjectNames },
+//     }));
+//   },
+
+// }));
+
+
+
+
+
+
+
+
+
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
-const REQUEST_LIMIT = 20; // always request 20
+const REQUEST_LIMIT = 20;
 
 export const useStudyStore = create((set, get) => ({
-  // ---------------- STATE ---------------- // selections from localStorage
-  activeId: null,           // current subject/topic ID
-  units: {},                // { [id]: { items, skip, exhausted } }
+  // ---------------- STATE ----------------
+  saved: null,
+  activeId: null,
+  units: {},
   currentIndex: 0,
   selectedOptions: {},
   subjectNames: {},
   topicNames: {},
-
   loading: false,
   paymentLocked: false,
   paymentLoading: false,
@@ -1298,22 +1586,28 @@ export const useStudyStore = create((set, get) => ({
       units: {},
       currentIndex: 0,
       selectedOptions: {},
+      subjectNames: {},
+      topicNames: {},
       paymentLocked: false,
     }),
 
   // ---------------- LOAD SAVED ----------------
   syncSaved: async () => {
     const saved = JSON.parse(localStorage.getItem("studySelections"));
+    console.log("📦 Loaded from localStorage:", saved);
+    
     if (!saved) return;
 
     set({ saved });
 
+    // Fetch names based on mode
     if (saved.mode === "subject") {
       await get().fetchSubjectNames();
     } else {
       await get().fetchTopicNames();
     }
 
+    // Set first active item
     const firstId =
       saved.mode === "subject"
         ? saved.subjects?.[0]
@@ -1358,7 +1652,7 @@ export const useStudyStore = create((set, get) => ({
       },
     })),
 
-  // ---------------- FETCH QUESTIONS ----------------
+  // ---------------- FETCH QUESTIONS (NEW ENDPOINT) ----------------
   fetchMoreQuestions: async () => {
     const { saved, activeId, units } = get();
     if (!saved || !activeId) return;
@@ -1369,36 +1663,86 @@ export const useStudyStore = create((set, get) => ({
       exhausted: false,
     };
 
-    if (unit.exhausted || get().paymentLocked) return;
+    if (unit.exhausted || get().paymentLocked) {
+      console.log("⏹️ Skipping fetch - exhausted or payment locked");
+      return;
+    }
 
+    console.log(`📥 Fetching more questions (skip: ${unit.skip}, current: ${unit.items.length})`);
     set({ loading: true });
 
     try {
       const { fetchWithAuth } = useAuthStore.getState();
 
-      const basePath =
-        saved.mode === "subject"
-          ? `subjects/${activeId}`
-          : `topics/${activeId}`;
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append('category', saved.exam);
+      params.append('limit', REQUEST_LIMIT);
+      params.append('skip', unit.skip);
 
-      const year = saved.mode === "subject" ? saved.subjectYears?.[activeId] : saved.topicYears?.[activeId];
-      const url =
-            year && year !== "random"
-            ? `${API_BASE}/${basePath}/questions?category=${saved.exam}&year=${year}&limit=${REQUEST_LIMIT}&skip=${unit.skip}`
-            : `${API_BASE}/${basePath}/questions?category=${saved.exam}&random=true&limit=${REQUEST_LIMIT}&skip=${unit.skip}`;
+      // Handle subject mode vs topic mode
+      if (saved.mode === "subject") {
+        // Add subject ID
+        params.append('subjectId', activeId);
+        
+        // Add year if specified
+        const year = saved.subjectYears?.[activeId];
+        if (year && year !== 'random') {
+          params.append('year', year);
+        } else if (year === 'random') {
+          params.append('random', 'true');
+        }
+      } else if (saved.mode === "topic") {
+        // Add topic ID
+        params.append('topicId', activeId);
+        
+        // Add year if specified
+        const year = saved.topicYears?.[activeId];
+        if (year && year !== 'random') {
+          params.append('year', year);
+        } else if (year === 'random') {
+          params.append('random', 'true');
+        }
+      }
 
-      console.log("📥 Fetching:", url);
+      const url = `${API_BASE}/users/study-questions?${params.toString()}`;
+      
+      console.log("🌐 API URL:", url);
 
       const res = await fetchWithAuth(url);
 
+      console.log("📦 API Response:", res);
+
       // ---- PAYMENT LOCK ----
+      // Only lock if NO questions returned AND requires upgrade
+      // OR if explicitly payment required (403 status)
       if (res?.status === 403 || res?.code === "PAYMENT_REQUIRED") {
         set({ paymentLocked: true, loading: false });
+        console.log("🔥 Payment required detected (403 or PAYMENT_REQUIRED)");
         return;
       }
 
       const data = Array.isArray(res?.data) ? res.data : [];
+      console.log(`✅ Received ${data.length} questions`);
 
+      // If no data returned AND requires upgrade, then lock payment
+      if (data.length === 0 && res?.accessInfo?.requiresUpgrade === true) {
+        set({ 
+          paymentLocked: true, 
+          loading: false,
+          units: {
+            ...get().units,
+            [activeId]: {
+              ...unit,
+              exhausted: true, // Mark as exhausted so we don't keep trying
+            },
+          },
+        });
+        console.log("🔥 Free limit reached, upgrade required");
+        return;
+      }
+
+      // If we got questions, store them (even if requiresUpgrade is true for future requests)
       set((s) => ({
         units: {
           ...s.units,
@@ -1410,17 +1754,28 @@ export const useStudyStore = create((set, get) => ({
         },
         loading: false,
       }));
+      
+      console.log(`💾 Stored ${data.length} questions. Total now: ${unit.items.length + data.length}`);
     } catch (err) {
       console.error("❌ Fetch failed:", err);
-      set({
-        paymentLocked: err?.status === 403,
-        loading: false,
-      });
+      
+      if (
+        err?.status === 403 ||
+        err?.response?.status === 403 ||
+        err?.message?.includes("403")
+      ) {
+        set({ paymentLocked: true, loading: false });
+        return;
+      }
+      
+      set({ loading: false });
     }
   },
 
   // ---------------- CHANGE ACTIVE ----------------
   changeActive: async (id) => {
+    console.log("🔁 Changing active to:", id);
+    
     set({
       activeId: id,
       currentIndex: 0,
@@ -1428,16 +1783,26 @@ export const useStudyStore = create((set, get) => ({
       paymentLocked: false,
     });
 
-    set((s) => ({
-      units: {
-        ...s.units,
-        [id]: {
-          items: [],
-          skip: 0,
-          exhausted: false,
+    // Check if we already have questions for this ID
+    const { units } = get();
+    if (units[id] && units[id].items.length > 0) {
+      console.log("✅ Already have questions for this ID, skipping fetch");
+      return;
+    }
+
+    // Initialize unit if doesn't exist
+    if (!units[id]) {
+      set((s) => ({
+        units: {
+          ...s.units,
+          [id]: {
+            items: [],
+            skip: 0,
+            exhausted: false,
+          },
         },
-      },
-    }));
+      }));
+    }
 
     await get().fetchMoreQuestions();
   },
@@ -1455,20 +1820,32 @@ export const useStudyStore = create((set, get) => ({
       return;
     }
 
-    // Try to fetch more
+    // We're at the last question, try to fetch more
     if (!unit.exhausted) {
       const before = unit.items.length;
       await get().fetchMoreQuestions();
       const after = get().getUnit().items.length;
 
+      // Check if we got new questions
       if (after > before) {
+        // Got new questions, move to next
         set({ currentIndex: currentIndex + 1 });
+        return;
+      }
+      
+      // No new questions came, but check if payment is now locked
+      const { paymentLocked: nowLocked } = get();
+      if (nowLocked) {
+        // Payment required, stay on current question
+        console.log("💳 Payment required to continue");
         return;
       }
     }
 
-    // Move to next subject/topic
-    await get().goToNextUnit();
+    // Try moving to next subject/topic only if not exhausted
+    if (unit.exhausted) {
+      await get().goToNextUnit();
+    }
   },
 
   prev: () =>
@@ -1485,80 +1862,147 @@ export const useStudyStore = create((set, get) => ({
     if (idx === -1) return;
 
     const nextId = ids[idx + 1];
-    if (!nextId) return;
+    if (!nextId) {
+      console.log("✅ Study completed");
+      alert('🎉 You have finished all!');
+      return;
+    }
 
     await get().changeActive(nextId);
   },
 
-  // ---------------- SUBJECT / TOPIC NAMES ----------------
+  // ---------------- FETCH SUBJECT NAMES (FROM API) ----------------
   fetchSubjectNames: async () => {
     const { saved } = get();
-    if (!saved?.subjects) return;
+    if (!saved?.subjects?.length) return;
 
-    const { fetchWithAuth } = useAuthStore.getState();
-    const names = {};
+    console.log("📘 Fetching subject names");
 
-    await Promise.all(
-      saved.subjects.map(async (id) => {
-        try {
-          const res = await fetchWithAuth(`${API_BASE}/subjects/${id}`);
-          names[id] = res?.data?.subjectName || id;
-        } catch {
+    try {
+      const { fetchWithAuth } = useAuthStore.getState();
+      
+      // Fetch user's topics which contains subject info
+      const res = await fetchWithAuth(`${API_BASE}/users/my-topics`);
+      
+      if (!res?.data) return;
+
+      const subjects = res.data;
+      const names = {};
+
+      // Map subject IDs to names from API response
+      subjects.forEach(subject => {
+        if (saved.subjects.includes(subject.subjectId)) {
+          names[subject.subjectId] = subject.subjectName;
+        }
+      });
+
+      // Fallback for IDs not found in API
+      saved.subjects.forEach(id => {
+        if (!names[id]) {
           names[id] = id;
         }
-      })
-    );
+      });
 
-    set({ subjectNames: names });
+      console.log("📗 Subject names:", names);
+      set({ subjectNames: names });
+
+    } catch (err) {
+      console.error("❌ Failed to fetch subject names:", err);
+      
+      // Fallback: use IDs as names
+      const names = {};
+      saved.subjects.forEach(id => {
+        names[id] = id;
+      });
+      set({ subjectNames: names });
+    }
   },
 
+  // ---------------- FETCH TOPIC NAMES (FROM API) ----------------
   fetchTopicNames: async () => {
     const { saved } = get();
     if (!saved?.topics) return;
 
-    const { fetchWithAuth } = useAuthStore.getState();
-    const topicNames = {};
-    const subjectNames = {};
+    console.log("📙 Fetching topic names");
 
-    await Promise.all(
-      Object.entries(saved.topics).flatMap(([subjectId, topicIds]) =>
-        topicIds.map(async (topicId) => {
-          try {
-            const res = await fetchWithAuth(`${API_BASE}/topics/${topicId}`);
-            topicNames[topicId] = res?.data?.topicName || topicId;
+    try {
+      const { fetchWithAuth } = useAuthStore.getState();
+      
+      // Fetch user's topics
+      const res = await fetchWithAuth(`${API_BASE}/users/my-topics`);
+      
+      if (!res?.data) return;
 
-            if (res?.data?.module?.subject?.subjectName) {
-              subjectNames[subjectId] =
-                res.data.module.subject.subjectName;
+      const subjects = res.data;
+      const topicNames = {};
+      const subjectNames = {};
+
+      // Get all topic IDs from saved
+      const savedTopicIds = Object.values(saved.topics).flat();
+
+      // Map topic IDs to names from API response
+      subjects.forEach(subject => {
+        subject.modules?.forEach(module => {
+          module.topics?.forEach(topic => {
+            if (savedTopicIds.includes(topic.topicId)) {
+              topicNames[topic.topicId] = topic.topicName;
+              
+              // Also get subject name for this topic
+              Object.keys(saved.topics).forEach(subjectId => {
+                if (saved.topics[subjectId].includes(topic.topicId)) {
+                  subjectNames[subjectId] = subject.subjectName;
+                }
+              });
             }
-          } catch {
-            topicNames[topicId] = topicId;
-          }
-        })
-      )
-    );
+          });
+        });
+      });
 
-    set((s) => ({
-      topicNames,
-      subjectNames: { ...s.subjectNames, ...subjectNames },
-    }));
+      // Fallback for IDs not found in API
+      savedTopicIds.forEach(id => {
+        if (!topicNames[id]) {
+          topicNames[id] = id;
+        }
+      });
+
+      console.log("📕 Topic names:", topicNames);
+      console.log("📗 Subject names from topics:", subjectNames);
+
+      set((s) => ({
+        topicNames,
+        subjectNames: { ...s.subjectNames, ...subjectNames },
+      }));
+
+    } catch (err) {
+      console.error("❌ Failed to fetch topic names:", err);
+      
+      // Fallback: use IDs as names
+      const topicNames = {};
+      const savedTopicIds = Object.values(saved.topics).flat();
+      savedTopicIds.forEach(id => {
+        topicNames[id] = id;
+      });
+      set({ topicNames });
+    }
   },
 
   // ---------------- PAYMENT ----------------
-  // initializePayment: async () => {
-  //   set({ paymentLoading: true });
+  initializePayment: async () => {
+    set({ paymentLoading: true });
 
-  //   try {
-  //     const { fetchWithAuth } = useAuthStore.getState();
-  //     const res = await fetchWithAuth(
-  //       `${API_BASE}/payments/initialize`,
-  //       { method: "POST" }
-  //     );
+    try {
+      const { fetchWithAuth } = useAuthStore.getState();
+      const res = await fetchWithAuth(
+        `${API_BASE}/payments/initialize`,
+        { method: "POST" }
+      );
 
-  //     window.location.href = res.data.authorizationUrl;
-  //   } catch (err) {
-  //     console.error("Payment init failed", err);
-  //     set({ paymentLoading: false });
-  //   }
-  // },
+      set({ paymentLoading: false });
+      console.log("💳 Payment URL:", res.data.authorizationUrl);
+      window.location.href = res.data.authorizationUrl;
+    } catch (err) {
+      console.error("❌ Payment init failed", err);
+      set({ paymentLoading: false });
+    }
+  },
 }));
