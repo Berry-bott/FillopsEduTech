@@ -763,7 +763,7 @@ export default function QuizPage() {
           next();
         }
         setIsProcessing(false);
-      }, 1500);
+      }, 500);
     } else {
       setIsProcessing(false);
     }

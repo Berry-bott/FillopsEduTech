@@ -128,6 +128,8 @@ export default function Checkout() {
         if (!res.ok) throw new Error("Failed to fetch preferences");
 
         const data = await res.json();
+        console.log(data);
+        
         const preferences = data.data?.preferences || {};
         const selectedSubjects = preferences.selectedSubjects || {};
 

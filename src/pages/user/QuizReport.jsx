@@ -6,7 +6,8 @@ export default function QuizResultsPage() {
   const navigate = useNavigate();
   const { result, reset, fetchStats } = useQuizStore();
   const [expandedId, setExpandedId] = useState(null);
-
+  console.log(fetchStats);
+  
   useEffect(() => {
     if (!result) {
       navigate("/quiz");

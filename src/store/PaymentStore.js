@@ -6,7 +6,7 @@ const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 // ✅ BUILT-IN DEBUG HELPER
 function logDebug(title, data) {
   console.log(`%c🔍 ${title}`, 'color: #8B5CF6; font-weight: bold; font-size: 14px;');
-  console.log(data);
+  // console.log(data.subscriptions);
 }
 
 function logSuccess(message) {
@@ -130,11 +130,16 @@ export const usePaymentStore = create((set, get) => ({
 
       // Combine all active subscriptions
       const allActiveSubscriptions = [...activeSubscriptions, ...lifetimeSubscriptions];
+
+
+      console.log("subcribtions", allActiveSubscriptions);
+
+      
       
       if (allActiveSubscriptions.length > 0) {
         console.log('\n%c📋 SUBSCRIPTION DETAILS:', 'color: #10B981; font-weight: bold; font-size: 14px;');
         allActiveSubscriptions.forEach((sub, idx) => {
-          console.log(`\n  ${idx + 1}. ${sub.subjectName || 'Unknown Subject'}`);
+          console.log(`  ${idx + 1}. ${sub.subjectName || 'Unknown Subject'}`);
           console.log(`     Subject ID: ${sub.subjectId || sub.id}`);
           console.log(`     Category: ${sub.category}`);
           console.log(`     Expires: ${sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString() : 'Lifetime'}`);

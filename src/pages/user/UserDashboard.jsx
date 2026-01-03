@@ -3,9 +3,9 @@ import OverviewStats from "../../components/DashboardComponents/user/overview-st
 import ContentChart from "../../components/DashboardComponents/user/content-chart"
 import RecentPosts from "../../components/DashboardComponents/user/recent-posts"
 import PopularArticles from "../../components/DashboardComponents/user/popular-articles"
-// import ContentCategories from "../components/DashboardComponents/user/content-categories"
-// import RecentComments from "../components/DashboardComponents/user/recent-comments"
-// import PublishingSchedule from "../components/DashboardComponents/user/publishing-schedule";
+import ContentCategories from "../../components/DashboardComponents/user/content-categories"
+import RecentComments from "../../components/DashboardComponents/user/recent-comments"
+// import PublishingSchedule from "../../components/DashboardComponents/user/publishing-schedule";
 import ExamSelector from "../../components/DashboardComponents/user/ExamSelector"
 import UserActivity from "../../components/DashboardComponents/user/user-activities"
 import { useEffect } from "react";
@@ -66,6 +66,7 @@ export default function UserDashboard() {
         <ExamSelector />
         <OverviewStats />
         <ContentChart />
+            <ContentCategories />
 
         <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
           {/* <SystemHistory /> */}
@@ -79,7 +80,6 @@ export default function UserDashboard() {
           </div>
 
           {/* <div className="space-y-4 sm:space-y-6 w-full min-w-0">
-            <ContentCategories />
             <RecentComments />
           </div> */}
         </div>

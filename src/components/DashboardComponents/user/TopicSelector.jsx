@@ -619,131 +619,385 @@
 
 
 
+// import React, { useState, useEffect } from "react";
+// import useAuthStore from "@/store/authStore";
+// import { Lock, Check } from "lucide-react";
+
+// export default function TopicSelector({
+//   selectedTopics = {},
+//   toggleTopic = () => {},
+//   setTopicYear = () => {},
+// }) {
+//   const { accessToken } = useAuthStore();
+
+//   const [openSubject, setOpenSubject] = useState(null);
+//   const [allSubjects, setAllSubjects] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const [subjectYears, setSubjectYears] = useState({});
+//   const [paidSubjects, setPaidSubjects] = useState([]); // NEW: Track paid subjects
+
+//   // NEW: Fetch user's paid subjects
+//   useEffect(() => {
+//     if (!accessToken) return;
+
+//     const fetchPaidSubjects = async () => {
+//       try {
+//         console.log("💰 Fetching paid subjects...");
+//         const res = await fetch(
+//           "https://fillops-server-5fuf.onrender.com/api/users/my-subjects",
+//           {
+//             headers: { Authorization: `Bearer ${accessToken}` },
+//           }
+//         );
+
+//         const json = await res.json();
+//         const subjects = json.data?.subjects || [];
+//         setPaidSubjects(subjects);
+//         console.log("✅ Paid subjects loaded:", subjects.length);
+//       } catch (err) {
+//         console.error("❌ Failed to fetch paid subjects:", err);
+//       }
+//     };
+
+//     fetchPaidSubjects();
+//   }, [accessToken]);
+
+//   // Fetch Topics and deduplicate subjects
+//   useEffect(() => {
+//     if (!accessToken) return;
+
+//     const fetchAllTopics = async () => {
+//       setLoading(true);
+//       try {
+//         console.log("➡️ Fetching /api/users/my-topics ...");
+//         const res = await fetch(`https://fillops-server-5fuf.onrender.com/api/users/my-topics`, {
+//           headers: { Authorization: `Bearer ${accessToken}` },
+//         });
+
+//         const json = await res.json();
+//         console.log("📥 /api/users/my-topics response:", json);
+
+//         const subjects = json.data || [];
+
+//         // Deduplicate subjects by name and collect all unique topics
+//         const subjectMap = new Map();
+        
+//         subjects.forEach(subject => {
+//           const subjectKey = subject.subjectName;
+          
+//           if (subjectMap.has(subjectKey)) {
+//             // Subject already exists, add topics
+//             const existing = subjectMap.get(subjectKey);
+            
+//             // Collect all topics from all modules
+//             subject.modules.forEach(module => {
+//               module.topics.forEach(topic => {
+//                 // Use topicName as key to avoid duplicates
+//                 const topicKey = topic.topicName;
+//                 if (!existing.topicsMap.has(topicKey)) {
+//                   existing.topicsMap.set(topicKey, topic);
+//                 }
+//               });
+//             });
+//           } else {
+//             // New subject, create topics map
+//             const topicsMap = new Map();
+//             subject.modules.forEach(module => {
+//               module.topics.forEach(topic => {
+//                 topicsMap.set(topic.topicName, topic);
+//               });
+//             });
+            
+//             subjectMap.set(subjectKey, {
+//               ...subject,
+//               topicsMap,
+//             });
+//           }
+//         });
+
+//         // Convert topicsMap to array for each subject
+//         const deduplicatedSubjects = Array.from(subjectMap.values()).map(subject => ({
+//           ...subject,
+//           allTopics: Array.from(subject.topicsMap.values()),
+//         }));
+        
+//         setAllSubjects(deduplicatedSubjects);
+        
+//         console.log("✅ Loaded subjects:", deduplicatedSubjects.length);
+//         console.log("📋 Subjects:", deduplicatedSubjects.map(s => s.subjectName));
+//       } catch (err) {
+//         console.error("❌ Failed to fetch topics:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchAllTopics();
+//   }, [accessToken]);
+
+//   // NEW: Check if subject is paid for
+//   const isSubjectPaid = (subjectId) => {
+//     return paidSubjects.some(
+//       (subject) =>
+//         subject.id === subjectId ||
+//         subject._id === subjectId ||
+//         subject.subjectId === subjectId
+//     );
+//   };
+
+//   // Update year and notify parent
+//   const handleYearChange = (subjectId, year) => {
+//     setSubjectYears((prev) => ({ ...prev, [subjectId]: year }));
+//     setTopicYear(subjectId, year);
+//     console.log(`📌 Selected year for subject ${subjectId}:`, year);
+//   };
+
+//   if (loading)
+//     return (
+//       <div className="flex flex-col items-center justify-center py-10">
+//         <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
+//         <p className="text-gray-700 dark:text-gray-300">Loading subjects and topics...</p>
+//       </div>
+//     );
+
+//   if (!allSubjects.length) 
+//     return (
+//       <div className="text-center py-8">
+//         <p className="text-gray-500 dark:text-gray-400">No subjects available.</p>
+//       </div>
+//     );
+
+//   return (
+//     <div className="space-y-4 relative overflow-y-auto max-h-[600px] p-2">
+//       {allSubjects.map((subject) => {
+//         const isOpen = openSubject === subject.subjectId;
+//         const isPaid = isSubjectPaid(subject.subjectId); // NEW: Check if paid
+
+//         // Use the deduplicated topics
+//         const allTopics = subject.allTopics || [];
+
+//         // Extract available years from topics
+//         const availableYearsSet = new Set();
+//         allTopics.forEach(topic => {
+//           if (topic.availableYears) {
+//             topic.availableYears.forEach(year => availableYearsSet.add(year));
+//           }
+//         });
+//         const availableYears = Array.from(availableYearsSet).sort((a, b) => b - a);
+
+//         const selectedYear = subjectYears[subject.subjectId] || "";
+
+//         return (
+//           <div
+//             key={subject.subjectId}
+//             className={`relative border rounded-xl p-4 shadow-sm transition ${
+//               isPaid 
+//                 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/30' 
+//                 : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700'
+//             }`}
+//             onMouseEnter={() => setOpenSubject(subject.subjectId)}
+//             onMouseLeave={() => setOpenSubject(null)}
+//           >
+//             {/* SUBJECT TITLE + YEAR DROPDOWN */}
+//             <div className="flex justify-between items-center gap-3">
+//               <div className="flex items-center gap-3 flex-1">
+//                 <span className="text-2xl">{subject.icon}</span>
+//                 <div className="flex-1">
+//                   <div className="flex items-center gap-2">
+//                     <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+//                       {subject.subjectName}
+//                     </div>
+//                     {/* NEW: Payment status badge */}
+//                     {isPaid ? (
+//                       <span className="flex items-center gap-1 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-bold">
+//                         <Check className="w-3 h-3" />
+//                         PAID
+//                       </span>
+//                     ) : (
+//                       <span className="flex items-center gap-1 text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold">
+//                         <Lock className="w-3 h-3" />
+//                         LOCKED
+//                       </span>
+//                     )}
+//                   </div>
+//                   <div className="text-xs text-gray-500 dark:text-gray-400">
+//                     {allTopics.length} topics available
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* YEAR SELECT */}
+//               <select
+//                 value={selectedYear}
+//                 onChange={(e) => handleYearChange(subject.subjectId, e.target.value)}
+//                 className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
+//               >
+//                 <option value="" disabled>Select Year</option>
+//                 <option value="random">Random</option>
+//                 {availableYears.map((yr) => (
+//                   <option key={yr} value={yr}>
+//                     {yr}
+//                   </option>
+//                 ))}
+//               </select>
+//             </div>
+
+//             {/* TOPIC DROPDOWN - No modules, just topics */}
+//             {isOpen && (
+//               <div className="absolute left-0 top-[70px] mt-2 w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4 z-50 max-h-96 overflow-y-auto">
+//                 {allTopics.length > 0 ? (
+//                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+//                     {allTopics.map((topic) => {
+//                       const isSelected =
+//                         selectedTopics[subject.subjectId]?.includes(topic.topicId) || false;
+
+//                       return (
+//                         <button
+//                           key={topic.topicId}
+//                           onClick={() => toggleTopic(subject.subjectId, topic.topicId)}
+//                           className={`text-center px-2 py-2.5 rounded-lg text-xs font-medium transition-all border
+//                             ${
+//                               isSelected
+//                                 ? "bg-indigo-600 text-white shadow-md border-indigo-700"
+//                                 : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
+//                             }`}
+//                           title={`${topic.questionCount} questions`}
+//                         >
+//                           <div className="font-semibold">{topic.topicName}</div>
+//                         </button>
+//                       );
+//                     })}
+//                   </div>
+//                 ) : (
+//                   <div className="text-center text-gray-500 py-4">
+//                     No topics available for this subject.
+//                   </div>
+//                 )}
+//               </div>
+//             )}
+//           </div>
+//         );
+//       })}
+//     </div>
+//   );
+// }
+
+
+
+
 import React, { useState, useEffect } from "react";
 import useAuthStore from "@/store/authStore";
-import { Lock, Check } from "lucide-react";
+
+const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 
 export default function TopicSelector({
   selectedTopics = {},
   toggleTopic = () => {},
   setTopicYear = () => {},
+  selectedExam, // The selected exam category (WAEC, JAMB, etc)
 }) {
   const { accessToken } = useAuthStore();
 
   const [openSubject, setOpenSubject] = useState(null);
-  const [allSubjects, setAllSubjects] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [subjectYears, setSubjectYears] = useState({});
-  const [paidSubjects, setPaidSubjects] = useState([]); // NEW: Track paid subjects
+  const [error, setError] = useState(null);
 
-  // NEW: Fetch user's paid subjects
+  // Fetch subjects filtered by selected exam
   useEffect(() => {
-    if (!accessToken) return;
+    if (!accessToken || !selectedExam) return;
 
-    const fetchPaidSubjects = async () => {
-      try {
-        console.log("💰 Fetching paid subjects...");
-        const res = await fetch(
-          "https://fillops-server-5fuf.onrender.com/api/users/my-subjects",
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
-
-        const json = await res.json();
-        const subjects = json.data?.subjects || [];
-        setPaidSubjects(subjects);
-        console.log("✅ Paid subjects loaded:", subjects.length);
-      } catch (err) {
-        console.error("❌ Failed to fetch paid subjects:", err);
-      }
-    };
-
-    fetchPaidSubjects();
-  }, [accessToken]);
-
-  // Fetch Topics and deduplicate subjects
-  useEffect(() => {
-    if (!accessToken) return;
-
-    const fetchAllTopics = async () => {
+    const fetchSubjects = async () => {
       setLoading(true);
+      setError(null);
+
       try {
-        console.log("➡️ Fetching /api/users/my-topics ...");
-        const res = await fetch(`https://fillops-server-5fuf.onrender.com/api/users/my-topics`, {
+        console.log("➡️ Fetching subjects for", selectedExam);
+
+        // Use /my-subjects endpoint which returns subjects grouped by category
+        const res = await fetch(`${API_BASE}/users/my-subjects`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
-        const json = await res.json();
-        console.log("📥 /api/users/my-topics response:", json);
+        if (!res.ok) throw new Error("Failed to fetch subjects");
 
-        const subjects = json.data || [];
+        const data = await res.json();
+        console.log("📥 Fetched data:", data);
 
-        // Deduplicate subjects by name and collect all unique topics
-        const subjectMap = new Map();
-        
-        subjects.forEach(subject => {
-          const subjectKey = subject.subjectName;
-          
-          if (subjectMap.has(subjectKey)) {
-            // Subject already exists, add topics
-            const existing = subjectMap.get(subjectKey);
-            
-            // Collect all topics from all modules
-            subject.modules.forEach(module => {
-              module.topics.forEach(topic => {
-                // Use topicName as key to avoid duplicates
-                const topicKey = topic.topicName;
-                if (!existing.topicsMap.has(topicKey)) {
-                  existing.topicsMap.set(topicKey, topic);
+        // Get subjects for the selected exam
+        const subjectsByCategory = data.data?.subjectsByCategory || {};
+        const examKey = selectedExam.toUpperCase();
+        const examSubjects = subjectsByCategory[examKey] || [];
+
+        console.log(`🔍 Subjects for ${examKey}:`, examSubjects);
+
+        // Now fetch topics for each subject
+        const subjectsWithTopics = await Promise.all(
+          examSubjects.map(async (subject) => {
+            try {
+              // Fetch topics for this specific subject
+              const topicsRes = await fetch(
+                `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
                 }
-              });
-            });
-          } else {
-            // New subject, create topics map
-            const topicsMap = new Map();
-            subject.modules.forEach(module => {
-              module.topics.forEach(topic => {
-                topicsMap.set(topic.topicName, topic);
-              });
-            });
-            
-            subjectMap.set(subjectKey, {
-              ...subject,
-              topicsMap,
-            });
-          }
-        });
+              );
 
-        // Convert topicsMap to array for each subject
-        const deduplicatedSubjects = Array.from(subjectMap.values()).map(subject => ({
-          ...subject,
-          allTopics: Array.from(subject.topicsMap.values()),
-        }));
-        
-        setAllSubjects(deduplicatedSubjects);
-        
-        console.log("✅ Loaded subjects:", deduplicatedSubjects.length);
-        console.log("📋 Subjects:", deduplicatedSubjects.map(s => s.subjectName));
+              if (!topicsRes.ok) {
+                console.warn(`Failed to fetch topics for ${subject.subjectName}`);
+                return {
+                  ...subject,
+                  allTopics: [],
+                };
+              }
+
+              const topicsData = await topicsRes.json();
+              
+              // Extract topics from modules
+              const allTopics = [];
+              const subjectData = topicsData.data?.[0]; // Assuming first item is the subject
+              
+              if (subjectData?.modules) {
+                subjectData.modules.forEach(module => {
+                  module.topics?.forEach(topic => {
+                    allTopics.push(topic);
+                  });
+                });
+              }
+
+              return {
+                id: subject.id,
+                subjectId: subject.id,
+                subjectName: subject.subjectName,
+                icon: subject.icon,
+                allTopics,
+              };
+            } catch (err) {
+              console.error(`Error fetching topics for ${subject.subjectName}:`, err);
+              return {
+                ...subject,
+                allTopics: [],
+              };
+            }
+          })
+        );
+
+        setSubjects(subjectsWithTopics);
+        console.log("✅ Loaded subjects with topics:", subjectsWithTopics.length);
+        console.log("📋 Subjects:", subjectsWithTopics.map(s => 
+          `${s.subjectName} (${s.allTopics.length} topics)`
+        ));
       } catch (err) {
-        console.error("❌ Failed to fetch topics:", err);
+        console.error("❌ Error loading subjects:", err);
+        setError("Unable to load subjects");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAllTopics();
-  }, [accessToken]);
-
-  // NEW: Check if subject is paid for
-  const isSubjectPaid = (subjectId) => {
-    return paidSubjects.some(
-      (subject) =>
-        subject.id === subjectId ||
-        subject._id === subjectId ||
-        subject.subjectId === subjectId
-    );
-  };
+    fetchSubjects();
+  }, [accessToken, selectedExam]);
 
   // Update year and notify parent
   const handleYearChange = (subjectId, year) => {
@@ -752,28 +1006,45 @@ export default function TopicSelector({
     console.log(`📌 Selected year for subject ${subjectId}:`, year);
   };
 
-  if (loading)
+  if (!selectedExam) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500 dark:text-gray-400">Please select an exam first.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-10">
         <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
         <p className="text-gray-700 dark:text-gray-300">Loading subjects and topics...</p>
       </div>
     );
+  }
 
-  if (!allSubjects.length) 
+  if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">No subjects available.</p>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+        <p className="text-red-600 text-sm">{error}</p>
       </div>
     );
+  }
+
+  if (!subjects.length) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500 dark:text-gray-400">
+          No subjects available for {selectedExam}.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 relative overflow-y-auto max-h-[600px] p-2">
-      {allSubjects.map((subject) => {
+      {subjects.map((subject) => {
         const isOpen = openSubject === subject.subjectId;
-        const isPaid = isSubjectPaid(subject.subjectId); // NEW: Check if paid
-
-        // Use the deduplicated topics
         const allTopics = subject.allTopics || [];
 
         // Extract available years from topics
@@ -790,35 +1061,23 @@ export default function TopicSelector({
         return (
           <div
             key={subject.subjectId}
-            className={`relative border rounded-xl p-4 shadow-sm transition ${
-              isPaid 
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/30' 
-                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700'
-            }`}
+            className="relative border rounded-xl p-4 shadow-sm transition bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700"
             onMouseEnter={() => setOpenSubject(subject.subjectId)}
             onMouseLeave={() => setOpenSubject(null)}
           >
             {/* SUBJECT TITLE + YEAR DROPDOWN */}
             <div className="flex justify-between items-center gap-3">
               <div className="flex items-center gap-3 flex-1">
-                <span className="text-2xl">{subject.icon}</span>
+                <span className="text-2xl">{subject.icon || "📚"}</span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                       {subject.subjectName}
                     </div>
-                    {/* NEW: Payment status badge */}
-                    {isPaid ? (
-                      <span className="flex items-center gap-1 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-bold">
-                        <Check className="w-3 h-3" />
-                        PAID
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold">
-                        <Lock className="w-3 h-3" />
-                        LOCKED
-                      </span>
-                    )}
+                    {/* Show exam badge */}
+                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full font-bold">
+                      {selectedExam}
+                    </span>
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
                     {allTopics.length} topics available
@@ -842,7 +1101,7 @@ export default function TopicSelector({
               </select>
             </div>
 
-            {/* TOPIC DROPDOWN - No modules, just topics */}
+            {/* TOPIC DROPDOWN */}
             {isOpen && (
               <div className="absolute left-0 top-[70px] mt-2 w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4 z-50 max-h-96 overflow-y-auto">
                 {allTopics.length > 0 ? (
@@ -861,7 +1120,7 @@ export default function TopicSelector({
                                 ? "bg-indigo-600 text-white shadow-md border-indigo-700"
                                 : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
                             }`}
-                          title={`${topic.questionCount} questions`}
+                          title={`${topic.questionCount || 0} questions`}
                         >
                           <div className="font-semibold">{topic.topicName}</div>
                         </button>
