@@ -31,12 +31,12 @@ export default function StudyActions({
   }, [examDropdownOpen]);
 
   return (
-    <div className="flex flex-wrap gap-1 md:gap-6">
+    <div className="flex flex-wrap gap-2 md:gap-6">
       {/* Study button */}
       <div className="relative inline-block" ref={dropdownRef}>
         <Button
           onClick={() => setExamDropdownOpen((s) => !s)}
-          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-1 px-4"
+          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-1 px-3"
         >
           <GraduationCap className="w-4 h-4" />
           <span>Study</span>
@@ -73,7 +73,7 @@ export default function StudyActions({
       {/* Quiz button */}
       <Button
         onClick={() => navigate ("/quiz")}
-        className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2 px-4"
+        className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2 px-3"
       >
         <PenTool className="w-4 h-4" />
         <span>Daily Quiz</span>
@@ -82,7 +82,7 @@ export default function StudyActions({
       {/* Exam button */}
       <Button
         onClick={() => openFor("exam")}
-        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2 px-4"
+        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2 px-3"
       >
         <FileText className="w-4 h-4" />
         <span>Take Exam</span>
