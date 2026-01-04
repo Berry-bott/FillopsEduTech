@@ -34,10 +34,10 @@ const CustomTooltip = ({ active, payload, coordinate, viewBox }) => {
       <div className="relative">
         {/* Arrow positioned based on tooltip side */}
         <div 
-          className="absolute -top-2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-gray-950"
+          className="absolute -top-2 left-0 w-0 h-0 border-l-[10px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-gray-950"
           style={{
-            left: isOnRightSide ? 'auto' : '16px',
-            right: isOnRightSide ? '16px' : 'auto'
+            left: isOnRightSide ? 'auto' : '106px',
+            right: isOnRightSide ? '169px' : 'auto'
           }}
         />
         
@@ -175,10 +175,10 @@ export default function StudyStatsPieChart() {
           },
           {
             name: "Quizzes",
+            color: "#facc15", // Deep blue
             value: correctCount,
             totalAttempts: totalQuestions,
             accuracy: quizAccuracy,
-            color: "#06B6D4", // Cyan/Sea blue
             icon: FileQuestion,
             description: "Quiz attempts",
           },
@@ -186,8 +186,8 @@ export default function StudyStatsPieChart() {
             name: "Exams",
             value: 87,
             totalAttempts: 100,
+            color: " #22c55e", // Cyan/Sea blue
             accuracy: 82,
-            color: "#3B82F6", // Deep blue
             icon: GraduationCap,
             description: "Practice exams taken",
           },
@@ -263,10 +263,10 @@ export default function StudyStatsPieChart() {
     : 0
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-950 dark:to-gray-900 rounded-2xl p-4 border-2 border-gray-200 dark:border-gray-800 shadow-lg hover:shadow-xl transition-shadow">
+    <div className="bg-white dark:bg-background rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-lg hover:shadow-xl transition-shadow">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-gray-900 dark:text-white">Performance Analysis</h3>
-        <Badge variant="outline" className="text-xs font-semibold border-2">
+        <Badge variant="outline" className="text-xs font-semibold border-2 ">
           Last 30 Days
         </Badge>
       </div>
@@ -331,7 +331,7 @@ export default function StudyStatsPieChart() {
       return (
         <div
           key={item.name}
-          className="py-2 px-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 hover:shadow-lg transition-all cursor-pointer group"
+          className="py-2 px-4 bg-white dark:bg-background rounded-xl border-2 hover:shadow-lg transition-all cursor-pointer group"
           style={{ borderColor: item.color }}
         >
         <div className="flex justify-between">

@@ -888,7 +888,7 @@ export default function PreferencePage() {
   // ================= LOADING STATE =================
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto p-8">
+      <div className="max-w-lg mx-auto p-8">
         <div className="grid grid-cols-2 gap-3">
           {Array(6).fill(0).map((_, idx) => (
             <div key={idx} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
