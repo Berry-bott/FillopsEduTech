@@ -889,13 +889,15 @@ export default function PreferencePage() {
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto p-16">
-        <h1 className="text-4xl font-merriweather my-10 text-center text-primary">
-          Loading...
-        </h1>
         <div className="grid grid-cols-2 gap-3">
           {Array(6).fill(0).map((_, idx) => (
             <div key={idx} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
           ))}
+        </div>
+        <div className="h-[300px] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          </div>
         </div>
       </div>
     );
@@ -905,7 +907,7 @@ export default function PreferencePage() {
   if (error && !tracks.length) {
     return (
       <div className="max-w-3xl mx-auto p-16">
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg text-center">
+        <div className="bg-red-100 text-red-700 p-2 rounded-lg text-center">
           {error}
           <button
             onClick={() => window.location.reload()}
@@ -920,7 +922,7 @@ export default function PreferencePage() {
 
   // ================= MAIN RENDER =================
   return (
-    <div className="max-w-3xl mx-auto p-16">
+    <div className="max-w-3xl mx-auto p-4">
       {/* TITLE */}
       <h1 className="text-4xl font-merriweather my-10 text-center text-primary">
         {step === 1 ? (
@@ -939,7 +941,7 @@ export default function PreferencePage() {
 
       {/* STEP INDICATOR - Only show for steps 2-5 (displays as "Step 1/4" through "Step 4/4") */}
       {step >= 2 && (
-        <p className="text-center mb-6 text-gray-500">
+        <p className="text-center mb-6 text-gray-500 dark:text-white/90">
           Step {step - 1} / 4
         </p>
       )}
@@ -948,16 +950,16 @@ export default function PreferencePage() {
       {step === 1 &&
         slideIn(
           <div className="mb-10">
-            <p className="text-center text-gray-600 mb-10 text-lg">
+            <p className="text-center text-gray-600 mb-10 text-lg dark:text-gray-300">
               Choose your learning path to get started
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto ">
               {/* COMMERCIAL COURSES */}
-              <div className="group relative bg-white rounded-2xl border border-gray-200 hover:border-blue-400 transition-all duration-300 overflow-hidden">
+              <div className="group relative dark:bg-transparent bg-white rounded-2xl border border-gray-200 hover:border-blue-400 transition-all duration-300 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-indigo-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
-                <div className="relative p-8">
+                <div className="relative p-4">
                   <div className="mb-6">
                     <div className="inline-flex p-3 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
                       <GraduationCap className="w-8 h-8" strokeWidth={1.5} />
@@ -1011,7 +1013,7 @@ export default function PreferencePage() {
               </div>
 
               {/* PROFESSIONAL COURSE */}
-              <div className="group relative bg-white rounded-2xl border border-gray-200 hover:border-emerald-400 transition-all duration-300 overflow-hidden">
+              <div className="group relative bg-white dark:bg-transparent rounded-2xl border border-gray-200 hover:border-emerald-400 transition-all duration-300 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-transparent to-green-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
                 <div className="relative p-8">
@@ -1050,10 +1052,10 @@ export default function PreferencePage() {
                   </div>
 
                   <a
-                    href="https://yourprofessionalcourse.com"
+                    href="https://filloptech.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 group/btn"
+                    className="w-full px-4 py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 group/btn"
                   >
                     <span>Explore</span>
                     <ExternalLink className="w-4 h-4 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" strokeWidth={2} />
@@ -1094,7 +1096,7 @@ export default function PreferencePage() {
             <div className="mt-20 text-center flex justify-between">
               <button
                 onClick={prevStep}
-                className="bg-destructive text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+                className="bg-destructive text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition"
               >
                 Prev
               </button>
@@ -1129,7 +1131,7 @@ export default function PreferencePage() {
                   <button
                     key={hobbyId}
                     onClick={() => toggleItemWithId(hobby, selectedHobbies, setSelectedHobbies)}
-                    className={`px-4 py-2 rounded-full border font-semibold transition ${
+                    className={`px-2 py-2 rounded-full border font-semibold transition ${
                       isSelected
                         ? "bg-blue-600 text-white border-blue-600"
                         : "bg-white text-gray-800 border-gray-300 hover:bg-gray-100"
@@ -1143,7 +1145,7 @@ export default function PreferencePage() {
             <div className="mt-20 text-center flex justify-between">
               <button
                 onClick={prevStep}
-                className="bg-destructive text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+                className="bg-destructive text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition"
               >
                 Prev
               </button>
@@ -1165,7 +1167,7 @@ export default function PreferencePage() {
             <p className="text-center text-primary-hover mb-6 -mt-4">
               What are your goals?
             </p>
-            <div className="flex gap-4 flex-wrap justify-center">
+            <div className="flex gap-2 flex-wrap justify-center">
               {goals.map((goal) => {
                 const goalValue = typeof goal === 'string' ? goal : goal.name;
                 const goalId = typeof goal === 'string' ? goal : goal.id;
@@ -1178,7 +1180,7 @@ export default function PreferencePage() {
                   <button
                     key={goalId}
                     onClick={() => toggleItemWithId(goal, selectedGoals, setSelectedGoals)}
-                    className={`px-4 py-2 rounded-full border font-semibold transition ${
+                    className={`px-2 py-2 rounded-full border font-semibold transition ${
                       isSelected
                         ? "bg-blue-600 text-white border-blue-600"
                         : "bg-white text-gray-800 border-gray-300 hover:bg-gray-100"
@@ -1192,14 +1194,14 @@ export default function PreferencePage() {
             <div className="mt-8 text-center flex justify-between">
               <button
                 onClick={prevStep}
-                className="bg-destructive text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+                className="bg-destructive text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition"
               >
                 Prev
               </button>
               <button
                 onClick={nextStep}
                 disabled={!selectedGoals.length}
-                className="bg-primary text-white px-6 py-3 rounded-xl font-semibold disabled:opacity-50 hover:opacity-90 transition"
+                className="bg-primary text-white px-8 py-3 rounded-xl font-semibold disabled:opacity-50 hover:opacity-90 transition"
               >
                 Next
               </button>
@@ -1212,7 +1214,7 @@ export default function PreferencePage() {
         slideIn(
           <div>
             {/* Exam Category Tabs */}
-            <div className="flex gap-3 justify-center mb-8 flex-wrap">
+            <div className="gap-4 mb-8 grid grid-cols-2 md:grid-cols-4 sm:grid-cols-auto-fit"> 
               {Object.entries(EXAMS).map(([key, val]) => {
                 const selectedCount = selectedSubjects[key]?.length || 0;
                 const hasSelection = selectedCount > 0;
@@ -1230,7 +1232,7 @@ export default function PreferencePage() {
                     <div className="flex items-center gap-2">
                       <span>{val.label}</span>
                       {hasSelection && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        <span className={`text-xs px-6 py-0.5 rounded-full ${
                           currentExamTab === key
                             ? "bg-blue-500 text-white"
                             : "bg-blue-100 text-blue-600"
@@ -1246,10 +1248,10 @@ export default function PreferencePage() {
 
             {/* Current Tab Info */}
             <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">
+              <h3 className="text-xl font-semibold dark:text-green-700/80 text-gray-900">
                 {EXAMS[currentExamTab].label} Subjects
               </h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm dark:text-white/80 text-gray-600 mt-1">
                 Select up to {EXAMS[currentExamTab].limit} subjects
               </p>
             </div>
@@ -1307,7 +1309,7 @@ export default function PreferencePage() {
             <div className="mt-10 flex justify-between">
               <button
                 onClick={prevStep}
-                className="bg-destructive text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+                className="bg-destructive text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition"
               >
                 Prev
               </button>
