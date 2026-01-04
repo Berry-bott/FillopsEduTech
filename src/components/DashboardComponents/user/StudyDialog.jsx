@@ -1,16 +1,17 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 import SubjectSelector from "./SubjectSelector";
 import TopicSelector from "./TopicSelector";
 import { useToast } from "@/components/ui/use-toast";
+
+
 export default function StudyDialog(props) {
   const {
     open,
@@ -81,102 +82,215 @@ export default function StudyDialog(props) {
     selectedTopics[visibleSubject].length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-3xl p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
-        <DialogHeader>
-          <DialogTitle className="text-lg md:text-xl font-semibold text-primary dark:text-gray-100">
-            {/* {activeAction === "study"
-              ? "Study - Setup"
-              : activeAction === "quiz"
-              ? "Quiz - Setup"
-              : "Exam - Setup"} */}
+    // <Dialog open={open} onOpenChange={setOpen}>
+    //   <DialogContent className="max-w-3xl p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
+    //     <DialogHeader>
+    //       <DialogTitle className="text-lg md:text-xl font-semibold text-primary dark:text-gray-100">
+    //         {/* {activeAction === "study"
+    //           ? "Study - Setup"
+    //           : activeAction === "quiz"
+    //           ? "Quiz - Setup"
+    //           : "Exam - Setup"} */}
+    //         {activeAction === "study"
+    //           ? "Study - Setup"
+    //           : "Exam - Setup"}
+    //       </DialogTitle>
+    //     </DialogHeader>
+
+    //     {/* Step 1: Select Mode */}
+    //     <div className={getStepClasses(selectedExam && !selectMode)}>
+    //       {selectedExam && !selectMode && (
+    //         <div className="mt-4 p-5 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+    //           <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-4">
+    //             {`Selected exam: ${selectedExam.toUpperCase()}. How do you want to proceed?`}
+    //           </p>
+    //           <div className="grid gap-3 md:grid-cols-2">
+    //             <Button
+    //               variant="outline"
+    //               className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 dark:text-blue-300 font-medium transition-colors"
+    //               onClick={() => setSelectMode("subject")}
+    //             >
+    //               Select by Subject
+    //             </Button>
+    //             <Button
+    //               variant="outline"
+    //               className="w-full border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-500/20 dark:text-green-300 font-medium transition-colors"
+    //               onClick={() => setSelectMode("topic")}
+    //             >
+    //               Select by Topic
+    //             </Button>
+    //           </div>
+    //         </div>
+    //       )}
+    //     </div>
+
+    //     {/* Step 2: Select Exam */}
+    //     <div className={getStepClasses(!selectedExam)}>
+    //       {!selectedExam && (
+    //         <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+    //           <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-3">
+    //             Select exam type:
+    //           </p>
+    //           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+    //             {exams.map((ex) => (
+    //               <Button
+    //                 key={ex}
+    //                 variant="outline"
+    //                 className="capitalize w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-500/20 transition-colors font-medium"
+    //                 onClick={() => setSelectedExam(ex)}
+    //               >
+    //                 {ex}
+    //               </Button>
+    //             ))}
+    //           </div>
+    //         </div>
+    //       )}
+    //     </div>
+
+    //     {/* Step 3a: Subject Selector */}
+    //     <div className={getStepClasses(selectedExam && selectMode === "subject")}>
+    //       {selectedExam && selectMode === "subject" && (
+    //         <div className="text-blue-700 mt-0">
+    //           <SubjectSelector
+    //             selectedExam={selectedExam}
+    //             subjectData={subjectData}
+    //             selectedSubjects={selectedSubjects}
+    //             subjectYears={subjectYears}
+    //             toggleSubject={toggleSubject}
+    //             setYearForSubject={setYearForSubject}
+                
+    //           />
+    //         </div>
+    //       )}
+    //     </div>
+
+    //     {/* Step 3b: Topic Selector */}
+    //     <div className={getStepClasses(selectedExam && selectMode === "topic")}>
+    //       {selectedExam && selectMode === "topic" && (
+    //         <div className="mt-0">
+
+    //       <TopicSelector
+    //         selectedExam={selectedExam}
+    //         selectedTopics={selectedTopics}
+    //         toggleTopic={handleToggleTopic}   
+    //         setTopicYear={setTopicYear}
+    //         topicYears={topicYears}
+    //         clearAllTopics={clearAllTopics}
+    //       />
+    //       </div>)}
+    //     </div>
+
+    //     {/* Start button */}
+    //     {(
+    //       (selectMode === "subject" && selectedSubjects.length > 0) ||
+    //       (selectMode === "topic" && hasTopicsSelectedInVisibleSubject)
+    //     ) && (
+    //       <DialogFooter className="mt-4">
+    //         <Button
+    //           onClick={handleStart}
+    //           className="w-full dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium"
+    //         >
+    //           Start Studying
+    //         </Button>
+    //       </DialogFooter>
+    //     )}
+    //   </DialogContent>
+    // </Dialog>
+
+    <Drawer open={open} onOpenChange={setOpen}>
+  <DrawerContent className="md:min-h-[30vh] min-h-[50vh] max-h-[95vh] bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+    <div className="w-full h-full flex flex-col items-center lg:ml-[130px]">
+      <div className="w-full max-w-3xl flex flex-col h-full">
+        <DrawerHeader className="flex-shrink-0">
+          <DrawerTitle className="text-lg md:text-xl font-semibold text-primary dark:text-gray-100">
             {activeAction === "study"
               ? "Study - Setup"
               : "Exam - Setup"}
-          </DialogTitle>
-        </DialogHeader>
+          </DrawerTitle>
+        </DrawerHeader>
 
-        {/* Step 1: Select Mode */}
-        <div className={getStepClasses(selectedExam && !selectMode)}>
-          {selectedExam && !selectMode && (
-            <div className="mt-4 p-5 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-4">
-                {`Selected exam: ${selectedExam.toUpperCase()}. How do you want to proceed?`}
-              </p>
-              <div className="grid gap-3 md:grid-cols-2">
-                <Button
-                  variant="outline"
-                  className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 dark:text-blue-300 font-medium transition-colors"
-                  onClick={() => setSelectMode("subject")}
-                >
-                  Select by Subject
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-500/20 dark:text-green-300 font-medium transition-colors"
-                  onClick={() => setSelectMode("topic")}
-                >
-                  Select by Topic
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Step 2: Select Exam */}
-        <div className={getStepClasses(!selectedExam)}>
-          {!selectedExam && (
-            <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-3">
-                Select exam type:
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {exams.map((ex) => (
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+          {/* Step 1: Select Mode */}
+          <div className={getStepClasses(selectedExam && !selectMode)}>
+            {selectedExam && !selectMode && (
+              <div className="p-5 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-4">
+                  {`Selected exam: ${selectedExam.toUpperCase()}. How do you want to proceed?`}
+                </p>
+                <div className="grid gap-3 md:grid-cols-2">
                   <Button
-                    key={ex}
                     variant="outline"
-                    className="capitalize w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-500/20 transition-colors font-medium"
-                    onClick={() => setSelectedExam(ex)}
+                    className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 dark:text-blue-300 font-medium transition-colors"
+                    onClick={() => setSelectMode("subject")}
                   >
-                    {ex}
+                    Select by Subject
                   </Button>
-                ))}
+                  <Button
+                    variant="outline"
+                    className="w-full border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-500/20 dark:text-green-300 font-medium transition-colors"
+                    onClick={() => setSelectMode("topic")}
+                  >
+                    Select by Topic
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Step 3a: Subject Selector */}
-        <div className={getStepClasses(selectedExam && selectMode === "subject")}>
-          {selectedExam && selectMode === "subject" && (
-            <div className="text-blue-700 mt-0">
-              <SubjectSelector
-                selectedExam={selectedExam}
-                subjectData={subjectData}
-                selectedSubjects={selectedSubjects}
-                subjectYears={subjectYears}
-                toggleSubject={toggleSubject}
-                setYearForSubject={setYearForSubject}
-                
-              />
-            </div>
-          )}
-        </div>
+          {/* Step 2: Select Exam */}
+          <div className={getStepClasses(!selectedExam)}>
+            {!selectedExam && (
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-3">
+                  Select exam type:
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {exams.map((ex) => (
+                    <Button
+                      key={ex}
+                      variant="outline"
+                      className="capitalize w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-500/20 transition-colors font-medium"
+                      onClick={() => setSelectedExam(ex)}
+                    >
+                      {ex}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-        {/* Step 3b: Topic Selector */}
-        <div className={getStepClasses(selectedExam && selectMode === "topic")}>
-          {selectedExam && selectMode === "topic" && (
-            <div className="mt-0">
+          {/* Step 3a: Subject Selector */}
+          <div className={getStepClasses(selectedExam && selectMode === "subject")}>
+            {selectedExam && selectMode === "subject" && (
+              <div className="text-blue-700">
+                <SubjectSelector
+                  selectedExam={selectedExam}
+                  subjectData={subjectData}
+                  selectedSubjects={selectedSubjects}
+                  subjectYears={subjectYears}
+                  toggleSubject={toggleSubject}
+                  setYearForSubject={setYearForSubject}
+                />
+              </div>
+            )}
+          </div>
 
-          <TopicSelector
-            selectedExam={selectedExam}
-            selectedTopics={selectedTopics}
-            toggleTopic={handleToggleTopic}   
-            setTopicYear={setTopicYear}
-            topicYears={topicYears}
-            clearAllTopics={clearAllTopics}
-          />
-          </div>)}
+          {/* Step 3b: Topic Selector */}
+          <div className={getStepClasses(selectedExam && selectMode === "topic")}>
+            {selectedExam && selectMode === "topic" && (
+              <div>
+                <TopicSelector
+                  selectedExam={selectedExam}
+                  selectedTopics={selectedTopics}
+                  toggleTopic={handleToggleTopic}   
+                  setTopicYear={setTopicYear}
+                  topicYears={topicYears}
+                  clearAllTopics={clearAllTopics}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Start button */}
@@ -184,16 +298,18 @@ export default function StudyDialog(props) {
           (selectMode === "subject" && selectedSubjects.length > 0) ||
           (selectMode === "topic" && hasTopicsSelectedInVisibleSubject)
         ) && (
-          <DialogFooter className="mt-4">
+          <DrawerFooter className="flex-shrink-0 px-4 pb-6">
             <Button
               onClick={handleStart}
               className="w-full dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium"
             >
               Start Studying
             </Button>
-          </DialogFooter>
+          </DrawerFooter>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
+  </DrawerContent>
+</Drawer>
   );
 }
