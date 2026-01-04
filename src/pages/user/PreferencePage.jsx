@@ -888,7 +888,7 @@ export default function PreferencePage() {
   // ================= LOADING STATE =================
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto p-16">
+      <div className="max-w-3xl mx-auto p-8">
         <div className="grid grid-cols-2 gap-3">
           {Array(6).fill(0).map((_, idx) => (
             <div key={idx} className="h-12 bg-gray-200 animate-pulse rounded-lg" />
@@ -969,33 +969,36 @@ export default function PreferencePage() {
                   <h3 className="text-2xl font-semibold text-primary mb-2">
                     Commercial Courses
                   </h3>
-                  <p className="text-gray-600 text-sm mb-2">
+                  <p className=" dark:text-white/80 text-gray-600 text-sm mb-2">
                     Comprehensive exam preparation
                   </p>
 
                   <div className="mb-6">
                     <p className="text-gray-700 leading-relaxed">
-                      Prepare for: <br />
+                      <span className="dark:text-red-500/80">Prepare for:</span> <br />
                       <span className="font-medium text-primary-hover">WAEC, </span>
                       <span className="font-medium text-primary-hover">NECO</span><br/>
                       <span className="font-medium text-primary-hover">JAMB, </span>
                       <span className="font-medium text-primary-hover">PUTME</span> 
-                      <br />with curated study materials and practice tests.
+                      <br />
+                      <span className="dark:text-white/80">
+                        with curated study materials and practice tests.
+                      </span>
                     </p>
                   </div>
 
                   <div className="space-y-3 mb-8">
                     <div className="flex items-center gap-3 text-sm text-gray-600">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      <span>Structured learning paths</span>
+                      <span className="dark:text-white/80" >Structured learning paths</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      <span>Practice questions & tests</span>
+                      <span className="dark:text-white/80">Practice questions & tests</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      <span>Performance tracking</span>
+                      <span className="dark:text-white/80">Performance tracking</span>
                     </div>
                   </div>
 
@@ -1026,12 +1029,12 @@ export default function PreferencePage() {
                   <h3 className="text-2xl font-semibold text-primary mb-2">
                     Professional Course
                   </h3>
-                  <p className="text-gray-600 text-sm mb-6">
+                  <p className="text-gray-600 dark:text-white/80 text-sm mb-6">
                     Career advancement programs
                   </p>
 
                   <div className="mb-6">
-                    <p className="text-gray-700 leading-relaxed">
+                    <p className="text-gray-700 dark:text-white/80 leading-relaxed">
                       Industry-recognized certifications and professional training to accelerate your career growth.
                     </p>
                   </div>
@@ -1039,15 +1042,15 @@ export default function PreferencePage() {
                   <div className="space-y-3 mb-8">
                     <div className="flex items-center gap-3 text-sm text-gray-600">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                      <span>Expert-led training</span>
+                      <span className="dark:text-white/80">Expert-led training</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                      <span>Industry certifications</span>
+                      <span className="dark:text-white/80">Industry certifications</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                      <span>Career support</span>
+                      <span className="dark:text-white/80">Career support</span>
                     </div>
                   </div>
 
