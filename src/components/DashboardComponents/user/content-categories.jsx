@@ -16,7 +16,48 @@ const getPerformanceStatus = (accuracy) => {
   return { label: "Poor", icon: TrendingDown, color: "text-red-600 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/30" }
 }
 
-// Custom tooltip component
+
+// Custom tooltip component with smart positioning
+// const CustomTooltip = ({ active, payload }) => {
+//   if (active && payload && payload.length) {
+//     const data = payload[0].payload
+//     const performance = getPerformanceStatus(data.accuracy)
+//     const PerformanceIcon = performance.icon
+
+//     return (
+//       <div className="bg-gray-900 dark:bg-gray-950 p-3 rounded-xl shadow-2xl border border-gray-700 dark:border-gray-600">
+//         <div className="flex items-center gap-2 mb-2">
+//           <div 
+//             className="w-3 h-3 rounded-full" 
+//             style={{ backgroundColor: data.color }}
+//           />
+//           <p className="font-bold text-white text-sm">{data.name}</p>
+//         </div>
+        
+//         <div className="space-y-1.5 text-xs">
+//           <div className="flex items-center gap-2">
+//             <PerformanceIcon className={`h-3.5 w-3.5 ${performance.color}`} />
+//             <span className={`font-semibold ${performance.color}`}>{performance.label}</span>
+//           </div>
+          
+//           <p className="text-gray-300">
+//             <span className="font-semibold text-white">{data.value}</span> completed
+//           </p>
+          
+//           <p className="text-gray-300">
+//             <span className="font-semibold text-white">{data.accuracy}%</span> accuracy
+//           </p>
+          
+//           <p className="text-gray-400 text-[10px]">
+//             {data.value}/{data.totalAttempts} total
+//           </p>
+//         </div>
+//       </div>
+//     )
+//   }
+//   return null
+// }
+// Custom tooltip component with arrow pointer
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
@@ -24,32 +65,45 @@ const CustomTooltip = ({ active, payload }) => {
     const PerformanceIcon = performance.icon
 
     return (
-      <div className="bg-white dark:bg-gray-900 p-2 rounded-xl shadow-2xl border-2 border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 mb-2">
-          <div 
-            className="w-3 h-3 rounded-full" 
-            style={{ backgroundColor: data.color }}
-          />
-          <p className="font-bold text-gray-900 dark:text-white text-base">{data.name}</p>
-        </div>
+      <div className="relative">
+        {/* Arrow pointer at the top-left corner */}
+        <div className="absolute -top-2 left-1 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-gray-950" />
         
-        <div className="space-y-1.5 text-sm">
-          <div className="flex items-center gap-2">
-            <PerformanceIcon className={`h-4 w-4 ${performance.color}`} />
-            <span className={`font-semibold ${performance.color}`}>{performance.label}</span>
+        <div className="bg-gray-900 dark:bg-gray-950 px-4 py-2.5 rounded-xl shadow-2xl border border-gray-700 dark:border-gray-600 min-w-[200px] max-w-[280px]">
+          {/* Header with icon and name */}
+          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-700">
+            <div 
+              className="w-3 h-3 rounded-full flex-shrink-0" 
+              style={{ backgroundColor: data.color }}
+            />
+            <p className="font-bold text-white text-sm truncate">{data.name}</p>
+            {performance && (
+              <Badge className={`${performance.bg} ${performance.color} border-0 text-[10px] px-2 py-0 font-bold ml-auto flex-shrink-0`}>
+                {performance.label}
+              </Badge>
+            )}
           </div>
           
-          <p className="text-gray-700 dark:text-gray-300">
-            <span className="font-semibold">{data.value}</span> completed
-          </p>
-          
-          <p className="text-gray-700 dark:text-gray-300">
-            <span className="font-semibold">{data.accuracy}%</span> accuracy
-          </p>
-          
-          <p className="text-gray-500 dark:text-gray-400 text-xs">
-            {data.value}/{data.totalAttempts} total
-          </p>
+          {/* Stats in flex layout */}
+          <div className="flex items-center justify-between gap-3 text-xs">
+            {/* Left side - Completion */}
+            <div className="flex flex-col">
+              <p className="text-gray-400 text-[10px] mb-0.5">Completed</p>
+              <p className="text-white font-bold">{data.value}/{data.totalAttempts}</p>
+            </div>
+            
+            {/* Divider */}
+            <div className="h-8 w-px bg-gray-700" />
+            
+            {/* Right side - Accuracy */}
+            <div className="flex flex-col items-end">
+              <p className="text-gray-400 text-[10px] mb-0.5">Accuracy</p>
+              <div className="flex items-center gap-1">
+                <PerformanceIcon className={`h-3 w-3 ${performance.color}`} />
+                <p className={`font-bold ${performance.color}`}>{data.accuracy}%</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -271,7 +325,13 @@ export default function StudyStatsPieChart() {
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip 
+                content={<CustomTooltip />} 
+                wrapperStyle={{ outline: 'none' }}
+                cursor={false}
+                position={{ x: 'auto', y: 'auto' }}
+                allowEscapeViewBox={{ x: true, y: true }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -281,56 +341,58 @@ export default function StudyStatsPieChart() {
         </div>
       )}
 
-      {/* Three Cards: Study, Quiz, Exams */}
-      {overallAccuracy > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          {statsData.map((item) => {
-            const Icon = item.icon
-            const performance = getPerformanceStatus(item.accuracy)
-            const PerformanceIcon = performance.icon
+    {/* Three Cards: Study, Quiz, Exams */}
+{overallAccuracy > 0 && (
+  <div className="flex flex-col gap-3 mb-5 md:grid md:grid-cols-3">
+    {statsData.map((item) => {
+      const Icon = item.icon
+      const performance = getPerformanceStatus(item.accuracy)
+      const PerformanceIcon = performance.icon
 
-            return (
-              <div
-                key={item.name}
-                className="py-2 px-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 hover:shadow-lg transition-all cursor-pointer group"
-                style={{ borderColor: item.color }}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div
-                    className="p-2 rounded-lg"
-                    style={{ backgroundColor: `${item.color}20` }}
-                  >
-                    <Icon className="h-4 w-4" style={{ color: item.color }} />
-                  </div>
-                  {item.accuracy > 0 && (
-                    <Badge className={`${performance.bg} ${performance.color} border-0 text-[9px] px-1.5 py-0 font-bold`}>
-                      {performance.label}
-                    </Badge>
-                  )}
-                </div>
+      return (
+        <div
+          key={item.name}
+          className="py-2 px-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 hover:shadow-lg transition-all cursor-pointer group"
+          style={{ borderColor: item.color }}
+        >
+        <div className="flex justify-between">
+          <div className="flex items-center gap-2 mb-1">
+            <div
+              className="p-2 rounded-lg"
+              style={{ backgroundColor: `${item.color}20` }}
+            >
+              <Icon className="h-4 w-4" style={{ color: item.color }} />
+            </div>
+            {item.accuracy > 0 && (
+              <Badge className={`${performance.bg} ${performance.color} border-0 text-[9px] px-1.5 py-0 font-bold`}>
+                {performance.label}
+              </Badge>
+            )}
+          </div>
 
-                <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-                  {item.name}
-                </p>
+          <p className="text-md font-bold text-gray-900 dark:text-white mb-1">
+            {item.name}
+          </p>
+          </div>
 
-                <div className="flex items-baseline gap-1 mb-2">
-                  <p
-                    className="text-2xl font-bold"
-                    style={{ color: item.color }}
-                  >
-                    {item.accuracy}%
-                  </p>
-                  <PerformanceIcon className={`h-3 w-3 ${performance.color}`} />
-                </div>
+          <div className="flex items-baseline gap-1 mb-2">
+            <p
+              className="text-2xl font-bold"
+              style={{ color: item.color }}
+            >
+              {item.accuracy}%
+            </p>
+            <PerformanceIcon className={`h-3 w-3 ${performance.color}`} />
+          </div>
 
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                  {item.value}/{item.totalAttempts} completed
-                </p>
-              </div>
-            )
-          })}
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+            {item.value}/{item.totalAttempts} completed
+          </p>
         </div>
-      )}
+      )
+    })}
+  </div>
+)}
 
       {/* Detailed Stats */}
       <div className="space-y-2">
