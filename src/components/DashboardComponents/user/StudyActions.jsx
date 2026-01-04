@@ -31,7 +31,7 @@ export default function StudyActions({
   }, [examDropdownOpen]);
 
   return (
-    <div className="flex flex-wrap gap-2 gap-2 md:gap-6">
+    <div className="flex flex-wrap gap-1 md:gap-6">
       {/* Study button */}
       <div className="relative inline-block" ref={dropdownRef}>
         <Button

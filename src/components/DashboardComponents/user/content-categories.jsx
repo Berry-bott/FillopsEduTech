@@ -18,89 +18,61 @@ const getPerformanceStatus = (accuracy) => {
 
 
 // Custom tooltip component with smart positioning
-// const CustomTooltip = ({ active, payload }) => {
-//   if (active && payload && payload.length) {
-//     const data = payload[0].payload
-//     const performance = getPerformanceStatus(data.accuracy)
-//     const PerformanceIcon = performance.icon
 
-//     return (
-//       <div className="bg-gray-900 dark:bg-gray-950 p-3 rounded-xl shadow-2xl border border-gray-700 dark:border-gray-600">
-//         <div className="flex items-center gap-2 mb-2">
-//           <div 
-//             className="w-3 h-3 rounded-full" 
-//             style={{ backgroundColor: data.color }}
-//           />
-//           <p className="font-bold text-white text-sm">{data.name}</p>
-//         </div>
-        
-//         <div className="space-y-1.5 text-xs">
-//           <div className="flex items-center gap-2">
-//             <PerformanceIcon className={`h-3.5 w-3.5 ${performance.color}`} />
-//             <span className={`font-semibold ${performance.color}`}>{performance.label}</span>
-//           </div>
-          
-//           <p className="text-gray-300">
-//             <span className="font-semibold text-white">{data.value}</span> completed
-//           </p>
-          
-//           <p className="text-gray-300">
-//             <span className="font-semibold text-white">{data.accuracy}%</span> accuracy
-//           </p>
-          
-//           <p className="text-gray-400 text-[10px]">
-//             {data.value}/{data.totalAttempts} total
-//           </p>
-//         </div>
-//       </div>
-//     )
-//   }
-//   return null
-// }
-// Custom tooltip component with arrow pointer
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({ active, payload, coordinate, viewBox }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
     const performance = getPerformanceStatus(data.accuracy)
     const PerformanceIcon = performance.icon
 
+    // Calculate position relative to chart center
+    const chartCenterX = viewBox?.width ? viewBox.width / 2 : 0
+    const currentX = coordinate?.x || 0
+    const isOnRightSide = currentX > chartCenterX
+
     return (
       <div className="relative">
-        {/* Arrow pointer at the top-left corner */}
-        <div className="absolute -top-2 left-1 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-gray-950" />
+        {/* Arrow positioned based on tooltip side */}
+        <div 
+          className="absolute -top-2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-gray-900 dark:border-b-gray-950"
+          style={{
+            left: isOnRightSide ? 'auto' : '16px',
+            right: isOnRightSide ? '16px' : 'auto'
+          }}
+        />
         
-        <div className="bg-gray-900 dark:bg-gray-950 px-4 py-2.5 rounded-xl shadow-2xl border border-gray-700 dark:border-gray-600 min-w-[200px] max-w-[280px]">
+        <div className="bg-gray-900 dark:bg-gray-950 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-2xl border border-gray-700 dark:border-gray-600 w-[180px] sm:min-w-[200px] sm:max-w-[280px]">
           {/* Header with icon and name */}
-          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-700">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 pb-1.5 sm:pb-2 border-b border-gray-700">
             <div 
-              className="w-3 h-3 rounded-full flex-shrink-0" 
+              className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0" 
               style={{ backgroundColor: data.color }}
             />
-            <p className="font-bold text-white text-sm truncate">{data.name}</p>
+            <p className="font-bold text-white text-xs sm:text-sm truncate">{data.name}</p>
             {performance && (
-              <Badge className={`${performance.bg} ${performance.color} border-0 text-[10px] px-2 py-0 font-bold ml-auto flex-shrink-0`}>
+              <Badge className={`${performance.bg} ${performance.color} border-0 text-[10px] sm:text-[10px] px-1.5 sm:px-2 py-0 font-bold ml-auto flex-shrink-0`}>
                 {performance.label}
               </Badge>
             )}
           </div>
           
           {/* Stats in flex layout */}
-          <div className="flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 text-xs">
             {/* Left side - Completion */}
             <div className="flex flex-col">
-              <p className="text-gray-400 text-[10px] mb-0.5">Completed</p>
-              <p className="text-white font-bold">{data.value}/{data.totalAttempts}</p>
+              <p className="text-gray-400 text-[9px] sm:text-[10px] mb-0.5">Completed</p>
+              <p className="text-white font-bold text-[11px] sm:text-xs">{data.value}/{data.totalAttempts}</p>
             </div>
             
             {/* Divider */}
-            <div className="h-8 w-px bg-gray-700" />
+            <div className="h-6 sm:h-8 w-px bg-gray-700" />
             
             {/* Right side - Accuracy */}
             <div className="flex flex-col items-end">
-              <p className="text-gray-400 text-[10px] mb-0.5">Accuracy</p>
-              <div className="flex items-center gap-1">
-                <PerformanceIcon className={`h-3 w-3 ${performance.color}`} />
-                <p className={`font-bold ${performance.color}`}>{data.accuracy}%</p>
+              <p className="text-gray-400 text-[9px] sm:text-[10px] mb-0.5">Accuracy</p>
+              <div className="flex items-center gap-0.5 sm:gap-1">
+                <PerformanceIcon className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${performance.color}`} />
+                <p className={`font-bold text-[11px] sm:text-xs ${performance.color}`}>{data.accuracy}%</p>
               </div>
             </div>
           </div>
@@ -327,10 +299,17 @@ export default function StudyStatsPieChart() {
               </Pie>
               <Tooltip 
                 content={<CustomTooltip />} 
-                wrapperStyle={{ outline: 'none' }}
+                wrapperStyle={{ 
+                  outline: 'none',
+                  pointerEvents: 'none',
+                   transition: 'all 0.5s ease-out'
+                }}
                 cursor={false}
-                position={{ x: 'auto', y: 'auto' }}
-                allowEscapeViewBox={{ x: true, y: true }}
+                offset={15}
+                allowEscapeViewBox={{ x: false, y: true }}
+                isAnimationActive={true}
+                animationDuration={100}
+                animationEasing="ease-out"
               />
             </PieChart>
           </ResponsiveContainer>
