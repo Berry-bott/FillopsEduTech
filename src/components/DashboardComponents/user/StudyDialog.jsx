@@ -196,12 +196,12 @@ export default function StudyDialog(props) {
     //     )}
     //   </DialogContent>
     // </Dialog>
-
-    <Drawer open={open} onOpenChange={setOpen}>
-  <DrawerContent className=" min-h-[75vh] max-h-[100vh] bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+<Drawer open={open} onOpenChange={setOpen}>
+  <DrawerContent className="h-[85vh] bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
     <div className="w-full h-full flex flex-col items-center lg:ml-[130px]">
-      <div className="w-full max-w-3xl flex flex-col h-full">
-        <DrawerHeader className="flex-shrink-0">
+      <div className="w-full max-w-3xl flex flex-col h-full overflow-hidden">
+        {/* Fixed Header */}
+        <DrawerHeader className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
           <DrawerTitle className="text-lg md:text-xl font-semibold text-primary dark:text-gray-100">
             {activeAction === "study"
               ? "Study - Setup"
@@ -209,7 +209,8 @@ export default function StudyDialog(props) {
           </DrawerTitle>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4">
           {/* Step 1: Select Mode */}
           <div className={getStepClasses(selectedExam && !selectMode)}>
             {selectedExam && !selectMode && (
@@ -291,14 +292,17 @@ export default function StudyDialog(props) {
               </div>
             )}
           </div>
+
+          {/* Extra padding at bottom for better UX */}
+          <div className="h-4"></div>
         </div>
 
-        {/* Start button */}
+        {/* Footer Button */}
         {(
           (selectMode === "subject" && selectedSubjects.length > 0) ||
           (selectMode === "topic" && hasTopicsSelectedInVisibleSubject)
         ) && (
-          <DrawerFooter className="flex-shrink-0 px-4 pb-6">
+          <DrawerFooter className="flex-shrink-0 px-4 pb-6 pt-4 sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-10">
             <Button
               onClick={handleStart}
               className="w-full dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium"
