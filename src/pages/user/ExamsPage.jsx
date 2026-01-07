@@ -587,7 +587,7 @@
 
 import Header from '../../components/DashboardComponents/user/study-component/Header';
 import QuestionCard from '../../components/DashboardComponents/user/study-component/QuestionCard';
-import { useStudyStore } from '../../store/studyStore';
+import { useStudyStore } from '@/store/studyStore';
 import { useState, useEffect, useRef } from 'react';
 import { Clock, Calculator, BarChart3, Printer, RotateCcw, X } from 'lucide-react';
 

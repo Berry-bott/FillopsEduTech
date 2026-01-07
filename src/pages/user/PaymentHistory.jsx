@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePaymentStore } from "../../store/paymentStore";
+import { usePaymentStore } from "@/store/paymentStore";
 import {
   Receipt,
   Calendar,

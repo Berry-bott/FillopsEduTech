@@ -478,7 +478,7 @@ export default function OverviewStats() {
             change: "+0%",
             changeType: "increase",
             icon: <Lightbulb className="h-4 w-4" />,
-            description: "Topics mastered",
+            description: "Topics you've tried",
           },
           {
             title: "Exams Written",
