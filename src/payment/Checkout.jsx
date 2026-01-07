@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import useAuthStore from "@/store/authStore";
-import { usePaymentStore } from "@/store/PaymentStore"
+import { usePaymentStore } from "@/store/paymentStore"
 import { useToast } from "@/components/ui/use-toast";
 import { Check, ShieldCheck, Star, Sparkles, 
   Clock, ChevronRight,

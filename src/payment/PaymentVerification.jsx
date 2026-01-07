@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { usePaymentStore } from "@/store/PaymentStore";
+import { usePaymentStore } from "@/store/paymentStore";
 
 export default function PaymentVerification() {
   const [searchParams] = useSearchParams();
