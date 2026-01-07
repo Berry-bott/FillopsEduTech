@@ -198,7 +198,7 @@ export default function StudyDialog(props) {
     // </Dialog>
 
     <Drawer open={open} onOpenChange={setOpen}>
-  <DrawerContent className="md:min-h-[30vh] min-h-[50vh] max-h-[95vh] bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+  <DrawerContent className="md:min-h-[30vh] min-h-[100vh] max-h-[100vh] bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
     <div className="w-full h-full flex flex-col items-center lg:ml-[130px]">
       <div className="w-full max-w-3xl flex flex-col h-full">
         <DrawerHeader className="flex-shrink-0">

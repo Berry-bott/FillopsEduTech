@@ -1068,7 +1068,6 @@ export default function TopicSelector({
             {/* SUBJECT TITLE + YEAR DROPDOWN */}
             <div className="flex justify-between items-center gap-3">
               <div className="flex items-center gap-3 flex-1">
-                <span className="text-2xl">{subject.icon || "📚"}</span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
