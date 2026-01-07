@@ -412,6 +412,50 @@ const Register = () => {
         transition={{ duration: 0.8 }}
         className="relative w-full max-w-md bg-white dark:bg-background border border-gray-200 dark:border-gray-700 shadow-xl rounded-3xl p-6 overflow-hidden"
       >
+
+      <div className="absolute -top-11 -right-9 w-32 h-32">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 1 }}
+                  className="relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-tr from-indigo-200 via-pink-200 to-transparent blur-2xl opacity-100 rounded-full"></div>
+                  {[...Array(6)].map((_, i) => (
+                    <motion.span
+                      key={i}
+                      className="absolute bg-white rounded-full opacity-80"
+                      style={{
+                        top: `${Math.random() * 80}%`,
+                        left: `${Math.random() * 80}%`,
+                        width: `${Math.random() * 4 + 2}px`,
+                        height: `${Math.random() * 4 + 2}px`,
+                        filter: "blur(1px)",
+                      }}
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{
+                        duration: Math.random() * 3 + 2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  ))}
+                  <div
+                    className="relative w-32 h-32"
+                    style={{
+                      clipPath:
+                        "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+                    }}
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=1920&h=1080&fit=crop"
+                      alt="Decorative"
+                      className="w-full h-full object-cover shadow-lg border border-white"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+
         {/* Logo */}
         <div className="flex justify-center mb-3">
           <img
@@ -488,6 +532,21 @@ const Register = () => {
             )}
           </div>
 
+           {/* Phone */}
+           <div className="relative">
+            <User className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
+            <input
+              {...register("phoneNumber")}
+              type="tel"
+              placeholder="Phone Number"
+              className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
+            />
+            {errors.phoneNumber && (
+              <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>
+            )}
+          </div>
+
+
           {/* Password */}
           <div className="relative">
             <Lock className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
@@ -530,20 +589,7 @@ const Register = () => {
             )}
           </div>
 
-          {/* Phone */}
-          <div className="relative">
-            <User className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
-            <input
-              {...register("phoneNumber")}
-              type="tel"
-              placeholder="Phone Number"
-              className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-            />
-            {errors.phoneNumber && (
-              <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>
-            )}
-          </div>
-
+         
           {/* Submit */}
           <button
             type="submit"
