@@ -22,6 +22,7 @@ import PaymentPending from "@/pages/user/PaymentPending";
 import StudyPage from "@/pages/user/StudyPage";
 import ExamsPage from "@/pages/user/ExamsPage";
 import LandingPage from "@/pages/index/LandingPage";
+// import TeachInOurPlatfrom from "@/pages/index/TeachInOurPlatfrom";
 import Unauthorized from "@/pages/index/Unauthorized";
 import UserDashboard from "@/pages/user/UserDashboard";
 import PreferencePage from "@/pages/user/PreferencePage";
@@ -72,6 +73,7 @@ function App() {
             <Route path="/onboarding" element={<PreferencePage />} />
             <Route path="/exam-selector" element={<ExamSelector />} />
             <Route path="/tutor/dashboard" element={<LecturerDashboard />} />
+            {/* <Route path="/tutor/login" element={<TeachInOurPlatfrom />} /> */}
 
 
           </Route>

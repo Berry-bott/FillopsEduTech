@@ -473,7 +473,7 @@ export default function OverviewStats() {
             description: "Different subjects covered",
           },
           {
-            title: "Topics Learned",
+            title: "Topics Practiced",
             value: overview.topicsLearned || "0",
             change: "+0%",
             changeType: "increase",
