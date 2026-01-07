@@ -1194,17 +1194,9 @@ export default function QuestionCard() {
   }
 
   return (
+    
     <section className="py-0">
-      {/* Back */}
-      <div className="p-2">
-        <button
-          onClick={() => navigate("/user/dashboard")}
-          className="text-white p-2 rounded text-[11px] bg-primary hover:bg-primary-hover"
-        >
-          ← Back to Dashboard
-        </button>
-      </div>
-
+  
       {/* Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
         {/* ================= LEFT: QUESTION ================= */}

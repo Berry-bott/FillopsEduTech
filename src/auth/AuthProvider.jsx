@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
-import useAuthStore from "../store/authStore";
+      import { useEffect, useState } from "react";
+      import useAuthStore from "../store/authStore";
 
-export default function AuthProvider({ children }) {
-  const checkAuth = useAuthStore((s) => s.checkAuth);
-  const [ready, setReady] = useState(false);
+      export default function AuthProvider({ children }) {
+        const checkAuth = useAuthStore((s) => s.checkAuth);
+        const [ready, setReady] = useState(false);
 
-  useEffect(() => {
-    checkAuth().finally(() => setReady(true));
-  }, []);
+        useEffect(() => {
+          checkAuth().finally(() => setReady(true));
+        }, []);
 
-  if (!ready) return <div>Loading...</div>;
+        if (!ready) return
 
-  return children;
-}
+        return children;
+      }

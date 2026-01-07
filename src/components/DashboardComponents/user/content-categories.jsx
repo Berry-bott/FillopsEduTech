@@ -114,118 +114,91 @@ export default function StudyStatsPieChart() {
       try {
         setLoading(true)
         
-        // Fetch quiz stats
-        let quizAccuracy = 0
-        let correctCount = 0
-        let totalQuestions = 0
-        let totalAttempted = 0
-        
-        try {
-          const quizResponse = await fetchWithAuth(`${API_BASE}/quiz/stats`)
-          console.log("📊 Raw Quiz Response:", quizResponse)
+        // Fetch from analytics/performance endpoint
+        const response = await fetchWithAuth(`${API_BASE}/users/analytics/performance`)
+        console.log("📊 Performance Analytics Response:", response)
+
+        if (response?.success && response?.data) {
+          const { charts, topicAnalysis, timeVsPerformance } = response.data
           
-          const quizData = quizResponse?.data
-          console.log("📊 Quiz Data:", quizData)
+          // Calculate overall statistics from the available data
+          const totalQuestions = charts?.progressOverTime?.reduce(
+            (sum, day) => sum + (day.questionsAnswered || 0), 0
+          ) || 0
           
-          // Extract from overview
-          const overview = quizData?.overview
-          if (overview) {
-            totalAttempted = overview.totalQuizzesAttempted || 0
-            totalQuestions = overview.totalQuestionsAnswered || 0
-            correctCount = overview.totalCorrectAnswers || 0
-            
-            // Calculate accuracy
-            if (correctCount > 0 && totalQuestions > 0) {
-              quizAccuracy = Math.round((correctCount / totalQuestions) * 100)
-            }
-            
-            console.log("📊 Quiz Overview Stats:")
-            console.log("  - Total Quizzes Attempted:", totalAttempted)
-            console.log("  - Total Questions Answered:", totalQuestions)
-            console.log("  - Total Correct:", correctCount)
-            console.log("  - Calculated Accuracy:", quizAccuracy + "%")
+          const avgAccuracy = charts?.progressOverTime?.length > 0
+            ? Math.round(
+                charts.progressOverTime.reduce((sum, day) => sum + (day.accuracy || 0), 0) / 
+                charts.progressOverTime.length
+              )
+            : 0
+
+          // Get subject performance data
+          const subjectPerf = charts?.subjectPerformance || []
+          
+          // Calculate stats by category using available data
+          const studySessionsData = subjectPerf.length > 0 ? {
+            completed: charts.progressOverTime?.length || 0,
+            total: charts.progressOverTime?.length || 0,
+            accuracy: avgAccuracy
+          } : { completed: 0, total: 0, accuracy: 0 }
+
+          const quizzesData = {
+            completed: totalQuestions > 0 ? Math.floor(totalQuestions / 20) : 0, // Estimate based on questions
+            total: totalQuestions > 0 ? Math.floor(totalQuestions / 20) : 0,
+            accuracy: avgAccuracy
           }
+
+          const examsData = topicAnalysis?.all ? {
+            completed: topicAnalysis.all.length,
+            total: topicAnalysis.all.length,
+            accuracy: topicAnalysis.all.length > 0 
+              ? Math.round(
+                  topicAnalysis.all.reduce((sum, topic) => sum + (topic.accuracy || 0), 0) / 
+                  topicAnalysis.all.length
+                )
+              : 0
+          } : { completed: 0, total: 0, accuracy: 0 }
           
-          // Also check recent quizzes for latest performance
-          const recentQuizzes = quizData?.recentQuizzes
-          if (recentQuizzes && recentQuizzes.length > 0) {
-            const latestQuiz = recentQuizzes[0]
-            console.log("📊 Latest Quiz:", latestQuiz)
-            console.log("  - Score:", latestQuiz.score + "/" + latestQuiz.totalQuestions)
-            console.log("  - Percentage:", latestQuiz.percentage + "%")
-          }
-          
-        } catch (quizError) {
-          console.error("⚠️ Could not fetch quiz stats:", quizError)
-          quizAccuracy = 0
-          correctCount = 0
-          totalQuestions = 0
-          totalAttempted = 0
+          const stats = [
+            {
+              name: "Study Sessions",
+              value: studySessionsData.completed,
+              totalAttempts: studySessionsData.total,
+              accuracy: studySessionsData.accuracy,
+              color: "#0EA5E9",
+              icon: BookOpen,
+              description: "Completed study sessions",
+            },
+            {
+              name: "Quizzes",
+              value: quizzesData.completed,
+              totalAttempts: quizzesData.total,
+              accuracy: quizzesData.accuracy,
+              color: "#FACC15",
+              icon: FileQuestion,
+              description: "Quiz attempts",
+            },
+            {
+              name: "Exams",
+              value: examsData.completed,
+              totalAttempts: examsData.total,
+              accuracy: examsData.accuracy,
+              color: "#22C55E",
+              icon: GraduationCap,
+              description: "Practice exams taken",
+            },
+          ]
+
+          console.log("📊 Mapped Stats:", stats)
+          setStatsData(stats)
+        } else {
+          console.warn("⚠️ No performance data received")
+          setStatsData(getDefaultStats())
         }
-
-        const stats = [
-          {
-            name: "Study Sessions",
-            value: 156,
-            totalAttempts: 200,
-            accuracy: 78,
-            color: "#0EA5E9", // Sky blue
-            icon: BookOpen,
-            description: "Completed study sessions",
-          },
-          {
-            name: "Quizzes",
-            color: "#facc15", // Deep blue
-            value: correctCount,
-            totalAttempts: totalQuestions,
-            accuracy: quizAccuracy,
-            icon: FileQuestion,
-            description: "Quiz attempts",
-          },
-          {
-            name: "Exams",
-            value: 87,
-            totalAttempts: 100,
-            color: " #22c55e", // Cyan/Sea blue
-            accuracy: 82,
-            icon: GraduationCap,
-            description: "Practice exams taken",
-          },
-        ]
-
-        setStatsData(stats)
       } catch (error) {
-        console.error("❌ Error fetching stats:", error)
-        
-        setStatsData([
-          {
-            name: "Study Sessions",
-            value: 0,
-            totalAttempts: 0,
-            accuracy: 0,
-            color: "#0EA5E9",
-            icon: BookOpen,
-            description: "Completed study sessions",
-          },
-          {
-            name: "Quizzes",
-            value: 0,
-            totalAttempts: 0,
-            accuracy: 0,
-            color: "#06B6D4",
-            icon: FileQuestion,
-            description: "Quiz attempts",
-          },
-          {
-            name: "Exams",
-            value: 0,
-            totalAttempts: 0,
-            accuracy: 0,
-            color: "#3B82F6",
-            icon: GraduationCap,
-            description: "Practice exams taken",
-          },
-        ])
+        console.error("❌ Error fetching performance stats:", error)
+        setStatsData(getDefaultStats())
       } finally {
         setLoading(false)
       }

@@ -1,9 +1,27 @@
 import { create } from "zustand";
 import useAuthStore from "./authStore";
-import { usePaymentStore } from "./PaymentStore";
+import { usePaymentStore } from "./paymentStore";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 const REQUEST_LIMIT = 40;
+const FREE_QUESTIONS_LIMIT = 5; // ✅ Free trial limit
+
+// ✅ Check if user has used their free questions
+function hasUsedFreeQuestions() {
+  const freeQuestionsUsed = localStorage.getItem('freeQuestionsUsed');
+  const count = parseInt(freeQuestionsUsed || '0', 10);
+  console.log(`📊 Free questions used: ${count}/${FREE_QUESTIONS_LIMIT}`);
+  return count >= FREE_QUESTIONS_LIMIT;
+}
+
+// ✅ Increment free questions counter
+function incrementFreeQuestionsCount(questionsCount) {
+  const current = parseInt(localStorage.getItem('freeQuestionsUsed') || '0', 10);
+  const newCount = current + questionsCount;
+  localStorage.setItem('freeQuestionsUsed', newCount.toString());
+  console.log(`📈 Free questions count: ${current} → ${newCount}`);
+  return newCount;
+}
 
 // ✅ STRICT CHECK: Must match EXACT subject ID + category
 function checkIfUserPaidForSubject(subjectInfo, category) {
@@ -47,15 +65,11 @@ function checkIfUserPaidForSubject(subjectInfo, category) {
     console.log(`    - Subscription Subject ID: ${sub.subjectId}`);
     console.log(`    - Subscription Category: ${sub.category}`);
     
-    // Check exact ID match
     const idMatches = sub.subjectId === subjectId || 
                      sub.id === subjectId || 
                      sub._id === subjectId;
     
-    // Match by category
     const categoryMatches = !category || sub.category === category;
-    
-    // ✅ MUST match BOTH ID and category
     const matches = idMatches && categoryMatches;
     
     console.log(`    - ID Match: ${idMatches} (${sub.subjectId} === ${subjectId})`);
@@ -87,8 +101,6 @@ function checkIfUserPaidForSubject(subjectInfo, category) {
     console.log(`   - ID: ${subjectId}`);
     console.log(`   - Category: ${category}`);
     console.log("\n💡 REASON: The subject ID doesn't match any paid subscription.");
-    console.log("💡 HINT: User may have selected topics from a different subject");
-    console.log("         with the same name but different ID (e.g., different exam board).");
     console.log("========================================\n");
   }
   
@@ -99,46 +111,147 @@ function checkIfUserPaidForSubject(subjectInfo, category) {
   return hasPaid;
 }
 
-// ✅ Get subject info for topic (no category filter)
+// async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
+//   const { accessToken } = useAuthStore.getState();
+  
+//   if (!accessToken || !topicId) {
+//     return null;
+//   }
+
+//   try {
+//     const response = await fetch(`${API_BASE}/users/my-subjects`, {
+//       headers: { Authorization: `Bearer ${accessToken}` },
+//     });
+
+//     if (!response.ok) return null;
+
+//     const data = await response.json();
+//     const subjectsByCategory = data.data?.subjectsByCategory || {};
+//     const examKey = userSelectedCategory?.toUpperCase();
+//     const subjects = subjectsByCategory[examKey] || [];
+
+//     console.log(`🔍 Searching for topic in ${examKey} subjects only:`, subjects.length);
+
+//     for (const subject of subjects) {
+//       const topicsRes = await fetch(
+//         `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
+//         { headers: { Authorization: `Bearer ${accessToken}` } }
+//       );
+      
+//       const topicsData = await topicsRes.json();
+//       const subjectData = topicsData.data?.[0];
+      
+//       if (subjectData?.modules) {
+//         for (const module of subjectData.modules) {
+//           for (const topic of module.topics || []) {
+//             if (topic.topicId === topicId || topic.id === topicId || topic._id === topicId) {
+//               console.log("✅ Found topic in correct category subject!");
+//               return {
+//                 id: subject.id,
+//                 subjectName: subject.subjectName,
+//                 category: userSelectedCategory
+//               };
+//             }
+//           }
+//         }
+//       }
+//     }
+
+//     return null;
+//   } catch (error) {
+//     console.error("❌ Error:", error);
+//     return null;
+//   }
+// }
 
 async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
+  console.log("\n🔍 ========================================");
+  console.log("🔍 GET SUBJECT INFO FOR TOPIC");
+  console.log("🔍 ========================================");
+  console.log("Looking for Topic ID:", topicId);
+  console.log("User Selected Category:", userSelectedCategory);
+  
   const { accessToken } = useAuthStore.getState();
   
-  if (!accessToken || !topicId) {
+  if (!accessToken) {
+    console.error("❌ No access token!");
+    return null;
+  }
+  
+  if (!topicId) {
+    console.error("❌ No topic ID provided!");
     return null;
   }
 
   try {
-    // ✅ Use /my-subjects to get subjects filtered by category
+    console.log("\n📡 Step 1: Fetching subjects by category...");
     const response = await fetch(`${API_BASE}/users/my-subjects`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error("❌ Failed to fetch subjects:", response.status);
+      return null;
+    }
 
     const data = await response.json();
     const subjectsByCategory = data.data?.subjectsByCategory || {};
     const examKey = userSelectedCategory?.toUpperCase();
     const subjects = subjectsByCategory[examKey] || [];
+    
+    console.log(`📚 Found ${subjects.length} subjects for ${examKey}`);
 
-    console.log(`🔍 Searching for topic in ${examKey} subjects only:`, subjects.length);
+    if (subjects.length === 0) {
+      console.warn(`⚠️ No subjects found for category: ${examKey}`);
+      console.log("Available categories:", Object.keys(subjectsByCategory));
+      return null;
+    }
 
-    // Now find the topic in these category-filtered subjects
-    for (const subject of subjects) {
-      // Fetch topics for this subject
-      const topicsRes = await fetch(
-        `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+    console.log("\n📡 Step 2: Searching for topic in subjects...");
+    
+    for (let i = 0; i < subjects.length; i++) {
+      const subject = subjects[i];
+      console.log(`\n  Checking subject ${i + 1}/${subjects.length}: ${subject.subjectName} (ID: ${subject.id})`);
       
-      const topicsData = await topicsRes.json();
-      const subjectData = topicsData.data?.[0];
-      
-      if (subjectData?.modules) {
+      try {
+        const topicsRes = await fetch(
+          `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        
+        if (!topicsRes.ok) {
+          console.warn(`  ⚠️ Failed to fetch topics for subject ${subject.id}`);
+          continue;
+        }
+        
+        const topicsData = await topicsRes.json();
+        const subjectData = topicsData.data?.[0];
+        
+        if (!subjectData || !subjectData.modules) {
+          console.warn(`  ⚠️ No modules in subject`);
+          continue;
+        }
+        
+        console.log(`  🔍 Searching through ${subjectData.modules.length} modules...`);
+        
         for (const module of subjectData.modules) {
-          for (const topic of module.topics || []) {
-            if (topic.topicId === topicId || topic.id === topicId || topic._id === topicId) {
-              console.log("✅ Found topic in correct category subject!");
+          if (!module.topics || module.topics.length === 0) continue;
+          
+          for (const topic of module.topics) {
+            const topicIdMatch = topic.topicId === topicId || 
+                                topic.id === topicId || 
+                                topic._id === topicId;
+            
+            if (topicIdMatch) {
+              console.log("\n🎉 ========================================");
+              console.log("🎉 TOPIC FOUND!");
+              console.log("🎉 ========================================");
+              console.log("Topic Name:", topic.topicName);
+              console.log("Subject Name:", subject.subjectName);
+              console.log("Subject ID:", subject.id);
+              console.log("Category:", userSelectedCategory);
+              console.log("========================================\n");
+              
               return {
                 id: subject.id,
                 subjectName: subject.subjectName,
@@ -147,15 +260,24 @@ async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
             }
           }
         }
+      } catch (err) {
+        console.error(`  ❌ Error fetching topics for subject ${subject.id}:`, err);
+        continue;
       }
     }
 
+    console.log("\n❌ TOPIC NOT FOUND IN ANY SUBJECT");
+    console.log("Searched through all subjects in category:", examKey);
+    console.log("Looking for topic ID:", topicId);
+    console.log("========================================\n");
+    
     return null;
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error("\n❌ ERROR IN getSubjectInfoForTopic:", error);
     return null;
   }
 }
+
 
 export const useStudyStore = create((set, get) => ({
   // ---------------- STATE ----------------
@@ -172,6 +294,7 @@ export const useStudyStore = create((set, get) => ({
   initialized: false,
   sessionId: null,
   sessionActive: false,
+  freeTrialActive: !hasUsedFreeQuestions(), // ✅ Track if in free trial mode
 
   // ---------------- RESET ----------------
   reset: () => {
@@ -190,6 +313,7 @@ export const useStudyStore = create((set, get) => ({
       sessionId: null,
       sessionActive: false,
       loading: false,
+      freeTrialActive: !hasUsedFreeQuestions(),
     });
   },
 
@@ -224,7 +348,12 @@ export const useStudyStore = create((set, get) => ({
       console.log("  Topics:", saved.topics);
     }
 
-    set({ saved, initialized: true, loading: true });
+    set({ 
+      saved, 
+      initialized: true, 
+      loading: true,
+      freeTrialActive: !hasUsedFreeQuestions() 
+    });
 
     try {
       if (saved.mode === "subject") {
@@ -294,16 +423,17 @@ export const useStudyStore = create((set, get) => ({
       },
     })),
 
-  // ---------------- FETCH QUESTIONS (WITH STRICT CHECK) ----------------
+  // ---------------- FETCH QUESTIONS (WITH FREE TRIAL) ----------------
   fetchMoreQuestions: async () => {
     const state = get();
-    const { saved, activeId, units } = state;
+    const { saved, activeId, units, freeTrialActive } = state;
     
     console.log("\n🔍 ========================================");
     console.log("🔍 FETCH MORE QUESTIONS");
     console.log("🔍 ========================================");
     console.log("Active ID:", activeId);
     console.log("Mode:", saved?.mode);
+    console.log("🎁 Free Trial Active:", freeTrialActive);
     
     if (!saved || !activeId) {
       console.log("❌ No saved or activeId");
@@ -314,7 +444,7 @@ export const useStudyStore = create((set, get) => ({
     const category = saved.exam;
     console.log("Category:", category);
 
-    let subjectInfo = null; // ✅ Declare here so it's available later
+    let subjectInfo = null;
     
     if (saved.mode === "subject") {
       subjectInfo = {
@@ -348,39 +478,52 @@ export const useStudyStore = create((set, get) => ({
       console.log("   Subject ID:", subjectInfo.id);
     }
 
-    // ✅ STRICT CHECK: Must match exact subject ID + category
-    if (subjectInfo) {
-      const hasPaid = checkIfUserPaidForSubject(subjectInfo, category);
-      
-      if (!hasPaid) {
-        console.log("\n🚫 ========================================");
-        console.log("🚫 PAYMENT LOCKED - ACCESS DENIED");
-        console.log("🚫 ========================================");
-        console.log("User has not paid for this specific subject.");
-        console.log("They need to select topics from a subject they've paid for.");
-        console.log("========================================\n");
-        
-        set({ 
-          paymentLocked: true, 
-          loading: false,
-          units: {
-            ...get().units,
-            [activeId]: {
-              items: [],
-              skip: 0,
-              exhausted: true,
-            },
-          },
-        });
-        return;
-      }
-      
-      console.log("\n✅ ========================================");
-      console.log("✅ ACCESS GRANTED - PAYMENT VERIFIED");
-      console.log("✅ ========================================");
-      console.log("Subject ID matches paid subscription!");
-      console.log("Proceeding to fetch questions...");
+    // ✅ NEW: Check free trial first, only check payment if trial exhausted
+    if (freeTrialActive) {
+      const usedCount = parseInt(localStorage.getItem('freeQuestionsUsed') || '0', 10);
+      console.log(`\n🎁 ========================================`);
+      console.log(`🎁 FREE TRIAL MODE - ${usedCount}/${FREE_QUESTIONS_LIMIT} questions used`);
+      console.log(`🎁 ========================================`);
+      console.log("Skipping payment check - user still has free questions");
       console.log("========================================\n");
+      
+      // Continue to fetch questions without payment check
+    } else {
+      // ✅ Free trial exhausted - now check payment
+      console.log(`\n💳 Free trial exhausted - checking payment...`);
+      
+      if (subjectInfo) {
+        const hasPaid = checkIfUserPaidForSubject(subjectInfo, category);
+        
+        if (!hasPaid) {
+          console.log("\n🚫 ========================================");
+          console.log("🚫 PAYMENT LOCKED - ACCESS DENIED");
+          console.log("🚫 ========================================");
+          console.log("User has exhausted free questions and not paid.");
+          console.log("========================================\n");
+          
+          set({ 
+            paymentLocked: true, 
+            loading: false,
+            freeTrialActive: false,
+            units: {
+              ...get().units,
+              [activeId]: {
+                items: [],
+                skip: 0,
+                exhausted: true,
+              },
+            },
+          });
+          return;
+        }
+        
+        console.log("\n✅ ========================================");
+        console.log("✅ ACCESS GRANTED - PAYMENT VERIFIED");
+        console.log("✅ ========================================");
+        console.log("Proceeding to fetch questions...");
+        console.log("========================================\n");
+      }
     }
 
     const unit = units[activeId] || {
@@ -418,7 +561,6 @@ export const useStudyStore = create((set, get) => ({
       } else if (saved.mode === "topic") {
         params.append('topicId', activeId);
         
-        // ✅ CRITICAL: Also send the parent subjectId so backend can verify access
         if (subjectInfo?.id) {
           params.append('subjectId', subjectInfo.id);
           console.log("📤 Sending parent subjectId:", subjectInfo.id);
@@ -438,24 +580,32 @@ export const useStudyStore = create((set, get) => ({
       const res = await fetchWithAuth(url);
 
       if (res?.status === 403 || res?.code === "PAYMENT_REQUIRED") {
-        console.log("\n🔥 ========================================");
-        console.log("🔥 API RETURNED 403 FORBIDDEN");
-        console.log("🔥 ========================================");
-        console.log("This shouldn't happen if frontend check passed!");
-        console.log("Backend might have different subject ID or additional checks.");
-        console.log("========================================\n");
-        
-        set({ paymentLocked: true, loading: false });
+        console.log("\n🔥 API RETURNED 403 FORBIDDEN");
+        set({ paymentLocked: true, loading: false, freeTrialActive: false });
         return;
       }
 
       const data = Array.isArray(res?.data) ? res.data : [];
       console.log(`✅ Received ${data.length} questions`);
 
+      // ✅ Update free questions counter if in trial mode
+      if (freeTrialActive && data.length > 0) {
+        const newCount = incrementFreeQuestionsCount(data.length);
+        
+        if (newCount >= FREE_QUESTIONS_LIMIT) {
+          console.log(`\n🎁 ========================================`);
+          console.log(`🎁 FREE TRIAL EXHAUSTED!`);
+          console.log(`🎁 Used ${newCount}/${FREE_QUESTIONS_LIMIT} questions`);
+          console.log(`🎁 ========================================\n`);
+          set({ freeTrialActive: false });
+        }
+      }
+
       if (data.length === 0 && res?.accessInfo?.requiresUpgrade === true) {
         set({ 
           paymentLocked: true, 
           loading: false,
+          freeTrialActive: false,
           units: {
             ...get().units,
             [activeId]: {
@@ -489,7 +639,7 @@ export const useStudyStore = create((set, get) => ({
         err?.response?.status === 403 ||
         err?.message?.includes("403")
       ) {
-        set({ paymentLocked: true, loading: false });
+        set({ paymentLocked: true, loading: false, freeTrialActive: false });
         return;
       }
       
@@ -587,45 +737,6 @@ export const useStudyStore = create((set, get) => ({
     await get().changeActive(nextId);
   },
 
-  // fetchSubjectNames: async () => {
-  //   const { saved } = get();
-  //   if (!saved?.subjects?.length) return;
-
-  //   console.log("📘 Fetching subject names");
-
-  //   try {
-  //     const { fetchWithAuth } = useAuthStore.getState();
-  //     const res = await fetchWithAuth(`${API_BASE}/users/my-topics`);
-  //     console.log(res);
-      
-      
-  //     if (!res?.data) return;
-
-  //     const subjects = res.data;
-  //     const names = {};
-
-  //     subjects.forEach(subject => {
-  //       if (saved.subjects.includes(subject.subjectId)) {
-  //         names[subject.subjectId] = subject.subjectName;
-  //       }
-  //     });
-
-  //     saved.subjects.forEach(id => {
-  //       if (!names[id]) names[id] = id;
-  //     });
-
-  //     set({ subjectNames: names });
-
-  //   } catch (err) {
-  //     console.error("❌ Failed to fetch subject names:", err);
-      
-  //     const names = {};
-  //     saved.subjects.forEach(id => {
-  //       names[id] = id;
-  //     });
-  //     set({ subjectNames: names });
-  //   }
-  // },
   fetchSubjectNames: async () => {
     const { saved } = get();
     if (!saved?.subjects?.length) return;
@@ -634,29 +745,20 @@ export const useStudyStore = create((set, get) => ({
   
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      
-      // ✅ Use /my-subjects endpoint instead
       const res = await fetchWithAuth(`${API_BASE}/users/my-subjects`);
-      console.log("📘 Subject response:", res);
       
       if (!res?.data) return;
   
-      // Handle different response structures
       let subjects = [];
       
-      // Check if data is nested in subjectsByCategory
       if (res.data.subjectsByCategory) {
-        // Flatten all subjects from all categories
         subjects = Object.values(res.data.subjectsByCategory).flat();
       } else if (Array.isArray(res.data)) {
         subjects = res.data;
       }
   
-      console.log("📘 Found subjects:", subjects.length);
-  
       const names = {};
   
-      // Match subjects by ID
       subjects.forEach(subject => {
         const subjectId = subject.id || subject.subjectId || subject._id;
         if (saved.subjects.includes(subjectId)) {
@@ -664,7 +766,6 @@ export const useStudyStore = create((set, get) => ({
         }
       });
   
-      // Fallback: use ID as name if not found
       saved.subjects.forEach(id => {
         if (!names[id]) {
           console.warn(`⚠️ Subject name not found for ID: ${id}`);
@@ -672,13 +773,11 @@ export const useStudyStore = create((set, get) => ({
         }
       });
   
-      console.log("📘 Subject names mapped:", names);
       set({ subjectNames: names });
   
     } catch (err) {
       console.error("❌ Failed to fetch subject names:", err);
       
-      // Fallback: use IDs as names
       const names = {};
       saved.subjects.forEach(id => {
         names[id] = id;
@@ -865,6 +964,890 @@ export const useStudyStore = create((set, get) => ({
     }
   },
 }));
+
+
+
+
+// import { create } from "zustand";
+// import useAuthStore from "./authStore";
+// import { usePaymentStore } from "./paymentStore";
+
+// const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+// const REQUEST_LIMIT = 40;
+
+// // ✅ STRICT CHECK: Must match EXACT subject ID + category
+// function checkIfUserPaidForSubject(subjectInfo, category) {
+//   const paymentState = usePaymentStore.getState();
+  
+//   console.log("\n================================");
+//   console.log("🔍 STRICT PAYMENT CHECK");
+//   console.log("================================");
+  
+//   const subjectId = typeof subjectInfo === 'string' ? subjectInfo : subjectInfo?.id;
+//   const subjectName = typeof subjectInfo === "string" ? null : subjectInfo?.subjectName;
+
+//   console.log("Looking for EXACT match:");
+//   console.log("  - Required Subject ID:", subjectId);
+//   console.log("  - Subject Name:", subjectName);
+//   console.log("  - Required Category:", category);
+  
+//   let activeSubscriptions = [];
+  
+//   if (paymentState.activeSubscriptions) {
+//     activeSubscriptions = paymentState.activeSubscriptions;
+//   } else if (paymentState.subscriptions?.active) {
+//     activeSubscriptions = paymentState.subscriptions.active;
+//   } else if (paymentState.active) {
+//     activeSubscriptions = paymentState.active;
+//   }
+  
+//   console.log("\n📋 Active Subscriptions:", activeSubscriptions.length);
+  
+//   if (!activeSubscriptions || activeSubscriptions.length === 0) {
+//     console.log("❌ No active subscriptions found");
+//     console.log("================================\n");
+//     return false;
+//   }
+  
+//   console.log("\n🔍 Checking each subscription:");
+  
+//   // ✅ STRICT: Must match by EXACT subject ID + category
+//   const hasPaid = activeSubscriptions.some((sub, index) => {
+//     console.log(`\n  Subscription ${index + 1}: ${sub.subjectName}`);
+//     console.log(`    - Subscription Subject ID: ${sub.subjectId}`);
+//     console.log(`    - Subscription Category: ${sub.category}`);
+    
+//     // Check exact ID match
+//     const idMatches = sub.subjectId === subjectId || 
+//                      sub.id === subjectId || 
+//                      sub._id === subjectId;
+    
+//     // Match by category
+//     const categoryMatches = !category || sub.category === category;
+    
+//     // ✅ MUST match BOTH ID and category
+//     const matches = idMatches && categoryMatches;
+    
+//     console.log(`    - ID Match: ${idMatches} (${sub.subjectId} === ${subjectId})`);
+//     console.log(`    - Category Match: ${categoryMatches} (${sub.category} === ${category})`);
+//     console.log(`    - Result: ${matches ? '✅ MATCH!' : '❌ No match'}`);
+    
+//     if (matches) {
+//       console.log("\n🎉 EXACT MATCH FOUND!");
+//       console.log(`   User HAS paid for: ${sub.subjectName}`);
+//       console.log(`   Subject ID: ${sub.subjectId}`);
+//       console.log(`   Category: ${sub.category}`);
+//     }
+    
+//     return matches;
+//   });
+  
+//   if (!hasPaid) {
+//     console.log("\n❌ ========================================");
+//     console.log("❌ ACCESS DENIED - NO MATCHING SUBSCRIPTION");
+//     console.log("❌ ========================================");
+//     console.log("\n📋 User's paid subscriptions:");
+//     activeSubscriptions.forEach((sub, i) => {
+//       console.log(`  ${i + 1}. ${sub.subjectName}`);
+//       console.log(`     - ID: ${sub.subjectId}`);
+//       console.log(`     - Category: ${sub.category}`);
+//     });
+//     console.log("\n🔒 User tried to access:");
+//     console.log(`   - Subject: ${subjectName}`);
+//     console.log(`   - ID: ${subjectId}`);
+//     console.log(`   - Category: ${category}`);
+//     console.log("\n💡 REASON: The subject ID doesn't match any paid subscription.");
+//     console.log("💡 HINT: User may have selected topics from a different subject");
+//     console.log("         with the same name but different ID (e.g., different exam board).");
+//     console.log("========================================\n");
+//   }
+  
+//   console.log("\n================================");
+//   console.log(`FINAL RESULT: ${hasPaid ? '✅ ACCESS GRANTED' : '❌ ACCESS DENIED'}`);
+//   console.log("================================\n");
+  
+//   return hasPaid;
+// }
+
+// // ✅ Get subject info for topic (no category filter)
+
+// async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
+//   const { accessToken } = useAuthStore.getState();
+  
+//   if (!accessToken || !topicId) {
+//     return null;
+//   }
+
+//   try {
+//     // ✅ Use /my-subjects to get subjects filtered by category
+//     const response = await fetch(`${API_BASE}/users/my-subjects`, {
+//       headers: { Authorization: `Bearer ${accessToken}` },
+//     });
+
+//     if (!response.ok) return null;
+
+//     const data = await response.json();
+//     const subjectsByCategory = data.data?.subjectsByCategory || {};
+//     const examKey = userSelectedCategory?.toUpperCase();
+//     const subjects = subjectsByCategory[examKey] || [];
+
+//     console.log(`🔍 Searching for topic in ${examKey} subjects only:`, subjects.length);
+
+//     // Now find the topic in these category-filtered subjects
+//     for (const subject of subjects) {
+//       // Fetch topics for this subject
+//       const topicsRes = await fetch(
+//         `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
+//         { headers: { Authorization: `Bearer ${accessToken}` } }
+//       );
+      
+//       const topicsData = await topicsRes.json();
+//       const subjectData = topicsData.data?.[0];
+      
+//       if (subjectData?.modules) {
+//         for (const module of subjectData.modules) {
+//           for (const topic of module.topics || []) {
+//             if (topic.topicId === topicId || topic.id === topicId || topic._id === topicId) {
+//               console.log("✅ Found topic in correct category subject!");
+//               return {
+//                 id: subject.id,
+//                 subjectName: subject.subjectName,
+//                 category: userSelectedCategory
+//               };
+//             }
+//           }
+//         }
+//       }
+//     }
+
+//     return null;
+//   } catch (error) {
+//     console.error("❌ Error:", error);
+//     return null;
+//   }
+// }
+
+// export const useStudyStore = create((set, get) => ({
+//   // ---------------- STATE ----------------
+//   saved: null,
+//   activeId: null,
+//   units: {},
+//   currentIndex: 0,
+//   selectedOptions: {},
+//   subjectNames: {},
+//   topicNames: {},
+//   loading: false,
+//   paymentLocked: false,
+//   paymentLoading: false,
+//   initialized: false,
+//   sessionId: null,
+//   sessionActive: false,
+
+//   // ---------------- RESET ----------------
+//   reset: () => {
+//     console.log("🧹 Resetting store");
+    
+//     set({
+//       saved: null,
+//       activeId: null,
+//       units: {},
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       subjectNames: {},
+//       topicNames: {},
+//       paymentLocked: false,
+//       initialized: false,
+//       sessionId: null,
+//       sessionActive: false,
+//       loading: false,
+//     });
+//   },
+
+//   // ---------------- LOAD SAVED ----------------
+//   syncSaved: async () => {
+//     const state = get();
+    
+//     if (state.loading && state.initialized) {
+//       console.log("⏭️ Already loading");
+//       return null;
+//     }
+    
+//     if (state.initialized && !state.loading) {
+//       console.log("🔄 Re-initializing");
+//       set({ initialized: false });
+//     }
+
+//     console.log("🔄 Starting syncSaved...");
+
+//     const saved = JSON.parse(localStorage.getItem("studySelections"));
+    
+//     if (!saved) {
+//       console.warn("⚠️ No saved data");
+//       set({ loading: false });
+//       return null;
+//     }
+
+//     console.log("📦 User Selection:");
+//     console.log("  Mode:", saved.mode);
+//     console.log("  Category:", saved.exam);
+//     if (saved.mode === "topic") {
+//       console.log("  Topics:", saved.topics);
+//     }
+
+//     set({ saved, initialized: true, loading: true });
+
+//     try {
+//       if (saved.mode === "subject") {
+//         await get().fetchSubjectNames();
+//       } else {
+//         await get().fetchTopicNames();
+//       }
+
+//       const firstId =
+//         saved.mode === "subject"
+//           ? saved.subjects?.[0]
+//           : Object.values(saved.topics || {})[0]?.[0];
+
+//       console.log("🎯 First ID:", firstId);
+
+//       if (firstId) {
+//         await get().changeActive(firstId);
+//         setTimeout(() => {
+//           const currentState = get();
+//           if (currentState.loading) {
+//             set({ loading: false });
+//           }
+//         }, 100);
+//       } else {
+//         set({ loading: false });
+//       }
+      
+//       return saved;
+//     } catch (error) {
+//       console.error("❌ Error in syncSaved:", error);
+//       set({ loading: false });
+//       return null;
+//     }
+//   },
+
+//   // ---------------- HELPERS ----------------
+//   getOrderedIds: () => {
+//     const { saved } = get();
+//     if (!saved) return [];
+
+//     if (saved.mode === "subject") {
+//       return saved.subjects || [];
+//     }
+
+//     return Object.values(saved.topics || {}).flat();
+//   },
+
+//   getUnit: () => {
+//     const { activeId, units } = get();
+//     return (
+//       units[activeId] || {
+//         items: [],
+//         skip: 0,
+//         exhausted: false,
+//       }
+//     );
+//   },
+
+//   getQuestions: () => get().getUnit().items,
+
+//   // ---------------- SELECTION ----------------
+//   setSelectedOption: (questionId, optionId) =>
+//     set((s) => ({
+//       selectedOptions: {
+//         ...s.selectedOptions,
+//         [questionId]: optionId,
+//       },
+//     })),
+
+//   // ---------------- FETCH QUESTIONS (WITH STRICT CHECK) ----------------
+//   fetchMoreQuestions: async () => {
+//     const state = get();
+//     const { saved, activeId, units } = state;
+    
+//     console.log("\n🔍 ========================================");
+//     console.log("🔍 FETCH MORE QUESTIONS");
+//     console.log("🔍 ========================================");
+//     console.log("Active ID:", activeId);
+//     console.log("Mode:", saved?.mode);
+    
+//     if (!saved || !activeId) {
+//       console.log("❌ No saved or activeId");
+//       set({ loading: false });
+//       return;
+//     }
+
+//     const category = saved.exam;
+//     console.log("Category:", category);
+
+//     let subjectInfo = null; // ✅ Declare here so it's available later
+    
+//     if (saved.mode === "subject") {
+//       subjectInfo = {
+//         id: activeId,
+//         category: category
+//       };
+//       console.log("📚 Subject mode - checking subject:", activeId);
+//     } else if (saved.mode === "topic") {
+//       console.log("📖 Topic mode - finding parent subject...");
+      
+//       subjectInfo = await getSubjectInfoForTopic(activeId, category);
+      
+//       if (!subjectInfo) {
+//         console.error("❌ Could not find subject for topic:", activeId);
+//         set({ 
+//           paymentLocked: true, 
+//           loading: false,
+//           units: {
+//             ...get().units,
+//             [activeId]: {
+//               items: [],
+//               skip: 0,
+//               exhausted: true,
+//             },
+//           },
+//         });
+//         return;
+//       }
+      
+//       console.log("✅ Found parent subject:", subjectInfo.subjectName);
+//       console.log("   Subject ID:", subjectInfo.id);
+//     }
+
+//     // ✅ STRICT CHECK: Must match exact subject ID + category
+//     if (subjectInfo) {
+//       const hasPaid = checkIfUserPaidForSubject(subjectInfo, category);
+      
+//       if (!hasPaid) {
+//         console.log("\n🚫 ========================================");
+//         console.log("🚫 PAYMENT LOCKED - ACCESS DENIED");
+//         console.log("🚫 ========================================");
+//         console.log("User has not paid for this specific subject.");
+//         console.log("They need to select topics from a subject they've paid for.");
+//         console.log("========================================\n");
+        
+//         set({ 
+//           paymentLocked: true, 
+//           loading: false,
+//           units: {
+//             ...get().units,
+//             [activeId]: {
+//               items: [],
+//               skip: 0,
+//               exhausted: true,
+//             },
+//           },
+//         });
+//         return;
+//       }
+      
+//       console.log("\n✅ ========================================");
+//       console.log("✅ ACCESS GRANTED - PAYMENT VERIFIED");
+//       console.log("✅ ========================================");
+//       console.log("Subject ID matches paid subscription!");
+//       console.log("Proceeding to fetch questions...");
+//       console.log("========================================\n");
+//     }
+
+//     const unit = units[activeId] || {
+//       items: [],
+//       skip: 0,
+//       exhausted: false,
+//     };
+
+//     if (unit.exhausted || state.paymentLocked) {
+//       console.log("⏹️ Already exhausted or locked");
+//       set({ loading: false });
+//       return;
+//     }
+
+//     console.log(`📥 Fetching questions (skip: ${unit.skip})`);
+//     set({ loading: true });
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+
+//       const params = new URLSearchParams();
+//       params.append('category', saved.exam);
+//       params.append('limit', REQUEST_LIMIT);
+//       params.append('skip', unit.skip);
+
+//       if (saved.mode === "subject") {
+//         params.append('subjectId', activeId);
+        
+//         const year = saved.subjectYears?.[activeId];
+//         if (year && year !== 'random') {
+//           params.append('year', year);
+//         } else if (year === 'random') {
+//           params.append('random', 'true');
+//         }
+//       } else if (saved.mode === "topic") {
+//         params.append('topicId', activeId);
+        
+//         // ✅ CRITICAL: Also send the parent subjectId so backend can verify access
+//         if (subjectInfo?.id) {
+//           params.append('subjectId', subjectInfo.id);
+//           console.log("📤 Sending parent subjectId:", subjectInfo.id);
+//         }
+        
+//         const year = saved.topicYears?.[activeId];
+//         if (year && year !== 'random') {
+//           params.append('year', year);
+//         } else if (year === 'random') {
+//           params.append('random', 'true');
+//         }
+//       }
+
+//       const url = `${API_BASE}/users/study-questions?${params.toString()}`;
+//       console.log("🌐 API URL:", url);
+
+//       const res = await fetchWithAuth(url);
+
+//       if (res?.status === 403 || res?.code === "PAYMENT_REQUIRED") {
+//         console.log("\n🔥 ========================================");
+//         console.log("🔥 API RETURNED 403 FORBIDDEN");
+//         console.log("🔥 ========================================");
+//         console.log("This shouldn't happen if frontend check passed!");
+//         console.log("Backend might have different subject ID or additional checks.");
+//         console.log("========================================\n");
+        
+//         set({ paymentLocked: true, loading: false });
+//         return;
+//       }
+
+//       const data = Array.isArray(res?.data) ? res.data : [];
+//       console.log(`✅ Received ${data.length} questions`);
+
+//       if (data.length === 0 && res?.accessInfo?.requiresUpgrade === true) {
+//         set({ 
+//           paymentLocked: true, 
+//           loading: false,
+//           units: {
+//             ...get().units,
+//             [activeId]: {
+//               ...unit,
+//               exhausted: true,
+//             },
+//           },
+//         });
+//         console.log("🔥 Free limit reached");
+//         return;
+//       }
+
+//       set((s) => ({
+//         units: {
+//           ...s.units,
+//           [activeId]: {
+//             items: [...unit.items, ...data],
+//             skip: unit.skip + data.length,
+//             exhausted: data.length < REQUEST_LIMIT,
+//           },
+//         },
+//         loading: false,
+//       }));
+      
+//       console.log(`💾 Total questions: ${unit.items.length + data.length}`);
+//     } catch (err) {
+//       console.error("❌ Fetch failed:", err);
+      
+//       if (
+//         err?.status === 403 ||
+//         err?.response?.status === 403 ||
+//         err?.message?.includes("403")
+//       ) {
+//         set({ paymentLocked: true, loading: false });
+//         return;
+//       }
+      
+//       set({ loading: false });
+//     }
+//   },
+
+//   // ---------------- CHANGE ACTIVE ----------------
+//   changeActive: async (id) => {
+//     console.log("🔁 Changing active to:", id);
+    
+//     set({
+//       activeId: id,
+//       currentIndex: 0,
+//       selectedOptions: {},
+//       paymentLocked: false,
+//     });
+
+//     const state = get();
+//     if (state.units[id] && state.units[id].items.length > 0) {
+//       console.log("✅ Already have questions");
+//       set({ loading: false });
+//       return;
+//     }
+
+//     if (!state.units[id]) {
+//       set((s) => ({
+//         units: {
+//           ...s.units,
+//           [id]: {
+//             items: [],
+//             skip: 0,
+//             exhausted: false,
+//           },
+//         },
+//       }));
+//     }
+
+//     await new Promise(resolve => setTimeout(resolve, 50));
+//     await get().fetchMoreQuestions();
+//   },
+
+//   // ---------------- NAVIGATION ----------------
+//   next: async () => {
+//     const { currentIndex, paymentLocked } = get();
+//     if (paymentLocked) return;
+
+//     const unit = get().getUnit();
+
+//     if (currentIndex < unit.items.length - 1) {
+//       set({ currentIndex: currentIndex + 1 });
+//       return;
+//     }
+
+//     if (!unit.exhausted) {
+//       const before = unit.items.length;
+//       await get().fetchMoreQuestions();
+//       const after = get().getUnit().items.length;
+
+//       if (after > before) {
+//         set({ currentIndex: currentIndex + 1 });
+//         return;
+//       }
+      
+//       if (get().paymentLocked) {
+//         console.log("💳 Payment required");
+//         return;
+//       }
+//     }
+
+//     if (unit.exhausted) {
+//       await get().goToNextUnit();
+//     }
+//   },
+
+//   prev: () =>
+//     set((s) => ({
+//       currentIndex: Math.max(0, s.currentIndex - 1),
+//     })),
+
+//   goToNextUnit: async () => {
+//     const ids = get().getOrderedIds();
+//     const { activeId } = get();
+
+//     const idx = ids.indexOf(activeId);
+//     if (idx === -1) return;
+
+//     const nextId = ids[idx + 1];
+//     if (!nextId) {
+//       console.log("✅ Completed");
+//       alert('🎉 You have finished all!');
+//       return;
+//     }
+
+//     await get().changeActive(nextId);
+//   },
+
+//   // fetchSubjectNames: async () => {
+//   //   const { saved } = get();
+//   //   if (!saved?.subjects?.length) return;
+
+//   //   console.log("📘 Fetching subject names");
+
+//   //   try {
+//   //     const { fetchWithAuth } = useAuthStore.getState();
+//   //     const res = await fetchWithAuth(`${API_BASE}/users/my-topics`);
+//   //     console.log(res);
+      
+      
+//   //     if (!res?.data) return;
+
+//   //     const subjects = res.data;
+//   //     const names = {};
+
+//   //     subjects.forEach(subject => {
+//   //       if (saved.subjects.includes(subject.subjectId)) {
+//   //         names[subject.subjectId] = subject.subjectName;
+//   //       }
+//   //     });
+
+//   //     saved.subjects.forEach(id => {
+//   //       if (!names[id]) names[id] = id;
+//   //     });
+
+//   //     set({ subjectNames: names });
+
+//   //   } catch (err) {
+//   //     console.error("❌ Failed to fetch subject names:", err);
+      
+//   //     const names = {};
+//   //     saved.subjects.forEach(id => {
+//   //       names[id] = id;
+//   //     });
+//   //     set({ subjectNames: names });
+//   //   }
+//   // },
+//   fetchSubjectNames: async () => {
+//     const { saved } = get();
+//     if (!saved?.subjects?.length) return;
+  
+//     console.log("📘 Fetching subject names");
+  
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+      
+//       // ✅ Use /my-subjects endpoint instead
+//       const res = await fetchWithAuth(`${API_BASE}/users/my-subjects`);
+//       console.log("📘 Subject response:", res);
+      
+//       if (!res?.data) return;
+  
+//       // Handle different response structures
+//       let subjects = [];
+      
+//       // Check if data is nested in subjectsByCategory
+//       if (res.data.subjectsByCategory) {
+//         // Flatten all subjects from all categories
+//         subjects = Object.values(res.data.subjectsByCategory).flat();
+//       } else if (Array.isArray(res.data)) {
+//         subjects = res.data;
+//       }
+  
+//       console.log("📘 Found subjects:", subjects.length);
+  
+//       const names = {};
+  
+//       // Match subjects by ID
+//       subjects.forEach(subject => {
+//         const subjectId = subject.id || subject.subjectId || subject._id;
+//         if (saved.subjects.includes(subjectId)) {
+//           names[subjectId] = subject.subjectName;
+//         }
+//       });
+  
+//       // Fallback: use ID as name if not found
+//       saved.subjects.forEach(id => {
+//         if (!names[id]) {
+//           console.warn(`⚠️ Subject name not found for ID: ${id}`);
+//           names[id] = id;
+//         }
+//       });
+  
+//       console.log("📘 Subject names mapped:", names);
+//       set({ subjectNames: names });
+  
+//     } catch (err) {
+//       console.error("❌ Failed to fetch subject names:", err);
+      
+//       // Fallback: use IDs as names
+//       const names = {};
+//       saved.subjects.forEach(id => {
+//         names[id] = id;
+//       });
+//       set({ subjectNames: names });
+//     }
+//   },
+
+//   fetchTopicNames: async () => {
+//     const { saved } = get();
+//     if (!saved?.topics) return;
+
+//     console.log("📙 Fetching topic names");
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const res = await fetchWithAuth(`${API_BASE}/users/my-topics`);
+      
+//       if (!res?.data) return;
+
+//       const subjects = res.data;
+//       const topicNames = {};
+//       const subjectNames = {};
+
+//       const savedTopicIds = Object.values(saved.topics).flat();
+
+//       subjects.forEach(subject => {
+//         subject.modules?.forEach(module => {
+//           module.topics?.forEach(topic => {
+//             if (savedTopicIds.includes(topic.topicId)) {
+//               topicNames[topic.topicId] = topic.topicName;
+              
+//               Object.keys(saved.topics).forEach(subjectId => {
+//                 if (saved.topics[subjectId].includes(topic.topicId)) {
+//                   subjectNames[subjectId] = subject.subjectName;
+//                 }
+//               });
+//             }
+//           });
+//         });
+//       });
+
+//       savedTopicIds.forEach(id => {
+//         if (!topicNames[id]) topicNames[id] = id;
+//       });
+
+//       set((s) => ({
+//         topicNames,
+//         subjectNames: { ...s.subjectNames, ...subjectNames },
+//       }));
+
+//     } catch (err) {
+//       console.error("❌ Failed to fetch topic names:", err);
+      
+//       const topicNames = {};
+//       const savedTopicIds = Object.values(saved.topics).flat();
+//       savedTopicIds.forEach(id => {
+//         topicNames[id] = id;
+//       });
+//       set({ topicNames });
+//     }
+//   },
+
+//   initializePayment: async () => {
+//     set({ paymentLoading: true });
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/payments/initialize`,
+//         { method: "POST" }
+//       );
+
+//       set({ paymentLoading: false });
+//       console.log("💳 Payment URL:", res.data.authorizationUrl);
+//       window.location.href = res.data.authorizationUrl;
+//     } catch (err) {
+//       console.error("❌ Payment init failed", err);
+//       set({ paymentLoading: false });
+//     }
+//   },
+
+//   startStudySession: async (savedData = null) => {
+//     const { saved: storeSaved, sessionActive } = get();
+//     const saved = savedData || storeSaved;
+    
+//     if (!saved || sessionActive) {
+//       return null;
+//     }
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+      
+//       let payload = {};
+
+//       if (saved.mode === "subject") {
+//         payload.subjectId = saved.subjects.length === 1 ? saved.subjects[0] : saved.subjects;
+//       } else if (saved.mode === "topic") {
+//         const allTopicIds = Object.values(saved.topics).flat();
+//         const subjectIds = Object.keys(saved.topics);
+
+//         if (subjectIds.length === 1 && allTopicIds.length === 1) {
+//           payload.subjectId = subjectIds[0];
+//           payload.topicIds = allTopicIds;
+//         } else {
+//           payload.subjectId = subjectIds;
+//           payload.topicIds = allTopicIds;
+//         }
+//       }
+
+//       const res = await fetchWithAuth(`${API_BASE}/study/start`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(payload),
+//       });
+
+//       if (res?.data?.sessionId) {
+//         set({ 
+//           sessionId: res.data.sessionId, 
+//           sessionActive: true 
+//         });
+//         return res.data.sessionId;
+//       }
+
+//       return null;
+//     } catch (err) {
+//       console.error("❌ Failed to start study session:", err);
+//       return null;
+//     }
+//   },
+
+//   submitAnswer: async (questionId, userChoice) => {
+//     const { sessionId, sessionActive } = get();
+    
+//     if (!sessionActive || !sessionId) {
+//       return false;
+//     }
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+
+//       const payload = {
+//         sessionId,
+//         questionId,
+//         userChoice,
+//       };
+
+//       await fetchWithAuth(`${API_BASE}/study/answer`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(payload),
+//       });
+
+//       return true;
+//     } catch (err) {
+//       console.error("❌ Failed to submit answer:", err);
+//       return false;
+//     }
+//   },
+
+//   endStudySession: async () => {
+//     const { sessionId, sessionActive } = get();
+    
+//     if (!sessionActive || !sessionId) {
+//       return;
+//     }
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+
+//       await fetchWithAuth(`${API_BASE}/study/end`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ sessionId }),
+//       });
+
+//       set({ 
+//         sessionId: null, 
+//         sessionActive: false 
+//       });
+
+//     } catch (err) {
+//       console.error("❌ Failed to end study session:", err);
+//     }
+//   },
+// }));
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
