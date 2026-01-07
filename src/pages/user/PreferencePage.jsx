@@ -926,7 +926,7 @@ export default function PreferencePage() {
       {/* TITLE */}
       <h1 className="text-4xl font-merriweather my-10 text-center text-primary">
         {step === 1 ? (
-          "What do you want to study on our platform today?"
+          "What do you want to study?"
         ) : step === 5 ? (
           "Select Your Subjects"
         ) : (
@@ -1048,14 +1048,14 @@ export default function PreferencePage() {
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
                       <span className="dark:text-white/80">Industry certifications</span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-3 text-sm text-gray-600 mb-6">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
                       <span className="dark:text-white/80">Career support</span>
                     </div>
                   </div>
 
                   <a
-                    href="https://filloptech.com"
+                    href="https://filloptech.com/register"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full px-4 py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 group/btn"
@@ -1074,7 +1074,7 @@ export default function PreferencePage() {
         slideIn(
           <div className="mb-10">
             <p className="text-center text-primary-hover mb-6 mt-20">
-              Select your track/interest
+              Select your interest
             </p>
             <div className="flex gap-4 flex-wrap justify-center">
               {tracks.map((track) => {
