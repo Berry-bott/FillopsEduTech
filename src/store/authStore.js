@@ -232,6 +232,15 @@
 
 
 
+
+
+
+
+
+
+
+
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
@@ -287,47 +296,6 @@ const useAuthStore = create(
           });
 
           return res;
-        } finally {
-          set({ loading: false });
-        }
-      },
-
-      // 🔹 TUTOR LOGIN
-      tutorLogin: async (formData) => {
-        set({ loading: true, error: "", success: "" });
-
-        try {
-          const response = await fetch(`${API_BASE}/admin/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
-            credentials: "include",
-          });
-          
-          const res = await response.json();
-          
-          if (!res.success) {
-            set({ error: res.message || "Tutor login failed" });
-            return res;
-          }
-
-          const { accessToken, user } = res.data;
-
-          sessionStorage.setItem("accessToken", accessToken);
-          console.log("👨‍🏫 Tutor login successful:", res);
-
-          set({
-            user,
-            accessToken,
-            isAuthenticated: true,
-          });
-
-          return res;
-        } catch (error) {
-          console.error("Tutor login error:", error);
-          const errorMessage = "Network error. Please check your connection.";
-          set({ error: errorMessage });
-          return { success: false, message: errorMessage };
         } finally {
           set({ loading: false });
         }
