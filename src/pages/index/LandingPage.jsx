@@ -8,7 +8,6 @@ import Footer from '../../components/layouts/Footer'
 
 
 
-
 const LandingPage = ()=>  {
 
   return (

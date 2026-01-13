@@ -62,7 +62,7 @@ export default function TopicsPanel({ context, topics, setTopics, modules, subje
       }
       setTopics([...topics, newTopic])
     }
-
+jj
     setFormData({ name: "", module: "", subject: "", description: "", content: "" })
     setIsDialogOpen(false)
   }

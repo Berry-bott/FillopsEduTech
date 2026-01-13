@@ -190,6 +190,10 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { ArrowRight, BookOpen, Users, Award } from "lucide-react";
 import hangoverImage from "../../assets/images/hero-education.jpg";
+import ChatBot from "../../chat-bot/BotChat";
+
+
+
 
 const HeroSection = () => {
   return (
@@ -298,6 +302,8 @@ const HeroSection = () => {
               </div>
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
+                {/* chat-bot  */}
+            <ChatBot/>
 
             {/* Download Button */}
             <Button

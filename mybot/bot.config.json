@@ -1,0 +1,12 @@
+{
+    "$schema": "../botpress.config.schema.json",
+    "id": "mybot",
+    "name": "MyBot",
+    "version": "0.0.1",
+    "description": "My chatbot",
+    "category": "productivity",
+    "details": {},
+    "author": "Your Name",
+    "license": "AGPL-3.0",
+    "homepage": ""
+  }
