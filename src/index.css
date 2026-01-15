@@ -130,6 +130,7 @@
   }
 }
 
+
 @layer base {
   * {
     @apply border-border;
@@ -306,19 +307,4 @@
 } 
 
 
-#bp-web-widget-container {
-  height: 200px !important; /* Change to your preferred height */
-  max-height: 200px !important;
-}
 
-/* Or target the iframe directly */
-#bp-web-widget {
-  height: 200px !important;
-  max-height: 40vh !important; /* 70% of viewport height */
-}
-
-/* For the opened chat window */
-.bpWidget {
-  height: 300px !important;
-  max-height: 40vh !important;
-}
