@@ -111,58 +111,6 @@ function checkIfUserPaidForSubject(subjectInfo, category) {
   return hasPaid;
 }
 
-// async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
-//   const { accessToken } = useAuthStore.getState();
-  
-//   if (!accessToken || !topicId) {
-//     return null;
-//   }
-
-//   try {
-//     const response = await fetch(`${API_BASE}/users/my-subjects`, {
-//       headers: { Authorization: `Bearer ${accessToken}` },
-//     });
-
-//     if (!response.ok) return null;
-
-//     const data = await response.json();
-//     const subjectsByCategory = data.data?.subjectsByCategory || {};
-//     const examKey = userSelectedCategory?.toUpperCase();
-//     const subjects = subjectsByCategory[examKey] || [];
-
-//     console.log(`🔍 Searching for topic in ${examKey} subjects only:`, subjects.length);
-
-//     for (const subject of subjects) {
-//       const topicsRes = await fetch(
-//         `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
-//         { headers: { Authorization: `Bearer ${accessToken}` } }
-//       );
-      
-//       const topicsData = await topicsRes.json();
-//       const subjectData = topicsData.data?.[0];
-      
-//       if (subjectData?.modules) {
-//         for (const module of subjectData.modules) {
-//           for (const topic of module.topics || []) {
-//             if (topic.topicId === topicId || topic.id === topicId || topic._id === topicId) {
-//               console.log("✅ Found topic in correct category subject!");
-//               return {
-//                 id: subject.id,
-//                 subjectName: subject.subjectName,
-//                 category: userSelectedCategory
-//               };
-//             }
-//           }
-//         }
-//       }
-//     }
-
-//     return null;
-//   } catch (error) {
-//     console.error("❌ Error:", error);
-//     return null;
-//   }
-// }
 
 async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
   console.log("\n🔍 ========================================");
@@ -294,7 +242,7 @@ export const useStudyStore = create((set, get) => ({
   initialized: false,
   sessionId: null,
   sessionActive: false,
-  freeTrialActive: !hasUsedFreeQuestions(), // ✅ Track if in free trial mode
+  freeTrialActive: !hasUsedFreeQuestions(),
 
   // ---------------- RESET ----------------
   reset: () => {
