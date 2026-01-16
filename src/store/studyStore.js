@@ -279,9 +279,10 @@ export const useStudyStore = create((set, get) => ({
       set({ initialized: false });
     }
 
-    console.log("🔄 Starting syncSaved...");
 
     const saved = JSON.parse(localStorage.getItem("studySelections"));
+    console.log(saved);
+    
     
     if (!saved) {
       console.warn("⚠️ No saved data");
