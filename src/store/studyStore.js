@@ -281,7 +281,6 @@ export const useStudyStore = create((set, get) => ({
 
 
     const saved = JSON.parse(localStorage.getItem("studySelections"));
-    console.log(saved);
     
     
     if (!saved) {
