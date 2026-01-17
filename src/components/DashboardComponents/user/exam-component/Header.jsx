@@ -58,10 +58,16 @@ export default function Header() {
     return (
       <main className="pt-16">
         <PageNav />
-        <div className="p-4 space-y-4">
-          <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
-          <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
-        </div>
+            <div className="flex justify-between items-center">
+            <div>
+            <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
+            <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
+            </div>
+            <div>
+            <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
+            <div className="h-8 w-36 bg-gray-300 dark:bg-gray-700 rounded mb-4 animate-pulse" />
+            </div>
+          </div>
       </main>
     );
   }

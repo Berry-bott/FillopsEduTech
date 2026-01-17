@@ -106,7 +106,8 @@ const AboutSection = () => {
         </div>
 
         {/* Stats */}
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-3xl shadow-2xl px-6 py-12 md:px-16 text-white transition-colors duration-300">
+           <div className="col-span-2 bg-primary rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/30 rounded-full -mr-12 -mt-12"></div> 
           <div className="text-center mb-14">
             <h3 className="text-3xl md:text-4xl font-bold mb-4">
               Comprehensive Learning Ecosystem

@@ -154,13 +154,36 @@ const useTutorStore = create(
         }
       },
 
+      // 🔹 GET SUBJECT BY ID
+          getSubjectById: async (subjectId) => {
+            set({ loading: true, error: "" });
+
+            try {
+              const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects/${subjectId}`);
+
+              if (result.success) {
+                console.log("✅ Subject fetched:", result.data);
+              } else {
+                set({ error: result.message || "Failed to fetch subject" });
+              }
+
+              return result;
+            } catch (error) {
+              console.error("❌ Error fetching subject:", error);
+              set({ error: "Network error" });
+              return { success: false, message: error.message };
+        } finally {
+          set({ loading: false });
+        }
+      },
+
       // 🔹 UPDATE SUBJECT
       updateSubject: async (subjectId, subjectData) => {
         set({ loading: true, error: "", success: "" });
 
         try {
           const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects/${subjectId}`, {
-            method: "POST",
+            method: "PATCH",
             body: JSON.stringify(subjectData),
           });
 
@@ -182,12 +205,13 @@ const useTutorStore = create(
       },
 
       // 🔹 DELETE SUBJECT
-      deleteSubject: async (subjectId) => {
+      deleteSubject: async (subjectId, subjectData) => {
         set({ loading: true, error: "", success: "" });
 
         try {
           const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects/${subjectId}`, {
             method: "DELETE",
+            body: JSON.stringify(subjectData),
           });
 
           if (result.success) {
@@ -206,6 +230,54 @@ const useTutorStore = create(
           set({ loading: false });
         }
       },
+
+      // 🔹 GET STUDENTS ENROLLED IN SUBJECT
+      getSubjectEnrolledStudents: async (subjectId) => {
+  if (!subjectId) {
+    return { success: false, message: "Subject ID is required" };
+  }
+
+  try {
+    const result = await get().fetchWithAuth(
+      `${API_BASE}/tutor/subjects/${subjectId}/users`
+    );
+
+    if (!result?.success) {
+      return { success: false, message: result?.message || "Failed to load students" };
+    }
+
+    return {
+      success: true,
+      data: result.data || [],
+    };
+  } catch (error) {
+    console.error("❌ Error fetching enrolled students:", error);
+    return { success: false, message: "Network error" };
+  }
+      },
+
+      // getSubjectEnrolledStudents: async (subjectId) => {
+      //   set({ loading: true, error: "" });
+
+      //   try {
+      //     const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects/${subjectId}/users`);
+
+      //     if (result.success) {
+      //       console.log("✅ Enrolled students fetched:", result.data);
+      //     } else {
+      //       set({ error: result.message || "Failed to fetch enrolled students" });
+      //     }
+
+      //     return result;
+      //   } catch (error) {
+      //     console.error("❌ Error fetching enrolled students:", error);
+      //     set({ error: "Network error" });
+      //     return { success: false, message: error.message };
+      //   } finally {
+      //     set({ loading: false });
+      //   }
+      // },
+
 
       // ========== MODULES ==========
 

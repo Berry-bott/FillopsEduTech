@@ -106,24 +106,24 @@ export default function ExamResultPage() {
         {/* Compact Score Cards Grid */}
         <div className="grid grid-cols-3 gap-3">
           {/* Main Score */}
-          <div className="col-span-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-            <div className="relative">
-              <p className="text-xs opacity-90 mb-1">Your Score</p>
-              <div className="flex items-end gap-2 mb-2">
-                <span className="text-4xl font-black">{resultData.scoreLabel?.split('/')[0] || resultData.totalScore}</span>
-                <span className="text-2xl font-bold opacity-80 mb-0.5">/ {resultData.scoreLabel?.split('/')[1] || resultData.totalPossible}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold">{resultData.percentageScore}</span>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  isPassing ? 'bg-green-400/30' : 'bg-blue-400/30'
-                }`}>
-                  {isPassing ? 'PASSED' : 'COMPLETE'}
-                </span>
-              </div>
+            <div className="col-span-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+                <div className="relative">
+                <p className="text-xs opacity-90 mb-1">Your Score</p>
+                <div className="flex items-end gap-2 mb-2">
+                    <span className="text-4xl font-black">{resultData.scoreLabel?.split('/')[0] || resultData.totalScore}</span>
+                    <span className="text-2xl font-bold opacity-80 mb-0.5">/ {resultData.scoreLabel?.split('/')[1] || resultData.totalPossible}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold">{resultData.percentageScore}</span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                    isPassing ? 'bg-green-400/30' : 'bg-blue-400/30'
+                    }`}>
+                    {isPassing ? 'PASSED' : 'COMPLETE'}
+                    </span>
+                </div>
+                </div>
             </div>
-          </div>
 
           {/* Quick Stats */}
           <div className="space-y-3">
@@ -241,7 +241,7 @@ export default function ExamResultPage() {
           {/* Retake Exam Button */}
           <button
             onClick={handleRetakeExam}
-            className="group bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+            className="group bg-green-500 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
           >
             <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

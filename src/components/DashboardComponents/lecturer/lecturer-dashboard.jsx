@@ -815,7 +815,7 @@ import React, { useState, useEffect, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import fillopLogo from "../../../assets/images/fillopsLogo.png"
-
+import AnalyticsPanel from "@/components/DashboardComponents/lecturer/analytics-panel"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -1162,6 +1162,7 @@ export default function LecturerDashboard() {
                 {activeTab === "topics" && <TopicsPanel context={context} topics={topics} setTopics={setTopics} modules={modules} subjects={subjects} globalSearch={globalSearch} />}
                 {activeTab === "questions" && <QuestionsPanel context={context} questions={questions} setQuestions={setQuestions} topics={topics} modules={modules} subjects={subjects} globalSearch={globalSearch} />}
                 {activeTab === "settings" && <SettingsPage context={context} />}
+                {activeTab === "analytics" && <AnalyticsPanel subjects={subjects} />}
               </div>
             </div>
           </div>

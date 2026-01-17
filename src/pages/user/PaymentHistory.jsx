@@ -107,7 +107,9 @@ const PaymentHistory = () => {
 
   if (loading && history.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 
+      via-sky-50 to-cyan-50">
+        
         <div className="text-center space-y-4">
           <div className="relative">
             <div className="animate-spin h-16 w-16 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto"></div>
@@ -133,8 +135,9 @@ const PaymentHistory = () => {
         </button>
         
         {/* Header with Glassmorphism */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-600 p-8 text-white shadow-2xl">
-          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+          <div className="col-span-2 bg-primary rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/30 rounded-full -mr-12 -mt-12"></div>
+          <div className="absolute inset-0"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
