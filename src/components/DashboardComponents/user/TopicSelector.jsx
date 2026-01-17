@@ -885,6 +885,365 @@
 
 
 
+// import React, { useState, useEffect } from "react";
+// import useAuthStore from "@/store/authStore";
+
+// const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+
+// export default function TopicSelector({
+//   selectedTopics = {},
+//   toggleTopic = () => {},
+//   setTopicYear = () => {},
+//   selectedExam, // The selected exam category (WAEC, JAMB, etc)
+// }) {
+//   const { accessToken } = useAuthStore();
+
+//   const [openSubject, setOpenSubject] = useState(null);
+//   const [subjects, setSubjects] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const [subjectYears, setSubjectYears] = useState({});
+//   const [error, setError] = useState(null);
+
+//   // Fetch subjects filtered by selected exam
+//   // useEffect(() => {
+//   //   if (!accessToken || !selectedExam) return;
+
+//   //   const fetchSubjects = async () => {
+//   //     setLoading(true);
+//   //     setError(null);
+
+//   //     try {
+//   //       console.log("➡️ Fetching subjects for", selectedExam);
+
+//   //       // Use /my-subjects endpoint which returns subjects grouped by category
+//   //       const res = await fetch(`${API_BASE}/users/my-subjects`, {
+//   //         headers: { Authorization: `Bearer ${accessToken}` },
+//   //       });
+
+//   //       if (!res.ok) throw new Error("Failed to fetch subjects");
+
+//   //       const data = await res.json();
+//   //       console.log("📥 Fetched data:", data);
+
+//   //       // Get subjects for the selected exam
+//   //       const subjectsByCategory = data.data?.subjectsByCategory || {};
+//   //       const examKey = selectedExam.toUpperCase();
+//   //       const examSubjects = subjectsByCategory[examKey] || [];
+
+//   //       console.log(`🔍 Subjects for ${examKey}:`, examSubjects);
+
+//   //       // Now fetch topics for each subject
+//   //       const subjectsWithTopics = await Promise.all(
+//   //         examSubjects.map(async (subject) => {
+//   //           try {
+//   //             // Fetch topics for this specific subject
+//   //             const topicsRes = await fetch(
+//   //               `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
+//   //               {
+//   //                 headers: { Authorization: `Bearer ${accessToken}` },
+//   //               }
+//   //             );
+
+//   //             if (!topicsRes.ok) {
+//   //               console.warn(`Failed to fetch topics for ${subject.subjectName}`);
+//   //               return {
+//   //                 ...subject,
+//   //                 allTopics: [],
+//   //               };
+//   //             }
+
+//   //             const topicsData = await topicsRes.json();
+              
+//   //             // Extract topics from modules
+//   //             const allTopics = [];
+//   //             const subjectData = topicsData.data?.[0]; // Assuming first item is the subject
+              
+//   //             if (subjectData?.modules) {
+//   //               subjectData.modules.forEach(module => {
+//   //                 module.topics?.forEach(topic => {
+//   //                   allTopics.push(topic);
+//   //                 });
+//   //               });
+//   //             }
+
+//   //             return {
+//   //               id: subject.id,
+//   //               subjectId: subject.id,
+//   //               subjectName: subject.subjectName,
+//   //               icon: subject.icon,
+//   //               allTopics,
+//   //             };
+//   //           } catch (err) {
+//   //             console.error(`Error fetching topics for ${subject.subjectName}:`, err);
+//   //             return {
+//   //               ...subject,
+//   //               allTopics: [],
+//   //             };
+//   //           }
+//   //         })
+//   //       );
+
+//   //       setSubjects(subjectsWithTopics);
+//   //       console.log("✅ Loaded subjects with topics:", subjectsWithTopics.length);
+//   //       console.log("📋 Subjects:", subjectsWithTopics.map(s => 
+//   //         `${s.subjectName} (${s.allTopics.length} topics)`
+//   //       ));
+//   //     } catch (err) {
+//   //       console.error("❌ Error loading subjects:", err);
+//   //       setError("Unable to load subjects");
+//   //     } finally {
+//   //       setLoading(false);
+//   //     }
+//   //   };
+
+//   //   fetchSubjects();
+//   // }, [accessToken, selectedExam]);
+
+//   useEffect(() => {
+//   if (!accessToken || !selectedExam) return;
+
+//   const fetchSubjects = async () => {
+//     setLoading(true);
+//     setError(null);
+
+//     try {
+//       console.log("➡️ Fetching subjects for", selectedExam);
+
+//       // Use /my-subjects endpoint which returns subjects grouped by category
+//       const res = await fetch(`${API_BASE}/users/my-subjects`, {
+//         headers: { Authorization: `Bearer ${accessToken}` },
+//       });
+
+//       if (!res.ok) throw new Error("Failed to fetch subjects");
+
+//       const data = await res.json();
+//       console.log("📥 Fetched subjects data:", data);
+
+//       // Get subjects for the selected exam
+//       const subjectsByCategory = data.data?.subjectsByCategory || {};
+//       const examKey = selectedExam.toUpperCase();
+//       const examSubjects = subjectsByCategory[examKey] || [];
+
+//       console.log(`🔍 Subjects for ${examKey}:`, examSubjects);
+
+//       // Fetch ALL topics for ALL subjects at once
+//       console.log("📡 Fetching all topics...");
+//       const allTopicsRes = await fetch(`${API_BASE}/users/my-topics`, {
+//         headers: { Authorization: `Bearer ${accessToken}` },
+//       });
+
+//       if (!allTopicsRes.ok) {
+//         throw new Error("Failed to fetch topics");
+//       }
+
+//       const allTopicsData = await allTopicsRes.json();
+//       console.log("📥 All topics data:", allTopicsData);
+
+//       // Map subjects with their topics
+//       const subjectsWithTopics = examSubjects.map((subject) => {
+//         const allTopics = [];
+
+//         // Find this subject's data in the topics response
+//         // Match by subjectId AND category (exam type)
+//         if (allTopicsData.data && Array.isArray(allTopicsData.data)) {
+//           const subjectTopicData = allTopicsData.data.find(
+//             (item) => item.subjectId === subject.id && item.category === examKey
+//           );
+
+//           console.log(`🔍 Topic data for ${subject.subjectName} (${examKey}):`, subjectTopicData);
+
+//           if (subjectTopicData?.modules) {
+//             subjectTopicData.modules.forEach((module) => {
+//               console.log(`  📦 Module: ${module.moduleName}`);
+//               if (module.topics && Array.isArray(module.topics)) {
+//                 module.topics.forEach((topic) => {
+//                   console.log(`    ✅ Topic: ${topic.topicName}`);
+//                   allTopics.push({
+//                     ...topic,
+//                     moduleName: module.moduleName,
+//                     moduleId: module.moduleId,
+//                     subjectId: subject.id,
+//                   });
+//                 });
+//               }
+//             });
+//           }
+//         }
+
+//         console.log(`✅ ${subject.subjectName}: ${allTopics.length} topics`);
+
+//         return {
+//           id: subject.id,
+//           subjectId: subject.id,
+//           subjectName: subject.subjectName,
+//           icon: subject.icon,
+//           allTopics,
+//         };
+//       });
+
+//       setSubjects(subjectsWithTopics);
+//       console.log("✅ Loaded subjects with topics:", subjectsWithTopics.length);
+//       console.log(
+//         "📋 Subjects:",
+//         subjectsWithTopics.map((s) => `${s.subjectName} (${s.allTopics.length} topics)`)
+//       );
+//     } catch (err) {
+//       console.error("❌ Error loading subjects:", err);
+//       setError("Unable to load subjects");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   fetchSubjects();
+// }, [accessToken, selectedExam]);
+
+//   // Update year and notify parent
+//   const handleYearChange = (subjectId, year) => {
+//     setSubjectYears((prev) => ({ ...prev, [subjectId]: year }));
+//     setTopicYear(subjectId, year);
+//     console.log(`📌 Selected year for subject ${subjectId}:`, year);
+//   };
+
+//   if (!selectedExam) {
+//     return (
+//       <div className="text-center py-8">
+//         <p className="text-gray-500 dark:text-gray-400">Please select an exam first.</p>
+//       </div>
+//     );
+//   }
+
+//   if (loading) {
+//     return (
+//       <div className="flex flex-col items-center justify-center py-10">
+//         <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
+//         <p className="text-gray-700 dark:text-gray-300">Loading subjects and topics...</p>
+//       </div>
+//     );
+//   }
+
+//   if (error) {
+//     return (
+//       <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+//         <p className="text-red-600 text-sm">{error}</p>
+//       </div>
+//     );
+//   }
+
+//   if (!subjects.length) {
+//     return (
+//       <div className="text-center py-8">
+//         <p className="text-gray-500 dark:text-gray-400">
+//           No subjects available for {selectedExam}.
+//         </p>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="space-y-4 relative overflow-y-auto max-h-[600px] p-2">
+//       {subjects.map((subject) => {
+//         const isOpen = openSubject === subject.subjectId;
+//         const allTopics = subject.allTopics || [];
+
+//         // Extract available years from topics
+//         const availableYearsSet = new Set();
+//         allTopics.forEach(topic => {
+//           if (topic.availableYears) {
+//             topic.availableYears.forEach(year => availableYearsSet.add(year));
+//           }
+//         });
+//         const availableYears = Array.from(availableYearsSet).sort((a, b) => b - a);
+
+//         const selectedYear = subjectYears[subject.subjectId] || "";
+
+//         return (
+//           <div
+//             key={subject.subjectId}
+//             className="relative border rounded-xl p-4 shadow-sm transition bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700"
+//             onMouseEnter={() => setOpenSubject(subject.subjectId)}
+//             onMouseLeave={() => setOpenSubject(null)}
+//           >
+//             {/* SUBJECT TITLE + YEAR DROPDOWN */}
+//             <div className="flex justify-between items-center gap-3">
+//               <div className="flex items-center gap-3 flex-1">
+//                 <div className="flex-1">
+//                   <div className="flex items-center gap-2">
+//                     <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+//                       {subject.subjectName}
+//                     </div>
+//                     {/* Show exam badge */}
+//                     <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full font-bold">
+//                       {selectedExam}
+//                     </span>
+//                   </div>
+//                   <div className="text-xs text-gray-500 dark:text-gray-400">
+//                     {allTopics.length} topics available
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* YEAR SELECT */}
+//               <select
+//                 value={selectedYear}
+//                 onChange={(e) => handleYearChange(subject.subjectId, e.target.value)}
+//                 className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
+//               >
+//                 <option value="" disabled>Select Year</option>
+//                 <option value="random">Random</option>
+//                 {availableYears.map((yr) => (
+//                   <option key={yr} value={yr}>
+//                     {yr}
+//                   </option>
+//                 ))}
+//               </select>
+//             </div>
+
+//             {/* TOPIC DROPDOWN */}
+//             {isOpen && (
+//               <div className="absolute left-0 top-[70px] mt-2 w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4 z-50 max-h-96 overflow-y-auto">
+//                 {allTopics.length > 0 ? (
+//                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+//                     {allTopics.map((topic) => {
+//                       const isSelected =
+//                         selectedTopics[subject.subjectId]?.includes(topic.topicId) || false;
+
+//                       return (
+//                         <button
+//                           key={topic.topicId}
+//                           onClick={() => toggleTopic(subject.subjectId, topic.topicId)}
+//                           className={`text-center px-2 py-2.5 rounded-lg text-xs font-medium transition-all border
+//                             ${
+//                               isSelected
+//                                 ? "bg-indigo-600 text-white shadow-md border-indigo-700"
+//                                 : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
+//                             }`}
+//                           title={`${topic.questionCount || 0} questions`}
+//                         >
+//                           <div className="font-semibold">{topic.topicName}</div>
+//                         </button>
+//                       );
+//                     })}
+//                   </div>
+//                 ) : (
+//                   <div className="text-center text-gray-500 py-4">
+//                     No topics available for this subject.
+//                   </div>
+//                 )}
+//               </div>
+//             )}
+//           </div>
+//         );
+//       })}
+//     </div>
+//   );
+// }
+
+
+
+
+
+
 import React, { useState, useEffect } from "react";
 import useAuthStore from "@/store/authStore";
 
@@ -904,99 +1263,83 @@ export default function TopicSelector({
   const [subjectYears, setSubjectYears] = useState({});
   const [error, setError] = useState(null);
 
-  // Fetch subjects filtered by selected exam
+  // Fetch topics and filter by selected exam
   useEffect(() => {
     if (!accessToken || !selectedExam) return;
 
-    const fetchSubjects = async () => {
+    const fetchSubjectsAndTopics = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        console.log("➡️ Fetching subjects for", selectedExam);
+        console.log("➡️ Fetching topics for", selectedExam);
 
-        // Use /my-subjects endpoint which returns subjects grouped by category
-        const res = await fetch(`${API_BASE}/users/my-subjects`, {
+        // Fetch ALL topics - this endpoint has everything we need!
+        const response = await fetch(`${API_BASE}/users/my-topics`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
-        if (!res.ok) throw new Error("Failed to fetch subjects");
+        if (!response.ok) {
+          throw new Error("Failed to fetch topics");
+        }
 
-        const data = await res.json();
-        console.log("📥 Fetched data:", data);
+        const data = await response.json();
+        console.log("📥 Fetched topics data:", data);
 
-        // Get subjects for the selected exam
-        const subjectsByCategory = data.data?.subjectsByCategory || {};
         const examKey = selectedExam.toUpperCase();
-        const examSubjects = subjectsByCategory[examKey] || [];
+        console.log(`🔍 Filtering for exam: ${examKey}`);
 
-        console.log(`🔍 Subjects for ${examKey}:`, examSubjects);
+        // Filter subjects by selected exam category and extract topics
+        const subjectsWithTopics = data.data
+          .filter((subject) => subject.category === examKey)
+          .map((subject) => {
+            const allTopics = [];
 
-        // Now fetch topics for each subject
-        const subjectsWithTopics = await Promise.all(
-          examSubjects.map(async (subject) => {
-            try {
-              // Fetch topics for this specific subject
-              const topicsRes = await fetch(
-                `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
-                {
-                  headers: { Authorization: `Bearer ${accessToken}` },
-                }
-              );
-
-              if (!topicsRes.ok) {
-                console.warn(`Failed to fetch topics for ${subject.subjectName}`);
-                return {
-                  ...subject,
-                  allTopics: [],
-                };
-              }
-
-              const topicsData = await topicsRes.json();
-              
-              // Extract topics from modules
-              const allTopics = [];
-              const subjectData = topicsData.data?.[0]; // Assuming first item is the subject
-              
-              if (subjectData?.modules) {
-                subjectData.modules.forEach(module => {
-                  module.topics?.forEach(topic => {
-                    allTopics.push(topic);
+            // Extract topics from modules
+            if (subject.modules && Array.isArray(subject.modules)) {
+              subject.modules.forEach((module) => {
+                console.log(`  📦 ${subject.subjectName} - Module: ${module.moduleName}`);
+                
+                if (module.topics && Array.isArray(module.topics)) {
+                  module.topics.forEach((topic) => {
+                    allTopics.push({
+                      ...topic,
+                      moduleName: module.moduleName,
+                      moduleId: module.moduleId,
+                      subjectId: subject.subjectId,
+                    });
                   });
-                });
-              }
-
-              return {
-                id: subject.id,
-                subjectId: subject.id,
-                subjectName: subject.subjectName,
-                icon: subject.icon,
-                allTopics,
-              };
-            } catch (err) {
-              console.error(`Error fetching topics for ${subject.subjectName}:`, err);
-              return {
-                ...subject,
-                allTopics: [],
-              };
+                }
+              });
             }
-          })
-        );
+
+            console.log(`✅ ${subject.subjectName}: ${allTopics.length} topics`);
+
+            return {
+              id: subject.subjectId,
+              subjectId: subject.subjectId,
+              subjectName: subject.subjectName,
+              icon: subject.icon,
+              color: subject.color,
+              allTopics,
+            };
+          });
 
         setSubjects(subjectsWithTopics);
-        console.log("✅ Loaded subjects with topics:", subjectsWithTopics.length);
-        console.log("📋 Subjects:", subjectsWithTopics.map(s => 
-          `${s.subjectName} (${s.allTopics.length} topics)`
-        ));
+        console.log("✅ Loaded subjects:", subjectsWithTopics.length);
+        console.log(
+          "📋 Summary:",
+          subjectsWithTopics.map((s) => `${s.subjectName} (${s.allTopics.length} topics)`)
+        );
       } catch (err) {
-        console.error("❌ Error loading subjects:", err);
-        setError("Unable to load subjects");
+        console.error("❌ Error loading topics:", err);
+        setError("Unable to load subjects and topics");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSubjects();
+    fetchSubjectsAndTopics();
   }, [accessToken, selectedExam]);
 
   // Update year and notify parent
@@ -1006,10 +1349,13 @@ export default function TopicSelector({
     console.log(`📌 Selected year for subject ${subjectId}:`, year);
   };
 
+  // Loading states and error handling
   if (!selectedExam) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">Please select an exam first.</p>
+        <p className="text-gray-500 dark:text-gray-400">
+          Please select an exam first.
+        </p>
       </div>
     );
   }
@@ -1018,7 +1364,9 @@ export default function TopicSelector({
     return (
       <div className="flex flex-col items-center justify-center py-10">
         <div className="w-8 h-8 border-4 border-blue-400 border-dashed rounded-full animate-spin mb-2"></div>
-        <p className="text-gray-700 dark:text-gray-300">Loading subjects and topics...</p>
+        <p className="text-gray-700 dark:text-gray-300">
+          Loading subjects and topics...
+        </p>
       </div>
     );
   }
@@ -1049,9 +1397,9 @@ export default function TopicSelector({
 
         // Extract available years from topics
         const availableYearsSet = new Set();
-        allTopics.forEach(topic => {
-          if (topic.availableYears) {
-            topic.availableYears.forEach(year => availableYearsSet.add(year));
+        allTopics.forEach((topic) => {
+          if (topic.availableYears && Array.isArray(topic.availableYears)) {
+            topic.availableYears.forEach((year) => availableYearsSet.add(year));
           }
         });
         const availableYears = Array.from(availableYearsSet).sort((a, b) => b - a);
@@ -1070,27 +1418,36 @@ export default function TopicSelector({
               <div className="flex items-center gap-3 flex-1">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
+  
+                    
+                    {/* Subject Name */}
                     <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                       {subject.subjectName}
                     </div>
-                    {/* Show exam badge */}
+                    
+                    {/* Exam Badge */}
                     <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full font-bold">
                       {selectedExam}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  
+                  {/* Topic Count */}
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {allTopics.length} topics available
                   </div>
                 </div>
               </div>
 
-              {/* YEAR SELECT */}
+              {/* YEAR SELECT DROPDOWN */}
               <select
                 value={selectedYear}
                 onChange={(e) => handleYearChange(subject.subjectId, e.target.value)}
                 className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition hover:bg-gray-100 dark:hover:bg-gray-600"
+                onClick={(e) => e.stopPropagation()} // Prevent triggering hover state
               >
-                <option value="" disabled>Select Year</option>
+                <option value="" disabled>
+                  Select Year
+                </option>
                 <option value="random">Random</option>
                 {availableYears.map((yr) => (
                   <option key={yr} value={yr}>
@@ -1100,7 +1457,7 @@ export default function TopicSelector({
               </select>
             </div>
 
-            {/* TOPIC DROPDOWN */}
+            {/* TOPIC DROPDOWN (Shows on hover) */}
             {isOpen && (
               <div className="absolute left-0 top-[70px] mt-2 w-full bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-4 z-50 max-h-96 overflow-y-auto">
                 {allTopics.length > 0 ? (
@@ -1119,9 +1476,12 @@ export default function TopicSelector({
                                 ? "bg-indigo-600 text-white shadow-md border-indigo-700"
                                 : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
                             }`}
-                          title={`${topic.questionCount || 0} questions`}
+                          title={`${topic.questionCount || 0} questions • ${topic.moduleName}`}
                         >
-                          <div className="font-semibold">{topic.topicName}</div>
+                          <div className="font-semibold truncate">
+                            {topic.topicName}
+                          </div>
+
                         </button>
                       );
                     })}

@@ -23,6 +23,7 @@ import PaymentHistory from "@/pages/user/PaymentHistory";
 import PaymentPending from "@/pages/user/PaymentPending";
 import StudyPage from "@/pages/user/StudyPage";
 import ExamsPage from "@/pages/user/ExamsPage";
+import ExamResultPage  from "@/pages/user/ExamResultPage";
 import LandingPage from "@/pages/index/LandingPage";
 import TutorRegister from "@/pages/index/TutorRegister";
 import TutorLogin from "@/pages/index/TutorLogin";
@@ -75,6 +76,7 @@ function App() {
               <Route path="/quiz/results" element={<QuizReport />} />
               <Route path="/quiz/history" element={<QuizHistoryPage />} />
               <Route path="/exam" element={<ExamsPage />} />
+              <Route path="exam-results/:examId" element={<ExamResultPage />} />
               <Route path="/exam-selector" element={<ExamSelector />} />
               
               {/* Payment routes */}

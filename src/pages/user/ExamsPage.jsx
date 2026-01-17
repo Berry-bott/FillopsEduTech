@@ -88,82 +88,87 @@ export default function ExamsPage() {
   const examId = useExamStore((s) => s.examId);
   const examCompleted = useExamStore((s) => s.examCompleted);
 
-  useEffect(() => {
-    console.log('📝 ExamsPage mounted → initializing exam store');
-    
-    const initAndStartExam = async () => {
-      try {
-        // FIRST: Initialize and load saved exam data
-        const savedData = await init();
+  
+
+  // Update your cleanup function in ExamsPage.jsx:
+
+useEffect(() => {
+  console.log('📝 ExamsPage mounted → initializing exam store');
+  
+  const initAndStartExam = async () => {
+    try {
+      const savedData = await init();
+      
+      console.log('📦 Saved exam data returned:', savedData);
+      
+      if (savedData && !examActive && !examCompleted) {
+        console.log('🚀 Starting exam session...');
         
-        console.log('📦 Saved exam data returned:', savedData);
+        const examSessionId = await startExam();
         
-        // THEN: Start exam session
-        if (savedData && !examActive && !examCompleted) {
-          console.log('🚀 Starting exam session...');
-          
-          const examSessionId = await startExam();
-          
-          if (examSessionId) {
-            console.log('✅ Exam started with ID:', examSessionId);
-            toast({
-              title: "Exam Started",
-              description: "Good luck! Your exam has begun.",
-            });
-          } else {
-            console.warn('⚠️ Failed to start exam session');
-            toast({
-              title: "Error",
-              description: "Failed to start exam. Please try again.",
-              variant: "destructive",
-            });
-          }
-        } else if (!savedData) {
-          console.warn('⚠️ No saved exam data, redirecting to dashboard');
+        if (examSessionId) {
+          console.log('✅ Exam started with ID:', examSessionId);
           toast({
-            title: "No Exam Data",
-            description: "Please select exam options first.",
+            title: "Exam Started",
+            description: "Good luck! Your exam has begun.",
+          });
+        } else {
+          console.warn('⚠️ Failed to start exam session');
+          toast({
+            title: "Error",
+            description: "Failed to start exam. Please try again.",
             variant: "destructive",
           });
-          navigate('/user/dashboard');
         }
-      } catch (error) {
-        console.error('❌ Error initializing exam:', error);
+      } else if (!savedData) {
+        console.warn('⚠️ No saved exam data, redirecting to dashboard');
         toast({
-          title: "Error",
-          description: "Failed to initialize exam. Please try again.",
+          title: "No Exam Data",
+          description: "Please select exam options first.",
           variant: "destructive",
         });
+        navigate('/user/dashboard');
       }
-    };
+    } catch (error) {
+      console.error('❌ Error initializing exam:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize exam. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
-    initAndStartExam();
+  initAndStartExam();
 
-    // Cleanup function
-    return () => {
-      console.log('🧹 ExamsPage unmounted');
+  // Cleanup function
+  return () => {
+    console.log('🧹 ExamsPage unmounted');
+    
+    const state = useExamStore.getState();
+    
+    // ✅ Only end exam if it's still active AND not completed
+    if (state.examActive && !state.examCompleted) {
+      console.log('⚠️ User left exam page while exam active - ending exam session');
       
-      // Only end exam if it's still active and not completed
-      const state = useExamStore.getState();
+      toast({
+        title: "Exam Ended",
+        description: "Your exam was automatically submitted.",
+        variant: "destructive",
+      });
       
-      if (state.examActive && !state.examCompleted) {
-        console.log('⚠️ User left exam page - ending exam session');
-        
-        // Show warning toast
-        toast({
-          title: "Exam Ended",
-          description: "Your exam was automatically submitted.",
-          variant: "destructive",
-        });
-        
-        // End the exam
-        endExam();
-      }
-      
-      // Reset store state
+      endExam();
+    }
+    
+    // ✅ DON'T reset if exam is completed - let results page use the data
+    if (!state.examCompleted) {
+      console.log('🧹 Resetting exam store (exam not completed)');
       reset();
-    };
-  }, []); // Empty dependency array - only run once on mount
+    } else {
+      console.log('✅ Keeping results in store for results page');
+    }
+  };
+}, []);
 
   // Prevent accidental page reload during exam
   useEffect(() => {

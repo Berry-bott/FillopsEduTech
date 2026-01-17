@@ -112,6 +112,120 @@ function checkIfUserPaidForSubject(subjectInfo, category) {
 }
 
 
+// async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
+//   console.log("\n🔍 ========================================");
+//   console.log("🔍 GET SUBJECT INFO FOR TOPIC");
+//   console.log("🔍 ========================================");
+//   console.log("Looking for Topic ID:", topicId);
+//   console.log("User Selected Category:", userSelectedCategory);
+  
+//   const { accessToken } = useAuthStore.getState();
+  
+//   if (!accessToken) {
+//     console.error("❌ No access token!");
+//     return null;
+//   }
+  
+//   if (!topicId) {
+//     console.error("❌ No topic ID provided!");
+//     return null;
+//   }
+
+//   try {
+//     console.log("\n📡 Step 1: Fetching subjects by category...");
+//     const response = await fetch(`${API_BASE}/users/my-subjects`, {
+//       headers: { Authorization: `Bearer ${accessToken}` },
+//     });
+
+//     if (!response.ok) {
+//       console.error("❌ Failed to fetch subjects:", response.status);
+//       return null;
+//     }
+
+//     const data = await response.json();
+//     const subjectsByCategory = data.data?.subjectsByCategory || {};
+//     const examKey = userSelectedCategory?.toUpperCase();
+//     const subjects = subjectsByCategory[examKey] || [];
+    
+//     console.log(`📚 Found ${subjects.length} subjects for ${examKey}`);
+
+//     if (subjects.length === 0) {
+//       console.warn(`⚠️ No subjects found for category: ${examKey}`);
+//       console.log("Available categories:", Object.keys(subjectsByCategory));
+//       return null;
+//     }
+
+//     console.log("\n📡 Step 2: Searching for topic in subjects...");
+    
+//     for (let i = 0; i < subjects.length; i++) {
+//       const subject = subjects[i];
+//       console.log(`\n  Checking subject ${i + 1}/${subjects.length}: ${subject.subjectName} (ID: ${subject.id})`);
+      
+//       try {
+//         const topicsRes = await fetch(
+//           `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
+//           { headers: { Authorization: `Bearer ${accessToken}` } }
+//         );
+        
+//         if (!topicsRes.ok) {
+//           console.warn(`  ⚠️ Failed to fetch topics for subject ${subject.id}`);
+//           continue;
+//         }
+        
+//         const topicsData = await topicsRes.json();
+//         const subjectData = topicsData.data?.[0];
+        
+//         if (!subjectData || !subjectData.modules) {
+//           console.warn(`  ⚠️ No modules in subject`);
+//           continue;
+//         }
+        
+//         console.log(`  🔍 Searching through ${subjectData.modules.length} modules...`);
+        
+//         for (const module of subjectData.modules) {
+//           if (!module.topics || module.topics.length === 0) continue;
+          
+//           for (const topic of module.topics) {
+//             const topicIdMatch = topic.topicId === topicId || 
+//                                 topic.id === topicId || 
+//                                 topic._id === topicId;
+            
+//             if (topicIdMatch) {
+//               console.log("\n🎉 ========================================");
+//               console.log("🎉 TOPIC FOUND!");
+//               console.log("🎉 ========================================");
+//               console.log("Topic Name:", topic.topicName);
+//               console.log("Subject Name:", subject.subjectName);
+//               console.log("Subject ID:", subject.id);
+//               console.log("Category:", userSelectedCategory);
+//               console.log("========================================\n");
+              
+//               return {
+//                 id: subject.id,
+//                 subjectName: subject.subjectName,
+//                 category: userSelectedCategory
+//               };
+//             }
+//           }
+//         }
+//       } catch (err) {
+//         console.error(`  ❌ Error fetching topics for subject ${subject.id}:`, err);
+//         continue;
+//       }
+//     }
+
+//     console.log("\n❌ TOPIC NOT FOUND IN ANY SUBJECT");
+//     console.log("Searched through all subjects in category:", examKey);
+//     console.log("Looking for topic ID:", topicId);
+//     console.log("========================================\n");
+    
+//     return null;
+//   } catch (error) {
+//     console.error("\n❌ ERROR IN getSubjectInfoForTopic:", error);
+//     return null;
+//   }
+// }
+
 async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
   console.log("\n🔍 ========================================");
   console.log("🔍 GET SUBJECT INFO FOR TOPIC");
@@ -132,90 +246,72 @@ async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
   }
 
   try {
-    console.log("\n📡 Step 1: Fetching subjects by category...");
-    const response = await fetch(`${API_BASE}/users/my-subjects`, {
+    // ✅ FIX: Use /my-topics instead of /my-subjects
+    console.log("\n📡 Fetching topics with modules...");
+    const response = await fetch(`${API_BASE}/users/my-topics`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     if (!response.ok) {
-      console.error("❌ Failed to fetch subjects:", response.status);
+      console.error("❌ Failed to fetch topics:", response.status);
       return null;
     }
 
     const data = await response.json();
-    const subjectsByCategory = data.data?.subjectsByCategory || {};
-    const examKey = userSelectedCategory?.toUpperCase();
-    const subjects = subjectsByCategory[examKey] || [];
+    const subjects = data.data || [];
     
-    console.log(`📚 Found ${subjects.length} subjects for ${examKey}`);
+    console.log(`📚 Found ${subjects.length} subjects with topics`);
 
-    if (subjects.length === 0) {
-      console.warn(`⚠️ No subjects found for category: ${examKey}`);
-      console.log("Available categories:", Object.keys(subjectsByCategory));
-      return null;
-    }
+    // Filter by category if provided
+    const filteredSubjects = userSelectedCategory 
+      ? subjects.filter(s => s.category === userSelectedCategory.toUpperCase())
+      : subjects;
 
-    console.log("\n📡 Step 2: Searching for topic in subjects...");
-    
-    for (let i = 0; i < subjects.length; i++) {
-      const subject = subjects[i];
-      console.log(`\n  Checking subject ${i + 1}/${subjects.length}: ${subject.subjectName} (ID: ${subject.id})`);
+    console.log(`🔍 Searching ${filteredSubjects.length} subjects for ${userSelectedCategory}...`);
+
+    // Search for the topic
+    for (let i = 0; i < filteredSubjects.length; i++) {
+      const subject = filteredSubjects[i];
+      console.log(`\n  Checking subject ${i + 1}/${filteredSubjects.length}: ${subject.subjectName} (ID: ${subject.subjectId})`);
       
-      try {
-        const topicsRes = await fetch(
-          `${API_BASE}/users/my-topics?subjectId=${subject.id}`,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
+      if (!subject.modules) {
+        console.warn(`  ⚠️ No modules in subject`);
+        continue;
+      }
+      
+      console.log(`  🔍 Searching through ${subject.modules.length} modules...`);
+      
+      for (const module of subject.modules) {
+        if (!module.topics || module.topics.length === 0) continue;
         
-        if (!topicsRes.ok) {
-          console.warn(`  ⚠️ Failed to fetch topics for subject ${subject.id}`);
-          continue;
-        }
-        
-        const topicsData = await topicsRes.json();
-        const subjectData = topicsData.data?.[0];
-        
-        if (!subjectData || !subjectData.modules) {
-          console.warn(`  ⚠️ No modules in subject`);
-          continue;
-        }
-        
-        console.log(`  🔍 Searching through ${subjectData.modules.length} modules...`);
-        
-        for (const module of subjectData.modules) {
-          if (!module.topics || module.topics.length === 0) continue;
+        for (const topic of module.topics) {
+          const topicIdMatch = topic.topicId === topicId || 
+                              topic.id === topicId || 
+                              topic._id === topicId;
           
-          for (const topic of module.topics) {
-            const topicIdMatch = topic.topicId === topicId || 
-                                topic.id === topicId || 
-                                topic._id === topicId;
+          if (topicIdMatch) {
+            console.log("\n🎉 ========================================");
+            console.log("🎉 TOPIC FOUND!");
+            console.log("🎉 ========================================");
+            console.log("Topic Name:", topic.topicName);
+            console.log("Module Name:", module.moduleName);
+            console.log("Subject Name:", subject.subjectName);
+            console.log("Subject ID:", subject.subjectId);
+            console.log("Category:", subject.category);
+            console.log("========================================\n");
             
-            if (topicIdMatch) {
-              console.log("\n🎉 ========================================");
-              console.log("🎉 TOPIC FOUND!");
-              console.log("🎉 ========================================");
-              console.log("Topic Name:", topic.topicName);
-              console.log("Subject Name:", subject.subjectName);
-              console.log("Subject ID:", subject.id);
-              console.log("Category:", userSelectedCategory);
-              console.log("========================================\n");
-              
-              return {
-                id: subject.id,
-                subjectName: subject.subjectName,
-                category: userSelectedCategory
-              };
-            }
+            return {
+              id: subject.subjectId,
+              subjectName: subject.subjectName,
+              category: subject.category || userSelectedCategory
+            };
           }
         }
-      } catch (err) {
-        console.error(`  ❌ Error fetching topics for subject ${subject.id}:`, err);
-        continue;
       }
     }
 
     console.log("\n❌ TOPIC NOT FOUND IN ANY SUBJECT");
-    console.log("Searched through all subjects in category:", examKey);
+    console.log("Searched through subjects in category:", userSelectedCategory);
     console.log("Looking for topic ID:", topicId);
     console.log("========================================\n");
     
