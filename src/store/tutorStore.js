@@ -13,6 +13,18 @@ const useTutorStore = create(
       loading: false,
       error: "",
       success: "",
+      subjects: [],
+      subjectsLoaded: false,
+      subjectsPagination: null,
+      modules: [],
+      modulesPagination: null,
+      modulesLoaded: false,
+      topics: [],
+      topicsPagination: null,
+      topicsLoaded: false,
+      questions: [],
+      questionsPagination: null,
+      questionsLoaded: false,
 
       // 🔹 GET ACCESS TOKEN FROM AUTH STORE
       getAccessToken: () => {
@@ -131,28 +143,86 @@ const useTutorStore = create(
         }
       },
 
-      // 🔹 GET OWN SUBJECTS
-      getSubjects: async () => {
-        set({ loading: true, error: "" });
+  //  // 🔹 GET OWN SUBJECTS
+  //     getSubjects: async () => {
+  //       const { subjectsLoaded } = get()
 
-        try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects`);
+  //       // Prevent refetch if already loaded
+  //       if (subjectsLoaded) {
+  //         return { success: true, data: get().subjects }
+  //       }
 
-          if (result.success) {
-            console.log("✅ Subjects fetched:", result.data);
-          } else {
-            set({ error: result.message || "Failed to fetch subjects" });
-          }
+  //       set({ loading: true, error: "" })
 
-          return result;
-        } catch (error) {
-          console.error("❌ Error fetching subjects:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
-        } finally {
-          set({ loading: false });
-        }
-      },
+  //       try {
+  //         const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects`)
+
+  //         if (result.success) {
+  //           console.log("✅ Subjects fetched:", result.data)
+
+  //           set({
+  //             subjects: result.data || [],
+  //             subjectsLoaded: true,
+  //             loading: false,
+  //           })
+  //         } else {
+  //           set({
+  //             error: result.message || "Failed to fetch subjects",
+  //             loading: false,
+  //           })
+  //         }
+
+  //         return result
+  //       } catch (error) {
+  //         console.error("❌ Error fetching subjects:", error)
+
+  //         set({
+  //           error: "Network error",
+  //           loading: false,
+  //         })
+
+  //         return { success: false, message: error.message }
+  //       }
+  //     },
+
+    getSubjects: async () => {
+  const { subjectsLoaded } = get()
+
+  if (subjectsLoaded) {
+    return { success: true, data: get().subjects }
+  }
+
+  set({ loading: true, error: "" })
+
+  try {
+    const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects`)
+
+    if (result.success) {
+      const subjects = result.data?.subjects || []
+      const pagination = result.data?.pagination || null
+
+      set({
+        subjects,
+        subjectsPagination: pagination,
+        subjectsLoaded: true,
+      })
+
+      console.log("✅ Subjects stored in Zustand:", subjects)
+    } else {
+      set({ error: result.message || "Failed to fetch subjects" })
+    }
+
+    return result
+  } catch (error) {
+    console.error("❌ Error fetching subjects:", error)
+    set({ error: "Network error" })
+    return { success: false, message: error.message }
+  } finally {
+    set({ loading: false })
+  }
+    },
+
+
 
       // 🔹 GET SUBJECT BY ID
           getSubjectById: async (subjectId) => {
@@ -233,27 +303,28 @@ const useTutorStore = create(
 
       // 🔹 GET STUDENTS ENROLLED IN SUBJECT
       getSubjectEnrolledStudents: async (subjectId) => {
-  if (!subjectId) {
-    return { success: false, message: "Subject ID is required" };
-  }
+        if (!subjectId) {
+          return { success: false, message: "Subject ID is required" };
+        }
 
-  try {
-    const result = await get().fetchWithAuth(
-      `${API_BASE}/tutor/subjects/${subjectId}/users`
-    );
+        try {
+          const result = await get().fetchWithAuth(
+            `${API_BASE}/tutor/subjects/${subjectId}/users`
+          );
+          console.log(result);
+          
+          if (!result?.success) {
+            return { success: false, message: result?.message || "Failed to load students" };
+          }
 
-    if (!result?.success) {
-      return { success: false, message: result?.message || "Failed to load students" };
-    }
-
-    return {
-      success: true,
-      data: result.data || [],
-    };
-  } catch (error) {
-    console.error("❌ Error fetching enrolled students:", error);
-    return { success: false, message: "Network error" };
-  }
+          return {
+            success: true,
+            data: result.data || [],
+          };
+        } catch (error) {
+          console.error("❌ Error fetching enrolled students:", error);
+          return { success: false, message: "Network error" };
+        }
       },
 
       // getSubjectEnrolledStudents: async (subjectId) => {
@@ -292,7 +363,11 @@ const useTutorStore = create(
           });
 
           if (result.success) {
-            set({ success: "Module created successfully" });
+            set({ 
+              success: "Module created successfully",
+              modulesLoaded: false,
+              subjectsLoaded: false 
+            });
             console.log("✅ Module created:", result.data);
           } else {
             set({ error: result.message || "Failed to create module" });
@@ -309,27 +384,72 @@ const useTutorStore = create(
       },
 
       // 🔹 GET OWN MODULES
-      getModules: async () => {
-        set({ loading: true, error: "" });
+     getModules: async () => {
+      const { modulesLoaded } = get()
+
+      if (modulesLoaded) {
+        return { 
+          success: true, 
+          data: { 
+          modules: get().modules, 
+          pagination: get().modulesPagination 
+      } 
+    }
+  }
+
+  set({ loading: true, error: "" })
+
+  try {
+    const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules`)
+    console.log(result);
+    
+
+    if (result.success) {
+      const modules = result.data?.modules || []
+      const pagination = result.data?.pagination || null
+
+      set({
+        modules,
+        modulesPagination: pagination,
+        modulesLoaded: true,
+      })
+
+      console.log("✅ Modules stored in Zustand:", modules)
+    } else {
+      set({ error: result.message || "Failed to fetch modules" })
+    }
+
+    return result
+  } catch (error) {
+    console.error("❌ Error fetching modules:", error)
+    set({ error: "Network error" })
+    return { success: false, message: error.message }
+  } finally {
+    set({ loading: false })
+  }
+      },
+
+      getModuleById: async (moduleId) => {
+        set({ loading: true, error: "" })
 
         try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules`);
+          const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules/${moduleId}`)
 
           if (result.success) {
-            console.log("✅ Modules fetched:", result.data);
+            console.log("✅ Module details fetched:", result.data)
           } else {
-            set({ error: result.message || "Failed to fetch modules" });
+            set({ error: result.message || "Failed to fetch module details" })
           }
 
-          return result;
+          return result
         } catch (error) {
-          console.error("❌ Error fetching modules:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
+          console.error("❌ Error fetching module details:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
         } finally {
-          set({ loading: false });
+          set({ loading: false })
         }
-      },
+        },
 
       // 🔹 UPDATE MODULE
       updateModule: async (moduleId, moduleData) => {
@@ -342,7 +462,9 @@ const useTutorStore = create(
           });
 
           if (result.success) {
-            set({ success: "Module updated successfully" });
+            set({ success: "Module updated successfully",
+                  modulesLoaded: false
+             });
             console.log("✅ Module updated:", result.data);
           } else {
             set({ error: result.message || "Failed to update module" });
@@ -358,222 +480,353 @@ const useTutorStore = create(
         }
       },
 
-      // 🔹 DELETE MODULE
-      deleteModule: async (moduleId) => {
-        set({ loading: true, error: "", success: "" });
+   // Delete module
+    deleteModule: async (moduleId) => {
+      set({ loading: true, error: "" })
 
-        try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules/${moduleId}`, {
-            method: "DELETE",
-          });
+      try {
+        // ✅ Add payload with force flag (similar to deleteSubject)
+        const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules/${moduleId}`, {
+          method: "DELETE",
+          body: JSON.stringify({ force: true })
+        })
 
-          if (result.success) {
-            set({ success: "Module deleted successfully" });
-            console.log("✅ Module deleted");
-          } else {
-            set({ error: result.message || "Failed to delete module" });
-          }
-
-          return result;
-        } catch (error) {
-          console.error("❌ Error deleting module:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
-        } finally {
-          set({ loading: false });
+        if (result.success) {
+          console.log("✅ Module deleted")
+          set({ 
+            modulesLoaded: false,
+            subjectsLoaded: false
+          })
+        } else {
+          set({ error: result.message || "Failed to delete module" })
         }
-      },
+
+        return result
+      } catch (error) {
+        console.error("❌ Error deleting module:", error)
+        set({ error: "Network error" })
+        return { success: false, message: error.message }
+      } finally {
+        set({ loading: false })
+      }
+    },
 
       // ========== TOPICS ==========
+      // Get all topics (with caching)
+      getTopics: async () => {
+        const { topicsLoaded } = get()
 
-      // 🔹 CREATE TOPIC
-      createTopic: async (moduleId, topicData) => {
-        set({ loading: true, error: "", success: "" });
+        if (topicsLoaded) {
+          return { 
+            success: true, 
+            data: { 
+              topics: get().topics, 
+              pagination: get().topicsPagination 
+            } 
+          }
+        }
+
+        set({ loading: true, error: "" })
 
         try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/module/${moduleId}/topics`, {
+          const result = await get().fetchWithAuth(`${API_BASE}/tutor/topics`)
+
+          if (result.success) {
+            const topics = result.data?.topics || result.data || []
+            const pagination = result.data?.pagination || null
+
+            set({
+              topics,
+              topicsPagination: pagination,
+              topicsLoaded: true,
+            })
+
+            console.log("✅ Topics stored in Zustand:", topics)
+          } else {
+            set({ error: result.message || "Failed to fetch topics" })
+          }
+
+          return result
+        } catch (error) {
+          console.error("❌ Error fetching topics:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
+        } finally {
+          set({ loading: false })
+        }
+      },
+
+      // Create topic
+      createTopic: async (moduleId, topicData) => {
+        set({ loading: true, error: "" })
+
+        try {
+          const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules/${moduleId}/topics`, {
             method: "POST",
             body: JSON.stringify(topicData),
-          });
+          })
 
           if (result.success) {
-            set({ success: "Topic created successfully" });
-            console.log("✅ Topic created:", result.data);
+            console.log("✅ Topic created:", result.data)
+            
+            // Invalidate caches
+            set({ 
+              topicsLoaded: false,
+              modulesLoaded: false,
+              subjectsLoaded: false
+            })
           } else {
-            set({ error: result.message || "Failed to create topic" });
+            set({ error: result.message || "Failed to create topic" })
           }
 
-          return result;
+          return result
         } catch (error) {
-          console.error("❌ Error creating topic:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
+          console.error("❌ Error creating topic:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
         } finally {
-          set({ loading: false });
+          set({ loading: false })
         }
       },
 
-      // 🔹 GET ALL TOPICS
-      getTopics: async () => {
-        set({ loading: true, error: "" });
+      // Update topic
+      updateTopic: async (topicId, topicData) => {
+        set({ loading: true, error: "" })
 
         try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/topics`);
+          const result = await get().fetchWithAuth(`${API_BASE}/tutor/topics/${topicId}`, {
+            method: "PATCH",
+            body: JSON.stringify(topicData),
+          })
 
           if (result.success) {
-            console.log("✅ Topics fetched:", result.data);
+            console.log("✅ Topic updated:", result.data)
+            set({ topicsLoaded: false })
           } else {
-            set({ error: result.message || "Failed to fetch topics" });
+            set({ error: result.message || "Failed to update topic" })
           }
 
-          return result;
+          return result
         } catch (error) {
-          console.error("❌ Error fetching topics:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
+          console.error("❌ Error updating topic:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
         } finally {
-          set({ loading: false });
+          set({ loading: false })
         }
       },
 
-      // 🔹 DELETE TOPIC
+      // Delete topic
       deleteTopic: async (topicId) => {
-        set({ loading: true, error: "", success: "" });
+        set({ loading: true, error: "" })
 
         try {
           const result = await get().fetchWithAuth(`${API_BASE}/tutor/topics/${topicId}`, {
             method: "DELETE",
-          });
+          })
 
           if (result.success) {
-            set({ success: "Topic deleted successfully" });
-            console.log("✅ Topic deleted");
+            console.log("✅ Topic deleted")
+            set({ 
+              topicsLoaded: false,
+              modulesLoaded: false,
+              subjectsLoaded: false
+            })
           } else {
-            set({ error: result.message || "Failed to delete topic" });
+            set({ error: result.message || "Failed to delete topic" })
           }
 
-          return result;
+          return result
         } catch (error) {
-          console.error("❌ Error deleting topic:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
+          console.error("❌ Error deleting topic:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
         } finally {
-          set({ loading: false });
+          set({ loading: false })
         }
       },
 
+      // Get topic by ID
+      getTopicById: async (topicId) => {
+        set({ loading: true, error: "" })
+
+        try {
+          const result = await get().fetchWithAuth(`${API_BASE}/tutor/topics/${topicId}`)
+
+          if (result.success) {
+            console.log("✅ Topic details fetched:", result.data)
+          } else {
+            set({ error: result.message || "Failed to fetch topic details" })
+          }
+
+          return result
+        } catch (error) {
+          console.error("❌ Error fetching topic details:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
+        } finally {
+          set({ loading: false })
+        }
+      },
+
+
       // ========== QUESTIONS ==========
 
-      // 🔹 CREATE QUESTION
+      // Get all questions (with caching)
+      getQuestions: async () => {
+        const { questionsLoaded } = get()
+
+        if (questionsLoaded) {
+          return { 
+            success: true, 
+            data: { 
+              questions: get().questions, 
+              pagination: get().questionsPagination 
+            } 
+          }
+        }
+
+        set({ loading: true, error: "" })
+
+        try {
+          const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions`)
+
+          if (result.success) {
+            const questions = result.data?.questions || result.data || []
+            const pagination = result.data?.pagination || null
+
+            set({
+              questions,
+              questionsPagination: pagination,
+              questionsLoaded: true,
+            })
+
+            console.log("✅ Questions stored in Zustand:", questions)
+          } else {
+            set({ error: result.message || "Failed to fetch questions" })
+          }
+
+          return result
+        } catch (error) {
+          console.error("❌ Error fetching questions:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
+        } finally {
+          set({ loading: false })
+        }
+      },
+
+      // Create question
       createQuestion: async (topicId, questionData) => {
-        set({ loading: true, error: "", success: "" });
+        set({ loading: true, error: "" })
 
         try {
           const result = await get().fetchWithAuth(`${API_BASE}/tutor/topics/${topicId}/questions`, {
             method: "POST",
             body: JSON.stringify(questionData),
-          });
+          })
 
           if (result.success) {
-            set({ success: "Question created successfully" });
-            console.log("✅ Question created:", result.data);
+            console.log("✅ Question created:", result.data)
+            
+            set({ 
+              questionsLoaded: false,
+              topicsLoaded: false,
+              modulesLoaded: false,
+              subjectsLoaded: false
+            })
           } else {
-            set({ error: result.message || "Failed to create question" });
+            set({ error: result.message || "Failed to create question" })
           }
 
-          return result;
+          return result
         } catch (error) {
-          console.error("❌ Error creating question:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
+          console.error("❌ Error creating question:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
         } finally {
-          set({ loading: false });
+          set({ loading: false })
         }
       },
 
-      // 🔹 GET ALL QUESTIONS
-      getQuestions: async (filters = {}) => {
-        set({ loading: true, error: "" });
-
-        try {
-          const queryParams = new URLSearchParams();
-          if (filters.difficulty) queryParams.append("difficulty", filters.difficulty);
-          if (filters.year) queryParams.append("year", filters.year);
-          if (filters.category) queryParams.append("category", filters.category);
-          if (filters.type) queryParams.append("type", filters.type);
-          if (filters.search) queryParams.append("search", filters.search);
-
-          const queryString = queryParams.toString();
-          const url = `${API_BASE}/tutor/questions${queryString ? `?${queryString}` : ""}`;
-
-          const result = await get().fetchWithAuth(url);
-
-          if (result.success) {
-            console.log("✅ Questions fetched:", result.data);
-          } else {
-            set({ error: result.message || "Failed to fetch questions" });
-          }
-
-          return result;
-        } catch (error) {
-          console.error("❌ Error fetching questions:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
-        } finally {
-          set({ loading: false });
-        }
-      },
-
-      // 🔹 UPDATE QUESTION
+      // Update question
       updateQuestion: async (questionId, questionData) => {
-        set({ loading: true, error: "", success: "" });
+        set({ loading: true, error: "" })
 
         try {
           const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions/${questionId}`, {
             method: "PATCH",
             body: JSON.stringify(questionData),
-          });
+          })
 
           if (result.success) {
-            set({ success: "Question updated successfully" });
-            console.log("✅ Question updated:", result.data);
+            console.log("✅ Question updated:", result.data)
+            set({ questionsLoaded: false })
           } else {
-            set({ error: result.message || "Failed to update question" });
+            set({ error: result.message || "Failed to update question" })
           }
 
-          return result;
+          return result
         } catch (error) {
-          console.error("❌ Error updating question:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
+          console.error("❌ Error updating question:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
         } finally {
-          set({ loading: false });
+          set({ loading: false })
         }
       },
 
-      // 🔹 DELETE QUESTION
+      // Delete question
       deleteQuestion: async (questionId) => {
-        set({ loading: true, error: "", success: "" });
+        set({ loading: true, error: "" })
 
         try {
           const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions/${questionId}`, {
             method: "DELETE",
-          });
+          })
 
           if (result.success) {
-            set({ success: "Question deleted successfully" });
-            console.log("✅ Question deleted");
+            console.log("✅ Question deleted")
+            set({ 
+              questionsLoaded: false,
+              topicsLoaded: false,
+              modulesLoaded: false,
+              subjectsLoaded: false
+            })
           } else {
-            set({ error: result.message || "Failed to delete question" });
+            set({ error: result.message || "Failed to delete question" })
           }
 
-          return result;
+          return result
         } catch (error) {
-          console.error("❌ Error deleting question:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
+          console.error("❌ Error deleting question:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
         } finally {
-          set({ loading: false });
+          set({ loading: false })
+        }
+      },
+
+      // Get question by ID
+      getQuestionById: async (questionId) => {
+        set({ loading: true, error: "" })
+
+        try {
+          const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions/${questionId}`)
+
+          if (result.success) {
+            console.log("✅ Question details fetched:", result.data)
+          } else {
+            set({ error: result.message || "Failed to fetch question details" })
+          }
+
+          return result
+        } catch (error) {
+          console.error("❌ Error fetching question details:", error)
+          set({ error: "Network error" })
+          return { success: false, message: error.message }
+        } finally {
+          set({ loading: false })
         }
       },
     }),

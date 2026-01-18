@@ -811,6 +811,373 @@
 
 
 
+// import React, { useState, useEffect, useMemo } from "react"
+// import { useNavigate } from "react-router-dom"
+// import { cn } from "@/lib/utils"
+// import fillopLogo from "../../../assets/images/fillopsLogo.png"
+// import AnalyticsPanel from "@/components/DashboardComponents/lecturer/analytics-panel"
+// import { Button } from "@/components/ui/button"
+// import { Input } from "@/components/ui/input"
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+// import { Badge } from "@/components/ui/badge"
+// import { ScrollArea } from "@/components/ui/scroll-area"
+// import { Separator } from "@/components/ui/separator"
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+// import { useToast } from "@/components/ui/use-toast"
+
+// import {
+//   LayoutDashboard,
+//   BookOpen,
+//   FolderOpen,
+//   FileText,
+//   HelpCircle,
+//   Users,
+//   BarChart3,
+//   Settings,
+//   Bell,
+//   Menu,
+//   X,
+//   Loader2
+// } from "lucide-react"
+
+// import { ThemeToggle } from "../../DashboardComponents/theme-toggle"
+// import SubjectsPanel from "@/components/DashboardComponents/lecturer/subjects-panel"
+// import ModulesPanel from "@/components/DashboardComponents/lecturer/modules-panel"
+// import TopicsPanel from "@/components/DashboardComponents/lecturer/topics-panel"
+// import QuestionsPanel from "@/components/DashboardComponents/lecturer/questions-panel"
+// import SettingsPage from "@/pages/lecturer/SettingsPage"
+// import DashboardOverview from "@/components/DashboardComponents/lecturer/DashboardOverview"
+
+// import useTutorAuthStore from "@/store/tutorAuthStore"
+// import useTutorStore from "@/store/tutorStore"
+
+// const EXAM_BODIES = [
+//   { id: "jamb", label: "JAMB", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+//   { id: "waec", label: "WAEC", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+//   { id: "neco", label: "NECO", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+//   { id: "putme", label: "Post-UTME", color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+// ]
+
+// export default function LecturerDashboard() {
+//   const navigate = useNavigate()
+//   const { toast } = useToast()
+
+//   // Auth
+//   const tutor = useTutorAuthStore((state) => state.tutor)
+//   const logout = useTutorAuthStore((state) => state.logout)
+//   const updateProfile = useTutorAuthStore((state) => state.updateProfile)
+//   const changePassword = useTutorAuthStore((state) => state.changePassword)
+
+//   // Tutor Store
+//   const {
+//     fetchDashboard,
+//     getSubjects,
+//     getModules,
+//     getTopics,
+//     getQuestions,
+//     dashboardData,
+//   } = useTutorStore()
+
+//   // State
+//   const [activeTab, setActiveTab] = useState("overview")
+//   const [selectedExamBody, setSelectedExamBody] = useState("jamb")
+//   const [selectedYear, setSelectedYear] = useState("")
+//   const [availableYears, setAvailableYears] = useState([])
+//   const [loadingYears, setLoadingYears] = useState(true)
+//   const [loadingData, setLoadingData] = useState(false)
+//   const [globalSearch, setGlobalSearch] = useState("")
+//   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+//   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+
+//   const [subjects, setSubjects] = useState([])
+//   const [modules, setModules] = useState([])
+//   const [topics, setTopics] = useState([])
+//   const [questions, setQuestions] = useState([])
+
+//   const navItems = [
+//     { id: "overview", label: "Overview", icon: LayoutDashboard },
+//     { id: "subjects", label: "Subjects", icon: BookOpen },
+//     { id: "modules", label: "Modules", icon: FolderOpen },
+//     { id: "topics", label: "Topics", icon: FileText },
+//     { id: "questions", label: "Questions Bank", icon: HelpCircle },
+//     { id: "students", label: "Students", icon: Users },
+//     { id: "analytics", label: "Analytics", icon: BarChart3 },
+//     { id: "settings", label: "Settings", icon: Settings },
+//   ]
+
+//   // Generate years dynamically
+//   const generateYears = () => {
+//     const currentYear = new Date().getFullYear()
+//     const years = []
+//     for (let i = 1; i >= -10; i--) years.push((currentYear + i).toString())
+//     return years
+//   }
+
+//   // Initialize dashboard
+//   useEffect(() => {
+//     if (!tutor) return
+//     const initDashboard = async () => {
+//       try {
+//         setLoadingYears(true)
+//         const years = generateYears()
+//         setAvailableYears(years)
+//         setSelectedYear(years[1]) // current year
+//         await fetchDashboard()
+//       } catch (error) {
+//         console.error("Dashboard init error:", error)
+//         toast({ title: "Warning", description: "Some features may be limited", variant: "destructive" })
+//       } finally {
+//         setLoadingYears(false)
+//       }
+//     }
+//     initDashboard()
+//   }, [tutor, fetchDashboard, toast])
+
+//   // Fetch content
+//   const fetchContent = async () => {
+//     if (!selectedExamBody || !selectedYear) return
+//     try {
+//       setLoadingData(true)
+//       const [subsRes, modsRes, topicsRes, quesRes] = await Promise.all([
+//         getSubjects(),
+//         getModules(),
+//         getTopics(),
+//         getQuestions({ category: selectedExamBody.toUpperCase(), year: selectedYear })
+//       ])
+//       if (subsRes?.success) setSubjects(subsRes.data.filter(s => s.category?.toLowerCase() === selectedExamBody && s.year === selectedYear))
+//       if (modsRes?.success) setModules(modsRes.data || [])
+//       if (topicsRes?.success) setTopics(topicsRes.data || [])
+//       if (quesRes?.success) setQuestions(quesRes.data || [])
+//     } catch (error) {
+//       console.error(error)
+//       toast({ title: "Error", description: "Failed to load content data", variant: "destructive" })
+//     } finally {
+//       setLoadingData(false)
+//     }
+//   }
+
+//   useEffect(() => { fetchContent() }, [selectedExamBody, selectedYear])
+
+//   const refreshData = fetchContent
+
+//   const handleLogout = async () => {
+//     await logout()
+//     navigate("/tutor/login")
+//     toast({ title: "Logged out", description: "You have been successfully logged out" })
+//   }
+
+//   const context = useMemo(() => ({
+//     examBody: selectedExamBody,
+//     year: selectedYear,
+//     refreshData,
+//     updateProfile,
+//     changePassword,
+//   }), [selectedExamBody, selectedYear, refreshData, updateProfile, changePassword])
+
+//   // Loading UI
+//   if (loadingYears) return (
+//     <div className="flex min-h-screen items-center justify-center bg-background">
+//       <div className="text-center space-y-4">
+//         <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+//         <p className="text-muted-foreground">Loading dashboard...</p>
+//       </div>
+//     </div>
+//   )
+
+//   const showLoadingOverlay = loadingData && (
+//     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+//       <div className="text-center space-y-4">
+//         <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+//         <p className="text-muted-foreground">Loading content...</p>
+//       </div>
+//     </div>
+//   )
+
+//   return (
+//     <>
+//       {showLoadingOverlay}
+//       <div className="flex min-h-screen bg-background font-sans">
+//         {/* SIDEBAR */}
+//         <aside
+//           className={cn(
+//             "fixed inset-y-0 left-0 z-50 w-64 bg-card flex flex-col border-r shadow-xl transform transition-transform duration-300 lg:translate-x-0",
+//             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+//           )}
+//         >
+//           {/* Mobile Close */}
+//           <div className="flex justify-end p-4 md:hidden">
+//             <Button variant="ghost" className="p-2" onClick={() => setMobileSidebarOpen(false)}>
+//               <X className="w-6 h-6" />
+//             </Button>
+//           </div>
+
+//           {/* Logo */}
+//           <div className="flex items-center p-2">
+//             <img src={fillopLogo} alt="Fillop Logo" className="w-12 h-12 object-contain" />
+//             <div className="leading-none mx-4 md:ml-2">
+//               <p className="text-primary font-bold font-merriweather text-xl">FILLOP TECH</p>
+//               <p className="text-education-orange text-[9px] font-merriweather">...simplifying your tech world</p>
+//             </div>
+//           </div>
+
+//           {/* Nav */}
+//           <ScrollArea className="flex-1 px-4 py-6">
+//             <div className="space-y-1">
+//               {navItems.map((item) => {
+//                 const Icon = item.icon
+//                 const isActive = activeTab === item.id
+//                 return (
+//                   <Button
+//                     key={item.id}
+//                     variant={isActive ? "secondary" : "ghost"}
+//                     className={cn("w-full justify-start gap-3 font-medium rounded-xl transition-all", isActive ? "bg-indigo-600 text-white" : "text-gray-700")}
+//                     onClick={() => { setActiveTab(item.id); setMobileSidebarOpen(false) }}
+//                   >
+//                     <Icon className="w-5 h-5" />
+//                     {item.label}
+//                   </Button>
+//                 )
+//               })}
+//             </div>
+//           </ScrollArea>
+
+//           {/* Footer */}
+//           <div className="p-4 border-t">
+//             <div className="flex items-center gap-3">
+//               <Avatar className="w-10 h-10 border">
+//                 <AvatarImage src="/placeholder.svg" alt="User" />
+//                 <AvatarFallback>{tutor?.firstName?.[0]}{tutor?.lastName?.[0]}</AvatarFallback>
+//               </Avatar>
+//               <div className="flex flex-col overflow-hidden flex-1">
+//                 <span className="truncate text-sm font-semibold">{tutor?.firstName} {tutor?.lastName}</span>
+//                 <span className="truncate text-xs text-gray-600">{tutor?.email}</span>
+//               </div>
+//               <Button
+//                 variant="ghost"
+//                 size="sm"
+//                 onClick={handleLogout}
+//                 className="text-xs text-red-600"
+//               >
+//                 Logout
+//               </Button>
+//             </div>
+//           </div>
+//         </aside>
+
+//         {/* MAIN */}
+//         <main className="flex-1 flex flex-col lg:pl-64 transition-all duration-300">
+//           {/* HEADER */}
+//           <header className="sticky top-0 z-50 h-16 flex items-center border-b bg-background/80 px-3 sm:px-6 backdrop-blur-md shadow-sm">
+//             <div className="flex items-center gap-3 w-full">
+//               <Button
+//                 variant="ghost"
+//                 className="p-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md lg:hidden"
+//                 onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+//               >
+//                 {mobileSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+//               </Button>
+//               <ThemeToggle />
+
+//               {/* Exam Body & Year */}
+//               {!mobileSearchOpen && (
+//                 <div className="flex items-center gap-2 bg-secondary/40 p-1 rounded-xl border flex-1 sm:flex-none">
+//                   <Select value={selectedExamBody} onValueChange={setSelectedExamBody}>
+//                     <SelectTrigger className="h-8 min-w-[70px] sm:w-[110px]">
+//                       <SelectValue placeholder="Exam" />
+//                     </SelectTrigger>
+//                     <SelectContent>
+//                       {EXAM_BODIES.map((body) => (
+//                         <SelectItem key={body.id} value={body.id}>{body.label}</SelectItem>
+//                       ))}
+//                     </SelectContent>
+//                   </Select>
+//                   <Separator orientation="vertical" className="h-5 hidden sm:flex" />
+//                   <Select value={selectedYear} onValueChange={setSelectedYear}>
+//                     <SelectTrigger className="h-8 min-w-[55px] sm:w-[90px]">
+//                       <SelectValue placeholder="Yr" />
+//                     </SelectTrigger>
+//                     <SelectContent>
+//                       {availableYears.map((year) => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+//                     </SelectContent>
+//                   </Select>
+//                 </div>
+//               )}
+
+//               {/* Desktop Search */}
+//               <div className="flex-1 hidden sm:flex relative">
+//                 <Input
+//                   type="search"
+//                   placeholder="Search anything..."
+//                   className="w-full rounded-full pl-10"
+//                   value={globalSearch}
+//                   onChange={(e) => setGlobalSearch(e.target.value)}
+//                 />
+//               </div>
+
+//               {/* Notification */}
+//               {!mobileSearchOpen && (
+//                 <Button variant="ghost" size="icon" className="relative">
+//                   <Bell className="w-5 h-5" />
+//                   <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border-2 border-background"></span>
+//                 </Button>
+//               )}
+//             </div>
+//           </header>
+
+//           {/* PAGE CONTENT */}
+//           <div className="flex-1 overflow-auto bg-secondary/20 p-4 sm:p-6 lg:p-8">
+//             <div className="mx-auto max-w-7xl space-y-6">
+//               <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
+//                 <div>
+//                   <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-900">
+//                     {navItems.find((item) => item.id === activeTab)?.label}
+//                   </h1>
+//                   <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+//                     {activeTab !== "settings" ? (
+//                       <>Manage {navItems.find((item) => item.id === activeTab)?.label.toLowerCase()} for <span className="font-semibold text-red-300">{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</span> • <span className="font-semibold">{selectedYear} Academic Session</span></>
+//                     ) : "Configure your profile and preferences"}
+//                   </p>
+//                 </div>
+//                 {activeTab !== "settings" && (
+//                   <div className="flex items-center gap-2 mt-2 md:mt-0 flex-wrap bg-gradient-to-r from-indigo-100 to-purple-100 p-2 rounded-xl shadow-sm">
+//                     <Badge>{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</Badge>
+//                     <Badge variant="secondary">{selectedYear}</Badge>
+//                   </div>
+//                 )}
+//               </div>
+
+//               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+//                 {activeTab === "overview" && (
+//                   <DashboardOverview
+//                     context={context}
+//                     setActiveTab={setActiveTab}
+//                     subjects={subjects}
+//                     modules={modules}
+//                     topics={topics}
+//                     questions={questions}
+//                   />
+//                 )}
+//                 {activeTab === "subjects" && <SubjectsPanel context={context} subjects={subjects} setSubjects={setSubjects} globalSearch={globalSearch} />}
+//                 {activeTab === "modules" && <ModulesPanel context={context} modules={modules} setModules={setModules} subjects={subjects} globalSearch={globalSearch} />}
+//                 {activeTab === "topics" && <TopicsPanel context={context} topics={topics} setTopics={setTopics} modules={modules} subjects={subjects} globalSearch={globalSearch} />}
+//                 {activeTab === "questions" && <QuestionsPanel context={context} questions={questions} setQuestions={setQuestions} topics={topics} modules={modules} subjects={subjects} globalSearch={globalSearch} />}
+//                 {activeTab === "settings" && <SettingsPage context={context} />}
+//                 {activeTab === "analytics" && <AnalyticsPanel subjects={subjects} />}
+//               </div>
+//             </div>
+//           </div>
+//         </main>
+//       </div>
+//     </>
+//   )
+// }
+
+
+
+
+
+
+
 import React, { useState, useEffect, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -844,6 +1211,7 @@ import { ThemeToggle } from "../../DashboardComponents/theme-toggle"
 import SubjectsPanel from "@/components/DashboardComponents/lecturer/subjects-panel"
 import ModulesPanel from "@/components/DashboardComponents/lecturer/modules-panel"
 import TopicsPanel from "@/components/DashboardComponents/lecturer/topics-panel"
+// import AllTopicsPanel  from "@/components/DashboardComponents/lecturer/topics-panel"
 import QuestionsPanel from "@/components/DashboardComponents/lecturer/questions-panel"
 import SettingsPage from "@/pages/lecturer/SettingsPage"
 import DashboardOverview from "@/components/DashboardComponents/lecturer/DashboardOverview"
@@ -894,6 +1262,17 @@ export default function LecturerDashboard() {
   const [topics, setTopics] = useState([])
   const [questions, setQuestions] = useState([])
 
+  // ✅ NEW: State for selected subject (for modules panel)
+  const [selectedSubjectId, setSelectedSubjectId] = useState(null)
+  const [selectedSubjectName, setSelectedSubjectName] = useState("")
+
+    // ✅ NEW: State for selected module (for topics panel)
+  const [selectedModuleId, setSelectedModuleId] = useState(null)
+  const [selectedModuleName, setSelectedModuleName] = useState("")
+
+  const [selectedTopicId, setSelectedTopicId] = useState(null)
+const [selectedTopicName, setSelectedTopicName] = useState("")
+
   const navItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "subjects", label: "Subjects", icon: BookOpen },
@@ -938,16 +1317,37 @@ export default function LecturerDashboard() {
     if (!selectedExamBody || !selectedYear) return
     try {
       setLoadingData(true)
+
       const [subsRes, modsRes, topicsRes, quesRes] = await Promise.all([
         getSubjects(),
         getModules(),
         getTopics(),
         getQuestions({ category: selectedExamBody.toUpperCase(), year: selectedYear })
       ])
-      if (subsRes?.success) setSubjects(subsRes.data.filter(s => s.category?.toLowerCase() === selectedExamBody && s.year === selectedYear))
-      if (modsRes?.success) setModules(modsRes.data || [])
-      if (topicsRes?.success) setTopics(topicsRes.data || [])
-      if (quesRes?.success) setQuestions(quesRes.data || [])
+
+      const safeSubjects = Array.isArray(subsRes?.data)
+        ? subsRes.data
+        : Array.isArray(subsRes?.data?.subjects)
+          ? subsRes.data.subjects
+          : []
+
+      setSubjects(
+        safeSubjects.filter(
+          s =>
+            s.category?.toLowerCase() === selectedExamBody &&
+            s.year === selectedYear
+        )
+      )
+
+      if (modsRes?.success)
+        setModules(Array.isArray(modsRes.data) ? modsRes.data : [])
+
+      if (topicsRes?.success)
+        setTopics(Array.isArray(topicsRes.data) ? topicsRes.data : [])
+
+      if (quesRes?.success)
+        setQuestions(Array.isArray(quesRes.data) ? quesRes.data : [])
+
     } catch (error) {
       console.error(error)
       toast({ title: "Error", description: "Failed to load content data", variant: "destructive" })
@@ -959,6 +1359,29 @@ export default function LecturerDashboard() {
   useEffect(() => { fetchContent() }, [selectedExamBody, selectedYear])
 
   const refreshData = fetchContent
+
+  // ✅ NEW: Handler for when a subject is selected from SubjectsPanel
+  const handleSubjectSelect = (subjectId, subjectName) => {
+    console.log("📌 Subject selected:", { subjectId, subjectName })
+    setSelectedSubjectId(subjectId)
+    setSelectedSubjectName(subjectName)
+    setActiveTab("modules") // Switch to modules tab
+  }
+
+  // ✅ NEW: Handler for when a module is selected from ModulesPanel
+  const handleModuleSelect = (moduleId, moduleName, subjectName) => {
+    console.log("📌 Module selected for topics:", { moduleId, moduleName, subjectName })
+    setSelectedModuleId(moduleId)
+    setSelectedModuleName(moduleName)
+    setActiveTab("topics") // Switch to topics tab
+  }
+
+  const handleTopicSelect = (topicId, topicName, moduleName) => {
+  console.log("📌 Topic selected for questions:", { topicId, topicName, moduleName })
+  setSelectedTopicId(topicId)
+  setSelectedTopicName(topicName)
+  setActiveTab("questions") // Switch to questions tab
+}
 
   const handleLogout = async () => {
     await logout()
@@ -997,21 +1420,19 @@ export default function LecturerDashboard() {
     <>
       {showLoadingOverlay}
       <div className="flex min-h-screen bg-background font-sans">
-        {/* SIDEBAR */}
+        {/* SIDEBAR - keeping original code */}
         <aside
           className={cn(
             "fixed inset-y-0 left-0 z-50 w-64 bg-card flex flex-col border-r shadow-xl transform transition-transform duration-300 lg:translate-x-0",
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          {/* Mobile Close */}
           <div className="flex justify-end p-4 md:hidden">
             <Button variant="ghost" className="p-2" onClick={() => setMobileSidebarOpen(false)}>
               <X className="w-6 h-6" />
             </Button>
           </div>
 
-          {/* Logo */}
           <div className="flex items-center p-2">
             <img src={fillopLogo} alt="Fillop Logo" className="w-12 h-12 object-contain" />
             <div className="leading-none mx-4 md:ml-2">
@@ -1020,7 +1441,6 @@ export default function LecturerDashboard() {
             </div>
           </div>
 
-          {/* Nav */}
           <ScrollArea className="flex-1 px-4 py-6">
             <div className="space-y-1">
               {navItems.map((item) => {
@@ -1030,7 +1450,7 @@ export default function LecturerDashboard() {
                   <Button
                     key={item.id}
                     variant={isActive ? "secondary" : "ghost"}
-                    className={cn("w-full justify-start gap-3 font-medium rounded-xl transition-all", isActive ? "bg-indigo-600 text-white" : "text-gray-700")}
+                    className={cn("w-full justify-start gap-3 font-medium rounded-xl transition-all", isActive ? "bg-primary text-gray-100 hover:text-gray-700" : "text-gray-700")}
                     onClick={() => { setActiveTab(item.id); setMobileSidebarOpen(false) }}
                   >
                     <Icon className="w-5 h-5" />
@@ -1041,7 +1461,6 @@ export default function LecturerDashboard() {
             </div>
           </ScrollArea>
 
-          {/* Footer */}
           <div className="p-4 border-t">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10 border">
@@ -1064,9 +1483,8 @@ export default function LecturerDashboard() {
           </div>
         </aside>
 
-        {/* MAIN */}
+        {/* MAIN - keeping header unchanged */}
         <main className="flex-1 flex flex-col lg:pl-64 transition-all duration-300">
-          {/* HEADER */}
           <header className="sticky top-0 z-50 h-16 flex items-center border-b bg-background/80 px-3 sm:px-6 backdrop-blur-md shadow-sm">
             <div className="flex items-center gap-3 w-full">
               <Button
@@ -1078,7 +1496,6 @@ export default function LecturerDashboard() {
               </Button>
               <ThemeToggle />
 
-              {/* Exam Body & Year */}
               {!mobileSearchOpen && (
                 <div className="flex items-center gap-2 bg-secondary/40 p-1 rounded-xl border flex-1 sm:flex-none">
                   <Select value={selectedExamBody} onValueChange={setSelectedExamBody}>
@@ -1103,7 +1520,6 @@ export default function LecturerDashboard() {
                 </div>
               )}
 
-              {/* Desktop Search */}
               <div className="flex-1 hidden sm:flex relative">
                 <Input
                   type="search"
@@ -1114,7 +1530,6 @@ export default function LecturerDashboard() {
                 />
               </div>
 
-              {/* Notification */}
               {!mobileSearchOpen && (
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="w-5 h-5" />
@@ -1124,20 +1539,25 @@ export default function LecturerDashboard() {
             </div>
           </header>
 
-          {/* PAGE CONTENT */}
+          {/* PAGE CONTENT - ONLY THIS SECTION CHANGED */}
           <div className="flex-1 overflow-auto bg-secondary/20 p-4 sm:p-6 lg:p-8">
             <div className="mx-auto max-w-7xl space-y-6">
               <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-900">
-                    {navItems.find((item) => item.id === activeTab)?.label}
-                  </h1>
-                  <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-                    {activeTab !== "settings" ? (
-                      <>Manage {navItems.find((item) => item.id === activeTab)?.label.toLowerCase()} for <span className="font-semibold text-red-300">{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</span> • <span className="font-semibold">{selectedYear} Academic Session</span></>
-                    ) : "Configure your profile and preferences"}
-                  </p>
+  <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-900">
+    {dashboardData?.welcome || "Welcome back"}
+  </h1>
+
+  <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+    {activeTab !== "settings" ? (
+      <>Manage {navItems.find((item) => item.id === activeTab)?.label.toLowerCase()} for 
+      <span className="font-semibold text-red-300">
+        {" "}{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}
+      </span> • <span className="font-semibold">{selectedYear} Academic Session</span></>
+    ) : "Configure your profile and preferences"}
+  </p>
                 </div>
+
                 {activeTab !== "settings" && (
                   <div className="flex items-center gap-2 mt-2 md:mt-0 flex-wrap bg-gradient-to-r from-indigo-100 to-purple-100 p-2 rounded-xl shadow-sm">
                     <Badge>{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</Badge>
@@ -1157,10 +1577,48 @@ export default function LecturerDashboard() {
                     questions={questions}
                   />
                 )}
-                {activeTab === "subjects" && <SubjectsPanel context={context} subjects={subjects} setSubjects={setSubjects} globalSearch={globalSearch} />}
-                {activeTab === "modules" && <ModulesPanel context={context} modules={modules} setModules={setModules} subjects={subjects} globalSearch={globalSearch} />}
-                {activeTab === "topics" && <TopicsPanel context={context} topics={topics} setTopics={setTopics} modules={modules} subjects={subjects} globalSearch={globalSearch} />}
-                {activeTab === "questions" && <QuestionsPanel context={context} questions={questions} setQuestions={setQuestions} topics={topics} modules={modules} subjects={subjects} globalSearch={globalSearch} />}
+                {/* ✅ UPDATED: SubjectsPanel now has onSubjectSelect */}
+                {activeTab === "subjects" && (
+                  <SubjectsPanel 
+                    onSubjectSelect={handleSubjectSelect}
+                    globalSearch={globalSearch} 
+                  />
+                )}
+                {/* ✅ UPDATED: ModulesPanel receives selectedSubject ID and name */}
+                {activeTab === "modules" && (
+                <ModulesPanel 
+                    selectedSubject={selectedSubjectId}
+                    subjectName={selectedSubjectName}
+                    selectedModuleId={selectedModuleId}  
+                    onTopicSelect={handleModuleSelect}
+                    globalSearch={globalSearch} 
+                  />
+                )}
+                {/* // Update the topics tab to use AllTopicsPanel instead
+                {activeTab === "topics" && (
+                  <AllTopicsPanel 
+                    onTopicSelect={handleTopicSelect}
+                    globalSearch={globalSearch}
+                  />
+                )} */}
+                {activeTab === "topics" && (
+                  <TopicsPanel 
+                    selectedModule={selectedModuleId}
+                    moduleName={selectedModuleName}
+                    subjectName={selectedSubjectName}
+                    selectedTopicId={selectedTopicId}  
+                    onQuestionSelect={handleTopicSelect}  
+                    globalSearch={globalSearch}
+                  />
+                )}
+                {activeTab === "questions" && (
+                <QuestionsPanel 
+                    selectedTopic={selectedTopicId}
+                    topicName={selectedTopicName}
+                    moduleName={selectedModuleName}
+                    globalSearch={globalSearch}
+                  />
+                )}
                 {activeTab === "settings" && <SettingsPage context={context} />}
                 {activeTab === "analytics" && <AnalyticsPanel subjects={subjects} />}
               </div>
@@ -1171,4 +1629,3 @@ export default function LecturerDashboard() {
     </>
   )
 }
-
