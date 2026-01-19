@@ -81,13 +81,13 @@ export default function ExamResultPage() {
       <div className="max-w-3xl mx-auto space-y-5">
         
         {/* Compact Header Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5 border border-blue-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-2 border border-blue-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                 isPassing ? 'bg-green-100 dark:bg-green-900/30' : 'bg-blue-100 dark:bg-blue-900/30'
               }`}>
-                <span className="text-2xl">{isPassing ? '🎉' : '✅'}</span>
+                <span className="text-lg">{isPassing ? '🎉' : '✅'}</span>
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900 dark:text-white">Exam Completed</h1>
@@ -106,7 +106,7 @@ export default function ExamResultPage() {
         {/* Compact Score Cards Grid */}
         <div className="grid grid-cols-3 gap-3">
           {/* Main Score */}
-            <div className="col-span-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white relative overflow-hidden">
+            <div className="col-span-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
                 <div className="relative">
                 <p className="text-xs opacity-90 mb-1">Your Score</p>
@@ -126,8 +126,8 @@ export default function ExamResultPage() {
             </div>
 
           {/* Quick Stats */}
-          <div className="space-y-3">
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 border border-green-200 dark:border-green-800">
+          <div className="space-y-2">
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-2 border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2 mb-1">
                 <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -137,7 +137,7 @@ export default function ExamResultPage() {
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalCorrect}</p>
             </div>
 
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 border border-red-200 dark:border-red-800">
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-2 border border-red-200 dark:border-red-800">
               <div className="flex items-center gap-2 mb-1">
                 <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -151,7 +151,7 @@ export default function ExamResultPage() {
 
         {/* Compact Performance Breakdown */}
         {resultData.breakdown && resultData.breakdown.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5 border border-blue-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-3 border border-blue-100 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-4">
               <div className="bg-blue-100 dark:bg-blue-900/30 p-1.5 rounded-lg">
                 <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@ export default function ExamResultPage() {
               <h2 className="text-base font-bold text-gray-900 dark:text-white">Subject Performance</h2>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2">
               {resultData.breakdown.map((topic, index) => {
                 const { correct, total } = parseRawScore(topic.rawScore);
                 const incorrect = total - correct;
@@ -170,7 +170,7 @@ export default function ExamResultPage() {
 
                 return (
                   <div key={index} className="bg-gradient-to-r from-gray-50 to-blue-50/50 dark:from-gray-700/50 dark:to-blue-900/10 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <div className="bg-blue-500 w-1 h-5 rounded-full"></div>

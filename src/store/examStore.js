@@ -931,8 +931,6 @@ getSubjectProgress: () => {
   },
 
   // ---------------- EXAM SESSION ----------------
-
-  // ---------------- EXAM SESSION ----------------
 startExam: async () => {
   const { saved, examActive } = get();
   
@@ -1136,110 +1134,6 @@ startExam: async () => {
     return null;
   }
 },
-//   startExam: async () => {
-//     const { saved, examActive } = get();
-    
-//     if (!saved || examActive) {
-//       console.log("⏭️ No saved config or exam already active");
-//       return null;
-//     }
-
-//     try {
-//       const { fetchWithAuth } = useAuthStore.getState();
-      
-//       let payload = {
-//         category: saved.exam,
-//         mode: saved.mode === "subject" ? "SUBJECT" : "TOPIC"
-//       };
-
-//       if (saved.mode === "subject") {
-//         payload.subjectIds = saved.subjects;
-//       } else if (saved.mode === "topic") {
-//         payload.topicIds = Object.values(saved.topics).flat();
-//       }
-
-//       console.log("🚀 Starting exam with payload:", payload);
-
-//       const res = await fetchWithAuth(`${API_BASE}/exams/start`, {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify(payload),
-//       });
-
-//       // ✅ LOG ENTIRE RESPONSE
-//       console.log("📦 FULL START EXAM RESPONSE:", JSON.stringify(res, null, 2));
-//       console.log("📦 Response data:", res?.data);
-//       console.log("📦 Response structure:", Object.keys(res || {}));
-      
-//       if (res?.data) {
-//         console.log("📦 Data structure:", Object.keys(res.data));
-//         console.log("📦 Exam ID:", res.data.examId);
-//         console.log("📦 Duration seconds:", res.data.durationSeconds);
-//         console.log("📦 Duration minutes:", res.data.durationMinutes);
-//         console.log("📦 Start time:", res.data.startTime);
-//         console.log("📦 Auto submit time:", res.data.autoSubmitTime);
-//       }
-
-//       if (res?.data?.examId) {
-//         const startTime = Date.now();
-        
-//         // ✅ Use durationSeconds from API response (PRIMARY)
-//         // Fallback to durationMinutes * 60, then saved duration, then default
-//         let timeInSeconds;
-        
-//         if (res.data.durationSeconds) {
-//           // API provided duration in seconds - use directly
-//           timeInSeconds = res.data.durationSeconds;
-//           console.log("⏰ Using durationSeconds from API:", timeInSeconds, "seconds");
-//         } else if (res.data.durationMinutes) {
-//           // API provided duration in minutes - convert to seconds
-//           timeInSeconds = res.data.durationMinutes * 60;
-//           console.log("⏰ Using durationMinutes from API:", res.data.durationMinutes, "minutes →", timeInSeconds, "seconds");
-//         } else if (saved.duration) {
-//           // Fallback to saved duration
-//           timeInSeconds = saved.duration * 60;
-//           console.log("⏰ Using saved duration:", saved.duration, "minutes →", timeInSeconds, "seconds");
-//         } else {
-//           // Default 60 minutes
-//           timeInSeconds = 60 * 60;
-//           console.log("⏰ Using default duration: 60 minutes →", timeInSeconds, "seconds");
-//         }
-        
-//         const durationInMinutes = Math.ceil(timeInSeconds / 60);
-        
-//         console.log("⏰ ========================================");
-//         console.log("⏰ TIMER SETUP COMPLETE");
-//         console.log("⏰ ========================================");
-//         console.log("⏰ Final duration:", timeInSeconds, "seconds (", durationInMinutes, "minutes )");
-//         console.log("⏰ Start time:", new Date(startTime).toISOString());
-//         console.log("⏰ Expected end:", new Date(startTime + timeInSeconds * 1000).toISOString());
-//         console.log("⏰ ========================================");
-        
-//         set({ 
-//           examId: res.data.examId, 
-//           examActive: true,
-//           examStartTime: startTime,
-//           examDuration: durationInMinutes,
-//           timeRemaining: timeInSeconds,
-//         });
-        
-//         console.log("✅ Exam started:", res.data.examId);
-//         console.log("✅ Timer initialized with:", timeInSeconds, "seconds");
-        
-//         // Start timer immediately
-//         const startTimerResult = get().startTimer();
-//         console.log("✅ Timer started:", startTimerResult);
-        
-//         return res.data.examId;
-//       }
-
-//       console.warn("⚠️ No examId in response");
-//       return null;
-//     } catch (err) {
-//       console.error("❌ Failed to start exam:", err);
-//       return null;
-//     }
-//   },
 
   submitAnswer: async (questionId, userChoice) => {
     const { examId, examActive } = get();
