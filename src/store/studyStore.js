@@ -4,7 +4,7 @@ import { usePaymentStore } from "./paymentStore";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 const REQUEST_LIMIT = 40;
-const FREE_QUESTIONS_LIMIT = 5; // ✅ Free trial limit
+const FREE_QUESTIONS_LIMIT = 50; // ✅ Free trial limit
 
 // ✅ Check if user has used their free questions
 function hasUsedFreeQuestions() {

@@ -716,7 +716,6 @@ getAnsweredCount: () => {
     await get().fetchMoreQuestions();
   },
 
-  // Add these methods to your examStore.js
 
 // ✅ Check if there are more subjects/topics to navigate to
 hasNextSubjectOrTopic: () => {

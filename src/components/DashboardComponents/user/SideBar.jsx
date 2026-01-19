@@ -234,13 +234,13 @@ const menuData = [
             href: "/payments/refunds",
             icon: Minus,
           },
-          {
-            id: "pending",
-            label: "Pending",
-            href: "/orders/pending",
-            icon: Clock,
-            badge: "3",
-          },
+          // {
+          //   id: "pending",
+          //   label: "Pending",
+          //   href: "/orders/pending",
+          //   icon: Clock,
+          //   badge: "3",
+          // },
         ],
       },
       // {
