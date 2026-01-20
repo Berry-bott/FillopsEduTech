@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { Mail, Lock, User, Eye, EyeOff, MailCheck, Loader2, Upload, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Mail, User, Loader2, Upload, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -28,6 +28,11 @@ const step2Schema = z.object({
   otherCertifications: z.string().optional(),
   professionalCertificate: z.string().optional(),
   membershipOfProfessionalBodies: z.string().optional(),
+  socialLinks: z
+  .string()
+  .url("Must be a valid URL")
+  .optional()
+
 });
 
 const step3Schema = z.object({
@@ -35,29 +40,6 @@ const step3Schema = z.object({
   state: z.string().min(1, "State is required"),
 });
 
-// ----------------------------------------
-// EMAIL VERIFICATION NOTICE COMPONENT
-// ----------------------------------------
-// const EmailVerificationNotice = ({ email }) => (
-//   <motion.div
-//     initial={{ opacity: 0, y: 40 }}
-//     animate={{ opacity: 1, y: 0 }}
-//     transition={{ duration: 0.7 }}
-//     className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-2xl p-6 text-center w-full max-w-md"
-//   >
-//     <MailCheck className="mx-auto h-12 w-12 text-indigo-600" />
-//     <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-3">
-//       Verify Your Email
-//     </h2>
-//     <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm leading-relaxed">
-//       We've sent a verification link to:
-//     </p>
-//     <p className="text-indigo-600 dark:text-indigo-400 font-semibold mt-1">{email}</p>
-//     <p className="text-gray-500 dark:text-gray-400 text-xs mt-4">
-//       Please check your inbox or spam folder and click the link to activate your account.
-//     </p>
-//   </motion.div>
-// );
 
 // ----------------------------------------
 // PROGRESS INDICATOR
@@ -120,6 +102,9 @@ const Register = () => {
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [passportFile, setPassportFile] = useState(null);
   const [passportPreview, setPassportPreview] = useState(null);
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfName, setPdfName] = useState("");
+
 
   const { register: registerUser, loading, error, success, clearMessages } = useAuthStore();
 
@@ -136,10 +121,11 @@ const Register = () => {
     degree: "",
     areaOfSpecialization: "",
     otherCertifications: "",
+    department: "",
     professionalCertificate: "",
     membershipOfProfessionalBodies: "",
-    password: "",
-    confirmPassword: "",
+    socialLinks: "",
+    cvUploads: "",
   });
 
   // Get current schema based on step
@@ -183,6 +169,35 @@ const Register = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  const handlePdfUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    if (file.type !== "application/pdf") {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please upload a PDF file only",
+      });
+      return;
+    }
+    if (file.size > 10000000) { // 10MB limit
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "PDF must be less than 10MB",
+      });
+      return;
+    }
+    setPdfFile(file);
+    setPdfName(file.name);
+  }
+  };
+  const removePdf = () => {
+  setPdfFile(null);
+  setPdfName("");
+};
+
 
   const removePassport = () => {
     setPassportFile(null);
@@ -272,6 +287,10 @@ const Register = () => {
     if (passportFile) {
       formDataToSend.append('passport', passportFile);
     }
+    if (pdfFile) {
+      formDataToSend.append('pdf', pdfFile);
+    }
+
 
     try {
       const result = await registerUser(payload); 
@@ -530,6 +549,20 @@ const Register = () => {
                   )}
                 </div>
 
+                {/* Department */}
+                <div className="relative">
+                  <input
+                    {...register("department")}
+                    type="text"
+                    placeholder="department"
+                    defaultValue={formData.department}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
+                  />
+                  {errors.schoolAttended && (
+                    <p className="text-red-500 text-xs mt-1">{errors.department.message}</p>
+                  )}
+                </div>
+
                 {/* Degree */}
                 <div className="relative">
                   <input
@@ -622,7 +655,7 @@ const Register = () => {
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-1">
                   Upload Passport Photograph
                 </h3>
-                                {/* Country */}
+                  {/* Country */}
                 <div className="relative">
                   <input
                     {...register("country")}
@@ -635,7 +668,7 @@ const Register = () => {
                     <p className="text-red-500 text-xs mt-1">{errors.country.message}</p>
                   )}
                 </div>
-
+        
                 {/* State */}
                 <div className="relative">
                   <input
@@ -649,6 +682,46 @@ const Register = () => {
                     <p className="text-red-500 text-xs mt-1">{errors.state.message}</p>
                   )}
                 </div>
+                {/* socail links */}
+                  <div className="relative">
+                  <input
+                    {...register("socialLinks")}
+                    type="url"
+                    placeholder="any social links"
+                    defaultValue={formData.socialLinks}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
+                  />
+                  {errors.country && (
+                    <p className="text-red-500 text-xs mt-1">{errors.socialLinks.message}</p>
+                  )}
+                </div>
+
+              {/* CV / PDF Upload */}
+              <div className="flex flex-col gap-1">
+                <label className="text-gray-700 dark:text-gray-300">
+                  Upload CV / Certificate (PDF)
+                </label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfUpload}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
+                />
+                
+                {pdfName && (
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-sm text-gray-500">{pdfName}</p>
+                    <button
+                      type="button"
+                      onClick={removePdf}
+                      className="text-red-500 text-xs hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+
 
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
                   {!passportPreview ? (
