@@ -26,8 +26,8 @@ export default function InitializePayment() {
           Unlock unlimited learning potential
         </p>
 
-        <p className="text-destructive text-sm text-center mt-2">
-          You have exhausted your 5 free questions. Please subscribe to continue.
+        <p className="text-primary-hover text-sm text-center mt-2">
+          You have exhausted your <span className="text-2xl font-bold text-destructive">50</span> free questions. Please subscribe to continue.
         </p>
       </div>
 
