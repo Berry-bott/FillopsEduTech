@@ -3,7 +3,6 @@ import { persist } from "zustand/middleware";
 import useTutorAuthStore from "./tutorAuthStore"; 
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
-
 const useTutorStore = create(
   persist(
     (set, get) => ({
@@ -26,6 +25,17 @@ const useTutorStore = create(
       questionsPagination: null,
       questionsLoaded: false,
 
+      // 🔹 SET DASHBOARD DATA
+      setDashboardData: (data) => {
+        set({ dashboardData: data });
+      },
+
+      // 🔹 GET ACCESS TOKEN FROM AUTH STORE
+      getAccessToken: () => {
+        return useTutorAuthStore.getState().accessToken;
+      },
+      
+      // ... rest of your code
       // 🔹 GET ACCESS TOKEN FROM AUTH STORE
       getAccessToken: () => {
         return useTutorAuthStore.getState().accessToken;
@@ -327,190 +337,6 @@ const useTutorStore = create(
         }
       },
 
-      // getSubjectEnrolledStudents: async (subjectId) => {
-      //   set({ loading: true, error: "" });
-
-      //   try {
-      //     const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects/${subjectId}/users`);
-
-      //     if (result.success) {
-      //       console.log("✅ Enrolled students fetched:", result.data);
-      //     } else {
-      //       set({ error: result.message || "Failed to fetch enrolled students" });
-      //     }
-
-      //     return result;
-      //   } catch (error) {
-      //     console.error("❌ Error fetching enrolled students:", error);
-      //     set({ error: "Network error" });
-      //     return { success: false, message: error.message };
-      //   } finally {
-      //     set({ loading: false });
-      //   }
-      // },
-
-
-      // ========== MODULES ==========
-
-      // 🔹 CREATE MODULE
-      createModule: async (subjectId, moduleData) => {
-        set({ loading: true, error: "", success: "" });
-
-        try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects/${subjectId}/modules`, {
-            method: "POST",
-            body: JSON.stringify(moduleData),
-          });
-
-          if (result.success) {
-            set({ 
-              success: "Module created successfully",
-              modulesLoaded: false,
-              subjectsLoaded: false 
-            });
-            console.log("✅ Module created:", result.data);
-          } else {
-            set({ error: result.message || "Failed to create module" });
-          }
-
-          return result;
-        } catch (error) {
-          console.error("❌ Error creating module:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
-        } finally {
-          set({ loading: false });
-        }
-      },
-
-      // 🔹 GET OWN MODULES
-     getModules: async () => {
-      const { modulesLoaded } = get()
-
-      if (modulesLoaded) {
-        return { 
-          success: true, 
-          data: { 
-          modules: get().modules, 
-          pagination: get().modulesPagination 
-      } 
-    }
-  }
-
-  set({ loading: true, error: "" })
-
-  try {
-    const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules`)
-    console.log(result);
-    
-
-    if (result.success) {
-      const modules = result.data?.modules || []
-      const pagination = result.data?.pagination || null
-
-      set({
-        modules,
-        modulesPagination: pagination,
-        modulesLoaded: true,
-      })
-
-      console.log("✅ Modules stored in Zustand:", modules)
-    } else {
-      set({ error: result.message || "Failed to fetch modules" })
-    }
-
-    return result
-  } catch (error) {
-    console.error("❌ Error fetching modules:", error)
-    set({ error: "Network error" })
-    return { success: false, message: error.message }
-  } finally {
-    set({ loading: false })
-  }
-      },
-
-      getModuleById: async (moduleId) => {
-        set({ loading: true, error: "" })
-
-        try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules/${moduleId}`)
-
-          if (result.success) {
-            console.log("✅ Module details fetched:", result.data)
-          } else {
-            set({ error: result.message || "Failed to fetch module details" })
-          }
-
-          return result
-        } catch (error) {
-          console.error("❌ Error fetching module details:", error)
-          set({ error: "Network error" })
-          return { success: false, message: error.message }
-        } finally {
-          set({ loading: false })
-        }
-        },
-
-      // 🔹 UPDATE MODULE
-      updateModule: async (moduleId, moduleData) => {
-        set({ loading: true, error: "", success: "" });
-
-        try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules/${moduleId}`, {
-            method: "PATCH",
-            body: JSON.stringify(moduleData),
-          });
-
-          if (result.success) {
-            set({ success: "Module updated successfully",
-                  modulesLoaded: false
-             });
-            console.log("✅ Module updated:", result.data);
-          } else {
-            set({ error: result.message || "Failed to update module" });
-          }
-
-          return result;
-        } catch (error) {
-          console.error("❌ Error updating module:", error);
-          set({ error: "Network error" });
-          return { success: false, message: error.message };
-        } finally {
-          set({ loading: false });
-        }
-      },
-
-   // Delete module
-    deleteModule: async (moduleId) => {
-      set({ loading: true, error: "" })
-
-      try {
-        // ✅ Add payload with force flag (similar to deleteSubject)
-        const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules/${moduleId}`, {
-          method: "DELETE",
-          body: JSON.stringify({ force: true })
-        })
-
-        if (result.success) {
-          console.log("✅ Module deleted")
-          set({ 
-            modulesLoaded: false,
-            subjectsLoaded: false
-          })
-        } else {
-          set({ error: result.message || "Failed to delete module" })
-        }
-
-        return result
-      } catch (error) {
-        console.error("❌ Error deleting module:", error)
-        set({ error: "Network error" })
-        return { success: false, message: error.message }
-      } finally {
-        set({ loading: false })
-      }
-    },
-
       // ========== TOPICS ==========
       // Get all topics (with caching)
       getTopics: async () => {
@@ -557,11 +383,12 @@ const useTutorStore = create(
       },
 
       // Create topic
-      createTopic: async (moduleId, topicData) => {
+ 
+      createTopic: async (subjectId, topicData) => {
         set({ loading: true, error: "" })
 
         try {
-          const result = await get().fetchWithAuth(`${API_BASE}/tutor/modules/${moduleId}/topics`, {
+          const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects/${subjectId}/topics`, {
             method: "POST",
             body: JSON.stringify(topicData),
           })
@@ -569,10 +396,8 @@ const useTutorStore = create(
           if (result.success) {
             console.log("✅ Topic created:", result.data)
             
-            // Invalidate caches
             set({ 
               topicsLoaded: false,
-              modulesLoaded: false,
               subjectsLoaded: false
             })
           } else {

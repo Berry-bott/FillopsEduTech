@@ -1,10 +1,19 @@
-// import React, { useState, useEffect } from "react"
+
+
+
+
+
+
+
+
+
+// import React, { useState } from "react"
 // import { Button } from "@/components/ui/button"
 // import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 // import { Input } from "@/components/ui/input"
 // import { Label } from "@/components/ui/label"
 // import { Textarea } from "@/components/ui/textarea"
-// import { Plus, Pencil, Trash2, HelpCircle, CheckCircle2, Search, Loader2, Eye, MoreHorizontal, AlertTriangle, Calendar, Hash, FileText, X } from "lucide-react"
+// import { Plus, Pencil, Trash2, HelpCircle, CheckCircle2, Loader2, Eye, MoreHorizontal, AlertTriangle, FileText, X } from "lucide-react"
 // import { Badge } from "@/components/ui/badge"
 // import { Separator } from "@/components/ui/separator"
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -31,11 +40,10 @@
 // const QUESTION_TYPES = ["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]
 // const CATEGORIES = ["JAMB", "WAEC", "NECO", "NABTEB"]
 
-// export default function QuestionsPanel({ selectedTopic, topicName, moduleName, globalSearch }) {
+// export default function QuestionsPanel({ selectedTopic, topicName, subjectName, questions, globalSearch }) {
 //   const { toast } = useToast()
-//   const { getQuestions, createQuestion, updateQuestion, deleteQuestion, getQuestionById, loading } = useTutorStore()
+//   const { createQuestion, updateQuestion, deleteQuestion, getQuestionById, loading } = useTutorStore()
 
-//   const [questions, setQuestions] = useState([])
 //   const [isDialogOpen, setIsDialogOpen] = useState(false)
 //   const [editingQuestion, setEditingQuestion] = useState(null)
 //   const [formData, setFormData] = useState({
@@ -48,7 +56,6 @@
 //   })
 //   const [options, setOptions] = useState(["", "", "", ""])
 //   const [correctAnswer, setCorrectAnswer] = useState("")
-//   const [localSearch, setLocalSearch] = useState("")
 //   const [isSubmitting, setIsSubmitting] = useState(false)
 //   const [viewingQuestion, setViewingQuestion] = useState(null)
 //   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -56,51 +63,6 @@
 //   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 //   const [questionToDelete, setQuestionToDelete] = useState(null)
 //   const [isDeleting, setIsDeleting] = useState(false)
-
-//   // Fetch questions when topic changes
-//   useEffect(() => {
-//     console.log("🔍 Selected Topic changed:", selectedTopic)
-//     if (selectedTopic) {
-//       fetchQuestions()
-//     } else {
-//       setQuestions([])
-//     }
-//   }, [selectedTopic])
-
-//   const fetchQuestions = async () => {
-//     try {
-//       const result = await getQuestions()
-      
-//       if (result.success) {
-//         const questionsData = result.data.questions || result.data || []
-        
-//         console.log("🔍 All questions fetched:", questionsData)
-//         console.log("🔍 Selected topic ID:", selectedTopic)
-        
-//         // Filter questions by selected topic
-//         const filteredQuestions = questionsData.filter((q) => {
-//           console.log(`Comparing: "${q.topic?.id}" === "${selectedTopic}"`, q.topic?.id === selectedTopic)
-//           return q.topic?.id === selectedTopic
-//         })
-        
-//         console.log("📦 Questions for topic:", { selectedTopic, filteredQuestions })
-//         setQuestions(filteredQuestions)
-//       } else {
-//         toast({
-//           title: "Error",
-//           description: result.message || "Failed to fetch questions",
-//           variant: "destructive",
-//         })
-//       }
-//     } catch (error) {
-//       console.error("Error fetching questions:", error)
-//       toast({
-//         title: "Error",
-//         description: "Failed to load questions",
-//         variant: "destructive",
-//       })
-//     }
-//   }
 
 //   const handleSubmit = async (e) => {
 //     e.preventDefault()
@@ -161,10 +123,9 @@
 //             : "Question created successfully",
 //         })
 
-//         await fetchQuestions()
-
 //         resetForm()
 //         setIsDialogOpen(false)
+//         window.location.reload()
 //       } else {
 //         toast({
 //           title: "Error",
@@ -232,9 +193,9 @@
 //           description: "Question deleted successfully",
 //         })
         
-//         await fetchQuestions()
 //         setDeleteConfirmOpen(false)
 //         setQuestionToDelete(null)
+//         window.location.reload()
 //       } else {
 //         toast({
 //           title: "Deletion Failed",
@@ -304,13 +265,18 @@
 //     setOptions(newOptions)
 //   }
 
-//   const searchTerm = globalSearch || localSearch
-
-//   const filteredQuestions = questions.filter((q) =>
-//     searchTerm === "" || 
-//     q.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//     q.explanation?.toLowerCase().includes(searchTerm.toLowerCase())
-//   )
+//   // Filter questions by search and topic
+//   const filteredQuestions = questions.filter((q) => {
+//     const matchesTopic = !selectedTopic || q.topic?.id === selectedTopic
+    
+//     if (!globalSearch) return matchesTopic
+    
+//     const searchLower = globalSearch.toLowerCase()
+//     const matchesSearch = q.text.toLowerCase().includes(searchLower) ||
+//       q.explanation?.toLowerCase().includes(searchLower)
+    
+//     return matchesSearch && matchesTopic
+//   })
 
 //   if (!selectedTopic) {
 //     return (
@@ -339,26 +305,14 @@
 //           <div>
 //             <h2 className="text-xl font-semibold">{topicName}</h2>
 //             <p className="text-sm text-muted-foreground">
-//               {moduleName ? `${moduleName} • Manage questions` : "Manage questions for this topic"}
+//               {subjectName ? `${subjectName} • Manage questions` : "Manage questions for this topic"}
 //             </p>
 //           </div>
 //         </div>
 //       )}
 
-//       {/* TOP BAR */}
-//       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-//         {/* Search */}
-//         <div className="relative w-full sm:w-[300px]">
-//           <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-//           <Input
-//             placeholder="Search questions..."
-//             className="w-full bg-background pl-9"
-//             value={localSearch}
-//             onChange={(e) => setLocalSearch(e.target.value)}
-//           />
-//         </div>
-
-//         {/* CREATE QUESTION DIALOG */}
+//       {/* TOP BAR - Only add button */}
+//       <div className="flex justify-end">
 //         <Dialog
 //           open={isDialogOpen}
 //           onOpenChange={(open) => {
@@ -369,7 +323,7 @@
 //           }}
 //         >
 //           <DialogTrigger asChild>
-//             <Button className="w-full sm:w-auto">
+//             <Button>
 //               <Plus className="mr-2 size-4" />
 //               New Question
 //             </Button>
@@ -388,18 +342,6 @@
 //               <div className="grid grid-cols-2 gap-4">
 //                 <div className="space-y-2">
 //                   <Label>Type</Label>
-//                   {/* <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-//                     <SelectTrigger>
-//                       <SelectValue />
-//                     </SelectTrigger>
-//                     <SelectContent  position="popper" side="bottom" align="start">
-//                       {QUESTION_TYPES.map((type) => (
-//                         <SelectItem key={type} value={type}>
-//                           {type.replace("_", " ")}
-//                         </SelectItem>
-//                       ))}
-//                     </SelectContent>
-//                   </Select> */}
 //                   <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
 //                     <SelectTrigger>
 //                       <SelectValue />
@@ -416,58 +358,34 @@
 
 //                 <div className="space-y-2">
 //                   <Label>Difficulty</Label>
-//                   {/* <Select value={formData.difficulty} onValueChange={(value) => setFormData({ ...formData, difficulty: value })}>
+//                   <Select value={formData.difficulty} onValueChange={(value) => setFormData({ ...formData, difficulty: value })}>
 //                     <SelectTrigger>
 //                       <SelectValue />
 //                     </SelectTrigger>
-//                     <SelectContent>
+//                     <SelectContent position="popper" sideOffset={5} className="z-[9999]">
 //                       {DIFFICULTY_LEVELS.map((level) => (
 //                         <SelectItem key={level} value={level}>
 //                           {level}
 //                         </SelectItem>
 //                       ))}
 //                     </SelectContent>
-//                   </Select> */}
-//                   <Select value={formData.difficulty} onValueChange={(value) => setFormData({ ...formData, difficulty: value })}>
-//                   <SelectTrigger>
-//                     <SelectValue />
-//                   </SelectTrigger>
-//                   <SelectContent position="popper" sideOffset={5} className="z-[9999]">
-//                     {DIFFICULTY_LEVELS.map((level) => (
-//                       <SelectItem key={level} value={level}>
-//                         {level}
-//                       </SelectItem>
-//                     ))}
-//                   </SelectContent>
-//                 </Select>
+//                   </Select>
 //                 </div>
 
 //                 <div className="space-y-2">
 //                   <Label>Category</Label>
-//                   {/* <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+//                   <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
 //                     <SelectTrigger>
 //                       <SelectValue />
 //                     </SelectTrigger>
-//                     <SelectContent>
+//                     <SelectContent position="popper" sideOffset={5} className="z-[9999]">
 //                       {CATEGORIES.map((cat) => (
 //                         <SelectItem key={cat} value={cat}>
 //                           {cat}
 //                         </SelectItem>
 //                       ))}
 //                     </SelectContent>
-//                   </Select> */}
-//                   <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-//                   <SelectTrigger>
-//                     <SelectValue />
-//                   </SelectTrigger>
-//                   <SelectContent position="popper" sideOffset={5} className="z-[9999]">
-//                     {CATEGORIES.map((cat) => (
-//                       <SelectItem key={cat} value={cat}>
-//                         {cat}
-//                       </SelectItem>
-//                     ))}
-//                   </SelectContent>
-//                 </Select>
+//                   </Select>
 //                 </div>
 
 //                 <div className="space-y-2">
@@ -586,7 +504,7 @@
 //             <CardContent className="flex flex-col items-center justify-center py-12">
 //               <HelpCircle className="size-12 text-muted-foreground/50 mb-4" />
 //               <p className="text-muted-foreground text-center">
-//                 {searchTerm 
+//                 {globalSearch 
 //                   ? "No questions found matching your search" 
 //                   : "No questions found. Create your first question."}
 //               </p>
@@ -724,15 +642,12 @@
 //               <Eye className="size-5" />
 //               Question Details
 //             </DialogTitle>
-//             <DialogDescription>
-//               Complete information about this question
-//             </DialogDescription>
 //           </DialogHeader>
 
 //           {loadingDetails ? (
 //             <div className="flex flex-col items-center justify-center py-12">
 //               <Loader2 className="size-12 text-muted-foreground/50 mb-4 animate-spin" />
-//               <p className="text-muted-foreground text-center">Loading question details...</p>
+//               <p className="text-muted-foreground text-center">Loading details...</p>
 //             </div>
 //           ) : viewingQuestion ? (
 //             <div className="space-y-6 py-4">
@@ -801,42 +716,8 @@
 //                   </div>
 //                 </>
 //               )}
-
-//               <Separator />
-
-//               <div className="space-y-2">
-//                 <h4 className="font-semibold flex items-center gap-2">
-//                   <Calendar className="size-4" />
-//                   Additional Information
-//                 </h4>
-//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-//                   <div className="space-y-1">
-//                     <p className="text-muted-foreground">Question ID</p>
-//                     <p className="font-mono text-xs bg-muted px-2 py-1 rounded">
-//                       {viewingQuestion.id || 'N/A'}
-//                     </p>
-//                   </div>
-//                   {viewingQuestion.createdAt && (
-//                     <div className="space-y-1">
-//                       <p className="text-muted-foreground">Created At</p>
-//                       <p className="font-medium">
-//                         {new Date(viewingQuestion.createdAt).toLocaleDateString('en-US', {
-//                           year: 'numeric',
-//                           month: 'long',
-//                           day: 'numeric'
-//                         })}
-//                       </p>
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
 //             </div>
-//           ) : (
-//             <div className="flex flex-col items-center justify-center py-12">
-//               <AlertTriangle className="size-12 text-muted-foreground/50 mb-4" />
-//               <p className="text-muted-foreground text-center">No question data available</p>
-//             </div>
-//           )}
+//           ) : null}
 
 //           <DialogFooter>
 //             <Button variant="outline" onClick={() => setDetailsOpen(false)}>
@@ -868,9 +749,7 @@
 
 
 
-
-
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -903,9 +782,25 @@ const DIFFICULTY_LEVELS = ["EASY", "MEDIUM", "HARD"]
 const QUESTION_TYPES = ["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]
 const CATEGORIES = ["JAMB", "WAEC", "NECO", "NABTEB"]
 
-export default function QuestionsPanel({ selectedTopic, topicName, subjectName, questions, globalSearch }) {
+export default function QuestionsPanel({ 
+  selectedTopic, 
+  topicName, 
+  subjectName, 
+  globalSearch,
+  examBody,
+  year,
+  color 
+}) {
   const { toast } = useToast()
-  const { createQuestion, updateQuestion, deleteQuestion, getQuestionById, loading } = useTutorStore()
+  const { 
+    createQuestion, 
+    updateQuestion, 
+    deleteQuestion, 
+    getQuestionById,
+    getQuestions,
+    questions: storeQuestions, // ✅ Get questions from Zustand store
+    loading 
+  } = useTutorStore()
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState(null)
@@ -926,6 +821,26 @@ export default function QuestionsPanel({ selectedTopic, topicName, subjectName, 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // ✅ Fetch questions only once - Zustand will cache them
+  useEffect(() => {
+    if (!storeQuestions || storeQuestions.length === 0) {
+      fetchQuestions()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchQuestions = async () => {
+    try {
+      await getQuestions() // ✅ This will update the Zustand store
+    } catch (error) {
+      console.error("Error fetching questions:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load questions",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -988,7 +903,10 @@ export default function QuestionsPanel({ selectedTopic, topicName, subjectName, 
 
         resetForm()
         setIsDialogOpen(false)
-        window.location.reload()
+        
+        // ✅ Invalidate cache to force refresh
+        useTutorStore.setState({ questionsLoaded: false })
+        await fetchQuestions()
       } else {
         toast({
           title: "Error",
@@ -1058,7 +976,10 @@ export default function QuestionsPanel({ selectedTopic, topicName, subjectName, 
         
         setDeleteConfirmOpen(false)
         setQuestionToDelete(null)
-        window.location.reload()
+        
+        // ✅ Invalidate cache to force refresh
+        useTutorStore.setState({ questionsLoaded: false })
+        await fetchQuestions()
       } else {
         toast({
           title: "Deletion Failed",
@@ -1128,17 +1049,42 @@ export default function QuestionsPanel({ selectedTopic, topicName, subjectName, 
     setOptions(newOptions)
   }
 
-  // Filter questions by search and topic
-  const filteredQuestions = questions.filter((q) => {
-    const matchesTopic = !selectedTopic || q.topic?.id === selectedTopic
+  // ✅ Filter questions from Zustand store based on props AND search
+  const filteredQuestions = (storeQuestions || []).filter((q) => {
+    // Topic filter
+    if (selectedTopic && q.topic?.id !== selectedTopic) {
+      return false
+    }
     
-    if (!globalSearch) return matchesTopic
+    // Search filter
+    if (globalSearch) {
+      const searchLower = globalSearch.toLowerCase()
+      const matchesSearch = 
+        q.text.toLowerCase().includes(searchLower) ||
+        q.explanation?.toLowerCase().includes(searchLower)
+      
+      if (!matchesSearch) return false
+    }
     
-    const searchLower = globalSearch.toLowerCase()
-    const matchesSearch = q.text.toLowerCase().includes(searchLower) ||
-      q.explanation?.toLowerCase().includes(searchLower)
+    // Year filter (questions HAVE years)
+    if (year) {
+      const matchesYear = q.year?.toString() === year.toString()
+      if (!matchesYear) return false
+    }
     
-    return matchesSearch && matchesTopic
+    // Category filter
+    if (examBody && examBody !== "all-catigories") {
+      const matchesCategory = q.category?.toLowerCase() === examBody.toLowerCase()
+      if (!matchesCategory) return false
+    }
+    
+    // Color filter (via topic's subject color)
+    if (color && color !== "all") {
+      const matchesColor = q.topic?.subject?.color === color
+      if (!matchesColor) return false
+    }
+    
+    return true
   })
 
   if (!selectedTopic) {

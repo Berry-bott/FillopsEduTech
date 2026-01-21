@@ -4,7 +4,7 @@
 // import { Input } from "@/components/ui/input"
 // import { Label } from "@/components/ui/label"
 // import { Textarea } from "@/components/ui/textarea"
-// import { Plus, MoreVertical, Layers, FileText, Search, Pencil, BookOpen, Filter, Loader2, Trash2, AlertTriangle, Eye, Calendar, User, Hash } from "lucide-react"
+// import { Plus, MoreVertical, FileText, Pencil, BookOpen, Loader2, Trash2, AlertTriangle, Eye, Hash } from "lucide-react"
 // import { Badge } from "@/components/ui/badge"
 // import { Separator } from "@/components/ui/separator"
 // import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -14,14 +14,29 @@
 // import { useToast } from "@/components/ui/use-toast"
 // import useTutorStore from "@/store/tutorStore"
 
-// export default function SubjectsPanel({ onSubjectSelect }) {
-//   // const { toast } = useToast()
+// const categories = ["WAEC", "NECO", "JAMB", "PUTME"]
+// const colorOptions = [
+//   { value: "bg-blue-500", label: "Blue", color: "bg-blue-500" },
+//   { value: "bg-emerald-500", label: "Green", color: "bg-emerald-500" },
+//   { value: "bg-purple-500", label: "Purple", color: "bg-purple-500" },
+//   { value: "bg-amber-500", label: "Amber", color: "bg-amber-500" },
+//   { value: "bg-red-500", label: "Red", color: "bg-red-500" },
+//   { value: "bg-pink-500", label: "Pink", color: "bg-pink-500" },
+// ]
+
+// export default function SubjectsPanel({ 
+//   onSubjectSelect, 
+//   globalSearch,
+//   examBody,
+//   color
+// }) {
+//   const { toast } = useToast()
 //   const { 
 //     createSubject, 
-//     getSubjects, 
 //     getSubjectById,
 //     updateSubject, 
-//     deleteSubject, 
+//     deleteSubject,
+//     getSubjects,
 //     loading 
 //   } = useTutorStore()
   
@@ -35,9 +50,6 @@
 //     category: "",
 //     color: "bg-blue-500" 
 //   })
-//   const [localSearch, setLocalSearch] = useState("")
-//   const [filterCategory, setFilterCategory] = useState("all")
-//   const [filterColor, setFilterColor] = useState("all")
 //   const [isSubmitting, setIsSubmitting] = useState(false)
 //   const [isDeleting, setIsDeleting] = useState(false)
 //   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -46,50 +58,27 @@
 //   const [detailsOpen, setDetailsOpen] = useState(false)
 //   const [loadingDetails, setLoadingDetails] = useState(false)
 
-//   const categories = ["WAEC", "NECO", "JAMB", "PUTME"]
-//   const colorOptions = [
-//     { value: "bg-blue-500", label: "Blue", color: "bg-blue-500" },
-//     { value: "bg-emerald-500", label: "Green", color: "bg-emerald-500" },
-//     { value: "bg-purple-500", label: "Purple", color: "bg-purple-500" },
-//     { value: "bg-amber-500", label: "Amber", color: "bg-amber-500" },
-//     { value: "bg-red-500", label: "Red", color: "bg-red-500" },
-//     { value: "bg-pink-500", label: "Pink", color: "bg-pink-500" },
-//   ]
-
-//   // Fetch subjects on mount
+//   // ✅ Fetch subjects on mount only
 //   useEffect(() => {
-//     loadSubjects()
+//     fetchSubjects()
 //   }, [])
 
-//   const loadSubjects = async () => {
+//   const fetchSubjects = async () => {
 //     try {
+//       useTutorStore.setState({ subjectsLoaded: false })
+      
 //       const result = await getSubjects()
-//       console.log("📦 API Response:", result)
       
 //       if (result.success) {
-//         const subjectsData = Array.isArray(result.data) 
-//           ? result.data 
-//           : result.data?.subjects 
-//           ? result.data.subjects 
-//           : []
-        
-//         console.log("📚 Subjects loaded:", subjectsData)
-//         setSubjects(subjectsData)
-//       } else {
-//         console.warn("⚠️ Failed to load subjects:", result.message)
-//         setSubjects([])
-//         toast({
-//           title: "Error",
-//           description: result.message || "Failed to load subjects",
-//           variant: "destructive",
-//         })
+//         const allSubjects = result.data?.subjects || result.data || []
+//         // ✅ Store ALL subjects without filtering
+//         setSubjects(allSubjects)
 //       }
 //     } catch (error) {
-//       console.error("❌ Error loading subjects:", error)
-//       setSubjects([])
+//       console.error("Error fetching subjects:", error)
 //       toast({
 //         title: "Error",
-//         description: "Failed to load subjects. Please try again.",
+//         description: "Failed to load subjects",
 //         variant: "destructive",
 //       })
 //     }
@@ -113,6 +102,7 @@
 //         subjectCode: formData.subjectCode.trim().toUpperCase(),
 //         description: formData.description.trim(),
 //         category: formData.category,
+//         color: formData.color,
 //       }
 
 //       let result
@@ -126,13 +116,6 @@
 //             title: "Success",
 //             description: "Subject updated successfully",
 //           })
-          
-//           setSubjects(prevSubjects => prevSubjects.map((s) => {
-//             const currentId = s.subjectId || s.id
-//             return currentId === subjectId
-//               ? { ...s, ...apiPayload, ...result.data, color: formData.color }
-//               : s
-//           }))
 //         } else {
 //           toast({
 //             title: "Update Failed",
@@ -148,8 +131,6 @@
 //             title: "Success",
 //             description: "Subject created successfully",
 //           })
-          
-//           await loadSubjects()
 //         } else {
 //           toast({
 //             title: "Creation Failed",
@@ -169,12 +150,14 @@
 //         })
 //         setEditingSubject(null)
 //         setIsDialogOpen(false)
+        
+//         await fetchSubjects()
 //       }
 //     } catch (error) {
 //       console.error("Error submitting subject:", error)
 //       toast({
 //         title: "Error",
-//         description: "An unexpected error occurred. Please try again.",
+//         description: "An unexpected error occurred.",
 //         variant: "destructive",
 //       })
 //     } finally {
@@ -246,28 +229,24 @@
 //         force: true
 //       }
 
-//       console.log("🗑️ Deleting subject:", { subjectId, deletePayload })
-
 //       const result = await deleteSubject(subjectId, deletePayload)
-      
-//       console.log("🗑️ Delete result:", result)
       
 //       if (result.success) {
 //         toast({
 //           title: "Success",
-//           description: `Subject "${subjectName}" and all related data deleted successfully`,
+//           description: `Subject "${subjectName}" deleted successfully`,
 //         })
         
-//         setSubjects(prevSubjects => prevSubjects.filter((s) => (s.subjectId || s.id) !== subjectId))
 //         setDeleteConfirmOpen(false)
 //         setSubjectToDelete(null)
+        
+//         await fetchSubjects()
 //       } else {
 //         toast({
 //           title: "Deletion Failed",
 //           description: result.error || result.message || "Failed to delete subject",
 //           variant: "destructive",
 //         })
-//         console.error("Delete error:", result)
 //       }
 //     } catch (error) {
 //       console.error("Error deleting subject:", error)
@@ -281,19 +260,16 @@
 //     }
 //   }
 
-//   // ✅ THIS IS THE KEY FUNCTION THAT FIXES THE MODULE SELECTION
-//   const handleViewModules = (subject) => {
-//     // Extract the actual string ID, not the whole object
+//   const handleViewTopics = (subject) => {
 //     let subjectId = subject.subjectId || subject.id
     
-//     // If subjectId is still an object, try to get the id property from it
 //     if (typeof subjectId === 'object' && subjectId !== null) {
 //       subjectId = subjectId.id || subjectId.subjectId
 //     }
     
 //     const subjectName = subject.subjectName || subject.name
     
-//     console.log("🔍 Selecting subject for modules:", { subjectId, subjectName })
+//     console.log("🔍 Selecting subject for topics:", { subjectId, subjectName })
     
 //     if (onSubjectSelect) {
 //       onSubjectSelect(subjectId, subjectName)
@@ -314,78 +290,41 @@
 //     }
 //   }
 
-//   const filteredSubjects = Array.isArray(subjects) ? subjects.filter((s) => {
-//     const matchesCategory = filterCategory === "all" || s.category === filterCategory
-//     const matchesColor = filterColor === "all" || s.color === filterColor
-//     const searchLower = localSearch.toLowerCase()
-//     const matchesSearch = localSearch === "" ||
-//       (s.subjectName || s.name || "").toLowerCase().includes(searchLower) ||
-//       (s.subjectCode || s.code || "").toLowerCase().includes(searchLower) ||
-//       (s.description || "").toLowerCase().includes(searchLower)
+//   // ✅ Filter subjects based on props AND search
+//   const filteredSubjects = subjects.filter((s) => {
+//     // Search filter
+//     if (globalSearch) {
+//       const searchLower = globalSearch.toLowerCase()
+//       const matchesSearch = 
+//         (s.subjectName || s.name || "").toLowerCase().includes(searchLower) ||
+//         (s.subjectCode || s.code || "").toLowerCase().includes(searchLower) ||
+//         (s.description || "").toLowerCase().includes(searchLower)
+      
+//       if (!matchesSearch) return false
+//     }
     
-//     return matchesCategory && matchesColor && matchesSearch
-//   }) : []
+//     // Category filter (if examBody is provided and not "all-catigories")
+//     if (examBody && examBody !== "all-catigories") {
+//       const matchesCategory = s.category?.toLowerCase() === examBody.toLowerCase()
+//       if (!matchesCategory) return false
+//     }
+    
+//     // Color filter (if color is provided and not "all")
+//     if (color && color !== "all") {
+//       const matchesColor = s.color === color
+//       if (!matchesColor) return false
+//     }
+    
+//     return true
+//   })
 
 //   return (
 //     <div className="space-y-6">
 //       {/* TOP BAR */}
-//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-//         <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
-//           <div className="relative flex-1 max-w-sm">
-//             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-//             <Input
-//               placeholder="Search subjects..."
-//               className="pl-9 bg-background"
-//               value={localSearch}
-//               onChange={(e) => setLocalSearch(e.target.value)}
-//             />
-//           </div>
-
-//           {/* Category Filter */}
-//           <DropdownMenu>
-//             <DropdownMenuTrigger asChild>
-//               <Button variant="outline" size="icon" className="shrink-0">
-//                 <Filter className="size-4" />
-//               </Button>
-//             </DropdownMenuTrigger>
-//             <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-sm border-border">
-//               <DropdownMenuItem onClick={() => setFilterCategory("all")}>
-//                 All Categories
-//               </DropdownMenuItem>
-//               <Separator className="my-1" />
-//               {categories.map((cat) => (
-//                 <DropdownMenuItem key={cat} onClick={() => setFilterCategory(cat)}>
-//                   {cat}
-//                 </DropdownMenuItem>
-//               ))}
-//             </DropdownMenuContent>
-//           </DropdownMenu>
-
-//           {/* Color Filter */}
-//           <DropdownMenu>
-//             <DropdownMenuTrigger asChild>
-//               <Button variant="outline" size="icon" className="shrink-0">
-//                 <div className={`size-4 rounded-full ${filterColor === "all" ? "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" : filterColor}`} />
-//               </Button>
-//             </DropdownMenuTrigger>
-//             <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-sm border-border">
-//               <DropdownMenuItem onClick={() => setFilterColor("all")}>
-//                 All Colors
-//               </DropdownMenuItem>
-//               <Separator className="my-1" />
-//               {colorOptions.map((option) => (
-//                 <DropdownMenuItem key={option.value} onClick={() => setFilterColor(option.value)}>
-//                   <div className={`size-4 rounded-full ${option.color} mr-2`} />
-//                   {option.label}
-//                 </DropdownMenuItem>
-//               ))}
-//             </DropdownMenuContent>
-//           </DropdownMenu>
-//         </div>
-
+//       <div className="flex justify-end">
 //         <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
 //           <DialogTrigger asChild>
-//             <Button className="w-full sm:w-auto">
+//             <Button>
 //               <Plus className="mr-2 size-4" />
 //               Add Subject
 //             </Button>
@@ -414,9 +353,6 @@
 //                   value={formData.subjectName}
 //                   onChange={(e) => setFormData({ ...formData, subjectName: e.target.value })}
 //                 />
-//                 <p className="text-xs text-muted-foreground">
-//                   The full name of the subject
-//                 </p>
 //               </div>
 
 //               <div className="grid gap-2">
@@ -430,9 +366,6 @@
 //                   onChange={(e) => setFormData({ ...formData, subjectCode: e.target.value.toUpperCase() })}
 //                   maxLength={10}
 //                 />
-//                 <p className="text-xs text-muted-foreground">
-//                   A short code or abbreviation (max 10 characters)
-//                 </p>
 //               </div>
 
 //               <div className="grid gap-2">
@@ -441,35 +374,17 @@
 //                 </Label>
 //                 <Textarea
 //                   id="description"
-//                   placeholder="e.g., Teaches about the various arms of government and its nuances"
+//                   placeholder="Brief description of the subject"
 //                   value={formData.description}
 //                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
 //                   rows={3}
 //                 />
-//                 <p className="text-xs text-muted-foreground">
-//                   A brief description of what this subject covers
-//                 </p>
 //               </div>
 
 //               <div className="grid gap-2">
 //                 <Label htmlFor="category">
 //                   Category <span className="text-red-500">*</span>
 //                 </Label>
-//                 {/* <Select 
-//                   value={formData.category} 
-//                   onValueChange={(value) => setFormData({ ...formData, category: value })}
-//                 >
-//                   <SelectTrigger id="category" className="w-full">
-//                     <SelectValue placeholder="Select exam category" />
-//                   </SelectTrigger>
-//                   <SelectContent position="popper" sideOffset={5}>
-//                     {categories.map((cat) => (
-//                       <SelectItem key={cat} value={cat}>
-//                         {cat}
-//                       </SelectItem>
-//                     ))}
-//                   </SelectContent>
-//                 </Select> */}
 //                 <Select 
 //                   value={formData.category} 
 //                   onValueChange={(value) => setFormData({ ...formData, category: value })}
@@ -485,9 +400,6 @@
 //                     ))}
 //                   </SelectContent>
 //                 </Select>
-//                 <p className="text-xs text-muted-foreground">
-//                   The exam body this subject belongs to
-//                 </p>
 //               </div>
 
 //               <div className="grid gap-2">
@@ -514,9 +426,6 @@
 //                     </button>
 //                   ))}
 //                 </div>
-//                 <p className="text-xs text-muted-foreground">
-//                   Choose a color to identify this subject (visual only)
-//                 </p>
 //               </div>
 //             </div>
 
@@ -540,43 +449,6 @@
 //           </DialogContent>
 //         </Dialog>
 //       </div>
-
-//       {/* Active Filters Display */}
-//       {(filterCategory !== "all" || filterColor !== "all" || localSearch) && (
-//         <div className="flex flex-wrap gap-2 items-center">
-//           <span className="text-sm text-muted-foreground">Active filters:</span>
-//           {filterCategory !== "all" && (
-//             <Badge variant="secondary" className="gap-1">
-//               Category: {filterCategory}
-//               <button onClick={() => setFilterCategory("all")} className="ml-1 hover:text-destructive">×</button>
-//             </Badge>
-//           )}
-//           {filterColor !== "all" && (
-//             <Badge variant="secondary" className="gap-1">
-//               <div className={`size-3 rounded-full ${filterColor}`} />
-//               Color Filter
-//               <button onClick={() => setFilterColor("all")} className="ml-1 hover:text-destructive">×</button>
-//             </Badge>
-//           )}
-//           {localSearch && (
-//             <Badge variant="secondary" className="gap-1">
-//               Search: "{localSearch}"
-//               <button onClick={() => setLocalSearch("")} className="ml-1 hover:text-destructive">×</button>
-//             </Badge>
-//           )}
-//           <Button 
-//             variant="ghost" 
-//             size="sm" 
-//             onClick={() => {
-//               setFilterCategory("all")
-//               setFilterColor("all")
-//               setLocalSearch("")
-//             }}
-//           >
-//             Clear all
-//           </Button>
-//         </div>
-//       )}
 
 //       {/* SUBJECT CARDS */}
 //       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -615,10 +487,9 @@
 //                       </Button>
 //                     </DropdownMenuTrigger>
 //                     <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-sm border-border">
-//                       {/* ✅ FIXED: Now properly calls handleViewModules */}
-//                       <DropdownMenuItem onClick={() => handleViewModules(subject)}>
-//                         <Layers className="size-4 mr-2" />
-//                         View Modules
+//                       <DropdownMenuItem onClick={() => handleViewTopics(subject)}>
+//                         <FileText className="size-4 mr-2" />
+//                         View Topics
 //                       </DropdownMenuItem>
 //                       <Separator className="my-1" />
 //                       <DropdownMenuItem onClick={() => handleViewDetails(subject)}>
@@ -645,18 +516,18 @@
 //                 <div className="grid grid-cols-2 gap-3 text-sm">
 //                   <div className="flex flex-col gap-1">
 //                     <span className="text-muted-foreground flex items-center gap-1 text-xs">
-//                       <Layers className="size-3" /> Create Modules
+//                       <FileText className="size-3" /> Topics
 //                     </span>
 //                     <span className="font-semibold">
-//                       {subject._count?.module || subject.modules || 0}
+//                       {subject._count?.topic || subject.topics || 0}
 //                     </span>
 //                   </div>
 //                   <div className="flex flex-col gap-1">
 //                     <span className="text-muted-foreground flex items-center gap-1 text-xs">
-//                       <FileText className="size-3" /> Topics
+//                       <Hash className="size-3" /> Questions
 //                     </span>
 //                     <span className="font-semibold">
-//                       {subject.topicCount || subject.topics || 0}
+//                       {subject.questionCount || subject.questions || 0}
 //                     </span>
 //                   </div>
 //                 </div>
@@ -669,21 +540,21 @@
 //                 )}
 //               </CardContent>
 //               <Separator />
-//               <CardFooter className="bg-secondary/30 py-2 flex justify-between items-center">
+//               <CardFooter className="bg-primary text-white py-2 flex justify-between items-center flex-col">
+//                <Button
+//                   size="sm"
+//                   variant="ghost"
+//                   className="h-7 w-42 text-xs "
+//                   onClick={() => handleViewTopics(subject)}
+//                 >
+//                   <FileText className="size-3 mr-1" />
+//                   Create Topics
+//                 </Button>
+               
+//               </CardFooter>
 //                 <div className="text-xs text-muted-foreground">
 //                   Created by you
 //                 </div>
-//                 {/* ✅ FIXED: Footer button also calls handleViewModules */}
-//                 <Button
-//                   size="sm"
-//                   variant="ghost"
-//                   className="h-7 text-xs"
-//                   onClick={() => handleViewModules(subject)}
-//                 >
-//                   <Layers className="size-3 mr-1" />
-//                   Create Modules
-//                 </Button>
-//               </CardFooter>
 //             </Card>
 //           )
 //         })}
@@ -695,29 +566,16 @@
 //           <CardContent className="flex flex-col items-center justify-center py-12">
 //             <BookOpen className="size-12 text-muted-foreground/50 mb-4" />
 //             <p className="text-muted-foreground text-center max-w-md">
-//               {localSearch || filterCategory !== "all" || filterColor !== "all"
-//                 ? "No subjects match your search criteria. Try adjusting your filters."
-//                 : "No subjects found. Create your first subject to get started."}
+//               {globalSearch
+//                 ? "No subjects match your search criteria."
+//                 : "No subjects found for the selected filters."}
 //             </p>
-//             {(localSearch || filterCategory !== "all" || filterColor !== "all") && (
-//               <Button 
-//                 variant="outline" 
-//                 className="mt-4"
-//                 onClick={() => {
-//                   setLocalSearch("")
-//                   setFilterCategory("all")
-//                   setFilterColor("all")
-//                 }}
-//               >
-//                 Clear Filters
-//               </Button>
-//             )}
 //           </CardContent>
 //         </Card>
 //       )}
 
 //       {/* LOADING STATE */}
-//       {loading && subjects.length === 0 && (
+//       {loading && (
 //         <Card>
 //           <CardContent className="flex flex-col items-center justify-center py-12">
 //             <Loader2 className="size-12 text-muted-foreground/50 mb-4 animate-spin" />
@@ -734,28 +592,9 @@
 //               <AlertTriangle className="size-5 text-destructive" />
 //               Delete Subject
 //             </AlertDialogTitle>
-//             <AlertDialogDescription className="space-y-3">
-//               <p>
-//                 Are you sure you want to delete{" "}
-//                 <span className="font-semibold text-foreground">
-//                   {subjectToDelete?.subjectName || subjectToDelete?.name}
-//                 </span>
-//                 ?
-//               </p>
-//               <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 space-y-2">
-//                 <p className="text-destructive font-medium text-sm">
-//                   ⚠️ This will permanently delete:
-//                 </p>
-//                 <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-//               <li>• {subjectToDelete?._count?.module || 0} modules</li>
-//               <li>• {subjectToDelete?._count?.topic || 0} topics</li>
-//               <li>• All associated questions and quizzes</li>
-//               <li>• All student progress data</li>
-//             </ul>
-//               </div>
-//               <p className="text-xs text-muted-foreground">
-//                 This action cannot be undone.
-//               </p>
+//             <AlertDialogDescription>
+//               Are you sure you want to delete <strong>{subjectToDelete?.subjectName || subjectToDelete?.name}</strong>? 
+//               This action cannot be undone and will also delete all associated topics and questions.
 //             </AlertDialogDescription>
 //           </AlertDialogHeader>
 //           <AlertDialogFooter>
@@ -766,177 +605,82 @@
 //               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 //             >
 //               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-//               Delete Subject
+//               Delete
 //             </AlertDialogAction>
 //           </AlertDialogFooter>
 //         </AlertDialogContent>
 //       </AlertDialog>
 
-//       {/* VIEW DETAILS DIALOG */}
+//       {/* SUBJECT DETAILS DIALOG */}
 //       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-//         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+//         <DialogContent className="max-w-2xl">
 //           <DialogHeader>
-//             <DialogTitle className="flex items-center gap-2">
-//               <Eye className="size-5" />
-//               Subject Details
-//             </DialogTitle>
-//             <DialogDescription>
-//               Complete information about this subject
-//             </DialogDescription>
+//             <DialogTitle>Subject Details</DialogTitle>
 //           </DialogHeader>
-
+          
 //           {loadingDetails ? (
-//             <div className="flex flex-col items-center justify-center py-12">
-//               <Loader2 className="size-12 text-muted-foreground/50 mb-4 animate-spin" />
-//               <p className="text-muted-foreground text-center">Loading subject details...</p>
+//             <div className="flex items-center justify-center py-8">
+//               <Loader2 className="size-8 animate-spin text-muted-foreground" />
 //             </div>
 //           ) : viewingSubject ? (
-//             <div className="space-y-6 py-4">
-//               <div className="flex items-start gap-4">
-//                 <div className={`w-16 h-16 rounded-lg ${viewingSubject.color || 'bg-blue-500'} flex items-center justify-center text-white font-bold text-xl`}>
-//                   {(viewingSubject.subjectCode || viewingSubject.code || '??').substring(0, 3)}
+//             <div className="space-y-4">
+//               <div className={`h-2 w-full rounded-t-lg ${viewingSubject.color || 'bg-blue-500'}`} />
+              
+//               <div className="grid gap-4">
+//                 <div>
+//                   <Label className="text-muted-foreground">Subject Name</Label>
+//                   <p className="text-lg font-semibold">{viewingSubject.subjectName || viewingSubject.name}</p>
 //                 </div>
-//                 <div className="flex-1">
-//                   <h3 className="text-2xl font-bold">{viewingSubject.subjectName || viewingSubject.name}</h3>
-//                   <div className="flex items-center gap-2 mt-2">
-//                     <Badge variant="secondary" className="font-mono">
-//                       {viewingSubject.subjectCode || viewingSubject.code}
-//                     </Badge>
-//                     {viewingSubject.category && (
-//                       <Badge variant="outline">{viewingSubject.category}</Badge>
-//                     )}
-//                   </div>
+                
+//                 <div>
+//                   <Label className="text-muted-foreground">Subject Code</Label>
+//                   <Badge variant="secondary" className="font-mono mt-1">
+//                     {viewingSubject.subjectCode || viewingSubject.code}
+//                   </Badge>
 //                 </div>
-//               </div>
-
-//               <Separator />
-
-//               <div className="space-y-2">
-//                 <h4 className="font-semibold flex items-center gap-2">
-//                   <FileText className="size-4" />
-//                   Description
-//                 </h4>
-//                 <p className="text-muted-foreground">
-//                   {viewingSubject.description || 'No description provided'}
-//                 </p>
-//               </div>
-
-//               <Separator />
-
-//               <div className="space-y-2">
-//                 <h4 className="font-semibold flex items-center gap-2">
-//                   <Hash className="size-4" />
-//                   Statistics
-//                 </h4>
-//                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-//                   <Card>
-//                     <CardContent className="pt-6">
-//                       <div className="text-center">
-//                         <Layers className="size-8 mx-auto mb-2 text-blue-500" />
-//                         <p className="text-2xl font-bold">{viewingSubject._count?.module || viewingSubject.modules || 0}</p>
-//                         <p className="text-xs text-muted-foreground">Modules</p>
-//                       </div>
-//                     </CardContent>
-//                   </Card>
-//                   <Card>
-//                     <CardContent className="pt-6">
-//                       <div className="text-center">
-//                         <FileText className="size-8 mx-auto mb-2 text-green-500" />
-//                         <p className="text-2xl font-bold">{viewingSubject.topicCount || viewingSubject.topics || 0}</p>
-//                         <p className="text-xs text-muted-foreground">Topics</p>
-//                       </div>
-//                     </CardContent>
-//                   </Card>
-//                   <Card>
-//                     <CardContent className="pt-6">
-//                       <div className="text-center">
-//                         <BookOpen className="size-8 mx-auto mb-2 text-purple-500" />
-//                         <p className="text-2xl font-bold">{viewingSubject.questionCount || viewingSubject.questions || 0}</p>
-//                         <p className="text-xs text-muted-foreground">Questions</p>
-//                       </div>
-//                     </CardContent>
-//                   </Card>
-//                   <Card>
-//                     <CardContent className="pt-6">
-//                       <div className="text-center">
-//                         <User className="size-8 mx-auto mb-2 text-amber-500" />
-//                         <p className="text-2xl font-bold">{viewingSubject.enrolledCount || viewingSubject.enrolled || 0}</p>
-//                         <p className="text-xs text-muted-foreground">Students</p>
-//                       </div>
-//                     </CardContent>
-//                   </Card>
+                
+//                 <div>
+//                   <Label className="text-muted-foreground">Description</Label>
+//                   <p className="text-sm mt-1">{viewingSubject.description || "No description provided"}</p>
 //                 </div>
-//               </div>
-
-//               <Separator />
-
-//               <div className="space-y-2">
-//                 <h4 className="font-semibold flex items-center gap-2">
-//                   <Calendar className="size-4" />
-//                   Additional Information
-//                 </h4>
-//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-//                   <div className="space-y-1">
-//                     <p className="text-muted-foreground">Subject ID</p>
-//                     <p className="font-mono text-xs bg-muted px-2 py-1 rounded">
-//                       {viewingSubject.subjectId || viewingSubject.id || 'N/A'}
+                
+//                 <div>
+//                   <Label className="text-muted-foreground">Category</Label>
+//                   <Badge variant="outline" className="mt-1">
+//                     {viewingSubject.category}
+//                   </Badge>
+//                 </div>
+                
+//                 <Separator />
+                
+//                 <div className="grid grid-cols-3 gap-4 text-center">
+//                   <div>
+//                     <Label className="text-muted-foreground">Topics</Label>
+//                     <p className="text-2xl font-bold mt-1">
+//                       {viewingSubject._count?.topic || viewingSubject.topics || 0}
 //                     </p>
 //                   </div>
-//                   {viewingSubject.createdAt && (
-//                     <div className="space-y-1">
-//                       <p className="text-muted-foreground">Created At</p>
-//                       <p className="font-medium">
-//                         {new Date(viewingSubject.createdAt).toLocaleDateString('en-US', {
-//                           year: 'numeric',
-//                           month: 'long',
-//                           day: 'numeric'
-//                         })}
-//                       </p>
-//                     </div>
-//                   )}
-//                   {viewingSubject.updatedAt && (
-//                     <div className="space-y-1">
-//                       <p className="text-muted-foreground">Last Updated</p>
-//                       <p className="font-medium">
-//                         {new Date(viewingSubject.updatedAt).toLocaleDateString('en-US', {
-//                           year: 'numeric',
-//                           month: 'long',
-//                           day: 'numeric'
-//                         })}
-//                       </p>
-//                     </div>
-//                   )}
-//                   {viewingSubject.tutorId && (
-//                     <div className="space-y-1">
-//                       <p className="text-muted-foreground">Tutor ID</p>
-//                       <p className="font-mono text-xs bg-muted px-2 py-1 rounded">
-//                         {viewingSubject.tutorId}
-//                       </p>
-//                     </div>
-//                   )}
+//                   <div>
+//                     <Label className="text-muted-foreground">Questions</Label>
+//                     <p className="text-2xl font-bold mt-1">
+//                       {viewingSubject.questionCount || viewingSubject.questions || 0}
+//                     </p>
+//                   </div>
+//                   <div>
+//                     <Label className="text-muted-foreground">Students</Label>
+//                     <p className="text-2xl font-bold mt-1">
+//                       {viewingSubject._count?.userProgress || 0}
+//                     </p>
+//                   </div>
 //                 </div>
 //               </div>
 //             </div>
-//           ) : (
-//             <div className="flex flex-col items-center justify-center py-12">
-//               <AlertTriangle className="size-12 text-muted-foreground/50 mb-4" />
-//               <p className="text-muted-foreground text-center">No subject data available</p>
-//             </div>
-//           )}
-
+//           ) : null}
+          
 //           <DialogFooter>
 //             <Button variant="outline" onClick={() => setDetailsOpen(false)}>
 //               Close
 //             </Button>
-//             {viewingSubject && (
-//               <Button onClick={() => {
-//                 setDetailsOpen(false)
-//                 handleEdit(viewingSubject)
-//               }}>
-//                 <Pencil className="size-4 mr-2" />
-//                 Edit Subject
-//               </Button>
-//             )}
 //           </DialogFooter>
 //         </DialogContent>
 //       </Dialog>
@@ -948,7 +692,15 @@
 
 
 
-import React, { useState } from "react"
+
+
+
+
+
+
+
+
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -974,13 +726,21 @@ const colorOptions = [
   { value: "bg-pink-500", label: "Pink", color: "bg-pink-500" },
 ]
 
-export default function SubjectsPanel({ onSubjectSelect, subjects, globalSearch }) {
+export default function SubjectsPanel({ 
+  onSubjectSelect, 
+  globalSearch,
+  examBody,
+  year,
+  color
+}) {
   const { toast } = useToast()
   const { 
     createSubject, 
     getSubjectById,
     updateSubject, 
-    deleteSubject, 
+    deleteSubject,
+    getSubjects,
+    subjects: storeSubjects, // ✅ Get subjects from Zustand store
     loading 
   } = useTutorStore()
   
@@ -1000,6 +760,26 @@ export default function SubjectsPanel({ onSubjectSelect, subjects, globalSearch 
   const [viewingSubject, setViewingSubject] = useState(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [loadingDetails, setLoadingDetails] = useState(false)
+
+  // ✅ Fetch subjects only once - Zustand will cache them
+  useEffect(() => {
+    if (!storeSubjects || storeSubjects.length === 0) {
+      fetchSubjects()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchSubjects = async () => {
+    try {
+      await getSubjects() // ✅ This will update the Zustand store
+    } catch (error) {
+      console.error("Error fetching subjects:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load subjects",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleSubmit = async () => {
     if (!formData.subjectName || !formData.subjectCode || !formData.description || !formData.category) {
@@ -1067,7 +847,10 @@ export default function SubjectsPanel({ onSubjectSelect, subjects, globalSearch 
         })
         setEditingSubject(null)
         setIsDialogOpen(false)
-        window.location.reload()
+        
+        // ✅ Invalidate cache to force refresh
+        useTutorStore.setState({ subjectsLoaded: false })
+        await fetchSubjects()
       }
     } catch (error) {
       console.error("Error submitting subject:", error)
@@ -1155,7 +938,10 @@ export default function SubjectsPanel({ onSubjectSelect, subjects, globalSearch 
         
         setDeleteConfirmOpen(false)
         setSubjectToDelete(null)
-        window.location.reload()
+        
+        // ✅ Invalidate cache to force refresh
+        useTutorStore.setState({ subjectsLoaded: false })
+        await fetchSubjects()
       } else {
         toast({
           title: "Deletion Failed",
@@ -1205,18 +991,37 @@ export default function SubjectsPanel({ onSubjectSelect, subjects, globalSearch 
     }
   }
 
-  // Filter subjects by search only (parent already filtered by exam body, year, and color)
-  const filteredSubjects = Array.isArray(subjects) ? subjects.filter((s) => {
-    if (!globalSearch) return true
-    const searchLower = globalSearch.toLowerCase()
-    return (s.subjectName || s.name || "").toLowerCase().includes(searchLower) ||
-      (s.subjectCode || s.code || "").toLowerCase().includes(searchLower) ||
-      (s.description || "").toLowerCase().includes(searchLower)
-  }) : []
+  // ✅ Filter subjects from Zustand store based on props AND search
+  const filteredSubjects = (storeSubjects || []).filter((s) => {
+    // Search filter
+    if (globalSearch) {
+      const searchLower = globalSearch.toLowerCase()
+      const matchesSearch = 
+        (s.subjectName || s.name || "").toLowerCase().includes(searchLower) ||
+        (s.subjectCode || s.code || "").toLowerCase().includes(searchLower) ||
+        (s.description || "").toLowerCase().includes(searchLower)
+      
+      if (!matchesSearch) return false
+    }
+    
+    // Category filter (if examBody is provided and not "all-catigories")
+    if (examBody && examBody !== "all-catigories") {
+      const matchesCategory = s.category?.toLowerCase() === examBody.toLowerCase()
+      if (!matchesCategory) return false
+    }
+    
+    // Color filter (if color is provided and not "all")
+    if (color && color !== "all") {
+      const matchesColor = s.color === color
+      if (!matchesColor) return false
+    }
+    
+    return true
+  })
 
   return (
     <div className="space-y-6">
-      {/* TOP BAR - Only add button */}
+      {/* TOP BAR */}
       <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogTrigger asChild>
@@ -1436,20 +1241,21 @@ export default function SubjectsPanel({ onSubjectSelect, subjects, globalSearch 
                 )}
               </CardContent>
               <Separator />
-              <CardFooter className="bg-secondary/30 py-2 flex justify-between items-center">
-                <div className="text-xs text-muted-foreground">
-                  Created by you
-                </div>
+              <CardFooter className=" text-white py-2 flex justify-between items-center">
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="h-7 text-xs"
+                  variant=""
+                  className="h-7 w-64 py-6 text-xs text-white hover:bg-primary-hover hover:text-white"
                   onClick={() => handleViewTopics(subject)}
                 >
                   <FileText className="size-3 mr-1" />
-                  View Topics
+                  Create Topics
                 </Button>
+ 
               </CardFooter>
+              <div className="text-xs">
+                  Created by you
+                </div>
             </Card>
           )
         })}
@@ -1487,27 +1293,9 @@ export default function SubjectsPanel({ onSubjectSelect, subjects, globalSearch 
               <AlertTriangle className="size-5 text-destructive" />
               Delete Subject
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-foreground">
-                  {subjectToDelete?.subjectName || subjectToDelete?.name}
-                </span>
-                ?
-              </p>
-              <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 space-y-2">
-                <p className="text-destructive font-medium text-sm">
-                  ⚠️ This will permanently delete:
-                </p>
-                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                  <li>• All topics under this subject</li>
-                  <li>• All associated questions</li>
-                  <li>• All student progress data</li>
-                </ul>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                This action cannot be undone.
-              </p>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{subjectToDelete?.subjectName || subjectToDelete?.name}</strong>? 
+              This action cannot be undone and will also delete all associated topics and questions.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1518,96 +1306,82 @@ export default function SubjectsPanel({ onSubjectSelect, subjects, globalSearch 
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete Subject
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* VIEW DETAILS DIALOG */}
+      {/* SUBJECT DETAILS DIALOG */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="size-5" />
-              Subject Details
-            </DialogTitle>
+            <DialogTitle>Subject Details</DialogTitle>
           </DialogHeader>
-
+          
           {loadingDetails ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="size-12 text-muted-foreground/50 mb-4 animate-spin" />
-              <p className="text-muted-foreground text-center">Loading details...</p>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
           ) : viewingSubject ? (
-            <div className="space-y-6 py-4">
-              <div className="flex items-start gap-4">
-                <div className={`w-16 h-16 rounded-lg ${viewingSubject.color || 'bg-blue-500'} flex items-center justify-center text-white font-bold text-xl`}>
-                  {(viewingSubject.subjectCode || viewingSubject.code || '??').substring(0, 3)}
+            <div className="space-y-4">
+              <div className={`h-2 w-full rounded-t-lg ${viewingSubject.color || 'bg-blue-500'}`} />
+              
+              <div className="grid gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Subject Name</Label>
+                  <p className="text-lg font-semibold">{viewingSubject.subjectName || viewingSubject.name}</p>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold">{viewingSubject.subjectName || viewingSubject.name}</h3>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="secondary" className="font-mono">
-                      {viewingSubject.subjectCode || viewingSubject.code}
-                    </Badge>
-                    {viewingSubject.category && (
-                      <Badge variant="outline">{viewingSubject.category}</Badge>
-                    )}
+                
+                <div>
+                  <Label className="text-muted-foreground">Subject Code</Label>
+                  <Badge variant="secondary" className="font-mono mt-1">
+                    {viewingSubject.subjectCode || viewingSubject.code}
+                  </Badge>
+                </div>
+                
+                <div>
+                  <Label className="text-muted-foreground">Description</Label>
+                  <p className="text-sm mt-1">{viewingSubject.description || "No description provided"}</p>
+                </div>
+                
+                <div>
+                  <Label className="text-muted-foreground">Category</Label>
+                  <Badge variant="outline" className="mt-1">
+                    {viewingSubject.category}
+                  </Badge>
+                </div>
+                
+                <Separator />
+                
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <Label className="text-muted-foreground">Topics</Label>
+                    <p className="text-2xl font-bold mt-1">
+                      {viewingSubject._count?.topic || viewingSubject.topics || 0}
+                    </p>
                   </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <h4 className="font-semibold">Description</h4>
-                <p className="text-muted-foreground">
-                  {viewingSubject.description || 'No description provided'}
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <h4 className="font-semibold">Statistics</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <FileText className="size-8 mx-auto mb-2 text-green-500" />
-                        <p className="text-2xl font-bold">{viewingSubject._count?.topic || 0}</p>
-                        <p className="text-xs text-muted-foreground">Topics</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <Hash className="size-8 mx-auto mb-2 text-purple-500" />
-                        <p className="text-2xl font-bold">{viewingSubject.questionCount || 0}</p>
-                        <p className="text-xs text-muted-foreground">Questions</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div>
+                    <Label className="text-muted-foreground">Questions</Label>
+                    <p className="text-2xl font-bold mt-1">
+                      {viewingSubject.questionCount || viewingSubject.questions || 0}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Students</Label>
+                    <p className="text-2xl font-bold mt-1">
+                      {viewingSubject._count?.userProgress || 0}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           ) : null}
-
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => setDetailsOpen(false)}>
               Close
             </Button>
-            {viewingSubject && (
-              <Button onClick={() => {
-                setDetailsOpen(false)
-                handleEdit(viewingSubject)
-              }}>
-                <Pencil className="size-4 mr-2" />
-                Edit Subject
-              </Button>
-            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

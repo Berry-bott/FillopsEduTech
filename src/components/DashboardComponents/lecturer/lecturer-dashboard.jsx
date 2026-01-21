@@ -15,7 +15,6 @@
 // import {
 //   LayoutDashboard,
 //   BookOpen,
-//   FolderOpen,
 //   FileText,
 //   HelpCircle,
 //   Users,
@@ -24,14 +23,13 @@
 //   Bell,
 //   Menu,
 //   X,
-//   Loader2
+//   Loader2,
+//   Plus
 // } from "lucide-react"
 
 // import { ThemeToggle } from "../../DashboardComponents/theme-toggle"
 // import SubjectsPanel from "@/components/DashboardComponents/lecturer/subjects-panel"
-// import ModulesPanel from "@/components/DashboardComponents/lecturer/modules-panel"
 // import TopicsPanel from "@/components/DashboardComponents/lecturer/topics-panel"
-// // import AllTopicsPanel  from "@/components/DashboardComponents/lecturer/topics-panel"
 // import QuestionsPanel from "@/components/DashboardComponents/lecturer/questions-panel"
 // import SettingsPage from "@/pages/lecturer/SettingsPage"
 // import DashboardOverview from "@/components/DashboardComponents/lecturer/DashboardOverview"
@@ -40,10 +38,21 @@
 // import useTutorStore from "@/store/tutorStore"
 
 // const EXAM_BODIES = [
+//   { id: "all-catigories", label: "AllCategories", color: "bg-pink-500/10 text-blue-600 dark:text-blue-400" },
 //   { id: "jamb", label: "JAMB", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
 //   { id: "waec", label: "WAEC", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
 //   { id: "neco", label: "NECO", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
 //   { id: "putme", label: "Post-UTME", color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+// ]
+
+// const COLOR_OPTIONS = [
+//   { value: "all", label: "AllColors", color: "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" },
+//   { value: "bg-blue-500", label: "Blue", color: "bg-blue-500" },
+//   { value: "bg-emerald-500", label: "Green", color: "bg-emerald-500" },
+//   { value: "bg-purple-500", label: "Purple", color: "bg-purple-500" },
+//   { value: "bg-amber-500", label: "Amber", color: "bg-amber-500" },
+//   { value: "bg-red-500", label: "Red", color: "bg-red-500" },
+//   { value: "bg-pink-500", label: "Pink", color: "bg-pink-500" },
 // ]
 
 // export default function LecturerDashboard() {
@@ -59,44 +68,30 @@
 //   // Tutor Store
 //   const {
 //     fetchDashboard,
-//     getSubjects,
-//     getModules,
-//     getTopics,
-//     getQuestions,
 //     dashboardData,
 //   } = useTutorStore()
 
 //   // State
 //   const [activeTab, setActiveTab] = useState("overview")
-//   const [selectedExamBody, setSelectedExamBody] = useState("jamb")
+//   const [selectedExamBody, setSelectedExamBody] = useState("all-catigories") // ✅ Default to "all-catigories"
 //   const [selectedYear, setSelectedYear] = useState("")
+//   const [selectedColor, setSelectedColor] = useState("all")
 //   const [availableYears, setAvailableYears] = useState([])
 //   const [loadingYears, setLoadingYears] = useState(true)
-//   const [loadingData, setLoadingData] = useState(false)
 //   const [globalSearch, setGlobalSearch] = useState("")
 //   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-//   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
 
-//   const [subjects, setSubjects] = useState([])
-//   const [modules, setModules] = useState([])
-//   const [topics, setTopics] = useState([])
-//   const [questions, setQuestions] = useState([])
-
-//   // ✅ NEW: State for selected subject (for modules panel)
+//   // State for selected subject (for topics panel)
 //   const [selectedSubjectId, setSelectedSubjectId] = useState(null)
 //   const [selectedSubjectName, setSelectedSubjectName] = useState("")
 
-//     // ✅ NEW: State for selected module (for topics panel)
-//   const [selectedModuleId, setSelectedModuleId] = useState(null)
-//   const [selectedModuleName, setSelectedModuleName] = useState("")
-
+//   // State for selected topic (for questions panel)
 //   const [selectedTopicId, setSelectedTopicId] = useState(null)
-// const [selectedTopicName, setSelectedTopicName] = useState("")
+//   const [selectedTopicName, setSelectedTopicName] = useState("")
 
 //   const navItems = [
 //     { id: "overview", label: "Overview", icon: LayoutDashboard },
 //     { id: "subjects", label: "Subjects", icon: BookOpen },
-//     { id: "modules", label: "Modules", icon: FolderOpen },
 //     { id: "topics", label: "Topics", icon: FileText },
 //     { id: "questions", label: "Questions Bank", icon: HelpCircle },
 //     { id: "students", label: "Students", icon: Users },
@@ -132,76 +127,21 @@
 //     initDashboard()
 //   }, [tutor, fetchDashboard, toast])
 
-//   // Fetch content
-//   const fetchContent = async () => {
-//     if (!selectedExamBody || !selectedYear) return
-//     try {
-//       setLoadingData(true)
-
-//       const [subsRes, modsRes, topicsRes, quesRes] = await Promise.all([
-//         getSubjects(),
-//         getModules(),
-//         getTopics(),
-//         getQuestions({ category: selectedExamBody.toUpperCase(), year: selectedYear })
-//       ])
-
-//       const safeSubjects = Array.isArray(subsRes?.data)
-//         ? subsRes.data
-//         : Array.isArray(subsRes?.data?.subjects)
-//           ? subsRes.data.subjects
-//           : []
-
-//       setSubjects(
-//         safeSubjects.filter(
-//           s =>
-//             s.category?.toLowerCase() === selectedExamBody &&
-//             s.year === selectedYear
-//         )
-//       )
-
-//       if (modsRes?.success)
-//         setModules(Array.isArray(modsRes.data) ? modsRes.data : [])
-
-//       if (topicsRes?.success)
-//         setTopics(Array.isArray(topicsRes.data) ? topicsRes.data : [])
-
-//       if (quesRes?.success)
-//         setQuestions(Array.isArray(quesRes.data) ? quesRes.data : [])
-
-//     } catch (error) {
-//       console.error(error)
-//       toast({ title: "Error", description: "Failed to load content data", variant: "destructive" })
-//     } finally {
-//       setLoadingData(false)
-//     }
-//   }
-
-//   useEffect(() => { fetchContent() }, [selectedExamBody, selectedYear])
-
-//   const refreshData = fetchContent
-
-//   // ✅ NEW: Handler for when a subject is selected from SubjectsPanel
+//   // Handler for when a subject is selected from SubjectsPanel
 //   const handleSubjectSelect = (subjectId, subjectName) => {
 //     console.log("📌 Subject selected:", { subjectId, subjectName })
 //     setSelectedSubjectId(subjectId)
 //     setSelectedSubjectName(subjectName)
-//     setActiveTab("modules") // Switch to modules tab
-//   }
-
-//   // ✅ NEW: Handler for when a module is selected from ModulesPanel
-//   const handleModuleSelect = (moduleId, moduleName, subjectName) => {
-//     console.log("📌 Module selected for topics:", { moduleId, moduleName, subjectName })
-//     setSelectedModuleId(moduleId)
-//     setSelectedModuleName(moduleName)
 //     setActiveTab("topics") // Switch to topics tab
 //   }
 
-//   const handleTopicSelect = (topicId, topicName, moduleName) => {
-//   console.log("📌 Topic selected for questions:", { topicId, topicName, moduleName })
-//   setSelectedTopicId(topicId)
-//   setSelectedTopicName(topicName)
-//   setActiveTab("questions") // Switch to questions tab
-// }
+//   // Handler for when a topic is selected from TopicsPanel
+//   const handleTopicSelect = (topicId, topicName) => {
+//     console.log("📌 Topic selected for questions:", { topicId, topicName })
+//     setSelectedTopicId(topicId)
+//     setSelectedTopicName(topicName)
+//     setActiveTab("questions") // Switch to questions tab
+//   }
 
 //   const handleLogout = async () => {
 //     await logout()
@@ -209,13 +149,18 @@
 //     toast({ title: "Logged out", description: "You have been successfully logged out" })
 //   }
 
+//   // Handler for Create button
+//   const handleCreateClick = () => {
+//     setActiveTab("subjects")
+//   }
+
 //   const context = useMemo(() => ({
 //     examBody: selectedExamBody,
 //     year: selectedYear,
-//     refreshData,
+//     color: selectedColor,
 //     updateProfile,
 //     changePassword,
-//   }), [selectedExamBody, selectedYear, refreshData, updateProfile, changePassword])
+//   }), [selectedExamBody, selectedYear, selectedColor, updateProfile, changePassword])
 
 //   // Loading UI
 //   if (loadingYears) return (
@@ -227,20 +172,10 @@
 //     </div>
 //   )
 
-//   const showLoadingOverlay = loadingData && (
-//     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-//       <div className="text-center space-y-4">
-//         <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
-//         <p className="text-muted-foreground">Loading content...</p>
-//       </div>
-//     </div>
-//   )
-
 //   return (
 //     <>
-//       {showLoadingOverlay}
 //       <div className="flex min-h-screen bg-background font-sans">
-//         {/* SIDEBAR - keeping original code */}
+//         {/* SIDEBAR */}
 //         <aside
 //           className={cn(
 //             "fixed inset-y-0 left-0 z-50 w-64 bg-card flex flex-col border-r shadow-xl transform transition-transform duration-300 lg:translate-x-0",
@@ -303,7 +238,7 @@
 //           </div>
 //         </aside>
 
-//         {/* MAIN - keeping header unchanged */}
+//         {/* MAIN */}
 //         <main className="flex-1 flex flex-col lg:pl-64 transition-all duration-300">
 //           <header className="sticky top-0 z-50 h-16 flex items-center border-b bg-background/80 px-3 sm:px-6 backdrop-blur-md shadow-sm">
 //             <div className="flex items-center gap-3 w-full">
@@ -316,29 +251,59 @@
 //               </Button>
 //               <ThemeToggle />
 
-//               {!mobileSearchOpen && (
-//                 <div className="flex items-center gap-2 bg-secondary/40 p-1 rounded-xl border flex-1 sm:flex-none">
-//                   <Select value={selectedExamBody} onValueChange={setSelectedExamBody}>
-//                     <SelectTrigger className="h-8 min-w-[70px] sm:w-[110px]">
-//                       <SelectValue placeholder="Exam" />
-//                     </SelectTrigger>
-//                     <SelectContent>
-//                       {EXAM_BODIES.map((body) => (
-//                         <SelectItem key={body.id} value={body.id}>{body.label}</SelectItem>
-//                       ))}
-//                     </SelectContent>
-//                   </Select>
-//                   <Separator orientation="vertical" className="h-5 hidden sm:flex" />
-//                   <Select value={selectedYear} onValueChange={setSelectedYear}>
-//                     <SelectTrigger className="h-8 min-w-[55px] sm:w-[90px]">
-//                       <SelectValue placeholder="Yr" />
-//                     </SelectTrigger>
-//                     <SelectContent>
-//                       {availableYears.map((year) => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-//                     </SelectContent>
-//                   </Select>
-//                 </div>
-//               )}
+//               <div className="flex items-center gap-2 bg-secondary/40 p-1 rounded-xl border flex-1 sm:flex-none">
+//                 {/* Exam Body Filter */}
+//                 <Select value={selectedExamBody} onValueChange={setSelectedExamBody}>
+//                   <SelectTrigger className="h-8 min-w-[70px] sm:w-[110px]">
+//                     <SelectValue placeholder="Exam" />
+//                   </SelectTrigger>
+//                   <SelectContent>
+//                     {EXAM_BODIES.map((body) => (
+//                       <SelectItem key={body.id} value={body.id}>{body.label}</SelectItem>
+//                     ))}
+//                   </SelectContent>
+//                 </Select>
+                
+//                 <Separator orientation="vertical" className="h-5 hidden sm:flex" />
+                
+//                 {/* Year Filter - Disabled on subjects tab */}
+//                 <Select 
+//                   value={selectedYear} 
+//                   onValueChange={setSelectedYear}
+//                   disabled={activeTab === "subjects"} // ✅ Disable year filter on subjects tab
+//                 >
+//                   <SelectTrigger className="h-8 min-w-[55px] sm:w-[90px]">
+//                     <SelectValue placeholder="Yr" />
+//                   </SelectTrigger>
+//                   <SelectContent>
+//                     {availableYears.map((year) => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+//                   </SelectContent>
+//                 </Select>
+
+//                 <Separator orientation="vertical" className="h-5 hidden sm:flex" />
+                
+//                 {/* Color Filter */}
+//                 <Select value={selectedColor} onValueChange={setSelectedColor}>
+//                   <SelectTrigger className="h-8 min-w-[50px] sm:w-[100px]">
+//                     <SelectValue>
+//                       <div className="flex items-center gap-2">
+//                         <div className={`h-4 w-4 rounded-full ${COLOR_OPTIONS.find(c => c.value === selectedColor)?.color}`} />
+//                         <span className="hidden sm:inline">{COLOR_OPTIONS.find(c => c.value === selectedColor)?.label}</span>
+//                       </div>
+//                     </SelectValue>
+//                   </SelectTrigger>
+//                   <SelectContent>
+//                     {COLOR_OPTIONS.map((option) => (
+//                       <SelectItem key={option.value} value={option.value}>
+//                         <div className="flex items-center gap-2">
+//                           <div className={`h-4 w-4 rounded-full ${option.color}`} />
+//                           {option.label}
+//                         </div>
+//                       </SelectItem>
+//                     ))}
+//                   </SelectContent>
+//                 </Select>
+//               </div>
 
 //               <div className="flex-1 hidden sm:flex relative">
 //                 <Input
@@ -350,40 +315,61 @@
 //                 />
 //               </div>
 
-//               {!mobileSearchOpen && (
-//                 <Button variant="ghost" size="icon" className="relative">
-//                   <Bell className="w-5 h-5" />
-//                   <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border-2 border-background"></span>
-//                 </Button>
-//               )}
+//               <Button variant="ghost" size="icon" className="relative">
+//                 <Bell className="w-5 h-5" />
+//                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border-2 border-background"></span>
+//               </Button>
 //             </div>
 //           </header>
 
-//           {/* PAGE CONTENT - ONLY THIS SECTION CHANGED */}
+//           {/* PAGE CONTENT */}
 //           <div className="flex-1 overflow-auto bg-secondary/20 p-4 sm:p-6 lg:p-8">
 //             <div className="mx-auto max-w-7xl space-y-6">
 //               <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
 //                 <div>
-//   <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-900">
-//     {dashboardData?.welcome || "Welcome back"}
-//   </h1>
+//                   <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-900">
+//                     {dashboardData?.welcome || "Welcome back"}
+//                   </h1>
 
-//   <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-//     {activeTab !== "settings" ? (
-//       <>Manage {navItems.find((item) => item.id === activeTab)?.label.toLowerCase()} for 
-//       <span className="font-semibold text-red-300">
-//         {" "}{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}
-//       </span> • <span className="font-semibold">{selectedYear} Academic Session</span></>
-//     ) : "Configure your profile and preferences"}
-//   </p>
+//                   <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+//                     {activeTab !== "settings" ? (
+//                       <>Manage {navItems.find((item) => item.id === activeTab)?.label.toLowerCase()} for 
+//                       <span className="font-semibold text-red-300">
+//                         {" "}{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}
+//                       </span>
+//                       {activeTab !== "subjects" && (
+//                         <> • <span className="font-semibold">{selectedYear} Academic Session</span></>
+//                       )}
+//                       </>
+//                     ) : "Configure your profile and preferences"}
+//                   </p>
 //                 </div>
 
-//                 {activeTab !== "settings" && (
-//                   <div className="flex items-center gap-2 mt-2 md:mt-0 flex-wrap bg-gradient-to-r from-indigo-100 to-purple-100 p-2 rounded-xl shadow-sm">
-//                     <Badge>{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</Badge>
-//                     <Badge variant="secondary">{selectedYear}</Badge>
-//                   </div>
-//                 )}
+//                 <div className="flex items-center gap-2">
+//                   {activeTab !== "settings" && (
+//                     <div className="flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-purple-100 p-2 rounded-xl shadow-sm">
+//                       <Badge>{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</Badge>
+//                       {activeTab !== "subjects" && <Badge variant="secondary">{selectedYear}</Badge>}
+//                       {selectedColor !== "all" && (
+//                         <Badge variant="outline" className="flex items-center gap-1">
+//                           <div className={`h-3 w-3 rounded-full ${selectedColor}`} />
+//                           {COLOR_OPTIONS.find(c => c.value === selectedColor)?.label}
+//                         </Badge>
+//                       )}
+//                     </div>
+//                   )}
+                  
+//                   {/* CREATE BUTTON - Only show on overview */}
+//                   {activeTab === "overview" && (
+//                     <Button 
+//                       onClick={handleCreateClick}
+//                       className="gap-2"
+//                     >
+//                       <Plus className="w-4 h-4" />
+//                       Create
+//                     </Button>
+//                   )}
+//                 </div>
 //               </div>
 
 //               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -391,56 +377,45 @@
 //                   <DashboardOverview
 //                     context={context}
 //                     setActiveTab={setActiveTab}
-//                     subjects={subjects}
-//                     modules={modules}
-//                     topics={topics}
-//                     questions={questions}
 //                   />
 //                 )}
-//                 {/* ✅ UPDATED: SubjectsPanel now has onSubjectSelect */}
+                
 //                 {activeTab === "subjects" && (
 //                   <SubjectsPanel 
 //                     onSubjectSelect={handleSubjectSelect}
-//                     globalSearch={globalSearch} 
-//                   />
-//                 )}
-//                 {/* ✅ UPDATED: ModulesPanel receives selectedSubject ID and name */}
-//                 {activeTab === "modules" && (
-//                 <ModulesPanel 
-//                     selectedSubject={selectedSubjectId}
-//                     subjectName={selectedSubjectName}
-//                     selectedModuleId={selectedModuleId}  
-//                     onTopicSelect={handleModuleSelect}
-//                     globalSearch={globalSearch} 
-//                   />
-//                 )}
-//                 {/* // Update the topics tab to use AllTopicsPanel instead
-//                 {activeTab === "topics" && (
-//                   <AllTopicsPanel 
-//                     onTopicSelect={handleTopicSelect}
+//                     examBody={selectedExamBody}
+//                     year={selectedYear}
+//                     color={selectedColor}
 //                     globalSearch={globalSearch}
 //                   />
-//                 )} */}
+//                 )}
+                
 //                 {activeTab === "topics" && (
 //                   <TopicsPanel 
-//                     selectedModule={selectedModuleId}
-//                     moduleName={selectedModuleName}
+//                     selectedSubject={selectedSubjectId}
 //                     subjectName={selectedSubjectName}
-//                     selectedTopicId={selectedTopicId}  
-//                     onQuestionSelect={handleTopicSelect}  
+//                     onTopicSelect={handleTopicSelect}
+//                     examBody={selectedExamBody}
+//                     year={selectedYear}
+//                     color={selectedColor}
 //                     globalSearch={globalSearch}
 //                   />
 //                 )}
+                
 //                 {activeTab === "questions" && (
-//                 <QuestionsPanel 
+//                   <QuestionsPanel 
 //                     selectedTopic={selectedTopicId}
 //                     topicName={selectedTopicName}
-//                     moduleName={selectedModuleName}
+//                     subjectName={selectedSubjectName}
+//                     examBody={selectedExamBody}
+//                     year={selectedYear}
+//                     color={selectedColor}
 //                     globalSearch={globalSearch}
 //                   />
 //                 )}
+                
 //                 {activeTab === "settings" && <SettingsPage context={context} />}
-//                 {activeTab === "analytics" && <AnalyticsPanel subjects={subjects} />}
+//                 {activeTab === "analytics" && <AnalyticsPanel />}
 //               </div>
 //             </div>
 //           </div>
@@ -449,6 +424,14 @@
 //     </>
 //   )
 // }
+
+
+
+
+
+
+
+
 
 
 
@@ -494,6 +477,7 @@ import useTutorAuthStore from "@/store/tutorAuthStore"
 import useTutorStore from "@/store/tutorStore"
 
 const EXAM_BODIES = [
+  { id: "all-catigories", label: "AllCategories", color: "bg-pink-500/10 text-blue-600 dark:text-blue-400" },
   { id: "jamb", label: "JAMB", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
   { id: "waec", label: "WAEC", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   { id: "neco", label: "NECO", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
@@ -523,26 +507,18 @@ export default function LecturerDashboard() {
   // Tutor Store
   const {
     fetchDashboard,
-    getSubjects,
-    getTopics,
-    getQuestions,
     dashboardData,
   } = useTutorStore()
 
   // State
   const [activeTab, setActiveTab] = useState("overview")
-  const [selectedExamBody, setSelectedExamBody] = useState("jamb")
+  const [selectedExamBody, setSelectedExamBody] = useState("all-catigories") // ✅ Default to "all-catigories"
   const [selectedYear, setSelectedYear] = useState("")
   const [selectedColor, setSelectedColor] = useState("all")
   const [availableYears, setAvailableYears] = useState([])
   const [loadingYears, setLoadingYears] = useState(true)
-  const [loadingData, setLoadingData] = useState(false)
   const [globalSearch, setGlobalSearch] = useState("")
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-
-  const [subjects, setSubjects] = useState([])
-  const [topics, setTopics] = useState([])
-  const [questions, setQuestions] = useState([])
 
   // State for selected subject (for topics panel)
   const [selectedSubjectId, setSelectedSubjectId] = useState(null)
@@ -590,69 +566,6 @@ export default function LecturerDashboard() {
     initDashboard()
   }, [tutor, fetchDashboard, toast])
 
-  // Fetch content based on filters
-  const fetchContent = async () => {
-    if (!selectedExamBody || !selectedYear) return
-    try {
-      setLoadingData(true)
-
-      const [subsRes, topicsRes, quesRes] = await Promise.all([
-        getSubjects(),
-        getTopics(),
-        getQuestions({ category: selectedExamBody.toUpperCase(), year: selectedYear })
-      ])
-
-      const safeSubjects = Array.isArray(subsRes?.data)
-        ? subsRes.data
-        : Array.isArray(subsRes?.data?.subjects)
-          ? subsRes.data.subjects
-          : []
-
-      // Filter subjects by exam body, year, and color
-      const filteredSubjects = safeSubjects.filter(s => {
-        const matchesCategory = s.category?.toLowerCase() === selectedExamBody
-        const matchesYear = s.year === selectedYear
-        const matchesColor = selectedColor === "all" || s.color === selectedColor
-        return matchesCategory && matchesYear && matchesColor
-      })
-      setSubjects(filteredSubjects)
-
-      // Filter topics by exam body, year, and color (inherited from subject)
-      if (topicsRes?.success) {
-        const allTopics = Array.isArray(topicsRes.data) ? topicsRes.data : topicsRes.data?.topics || []
-        const filteredTopics = allTopics.filter(t => {
-          const matchesCategory = t.subject?.category?.toLowerCase() === selectedExamBody
-          const matchesYear = t.subject?.year === selectedYear
-          const matchesColor = selectedColor === "all" || t.subject?.color === selectedColor
-          return matchesCategory && matchesYear && matchesColor
-        })
-        setTopics(filteredTopics)
-      }
-
-      // Filter questions by exam body, year, and color (inherited from subject through topic)
-      if (quesRes?.success) {
-        const allQuestions = Array.isArray(quesRes.data) ? quesRes.data : quesRes.data?.questions || []
-        const filteredQuestions = allQuestions.filter(q => {
-          const matchesCategory = q.category?.toLowerCase() === selectedExamBody || q.topic?.subject?.category?.toLowerCase() === selectedExamBody
-          const matchesYear = q.year === selectedYear || q.topic?.subject?.year === selectedYear
-          const matchesColor = selectedColor === "all" || q.topic?.subject?.color === selectedColor
-          return matchesCategory && matchesYear && matchesColor
-        })
-        setQuestions(filteredQuestions)
-      }
-
-    } catch (error) {
-      console.error(error)
-      toast({ title: "Error", description: "Failed to load content data", variant: "destructive" })
-    } finally {
-      setLoadingData(false)
-    }
-  }
-
-  useEffect(() => { fetchContent() }, [selectedExamBody, selectedYear, selectedColor])
-
-  const refreshData = fetchContent
-
   // Handler for when a subject is selected from SubjectsPanel
   const handleSubjectSelect = (subjectId, subjectName) => {
     console.log("📌 Subject selected:", { subjectId, subjectName })
@@ -684,10 +597,9 @@ export default function LecturerDashboard() {
     examBody: selectedExamBody,
     year: selectedYear,
     color: selectedColor,
-    refreshData,
     updateProfile,
     changePassword,
-  }), [selectedExamBody, selectedYear, selectedColor, refreshData, updateProfile, changePassword])
+  }), [selectedExamBody, selectedYear, selectedColor, updateProfile, changePassword])
 
   // Loading UI
   if (loadingYears) return (
@@ -699,18 +611,8 @@ export default function LecturerDashboard() {
     </div>
   )
 
-  const showLoadingOverlay = loadingData && (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
-        <p className="text-muted-foreground">Loading content...</p>
-      </div>
-    </div>
-  )
-
   return (
     <>
-      {showLoadingOverlay}
       <div className="flex min-h-screen bg-background font-sans">
         {/* SIDEBAR */}
         <aside
@@ -803,8 +705,12 @@ export default function LecturerDashboard() {
                 
                 <Separator orientation="vertical" className="h-5 hidden sm:flex" />
                 
-                {/* Year Filter */}
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                {/* Year Filter - Disabled on subjects and topics tabs */}
+                <Select 
+                  value={selectedYear} 
+                  onValueChange={setSelectedYear}
+                  disabled={activeTab === "subjects" || activeTab === "topics"} // ✅ Disable year filter on subjects and topics tabs
+                >
                   <SelectTrigger className="h-8 min-w-[55px] sm:w-[90px]">
                     <SelectValue placeholder="Yr" />
                   </SelectTrigger>
@@ -869,7 +775,11 @@ export default function LecturerDashboard() {
                       <>Manage {navItems.find((item) => item.id === activeTab)?.label.toLowerCase()} for 
                       <span className="font-semibold text-red-300">
                         {" "}{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}
-                      </span> • <span className="font-semibold">{selectedYear} Academic Session</span></>
+                      </span>
+                      {activeTab !== "subjects" && activeTab !== "topics" && (
+                        <> • <span className="font-semibold">{selectedYear} Academic Session</span></>
+                      )}
+                      </>
                     ) : "Configure your profile and preferences"}
                   </p>
                 </div>
@@ -878,7 +788,7 @@ export default function LecturerDashboard() {
                   {activeTab !== "settings" && (
                     <div className="flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-purple-100 p-2 rounded-xl shadow-sm">
                       <Badge>{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</Badge>
-                      <Badge variant="secondary">{selectedYear}</Badge>
+                      {activeTab !== "subjects" && activeTab !== "topics" && <Badge variant="secondary">{selectedYear}</Badge>}
                       {selectedColor !== "all" && (
                         <Badge variant="outline" className="flex items-center gap-1">
                           <div className={`h-3 w-3 rounded-full ${selectedColor}`} />
@@ -906,16 +816,15 @@ export default function LecturerDashboard() {
                   <DashboardOverview
                     context={context}
                     setActiveTab={setActiveTab}
-                    subjects={subjects}
-                    topics={topics}
-                    questions={questions}
                   />
                 )}
                 
                 {activeTab === "subjects" && (
                   <SubjectsPanel 
                     onSubjectSelect={handleSubjectSelect}
-                    subjects={subjects}
+                    examBody={selectedExamBody}
+                    year={selectedYear}
+                    color={selectedColor}
                     globalSearch={globalSearch}
                   />
                 )}
@@ -925,7 +834,9 @@ export default function LecturerDashboard() {
                     selectedSubject={selectedSubjectId}
                     subjectName={selectedSubjectName}
                     onTopicSelect={handleTopicSelect}
-                    topics={topics}
+                    examBody={selectedExamBody}
+                    year={selectedYear}
+                    color={selectedColor}
                     globalSearch={globalSearch}
                   />
                 )}
@@ -935,13 +846,15 @@ export default function LecturerDashboard() {
                     selectedTopic={selectedTopicId}
                     topicName={selectedTopicName}
                     subjectName={selectedSubjectName}
-                    questions={questions}
+                    examBody={selectedExamBody}
+                    year={selectedYear}
+                    color={selectedColor}
                     globalSearch={globalSearch}
                   />
                 )}
                 
                 {activeTab === "settings" && <SettingsPage context={context} />}
-                {activeTab === "analytics" && <AnalyticsPanel subjects={subjects} />}
+                {activeTab === "analytics" && <AnalyticsPanel />}
               </div>
             </div>
           </div>
