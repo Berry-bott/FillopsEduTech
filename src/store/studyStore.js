@@ -985,6 +985,10 @@ export const useStudyStore = create((set, get) => ({
   initialized: false,
   sessionId: null,
   sessionActive: false,
+  // ✅ NEW STATE FOR SUMMARY
+  showSummary: false,
+  studyResults: null,
+  sessionStartTime: null,
 
   // ---------------- RESET ----------------
   reset: () => {
@@ -1003,6 +1007,9 @@ export const useStudyStore = create((set, get) => ({
       sessionId: null,
       sessionActive: false,
       loading: false,
+      showSummary: false,
+      studyResults: null,
+      sessionStartTime: null,
     });
   },
 
@@ -1566,6 +1573,184 @@ export const useStudyStore = create((set, get) => ({
       console.error("❌ Failed to end study session:", err);
     }
   },
+  
+
+  // ✅ NEW: Set show summary flag
+  setShowSummary: (show) => set({ showSummary: show }),
+
+  // ✅ NEW: Generate study results
+  generateStudyResults: () => {
+    const state = get();
+    const { saved, units, selectedOptions, subjectNames, topicNames, sessionStartTime } = state;
+    
+    console.log("📊 Generating study results...");
+
+    // Collect all questions from all units
+    const allQuestions = [];
+    const orderedIds = state.getOrderedIds();
+    
+    orderedIds.forEach(id => {
+      const unit = units[id];
+      if (unit?.items) {
+        allQuestions.push(...unit.items.map(q => ({
+          ...q,
+          unitId: id,
+          unitName: saved.mode === "subject" 
+            ? subjectNames[id] 
+            : topicNames[id]
+        })));
+      }
+    });
+
+    // Calculate statistics
+    const totalQuestions = allQuestions.length;
+    const answeredQuestions = Object.keys(selectedOptions).length;
+    
+    let correctAnswers = 0;
+    let incorrectAnswers = 0;
+    
+    allQuestions.forEach(q => {
+      const userAnswer = selectedOptions[q.id];
+      if (userAnswer) {
+        if (userAnswer === q.correctAnswer) {
+          correctAnswers++;
+        } else {
+          incorrectAnswers++;
+        }
+      }
+    });
+
+    const skippedQuestions = totalQuestions - answeredQuestions;
+    const accuracy = answeredQuestions > 0 
+      ? Math.round((correctAnswers / answeredQuestions) * 100) 
+      : 0;
+
+    // Calculate time spent
+    let timeSpent = "00:00";
+    if (sessionStartTime) {
+      const endTime = Date.now();
+      const diffMs = endTime - sessionStartTime;
+      const minutes = Math.floor(diffMs / 60000);
+      const seconds = Math.floor((diffMs % 60000) / 1000);
+      timeSpent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    // Group by subject/topic
+    const subjectMap = {};
+    
+    allQuestions.forEach(q => {
+      const subjectKey = q.unitId;
+      const subjectName = q.unitName || subjectKey;
+      
+      if (!subjectMap[subjectKey]) {
+        subjectMap[subjectKey] = {
+          name: subjectName,
+          totalQuestions: 0,
+          correct: 0,
+          incorrect: 0,
+          skipped: 0,
+        };
+      }
+      
+      subjectMap[subjectKey].totalQuestions++;
+      
+      const userAnswer = selectedOptions[q.id];
+      if (!userAnswer) {
+        subjectMap[subjectKey].skipped++;
+      } else if (userAnswer === q.correctAnswer) {
+        subjectMap[subjectKey].correct++;
+      } else {
+        subjectMap[subjectKey].incorrect++;
+      }
+    });
+
+    // Prepare questions for summary (with status but no answers)
+    const questionsForSummary = allQuestions.map((q, idx) => ({
+      id: q.id,
+      questionNumber: idx + 1,
+      subject: q.unitName || "Unknown",
+      text: q.text,
+      userAnswer: selectedOptions[q.id] || null,
+      isCorrect: selectedOptions[q.id] 
+        ? selectedOptions[q.id] === q.correctAnswer 
+        : null,
+      difficulty: q.difficulty,
+      category: q.category,
+      year: q.year,
+    }));
+
+    const studyResults = {
+      sessionId: state.sessionId,
+      totalQuestions,
+      answeredQuestions,
+      correctAnswers,
+      incorrectAnswers,
+      skippedQuestions,
+      accuracy,
+      timeSpent,
+      completedAt: new Date().toISOString(),
+      subjects: Object.values(subjectMap),
+      questions: questionsForSummary,
+    };
+
+    console.log("✅ Study results generated:", studyResults);
+    set({ studyResults });
+    return studyResults;
+  },
+
+  // ✅ MODIFIED: Start session with timestamp
+  startStudySession: async (savedData = null) => {
+    const { saved: storeSaved, sessionActive } = get();
+    const saved = savedData || storeSaved;
+    
+    if (!saved || sessionActive) {
+      return null;
+    }
+
+    // ✅ Record start time
+    set({ sessionStartTime: Date.now() });
+
+    try {
+      const { fetchWithAuth } = useAuthStore.getState();
+      
+      let payload = {};
+
+      if (saved.mode === "subject") {
+        payload.subjectId = saved.subjects.length === 1 ? saved.subjects[0] : saved.subjects;
+      } else if (saved.mode === "topic") {
+        const allTopicIds = Object.values(saved.topics).flat();
+        const subjectIds = Object.keys(saved.topics);
+
+        if (subjectIds.length === 1 && allTopicIds.length === 1) {
+          payload.subjectId = subjectIds[0];
+          payload.topicIds = allTopicIds;
+        } else {
+          payload.subjectId = subjectIds;
+          payload.topicIds = allTopicIds;
+        }
+      }
+
+      const res = await fetchWithAuth(`${API_BASE}/study/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res?.data?.sessionId) {
+        set({ 
+          sessionId: res.data.sessionId, 
+          sessionActive: true 
+        });
+        return res.data.sessionId;
+      }
+
+      return null;
+    } catch (err) {
+      console.error("❌ Failed to start study session:", err);
+      return null;
+    }
+  },
+
 }));
 
 

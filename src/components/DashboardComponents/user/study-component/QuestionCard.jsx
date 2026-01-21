@@ -1362,10 +1362,363 @@
 
 
 
+// import { useState, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
+// import { useStudyStore } from "../../../../store/studyStore";
+// import InitializePayment from "../../../../payment/initializePayment";
+// import { useToast } from "@/components/ui/use-toast";
+
+// export default function QuestionCard() {
+//   const navigate = useNavigate();
+//   const { toast } = useToast();
+
+//   const {
+//     currentIndex,
+//     selectedOptions,
+//     setSelectedOption,
+//     next,
+//     prev,
+//     loading,
+//     paymentLocked,
+//     getQuestions,
+//     submitAnswer,
+//     sessionActive,
+//     endStudySession,
+//     initialized,
+//   } = useStudyStore();
+
+//   const questions = getQuestions();
+//   const q = questions?.[currentIndex] ?? null;
+
+//   const [visible, setVisible] = useState(false);
+//   const [showStudyPanel, setShowStudyPanel] = useState(false);
+
+//   const userChoice = q ? selectedOptions[q.id] : null;
+//   const isCorrect = q && userChoice === q.correctAnswer;
+
+//   // ✅ Only render question when fully loaded
+//   const canRenderQuestion = !!q && !paymentLocked && initialized;
+//   const isFullyLoaded = initialized && !loading;
+
+//   // ----------------------------
+//   // Fade-in effect for question
+//   // ----------------------------
+//   useEffect(() => {
+//     if (!canRenderQuestion) {
+//       setVisible(false);
+//       setShowStudyPanel(false);
+//       return;
+//     }
+
+//     setVisible(false);
+//     const t = setTimeout(() => setVisible(true), 100);
+//     return () => clearTimeout(t);
+//   }, [currentIndex, canRenderQuestion]);
+
+//   // ----------------------------
+//   // Reset study panel when question changes
+//   // ----------------------------
+//   useEffect(() => {
+//     setShowStudyPanel(false);
+//   }, [currentIndex]);
+
+//   // ----------------------------
+//   // Handle End Session
+//   // ----------------------------
+//   const handleEndSession = async () => {
+//     try {
+//       toast({
+//         title: "Ending session...",
+//         description: "Please wait while we process your request.",
+//       });
+//       await endStudySession();
+//       toast({
+//         title: "Success",
+//         description: "Study session ended successfully!",
+//       });
+//       navigate("/user/dashboard");
+//     } catch (error) {
+//       toast({
+//         title: "Error",
+//         description: "Failed to end session. Please try again.",
+//         variant: "destructive",
+//       });
+//     }
+//   };
+
+//   // ----------------------------
+//   // Handle option selection with backend submission
+//   // ----------------------------
+//   const handleOptionSelect = async (option) => {
+//     setSelectedOption(q.id, option);
+//     setShowStudyPanel(false);
+
+//     if (sessionActive) {
+//       console.log("📤 Submitting answer to backend...");
+//       const success = await submitAnswer(q.id, option);
+//       if (success) {
+//         console.log("✅ Answer submitted successfully");
+//       } else {
+//         console.warn("⚠️ Answer submission failed");
+//       }
+//     }
+//   };
+
+//   // ----------------------------
+//   // Loading Skeleton - Show until EVERYTHING is ready
+//   // ----------------------------
+//   if (!isFullyLoaded || !canRenderQuestion) {
+//     return (
+//       <section className="py-0">
+//         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+//           {/* Left: Question Skeleton */}
+//           <main>
+//             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 space-y-4 animate-pulse">
+//               <div className="h-6 w-48 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//               <div className="h-16 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//               <div className="space-y-3">
+//                 {Array.from({ length: 4 }).map((_, i) => (
+//                   <div key={i} className="h-12 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//                 ))}
+//               </div>
+//               <div className="flex justify-between mt-6 pt-4 border-t border-gray-300 dark:border-gray-700">
+//                 <div className="h-10 w-24 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//                 <div className="h-10 w-24 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//               </div>
+//             </div>
+//           </main>
+
+//           {/* Right: Sidebar Skeleton */}
+//           <aside>
+//             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 space-y-4 animate-pulse">
+//               <div className="h-6 w-32 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//               <div className="h-32 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//             </div>
+//           </aside>
+//         </div>
+//       </section>
+//     );
+//   }
+
+//   return (
+//     <section className="py-0">
+//       {/* Layout */}
+//       <div className="grid grid-cols-1 lg:grid-cols-[1fr_650px] md:grid-cols-[1fr_250px] gap-8">
+//         {/* ================= LEFT: QUESTION ================= */}
+//         <main>
+//           <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6">
+//             <div
+//               className={`transition-opacity duration-300 ${
+//                 visible ? "opacity-100" : "opacity-0"
+//               }`}
+//             >
+//               {/* Question Header */}
+//               <div className="flex justify-between items-center mb-6">
+//                 <h2 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
+//                   Question {currentIndex + 1} of {questions.length}
+//                 </h2>
+                
+//                 {/* Session Status Indicator with End Button */}
+//                 {sessionActive && (
+//                   <div className="flex items-center gap-2">
+//                     <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+//                       <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+//                       Session Active
+//                     </span>
+//                     <button
+//                       onClick={handleEndSession}
+//                       className="text-xs bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 transition"
+//                     >
+//                       End Session
+//                     </button>
+//                   </div>
+//                 )}
+//               </div>
+
+//               {/* Question Text */}
+//               <p className="mb-6 text-gray-800 dark:text-gray-200 text-lg leading-relaxed">
+//                 {q.text}
+//               </p>
+
+//               {/* Options */}
+//               <div className="space-y-2">
+//                 {Array.isArray(q.options) &&
+//                   q.options.map((opt, i) => {
+//                     const letter = String.fromCharCode(65 + i);
+
+//                     let borderColor = "border-gray-300 dark:border-gray-600";
+//                     let bgColor = "bg-white dark:bg-gray-800";
+                    
+//                     if (userChoice) {
+//                       if (opt === q.correctAnswer) {
+//                         borderColor = "border-green-600";
+//                         bgColor = "bg-green-50 dark:bg-green-900/20";
+//                       } else if (opt === userChoice) {
+//                         borderColor = "border-red-600";
+//                         bgColor = "bg-red-50 dark:bg-red-900/20";
+//                       }
+//                     }
+
+//                     return (
+//                       <label
+//                         key={i}
+//                         className={`flex items-center gap-3 p-2 border-2 rounded-lg cursor-pointer transition-all ${borderColor} ${bgColor} ${
+//                           !userChoice ? "hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400" : ""
+//                         }`}
+//                       >
+//                         <input
+//                           type="radio"
+//                           name={q.id}
+//                           checked={userChoice === opt}
+//                           onChange={() => handleOptionSelect(opt)}
+//                           disabled={!!userChoice}
+//                           className="w-4 h-4"
+//                         />
+//                         <span className="text-gray-800 dark:text-gray-200">
+//                           <strong>{letter}.</strong> {opt}
+//                         </span>
+//                       </label>
+//                     );
+//                   })}
+//               </div>
+
+//               {/* Question Meta Info */}
+//               {(q.year || q.difficulty || q.category) && (
+//                 <div className="mt-6 flex gap-2 flex-wrap text-xs">
+//                   {q.year && (
+//                     <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+//                       Year: {q.year}
+//                     </span>
+//                   )}
+//                   {q.difficulty && (
+//                     <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+//                       {q.difficulty}
+//                     </span>
+//                   )}
+//                   {q.category && (
+//                     <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+//                       {q.category}
+//                     </span>
+//                   )}
+//                 </div>
+//               )}
+//             </div>
+
+//             {/* Navigation */}
+//             <div className="mt-6 flex justify-between items-center border-t border-gray-300 dark:border-gray-700 pt-4">
+//               <button
+//                 disabled={currentIndex === 0}
+//                 onClick={prev}
+//                 className={`px-6 py-2.5 rounded-lg transition font-medium ${
+//                   currentIndex === 0
+//                     ? "bg-gray-400 text-white cursor-not-allowed"
+//                     : "bg-red-500 text-white hover:bg-red-600"
+//                 }`}
+//               >
+//                 Previous
+//               </button>
+
+//               <button
+//                 onClick={next}
+//                 disabled={paymentLocked || !userChoice}
+//                 className={`px-6 py-2.5 rounded-lg transition font-medium ${
+//                   paymentLocked || !userChoice
+//                     ? "bg-gray-400 cursor-not-allowed text-white"
+//                     : "bg-blue-600 text-white hover:bg-blue-700"
+//                 }`}
+//               >
+//                 {currentIndex === questions.length - 1 ? "Finish" : "Next"}
+//               </button>
+//             </div>
+//           </div>
+//         </main>
+
+//         {/* ================= RIGHT: SIDEBAR ================= */}
+//         <aside className="space-y-4">
+//           {/* Payment Panel */}
+//           {paymentLocked && (
+//             <div>
+//               <InitializePayment />
+//             </div>
+//           )}
+
+//           {/* Study Panel - Only shows when user selects an option */}
+//           {!paymentLocked && userChoice && (
+//             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+//               {/* Study Button */}
+//               <button
+//                 onClick={() => setShowStudyPanel(!showStudyPanel)}
+//                 className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
+//                   showStudyPanel
+//                     ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+//                     : "bg-blue-600 text-white hover:bg-blue-700"
+//                 }`}
+//               >
+//                 {showStudyPanel ? "Hide Study Panel" : "📚 Study"}
+//               </button>
+
+//               {/* Answer & Explanation - Shows when Study button is clicked */}
+//               {showStudyPanel && (
+//                 <div className="mt-4 space-y-4 animate-fadeIn">
+//                   {/* Correct Answer */}
+//                   <div className={`p-4 rounded-lg ${
+//                     isCorrect 
+//                       ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700" 
+//                       : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+//                   }`}>
+//                     <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">
+//                       {isCorrect ? '✅ Correct!' : '❌ Incorrect'}
+//                     </h4>
+//                     <p className={`text-sm font-medium ${
+//                       isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+//                     }`}>
+//                       Correct Answer: <strong>{q.correctAnswer}</strong>
+//                     </p>
+//                   </div>
+
+//                   {/* Explanation */}
+//                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+//                     <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">
+//                       💡 Explanation
+//                     </h4>
+//                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+//                       {q.explanation || "No explanation available for this question."}
+//                     </p>
+//                   </div>
+//                 </div>
+//               )}
+//             </div>
+//           )}
+
+//           {/* Placeholder when no option selected */}
+//           {!paymentLocked && !userChoice && (
+//             <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50">
+//               <p className="text-gray-500 dark:text-gray-400 text-sm">
+//                 Select an option to unlock the study panel
+//               </p>
+//             </div>
+//           )}
+//         </aside>
+//       </div>
+//     </section>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudyStore } from "../../../../store/studyStore";
 import InitializePayment from "../../../../payment/initializePayment";
+import StudySummary from "./StudySummary";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function QuestionCard() {
@@ -1385,6 +1738,14 @@ export default function QuestionCard() {
     sessionActive,
     endStudySession,
     initialized,
+    showSummary,
+    setShowSummary,
+    generateStudyResults,
+    studyResults,
+    getOrderedIds,
+    activeId,
+    units,
+    changeActive,
   } = useStudyStore();
 
   const questions = getQuestions();
@@ -1399,6 +1760,28 @@ export default function QuestionCard() {
   // ✅ Only render question when fully loaded
   const canRenderQuestion = !!q && !paymentLocked && initialized;
   const isFullyLoaded = initialized && !loading;
+
+  // ✅ Check if all units are exhausted
+  const areAllUnitsExhausted = () => {
+    const orderedIds = getOrderedIds();
+    if (orderedIds.length === 0) return false;
+    
+    return orderedIds.every(id => {
+      const unit = units[id];
+      return unit?.exhausted === true;
+    });
+  };
+
+  // ✅ Check if current unit is last and at last question
+  const isAtLastQuestion = () => {
+    const orderedIds = getOrderedIds();
+    const currentUnitIndex = orderedIds.indexOf(activeId);
+    const isLastUnit = currentUnitIndex === orderedIds.length - 1;
+    const unit = units[activeId];
+    const isLastQuestionInUnit = currentIndex === (unit?.items?.length || 0) - 1;
+    
+    return isLastUnit && isLastQuestionInUnit && unit?.exhausted;
+  };
 
   // ----------------------------
   // Fade-in effect for question
@@ -1421,6 +1804,46 @@ export default function QuestionCard() {
   useEffect(() => {
     setShowStudyPanel(false);
   }, [currentIndex]);
+
+  // ----------------------------
+  // Handle Next with completion check
+  // ----------------------------
+  const handleNext = async () => {
+    if (paymentLocked) return;
+
+    // ✅ Check if this is the last question and all units are done
+    if (isAtLastQuestion() && areAllUnitsExhausted()) {
+      console.log("🎓 Study session complete!");
+      
+      // Generate results
+      const results = generateStudyResults();
+      
+      if (!results) {
+        toast({
+          title: "Error",
+          description: "Failed to generate study results",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // End session
+      await endStudySession();
+      
+      // Show summary
+      setShowSummary(true);
+      
+      toast({
+        title: "Study Session Complete! 🎉",
+        description: "Great work! Review your performance below.",
+      });
+      
+      return;
+    }
+
+    // Otherwise, proceed normally
+    await next();
+  };
 
   // ----------------------------
   // Handle End Session
@@ -1447,6 +1870,74 @@ export default function QuestionCard() {
   };
 
   // ----------------------------
+  // Summary Handlers
+  // ----------------------------
+  const handleReturnToDashboard = async () => {
+    try {
+      setShowSummary(false);
+      navigate("/user/dashboard");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to return to dashboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReviewMistakes = () => {
+    setShowSummary(false);
+    
+    // Find all incorrect questions across all units
+    const orderedIds = getOrderedIds();
+    let incorrectQuestionFound = false;
+    
+    for (const unitId of orderedIds) {
+      const unit = units[unitId];
+      if (!unit?.items) continue;
+      
+      const incorrectQuestions = unit.items.filter(
+        q => selectedOptions[q.id] && selectedOptions[q.id] !== q.correctAnswer
+      );
+      
+      if (incorrectQuestions.length > 0) {
+        // Navigate to this unit and first incorrect question
+        const firstIncorrectIdx = unit.items.findIndex(
+          q => q.id === incorrectQuestions[0].id
+        );
+        
+        // Change to the unit with incorrect questions
+        changeActive(unitId);
+        
+        // Set current index to first incorrect question
+        setTimeout(() => {
+          useStudyStore.setState({ currentIndex: firstIncorrectIdx });
+        }, 100);
+        
+        incorrectQuestionFound = true;
+        
+        toast({
+          title: "Review Mode",
+          description: "Reviewing your incorrect answers",
+        });
+        
+        break;
+      }
+    }
+    
+    if (!incorrectQuestionFound) {
+      toast({
+        title: "No Mistakes!",
+        description: "You answered all questions correctly! 🎉",
+      });
+    }
+  };
+
+  const handleStartNewSession = () => {
+    navigate("/user/study");
+  };
+
+  // ----------------------------
   // Handle option selection with backend submission
   // ----------------------------
   const handleOptionSelect = async (option) => {
@@ -1463,6 +1954,18 @@ export default function QuestionCard() {
       }
     }
   };
+
+  // ✅ SHOW SUMMARY IF FLAG IS SET
+  if (showSummary && studyResults) {
+    return (
+      <StudySummary
+        studyResults={studyResults}
+        onReturnToDashboard={handleReturnToDashboard}
+        onReviewMistakes={handleReviewMistakes}
+        onStartNewSession={handleStartNewSession}
+      />
+    );
+  }
 
   // ----------------------------
   // Loading Skeleton - Show until EVERYTHING is ready
@@ -1619,15 +2122,17 @@ export default function QuestionCard() {
               </button>
 
               <button
-                onClick={next}
+                onClick={handleNext}
                 disabled={paymentLocked || !userChoice}
                 className={`px-6 py-2.5 rounded-lg transition font-medium ${
                   paymentLocked || !userChoice
                     ? "bg-gray-400 cursor-not-allowed text-white"
+                    : isAtLastQuestion() && areAllUnitsExhausted()
+                    ? "bg-green-600 text-white hover:bg-green-700"
                     : "bg-blue-600 text-white hover:bg-blue-700"
                 }`}
               >
-                {currentIndex === questions.length - 1 ? "Finish" : "Next"}
+                {isAtLastQuestion() && areAllUnitsExhausted() ? "Finish Study" : "Next"}
               </button>
             </div>
           </div>
