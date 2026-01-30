@@ -126,80 +126,80 @@ const useTutorAuthStore = create(
       },
 
       // 🔹 UPDATE PROFILE
-updateProfile: async (profileData) => {
-    const token = get().accessToken;
-    
-    if (!token) {
-      set({ error: "Not authenticated" });
-      return { success: false, message: "Not authenticated" };
-    }
-  
-    set({ loading: true, error: "", success: "" });
-  
-    try {
-      const res = await updateProfile(token, profileData);
-  
-      if (!res.success) {
-        set({ error: res.message || "Failed to update profile" });
-        return res;
-      }
-  
-      // Update tutor data in store
-      set({
-        tutor: res.data,
-        success: "Profile updated successfully",
-      });
-  
-      console.log("✅ Profile updated:", res.data);
-      return res;
-    } catch (error) {
-      console.error("❌ Error updating profile:", error);
-      const errorMessage = "Network error. Please check your connection.";
-      set({ error: errorMessage });
-      return { success: false, message: errorMessage };
-    } finally {
-      set({ loading: false });
-    }
-  },
-  
-  // 🔹 CHANGE PASSWORD
-  changePassword: async (passwordData) => {
-    const token = get().accessToken;
-    
-    if (!token) {
-      set({ error: "Not authenticated" });
-      return { success: false, message: "Not authenticated" };
-    }
-  
-    // Validate passwords match
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      set({ error: "New passwords do not match" });
-      return { success: false, message: "New passwords do not match" };
-    }
-  
-    set({ loading: true, error: "", success: "" });
-  
-    try {
-      const res = await changePassword(token, passwordData);
-  
-      if (!res.success) {
-        set({ error: res.message || "Failed to change password" });
-        return res;
-      }
-  
-      set({ success: "Password changed successfully" });
-  
-      console.log("✅ Password changed successfully");
-      return res;
-    } catch (error) {
-      console.error("❌ Error changing password:", error);
-      const errorMessage = "Network error. Please check your connection.";
-      set({ error: errorMessage });
-      return { success: false, message: errorMessage };
-    } finally {
-      set({ loading: false });
-    }
-  },
+      updateProfile: async (profileData) => {
+        const token = get().accessToken;
+        
+        if (!token) {
+          set({ error: "Not authenticated" });
+          return { success: false, message: "Not authenticated" };
+        }
+      
+        set({ loading: true, error: "", success: "" });
+      
+        try {
+          const res = await updateProfile(token, profileData);
+      
+          if (!res.success) {
+            set({ error: res.message || "Failed to update profile" });
+            return res;
+          }
+      
+          // Update tutor data in store
+          set({
+            tutor: res.data,
+            success: "Profile updated successfully",
+          });
+      
+          console.log("✅ Profile updated:", res.data);
+          return res;
+        } catch (error) {
+          console.error("❌ Error updating profile:", error);
+          const errorMessage = "Network error. Please check your connection.";
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage };
+        } finally {
+          set({ loading: false });
+        }
+      },
+      
+      // 🔹 CHANGE PASSWORD
+      changePassword: async (passwordData) => {
+        const token = get().accessToken;
+        
+        if (!token) {
+          set({ error: "Not authenticated" });
+          return { success: false, message: "Not authenticated" };
+        }
+      
+        // Validate passwords match
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+          set({ error: "New passwords do not match" });
+          return { success: false, message: "New passwords do not match" };
+        }
+      
+        set({ loading: true, error: "", success: "" });
+      
+        try {
+          const res = await changePassword(token, passwordData);
+      
+          if (!res.success) {
+            set({ error: res.message || "Failed to change password" });
+            return res;
+          }
+      
+          set({ success: "Password changed successfully" });
+      
+          console.log("✅ Password changed successfully");
+          return res;
+        } catch (error) {
+          console.error("❌ Error changing password:", error);
+          const errorMessage = "Network error. Please check your connection.";
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage };
+        } finally {
+          set({ loading: false });
+        }
+      },
 
       // 🔹 LOGOUT
       logout: async () => {

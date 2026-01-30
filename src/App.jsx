@@ -12,7 +12,8 @@ import MessagesPage from "@/pages/admin/MessagesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import UsersPage from "@/pages/admin/UsersPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
-
+// chats
+import TutorChatPage from "./pages/chat/TutorChatPage"
 // 🧩 Pages
 import Login from "@/pages/index/Login";
 import Register from "@/pages/index/Register";
@@ -78,6 +79,10 @@ function App() {
               <Route path="/exam" element={<ExamsPage />} />
               <Route path="exam-results/:examId" element={<ExamResultPage />} />
               <Route path="/exam-selector" element={<ExamSelector />} />
+
+              {/* chats */}
+              <Route path="/chat/tutor" element={<TutorChatPage/>} />
+              
               
               {/* Payment routes */}
               <Route path="/checkout" element={<CheckoutPage />} />

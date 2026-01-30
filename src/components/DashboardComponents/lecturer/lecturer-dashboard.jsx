@@ -766,9 +766,11 @@ export default function LecturerDashboard() {
             <div className="mx-auto max-w-7xl space-y-6">
               <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-900">
-                    {dashboardData?.welcome || "Welcome back"}
-                  </h1>
+             <h2 className="text-3xl text-primary font-bold mb-2">
+                  {tutor?.firstName 
+                    ? `Welcome back, ${tutor.firstName}!` 
+                    : dashboardData?.welcome?.message || 'Welcome back!'}
+                </h2>
 
                   <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                     {activeTab !== "settings" ? (

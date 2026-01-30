@@ -153,84 +153,42 @@ const useTutorStore = create(
         }
       },
 
-  //  // 🔹 GET OWN SUBJECTS
-  //     getSubjects: async () => {
-  //       const { subjectsLoaded } = get()
+      getSubjects: async () => {
+    const { subjectsLoaded } = get()
 
-  //       // Prevent refetch if already loaded
-  //       if (subjectsLoaded) {
-  //         return { success: true, data: get().subjects }
-  //       }
-
-  //       set({ loading: true, error: "" })
-
-  //       try {
-  //         const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects`)
-
-  //         if (result.success) {
-  //           console.log("✅ Subjects fetched:", result.data)
-
-  //           set({
-  //             subjects: result.data || [],
-  //             subjectsLoaded: true,
-  //             loading: false,
-  //           })
-  //         } else {
-  //           set({
-  //             error: result.message || "Failed to fetch subjects",
-  //             loading: false,
-  //           })
-  //         }
-
-  //         return result
-  //       } catch (error) {
-  //         console.error("❌ Error fetching subjects:", error)
-
-  //         set({
-  //           error: "Network error",
-  //           loading: false,
-  //         })
-
-  //         return { success: false, message: error.message }
-  //       }
-  //     },
-
-    getSubjects: async () => {
-  const { subjectsLoaded } = get()
-
-  if (subjectsLoaded) {
-    return { success: true, data: get().subjects }
-  }
-
-  set({ loading: true, error: "" })
-
-  try {
-    const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects`)
-
-    if (result.success) {
-      const subjects = result.data?.subjects || []
-      const pagination = result.data?.pagination || null
-
-      set({
-        subjects,
-        subjectsPagination: pagination,
-        subjectsLoaded: true,
-      })
-
-      console.log("✅ Subjects stored in Zustand:", subjects)
-    } else {
-      set({ error: result.message || "Failed to fetch subjects" })
+    if (subjectsLoaded) {
+      return { success: true, data: get().subjects }
     }
 
-    return result
-  } catch (error) {
-    console.error("❌ Error fetching subjects:", error)
-    set({ error: "Network error" })
-    return { success: false, message: error.message }
-  } finally {
-    set({ loading: false })
-  }
-    },
+    set({ loading: true, error: "" })
+
+    try {
+      const result = await get().fetchWithAuth(`${API_BASE}/tutor/subjects`)
+
+      if (result.success) {
+        const subjects = result.data?.subjects || []
+        const pagination = result.data?.pagination || null
+
+        set({
+          subjects,
+          subjectsPagination: pagination,
+          subjectsLoaded: true,
+        })
+
+        console.log("✅ Subjects stored in Zustand:", subjects)
+      } else {
+        set({ error: result.message || "Failed to fetch subjects" })
+      }
+
+      return result
+    } catch (error) {
+      console.error("❌ Error fetching subjects:", error)
+      set({ error: "Network error" })
+      return { success: false, message: error.message }
+    } finally {
+      set({ loading: false })
+    }
+      },
 
 
 

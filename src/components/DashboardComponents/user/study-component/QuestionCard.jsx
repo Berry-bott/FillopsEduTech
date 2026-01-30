@@ -3710,52 +3710,11 @@ export default function QuestionCard() {
     }
   };
 
-  const handleReviewMistakes = () => {
-    setShowSummary(false);
-    
-    const orderedIds = getOrderedIds();
-    let incorrectQuestionFound = false;
-    
-    for (const unitId of orderedIds) {
-      const unit = units[unitId];
-      if (!unit?.items) continue;
-      
-      const incorrectQuestions = unit.items.filter(
-        q => selectedOptions[q.id] && selectedOptions[q.id] !== q.correctAnswer
-      );
-      
-      if (incorrectQuestions.length > 0) {
-        const firstIncorrectIdx = unit.items.findIndex(
-          q => q.id === incorrectQuestions[0].id
-        );
-        
-        changeActive(unitId);
-        
-        setTimeout(() => {
-          useStudyStore.setState({ currentIndex: firstIncorrectIdx });
-        }, 100);
-        
-        incorrectQuestionFound = true;
-        
-        toast({
-          title: "Review Mode",
-          description: "Reviewing your incorrect answers",
-        });
-        
-        break;
-      }
-    }
-    
-    if (!incorrectQuestionFound) {
-      toast({
-        title: "No Mistakes!",
-        description: "You answered all questions correctly! 🎉",
-      });
-    }
-  };
 
   const handleStartNewSession = () => {
     navigate("/study");
+    console.log("this is to eand");
+    
   };
 
   // Handle option selection - can change until question is locked
@@ -3780,7 +3739,6 @@ export default function QuestionCard() {
       <StudySummary
         studyResults={studyResults}
         onReturnToDashboard={handleReturnToDashboard}
-        onReviewMistakes={handleReviewMistakes}
         onStartNewSession={handleStartNewSession}
       />
     );
@@ -3891,7 +3849,7 @@ export default function QuestionCard() {
                         bgColor = "bg-green-50 dark:bg-green-900/20";
                       } else if (opt === savedSelection) {
                         borderColor = "border-red-600";
-                        bgColor = "bg-red-500 dark:bg-red-900/20";
+                        bgColor = "bg-red-50 dark:bg-red-900/20";
                       }
                     }
 
@@ -3910,7 +3868,7 @@ export default function QuestionCard() {
                           checked={isSelected}
                           onChange={() => handleOptionSelect(opt)}
                           disabled={isQuestionLocked}
-                          className="w-4 h-4"
+                          className="w-4 h-4" 
                         />
                         <span className="text-gray-800 dark:text-gray-200">
                           <strong>{letter}.</strong> {opt}
