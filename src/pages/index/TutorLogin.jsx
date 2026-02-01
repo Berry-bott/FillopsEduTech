@@ -19,7 +19,7 @@ const TutorLogin = () => {
   const { toast } = useToast();
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading, isAuthenticated } = useTutorAuthStore(); // ✅ Added isAuthenticated
+  const { login, loading, isAuthenticated } = useTutorAuthStore(); 
 
   const {
     register,
@@ -53,6 +53,10 @@ const TutorLogin = () => {
         navigate("/tutor/dashboard", { replace: true });
         return;
       }
+        const profileRes = await getProfile(res.data.accessToken);
+    if (profileRes.success) {
+      useTutorAuthStore.getState().setTutor(profileRes.data);
+    }
 
       setError(res?.message || "Invalid email or password");
     } catch (error) {

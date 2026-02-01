@@ -1,3 +1,261 @@
+// import React, { useState, useEffect } from "react"
+// import { Button } from "@/components/ui/button"
+// import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+// import { Input } from "@/components/ui/input"
+// import { Badge } from "@/components/ui/badge"
+// import { Separator } from "@/components/ui/separator"
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+// import { 
+//   Search, 
+//   Users, 
+//   BookOpen, 
+//   TrendingUp, 
+//   Loader2,
+//   Mail,
+//   Award,
+//   GraduationCap,
+//   BarChart3,
+//   PieChart
+// } from "lucide-react"
+// import { useToast } from "@/components/ui/use-toast"
+// import useTutorStore from "@/store/tutorStore"
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select"
+
+// export default function AnalyticsPanel({ subjects }) {
+//   const { toast } = useToast()
+//   const { getSubjectEnrolledStudents } = useTutorStore()
+
+//   const [selectedSubject, setSelectedSubject] = useState(null)
+//   const [enrolledStudents, setEnrolledStudents] = useState([])
+//   const [localSearch, setLocalSearch] = useState("")
+//   const [loadingStudents, setLoadingStudents] = useState(false)
+//   const [stats, setStats] = useState({
+//     totalStudents: 0,
+//     activeStudents: 0,
+//     completionRate: 0,
+//     averageProgress: 0
+//   })
+
+//   // ---------------- LOAD STUDENTS ----------------
+//   const loadEnrolledStudents = async () => {
+//     if (!selectedSubject) return
+
+//     setLoadingStudents(true)
+
+//     try {
+//       const subjectId = String(selectedSubject.subjectId || selectedSubject.id)
+
+//       const result = await getSubjectEnrolledStudents(subjectId)
+
+//       console.log("📦 API RESULT:", result)
+
+//       if (!result?.success) {
+//         toast({
+//           title: "Error",
+//           description: result?.message || "Failed to load students",
+//           variant: "destructive",
+//         })
+//         setEnrolledStudents([])
+//         return
+//       }
+
+//       const students = result.data?.students || result.data || []
+
+//       setEnrolledStudents(students)
+
+//       const totalStudents = students.length
+//       const activeStudents = students.filter(s => s.status === "active").length
+//       const totalProgress = students.reduce((sum, s) => sum + (s.progress || 0), 0)
+
+//       const averageProgress = totalStudents
+//         ? Math.round(totalProgress / totalStudents)
+//         : 0
+
+//       const completionRate = totalStudents
+//         ? Math.round(students.filter(s => (s.progress || 0) >= 100).length / totalStudents * 100)
+//         : 0
+
+//       setStats({
+//         totalStudents,
+//         activeStudents,
+//         completionRate,
+//         averageProgress,
+//       })
+
+//     } catch (error) {
+//       console.error("❌ Analytics error:", error)
+//       toast({
+//         title: "Error",
+//         description: "Failed to load enrolled students",
+//         variant: "destructive",
+//       })
+//     } finally {
+//       setLoadingStudents(false)
+//     }
+//   }
+
+//   // ---------------- AUTO SELECT FIRST SUBJECT ----------------
+//   useEffect(() => {
+//     if (subjects?.length && !selectedSubject) {
+//       setSelectedSubject(subjects[0])
+//     }
+//   }, [subjects])
+
+//   // ---------------- LOAD WHEN SUBJECT CHANGES ----------------
+//   useEffect(() => {
+//     if (selectedSubject) {
+//       loadEnrolledStudents()
+//     }
+//   }, [selectedSubject])
+
+//   // ---------------- FILTER ----------------
+//   const filteredStudents = enrolledStudents.filter(student => {
+//     if (!localSearch) return true
+//     const q = localSearch.toLowerCase()
+//     return (
+//       (student.firstName || "").toLowerCase().includes(q) ||
+//       (student.lastName || "").toLowerCase().includes(q) ||
+//       (student.email || "").toLowerCase().includes(q) ||
+//       (student.studentId || "").toLowerCase().includes(q)
+//     )
+//   })
+
+//   const handleSubjectChange = (subjectId) => {
+//     const subject = subjects.find(
+//       s => String(s.subjectId || s.id) === subjectId
+//     )
+//     if (subject) setSelectedSubject(subject)
+//   }
+
+//   return (
+//     <div className="space-y-6">
+
+//       {/* HEADER */}
+//       <div className="flex flex-col sm:flex-row justify-between gap-4">
+//         <div>
+//           <h2 className="text-xl font-bold flex items-center gap-2">
+//             <BarChart3 className="size-6 text-primary" />
+//             Student Enrollment Analytics
+//           </h2>
+//           <p className="text-sm text-muted-foreground">
+//             View and analyze student enrollment across your subjects
+//           </p>
+//         </div>
+
+//         <Select
+//           value={selectedSubject ? String(selectedSubject.subjectId || selectedSubject.id) : ""}
+//           onValueChange={handleSubjectChange}
+//         >
+//           <SelectTrigger className="w-[250px]">
+//             <SelectValue placeholder="Select a subject" />
+//           </SelectTrigger>
+//           <SelectContent>
+//             {subjects?.length ? subjects.map(subject => (
+//               <SelectItem
+//                 key={subject.subjectId || subject.id}
+//                 value={String(subject.subjectId || subject.id)}
+//               >
+//                 {subject.subjectName || subject.name}
+//               </SelectItem>
+//             )) : (
+//               <SelectItem value="none" disabled>No subjects</SelectItem>
+//             )}
+//           </SelectContent>
+//         </Select>
+//       </div>
+
+//       {/* STATS */}
+//       {selectedSubject && (
+//         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+//           <StatCard title="Total Students" value={stats.totalStudents} Icon={Users} />
+//           <StatCard title="Active Students" value={stats.activeStudents} Icon={TrendingUp} />
+//           <StatCard title="Avg Progress" value={`${stats.averageProgress}%`} Icon={PieChart} />
+//           <StatCard title="Completion Rate" value={`${stats.completionRate}%`} Icon={Award} />
+//         </div>
+//       )}
+
+//       {/* SEARCH */}
+//       {selectedSubject && enrolledStudents.length > 0 && (
+//         <div className="flex gap-2">
+//           <div className="relative max-w-sm flex-1">
+//             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+//             <Input
+//               className="pl-9"
+//               placeholder="Search students..."
+//               value={localSearch}
+//               onChange={(e) => setLocalSearch(e.target.value)}
+//             />
+//           </div>
+//           <Badge>{filteredStudents.length}/{enrolledStudents.length}</Badge>
+//         </div>
+//       )}
+
+//       {/* STUDENTS */}
+//       {loadingStudents ? (
+//         <Card><CardContent className="py-12 text-center"><Loader2 className="animate-spin mx-auto" /></CardContent></Card>
+//       ) : filteredStudents.length ? (
+//         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+//           {filteredStudents.map(student => (
+//             <Card key={student.id || student.studentId}>
+//               <CardHeader className="flex gap-3">
+//                 <Avatar>
+//                   <AvatarImage src={student.avatar} />
+//                   <AvatarFallback>
+//                     {student.firstName?.[0]}{student.lastName?.[0]}
+//                   </AvatarFallback>
+//                 </Avatar>
+//                 <div>
+//                   <CardTitle>{student.firstName} {student.lastName}</CardTitle>
+//                   <CardDescription className="flex items-center gap-1">
+//                     <Mail className="size-3" /> {student.email}
+//                   </CardDescription>
+//                 </div>
+//               </CardHeader>
+//               <CardContent>
+//                 <p className="text-sm">Progress: {student.progress || 0}%</p>
+//               </CardContent>
+//             </Card>
+//           ))}
+//         </div>
+//       ) : (
+//         <Card>
+//           <CardContent className="py-12 text-center">
+//             <GraduationCap className="mx-auto mb-4 text-muted-foreground" />
+//             <p>No students found</p>
+//           </CardContent>
+//         </Card>
+//       )}
+//     </div>
+//   )
+// }
+
+// // ---------------- SMALL CARD COMPONENT ----------------
+// function StatCard({ title, value, Icon }) {
+//   return (
+//     <Card>
+//       <CardHeader className="pb-3 flex justify-between">
+//         <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
+//         <Icon className="size-4" />
+//       </CardHeader>
+//       <CardContent>
+//         <div className="text-2xl font-bold">{value}</div>
+//       </CardContent>
+//     </Card>
+//   )
+// }
+
+
+
+
+
+
+
 import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -15,7 +273,15 @@ import {
   Award,
   GraduationCap,
   BarChart3,
-  PieChart
+  PieChart,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Calendar,
+  HelpCircle,
+  AlertCircle,
+  Activity,
+  Target
 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import useTutorStore from "@/store/tutorStore"
@@ -29,7 +295,7 @@ import {
 
 export default function AnalyticsPanel({ subjects }) {
   const { toast } = useToast()
-  const { getSubjectEnrolledStudents } = useTutorStore()
+  const { getSubjectEnrolledStudents, dashboardData, fetchDashboard, loading } = useTutorStore()
 
   const [selectedSubject, setSelectedSubject] = useState(null)
   const [enrolledStudents, setEnrolledStudents] = useState([])
@@ -41,6 +307,13 @@ export default function AnalyticsPanel({ subjects }) {
     completionRate: 0,
     averageProgress: 0
   })
+
+  // ---------------- LOAD DASHBOARD DATA ----------------
+  useEffect(() => {
+    if (!dashboardData) {
+      fetchDashboard()
+    }
+  }, [])
 
   // ---------------- LOAD STUDENTS ----------------
   const loadEnrolledStudents = async () => {
@@ -133,119 +406,613 @@ export default function AnalyticsPanel({ subjects }) {
     if (subject) setSelectedSubject(subject)
   }
 
+  // ---------------- FORMAT DATE ----------------
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A"
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }
+
+  // ---------------- GET STATUS BADGE ----------------
+  const getStatusBadge = (status) => {
+    const variants = {
+      PENDING: { className: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: Clock },
+      CONFIRMED: { className: "bg-blue-100 text-blue-800 border-blue-200", icon: CheckCircle2 },
+      COMPLETED: { className: "bg-green-100 text-green-800 border-green-200", icon: Award },
+      CANCELLED: { className: "bg-red-100 text-red-800 border-red-200", icon: XCircle },
+      CANCELLED_BY_USER: { className: "bg-red-100 text-red-800 border-red-200", icon: XCircle },
+    }
+    const config = variants[status] || { className: "bg-gray-100 text-gray-800 border-gray-200", icon: AlertCircle }
+    const Icon = config.icon
+    return (
+      <Badge className={`${config.className} flex items-center gap-1 border`}>
+        <Icon className="size-3" />
+        {status?.replace(/_/g, " ")}
+      </Badge>
+    )
+  }
+
+  // ---------------- GET DIFFICULTY BADGE ----------------
+  const getDifficultyBadge = (difficulty) => {
+    const variants = {
+      EASY: "bg-green-100 text-green-800 border-green-200",
+      MEDIUM: "bg-blue-100 text-blue-800 border-blue-200",
+      HARD: "bg-red-100 text-red-800 border-red-200"
+    }
+    return (
+      <Badge className={`${variants[difficulty] || "bg-gray-100 text-gray-800 border-gray-200"} border`}>
+        {difficulty}
+      </Badge>
+    )
+  }
+
+  if (loading && !dashboardData) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-blue-200 shadow-lg">
+          <CardContent className="py-16 text-center">
+            <Loader2 className="animate-spin mx-auto mb-4 size-16 text-blue-600" />
+            <p className="text-blue-600 font-medium text-lg">Loading analytics...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-8">
 
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <BarChart3 className="size-6 text-primary" />
-            Student Enrollment Analytics
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            View and analyze student enrollment across your subjects
-          </p>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white shadow-xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold flex items-center gap-3 mb-2">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <BarChart3 className="size-8" />
+              </div>
+              Analytics Dashboard
+            </h2>
+            <p className="text-blue-100 text-lg">
+              Comprehensive overview of your tutoring platform
+            </p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm px-6 py-3 rounded-lg border border-white/20">
+            <p className="text-sm text-blue-100">Last Updated</p>
+            <p className="font-semibold">{new Date().toLocaleDateString()}</p>
+          </div>
         </div>
-
-        <Select
-          value={selectedSubject ? String(selectedSubject.subjectId || selectedSubject.id) : ""}
-          onValueChange={handleSubjectChange}
-        >
-          <SelectTrigger className="w-[250px]">
-            <SelectValue placeholder="Select a subject" />
-          </SelectTrigger>
-          <SelectContent>
-            {subjects?.length ? subjects.map(subject => (
-              <SelectItem
-                key={subject.subjectId || subject.id}
-                value={String(subject.subjectId || subject.id)}
-              >
-                {subject.subjectName || subject.name}
-              </SelectItem>
-            )) : (
-              <SelectItem value="none" disabled>No subjects</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
       </div>
 
-      {/* STATS */}
-      {selectedSubject && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total Students" value={stats.totalStudents} Icon={Users} />
-          <StatCard title="Active Students" value={stats.activeStudents} Icon={TrendingUp} />
-          <StatCard title="Avg Progress" value={`${stats.averageProgress}%`} Icon={PieChart} />
-          <StatCard title="Completion Rate" value={`${stats.completionRate}%`} Icon={Award} />
-        </div>
-      )}
-
-      {/* SEARCH */}
-      {selectedSubject && enrolledStudents.length > 0 && (
-        <div className="flex gap-2">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Search students..."
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+      {/* OVERVIEW STATS */}
+      {dashboardData?.overview && (
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-1 w-5 bg-blue-600 rounded-full"></div>
+            <h3 className="text-2xl font-bold text-gray-800">Platform Overview</h3>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <EnhancedStatCard 
+              title="Total Bookings" 
+              value={dashboardData.overview.totalBookings || 0} 
+              Icon={Calendar}
+              gradient="from-blue-500 to-blue-600"
+              iconBg="bg-blue-100"
+              iconColor="text-blue-600"
+            />
+            <EnhancedStatCard 
+              title="Total Questions" 
+              value={dashboardData.overview.totalQuestions || 0} 
+              Icon={HelpCircle}
+              gradient="from-indigo-500 to-indigo-600"
+              iconBg="bg-indigo-100"
+              iconColor="text-indigo-600"
+            />
+            <EnhancedStatCard 
+              title="Total Subjects" 
+              value={dashboardData.overview.totalSubjects || 0} 
+              Icon={BookOpen}
+              gradient="from-cyan-500 to-cyan-600"
+              iconBg="bg-cyan-100"
+              iconColor="text-cyan-600"
+            />
+            <EnhancedStatCard 
+              title="Total Topics" 
+              value={dashboardData.overview.totalTopics || 0} 
+              Icon={PieChart}
+              gradient="from-sky-500 to-sky-600"
+              iconBg="bg-sky-100"
+              iconColor="text-sky-600"
             />
           </div>
-          <Badge>{filteredStudents.length}/{enrolledStudents.length}</Badge>
         </div>
       )}
 
-      {/* STUDENTS */}
-      {loadingStudents ? (
-        <Card><CardContent className="py-12 text-center"><Loader2 className="animate-spin mx-auto" /></CardContent></Card>
-      ) : filteredStudents.length ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudents.map(student => (
-            <Card key={student.id || student.studentId}>
-              <CardHeader className="flex gap-3">
-                <Avatar>
-                  <AvatarImage src={student.avatar} />
-                  <AvatarFallback>
-                    {student.firstName?.[0]}{student.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <CardTitle>{student.firstName} {student.lastName}</CardTitle>
-                  <CardDescription className="flex items-center gap-1">
-                    <Mail className="size-3" /> {student.email}
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">Progress: {student.progress || 0}%</p>
-              </CardContent>
-            </Card>
-          ))}
+      {/* BOOKING STATS */}
+      {dashboardData?.bookingStats && (
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-1 w-5 bg-blue-600 rounded-full"></div>
+            <h3 className="text-2xl font-bold text-gray-800">Booking Statistics</h3>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <EnhancedStatCard 
+              title="Pending Sessions" 
+              value={dashboardData.bookingStats.pending || 0} 
+              Icon={Clock}
+              gradient="from-yellow-500 to-yellow-600"
+              iconBg="bg-yellow-100"
+              iconColor="text-yellow-600"
+            />
+            <EnhancedStatCard 
+              title="Confirmed Sessions" 
+              value={dashboardData.bookingStats.confirmed || 0} 
+              Icon={CheckCircle2}
+              gradient="from-blue-500 to-blue-600"
+              iconBg="bg-blue-100"
+              iconColor="text-blue-600"
+            />
+            <EnhancedStatCard 
+              title="Completed Sessions" 
+              value={dashboardData.bookingStats.completed || 0} 
+              Icon={Award}
+              gradient="from-green-500 to-green-600"
+              iconBg="bg-green-100"
+              iconColor="text-green-600"
+            />
+            <EnhancedStatCard 
+              title="Cancelled Sessions" 
+              value={dashboardData.bookingStats.cancelled || 0} 
+              Icon={XCircle}
+              gradient="from-red-500 to-red-600"
+              iconBg="bg-red-100"
+              iconColor="text-red-600"
+            />
+            <EnhancedStatCard 
+              title="User Cancelled" 
+              value={dashboardData.bookingStats.cancelled_by_user || 0} 
+              Icon={XCircle}
+              gradient="from-orange-500 to-orange-600"
+              iconBg="bg-orange-100"
+              iconColor="text-orange-600"
+            />
+            <EnhancedStatCard 
+              title="Rescheduled" 
+              value={dashboardData.bookingStats.rescheduled || 0} 
+              Icon={Activity}
+              gradient="from-purple-500 to-purple-600"
+              iconBg="bg-purple-100"
+              iconColor="text-purple-600"
+            />
+          </div>
         </div>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <GraduationCap className="mx-auto mb-4 text-muted-foreground" />
-            <p>No students found</p>
+      )}
+
+      {/* QUESTIONS BY DIFFICULTY */}
+      {dashboardData?.questionsByDifficulty && (
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-1 w-5 bg-blue-600 rounded-full"></div>
+            <h3 className="text-2xl font-bold text-gray-800">Questions by Difficulty</h3>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            <EnhancedStatCard 
+              title="Easy Questions" 
+              value={dashboardData.questionsByDifficulty.easy || 0} 
+              Icon={CheckCircle2}
+              gradient="from-green-500 to-green-600"
+              iconBg="bg-green-100"
+              iconColor="text-green-600"
+            />
+            <EnhancedStatCard 
+              title="Medium Questions" 
+              value={dashboardData.questionsByDifficulty.medium || 0} 
+              Icon={Target}
+              gradient="from-blue-500 to-blue-600"
+              iconBg="bg-blue-100"
+              iconColor="text-blue-600"
+            />
+            <EnhancedStatCard 
+              title="Hard Questions" 
+              value={dashboardData.questionsByDifficulty.hard || 0} 
+              Icon={TrendingUp}
+              gradient="from-red-500 to-red-600"
+              iconBg="bg-red-100"
+              iconColor="text-red-600"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* QUESTIONS BY CATEGORY */}
+      {dashboardData?.questionsByCategory && (
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-1 w-5 bg-blue-600 rounded-full"></div>
+            <h3 className="text-2xl font-bold text-gray-800">Questions by Category</h3>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {dashboardData.questionsByCategory.map((cat, idx) => (
+              <EnhancedStatCard 
+                key={idx}
+                title={`${cat.category || "Unknown"} Exam`} 
+                value={cat._count?.category || 0} 
+                Icon={HelpCircle}
+                gradient={
+                  idx === 0 ? "from-blue-500 to-blue-600" :
+                  idx === 1 ? "from-indigo-500 to-indigo-600" :
+                  idx === 2 ? "from-purple-500 to-purple-600" :
+                  "from-cyan-500 to-cyan-600"
+                }
+                iconBg={
+                  idx === 0 ? "bg-blue-100" :
+                  idx === 1 ? "bg-indigo-100" :
+                  idx === 2 ? "bg-purple-100" :
+                  "bg-cyan-100"
+                }
+                iconColor={
+                  idx === 0 ? "text-blue-600" :
+                  idx === 1 ? "text-indigo-600" :
+                  idx === 2 ? "text-purple-600" :
+                  "text-cyan-600"
+                }
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* UPCOMING SESSIONS */}
+      {dashboardData?.upcomingSessions && dashboardData.upcomingSessions.length > 0 && (
+        <Card className="border-blue-200 shadow-lg overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-3 text-2xl text-blue-900">
+                  <div className="bg-blue-600 p-2 rounded-lg">
+                    <Calendar className="size-6 text-white" />
+                  </div>
+                  Upcoming Sessions
+                </CardTitle>
+                <CardDescription className="text-blue-700 mt-2">
+                  {dashboardData.upcomingSessions.length} scheduled tutoring session{dashboardData.upcomingSessions.length !== 1 ? 's' : ''}
+                </CardDescription>
+              </div>
+              <Badge className="bg-blue-600 text-white border-0 px-4 py-2 text-lg">
+                {dashboardData.upcomingSessions.length}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {dashboardData.upcomingSessions.map((session) => (
+                <Card key={session.id} className="border-l-4 border-l-blue-600 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="size-14 border-2 border-blue-200">
+                          <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold text-lg">
+                            {session.user?.firstName?.[0]}{session.user?.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold text-lg text-gray-800">
+                            {session.user?.firstName} {session.user?.lastName}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1 max-w-md">{session.purpose}</p>
+                        </div>
+                      </div>
+                      {getStatusBadge(session.status)}
+                    </div>
+                    <Separator className="my-4" />
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <span className="text-blue-600 font-medium flex items-center gap-2">
+                          <Calendar className="size-4" />
+                          Scheduled
+                        </span>
+                        <p className="font-semibold text-gray-800 mt-1">{formatDate(session.scheduledAt)}</p>
+                      </div>
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <span className="text-blue-600 font-medium flex items-center gap-2">
+                          <Clock className="size-4" />
+                          Duration
+                        </span>
+                        <p className="font-semibold text-gray-800 mt-1">{session.duration} minutes</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
+
+      {/* RECENT BOOKINGS */}
+      {dashboardData?.recentBookings && dashboardData.recentBookings.length > 0 && (
+        <Card className="border-blue-200 shadow-lg overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-3 text-2xl text-blue-900">
+                  <div className="bg-blue-600 p-2 rounded-lg">
+                    <Activity className="size-6 text-white" />
+                  </div>
+                  Recent Bookings
+                </CardTitle>
+                <CardDescription className="text-blue-700 mt-2">
+                  Latest booking activities
+                </CardDescription>
+              </div>
+              <Badge className="bg-blue-600 text-white border-0 px-4 py-2 text-lg">
+                {dashboardData.recentBookings.length}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-3">
+              {dashboardData.recentBookings.map((booking) => (
+                <div key={booking.id} className="flex items-center justify-between p-4 border border-blue-100 rounded-xl hover:bg-blue-50 transition-all duration-200 hover:shadow-md">
+                  <div className="flex items-center gap-4 flex-1">
+                    <Avatar className="size-12 border-2 border-blue-200">
+                      <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
+                        {booking.user?.firstName?.[0]}{booking.user?.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800">
+                        {booking.user?.firstName} {booking.user?.lastName}
+                      </p>
+                      <p className="text-sm text-gray-600 line-clamp-1 mt-1">{booking.purpose}</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <p className="text-xs text-blue-600 font-medium flex items-center gap-1">
+                          <Calendar className="size-3" />
+                          {formatDate(booking.scheduledAt)}
+                        </p>
+                        <p className="text-xs text-blue-600 font-medium flex items-center gap-1">
+                          <Clock className="size-3" />
+                          {booking.duration}min
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {getStatusBadge(booking.status)}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* RECENT QUESTIONS */}
+      {dashboardData?.recentQuestions && dashboardData.recentQuestions.length > 0 && (
+        <Card className="border-blue-200 shadow-lg overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-3 text-2xl text-blue-900">
+                  <div className="bg-blue-600 p-2 rounded-lg">
+                    <HelpCircle className="size-6 text-white" />
+                  </div>
+                  Recent Questions
+                </CardTitle>
+                <CardDescription className="text-blue-700 mt-2">
+                  Latest created questions
+                </CardDescription>
+              </div>
+              <Badge className="bg-blue-600 text-white border-0 px-4 py-2 text-lg">
+                {dashboardData.recentQuestions.length}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {dashboardData.recentQuestions.map((question) => (
+                <div key={question.id} className="p-5 border border-blue-100 rounded-xl hover:bg-blue-50 transition-all duration-200 hover:shadow-md">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 line-clamp-2 text-lg mb-2">{question.text}</p>
+                      <div className="flex items-center gap-2 text-sm">
+                        <BookOpen className="size-4 text-blue-600" />
+                        <span className="text-blue-700 font-medium">
+                          {question.subject?.subjectName}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 items-end ml-4">
+                      {getDifficultyBadge(question.difficulty)}
+                      <Badge className="bg-blue-100 text-blue-800 border border-blue-200">
+                        {question.category}
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 flex items-center gap-1 mt-3 pt-3 border-t border-blue-100">
+                    <Clock className="size-3" />
+                    Created {formatDate(question.createdAt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* SUBJECT ENROLLMENT ANALYTICS */}
+      <Separator className="my-8" />
+      
+      <div>
+        <div className="flex items-center gap-2 mb-6">
+          <div className="h-1 w-5 bg-blue-600 rounded-full"></div>
+          <h3 className="text-2xl font-bold text-gray-800">Subject Enrollment Analytics</h3>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6 bg-blue-50 p-6 rounded-xl border border-blue-200">
+          <p className="text-blue-800 font-medium">
+            View and analyze student enrollment across your subjects
+          </p>
+
+          <Select
+            value={selectedSubject ? String(selectedSubject.subjectId || selectedSubject.id) : ""}
+            onValueChange={handleSubjectChange}
+          >
+            <SelectTrigger className="w-full sm:w-[280px] border-blue-300 focus:ring-blue-500">
+              <SelectValue placeholder="Select a subject" />
+            </SelectTrigger>
+            <SelectContent>
+              {subjects?.length ? subjects.map(subject => (
+                <SelectItem
+                  key={subject.subjectId || subject.id}
+                  value={String(subject.subjectId || subject.id)}
+                  className="hover:bg-blue-50"
+                >
+                  {subject.subjectName || subject.name}
+                </SelectItem>
+              )) : (
+                <SelectItem value="none" disabled>No subjects</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* SUBJECT STATS */}
+        {selectedSubject && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            <EnhancedStatCard 
+              title="Total Students" 
+              value={stats.totalStudents} 
+              Icon={Users}
+              gradient="from-blue-500 to-blue-600"
+              iconBg="bg-blue-100"
+              iconColor="text-blue-600"
+            />
+            <EnhancedStatCard 
+              title="Active Students" 
+              value={stats.activeStudents} 
+              Icon={TrendingUp}
+              gradient="from-green-500 to-green-600"
+              iconBg="bg-green-100"
+              iconColor="text-green-600"
+            />
+            <EnhancedStatCard 
+              title="Avg Progress" 
+              value={`${stats.averageProgress}%`} 
+              Icon={PieChart}
+              gradient="from-purple-500 to-purple-600"
+              iconBg="bg-purple-100"
+              iconColor="text-purple-600"
+            />
+            <EnhancedStatCard 
+              title="Completion Rate" 
+              value={`${stats.completionRate}%`} 
+              Icon={Award}
+              gradient="from-yellow-500 to-yellow-600"
+              iconBg="bg-yellow-100"
+              iconColor="text-yellow-600"
+            />
+          </div>
+        )}
+
+        {/* SEARCH */}
+        {selectedSubject && enrolledStudents.length > 0 && (
+          <div className="flex gap-3 mb-6">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-3 size-5 text-blue-400" />
+              <Input
+                className="pl-11 h-12 border-blue-300 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Search students by name or email..."
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+              />
+            </div>
+            <Badge className="bg-blue-600 text-white border-0 px-4 h-12 flex items-center text-base">
+              {filteredStudents.length}/{enrolledStudents.length}
+            </Badge>
+          </div>
+        )}
+
+        {/* STUDENTS */}
+        {loadingStudents ? (
+          <Card className="border-blue-200">
+            <CardContent className="py-16 text-center">
+              <Loader2 className="animate-spin mx-auto mb-4 size-16 text-blue-600" />
+              <p className="text-blue-600 font-medium">Loading students...</p>
+            </CardContent>
+          </Card>
+        ) : filteredStudents.length ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredStudents.map(student => (
+              <Card key={student.id || student.studentId} className="border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardHeader className="bg-gradient-to-br from-blue-50 to-white pb-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="size-16 border-2 border-blue-300">
+                      <AvatarImage src={student.avatar} />
+                      <AvatarFallback className="bg-blue-600 text-white font-bold text-xl">
+                        {student.firstName?.[0]}{student.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg text-gray-800">{student.firstName} {student.lastName}</CardTitle>
+                      <CardDescription className="flex items-center gap-1 mt-1">
+                        <Mail className="size-3 text-blue-600" /> 
+                        <span className="text-blue-700 text-xs">{student.email}</span>
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-blue-700">Progress</span>
+                      <span className="text-lg font-bold text-blue-900">{student.progress || 0}%</span>
+                    </div>
+                    <div className="w-full bg-blue-200 rounded-full h-2.5">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500" 
+                        style={{ width: `${student.progress || 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : selectedSubject ? (
+          <Card className="border-blue-200 shadow-lg">
+            <CardContent className="py-16 text-center">
+              <div className="bg-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <GraduationCap className="size-12 text-blue-600" />
+              </div>
+              <p className="text-xl font-semibold text-gray-800 mb-2">No students found</p>
+              <p className="text-blue-600">Try adjusting your search filters</p>
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
     </div>
   )
 }
 
-// ---------------- SMALL CARD COMPONENT ----------------
-function StatCard({ title, value, Icon }) {
+// ---------------- ENHANCED STAT CARD COMPONENT ----------------
+function EnhancedStatCard({ title, value, Icon, gradient = "from-blue-500 to-blue-600", iconBg = "bg-blue-100", iconColor = "text-blue-600" }) {
   return (
-    <Card>
-      <CardHeader className="pb-3 flex justify-between">
-        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
-        <Icon className="size-4" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-      </CardContent>
+    <Card className="border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden group">
+      {/* <div className={`h-1 bg-gradient-to-r ${gradient}`}></div> */}
+      <CardContent className="p-">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600 mb-3">{title}</p>
+            <p className="text-4xl font-bold text-gray-900">{value}</p>
+          </div>
+          <div className={`${iconBg} p-2 rounded-xl group-hover:scale-110 transition-transform duration-300`}>
+            <Icon className={`size-4 ${iconColor}`} />
+          </div>
+        </div>
+    </CardContent>
     </Card>
   )
 }

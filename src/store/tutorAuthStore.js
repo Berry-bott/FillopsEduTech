@@ -10,6 +10,7 @@ import {
     tutorLogout,
     refreshAccessToken as apiRefreshAccessToken,
   } from "../api/tutorAuth";
+  
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 
@@ -101,29 +102,52 @@ const useTutorAuthStore = create(
       },
 
       // 🔹 CHECK AUTH (on app load)
-      checkTutorAuth: async () => {
-        const token = get().accessToken;
+      // checkTutorAuth: async () => {
+      //   const token = get().accessToken;
 
-        // Try existing access token
-        if (token) {
+      //   // Try existing access token
+      //   if (token) {
+      //     const res = await getProfile(token);
+
+      //     if (res.success) {
+      //       set({ tutor: res.data, isAuthenticated: true });
+      //       return true;
+      //     }
+      //   }
+
+      //   // Try refresh
+      //   const refreshed = await get().refreshAccessToken();
+      //   console.log("🔄 Refresh result:", refreshed);
+      //   if (refreshed) return true;
+
+      //   // Logout fallback
+      //   sessionStorage.removeItem("accessToken");
+      //   set({ tutor: null, accessToken: null, isAuthenticated: false });
+      //   return false;
+      // },
+
+    checkTutorAuth: async () => {
+      let token = get().accessToken || sessionStorage.getItem("accessToken");
+
+      if (token) {
+        try {
           const res = await getProfile(token);
-
           if (res.success) {
-            set({ tutor: res.data, isAuthenticated: true });
+            set({ tutor: res.data, isAuthenticated: true, accessToken: token });
             return true;
           }
-        }
+        } catch {}
+      }
 
-        // Try refresh
-        const refreshed = await get().refreshAccessToken();
-        console.log("🔄 Refresh result:", refreshed);
-        if (refreshed) return true;
+      const refreshed = await get().refreshAccessToken();
+      console.log("🔄 Refresh result:", refreshed);
+      if (refreshed) return true;
 
-        // Logout fallback
-        sessionStorage.removeItem("accessToken");
-        set({ tutor: null, accessToken: null, isAuthenticated: false });
-        return false;
-      },
+      sessionStorage.removeItem("accessToken");
+      set({ tutor: null, accessToken: null, isAuthenticated: false });
+      return false;
+    },
+
 
       // 🔹 UPDATE PROFILE
       updateProfile: async (profileData) => {
@@ -161,7 +185,121 @@ const useTutorAuthStore = create(
           set({ loading: false });
         }
       },
-      
+
+      // 🔹 UPLOAD AVATAR
+      uploadAvatar: async (formData) => {
+        const token = get().accessToken; // ✅ Direct access to state
+        
+        if (!token) {
+          return { success: false, message: "Not authenticated" };
+        }
+
+        set({ loading: true, error: "" });
+
+        try {
+          const response = await fetch(`${API_BASE}/tutor/profile/avatar`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              // Don't set Content-Type - let browser set it with boundary
+            },
+            credentials: "include",
+            body: formData,
+          });
+
+          const result = await response.json();
+
+          console.log("📥 Avatar upload response:", result);
+
+          if (result.success) {
+            console.log("✅ Avatar uploaded:", result.data);
+            
+            // Update tutor data in store
+            const currentTutor = get().tutor;
+            if (currentTutor) {
+              set({
+                tutor: {
+                  ...currentTutor,
+                  avatar: result.data.avatar || result.data.avatarUrl || result.data.url
+                }
+              });
+            }
+            
+            set({ success: "Avatar uploaded successfully" });
+          } else {
+            set({ error: result.message || "Failed to upload avatar" });
+          }
+
+          return result;
+        } catch (error) {
+          console.error("❌ Error uploading avatar:", error);
+          const errorMessage = error.message || "Network error. Please check your connection.";
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage };
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      // 🔹 DELETE AVATAR
+      deleteAvatar: async () => {
+        const token = get().accessToken; // ✅ Direct access to state
+        
+        if (!token) {
+          return { success: false, message: "Not authenticated" };
+        }
+
+        set({ loading: true, error: "" });
+
+        try {
+          const response = await fetch(`${API_BASE}/tutor/profile/avatar`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+
+          const result = await response.json();
+
+          console.log("📥 Avatar delete response:", result);
+
+          if (result.success) {
+            console.log("✅ Avatar deleted");
+            
+            // Update tutor data in store
+            const currentTutor = get().tutor;
+            if (currentTutor) {
+              set({
+                tutor: {
+                  ...currentTutor,
+                  avatar: null
+                }
+              });
+            }
+            
+            set({ success: "Avatar deleted successfully" });
+          } else {
+            set({ error: result.message || "Failed to delete avatar" });
+          }
+
+          return result;
+        } catch (error) {
+          console.error("❌ Error deleting avatar:", error);
+          const errorMessage = error.message || "Network error. Please check your connection.";
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage };
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      // 🔹 ADD SET TUTOR METHOD (if not already present)
+      setTutor: (tutorData) => {
+        set({ tutor: tutorData });
+      },
+            
       // 🔹 CHANGE PASSWORD
       changePassword: async (passwordData) => {
         const token = get().accessToken;
