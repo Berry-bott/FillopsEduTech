@@ -1,9 +1,13 @@
-import { X, Calendar, Clock, User, MessageSquare, Star } from "lucide-react";
+
+import { useToast } from "@/components/ui/use-toast";
+import { X, Calendar, Clock, MessageSquare, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export default function BookingDetailsModal({ booking, isOpen, onClose, onReschedule, onCancel }) {
+  const { toast } = useToast();
+
   if (!isOpen || !booking) return null;
 
   const formatDate = (dateString) => {
@@ -35,6 +39,57 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onResche
     }
   };
 
+  const handleRescheduleClick = () => {
+    try {
+      onReschedule(booking);
+      toast({
+        title: "Reschedule Requested",
+        description: "Opening reschedule modal...",
+      });
+      onClose();
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Reschedule Failed",
+        description: err.message || "Something went wrong. Please try again.",
+      });
+    }
+  };
+
+  // const handleCancelClick = () => {
+  //   try {
+  //     onCancel(booking.id);
+  //     toast({
+  //       title: "Cancellation Requested",
+  //       description: "Cancelling your session...",
+  //     });
+  //     onClose();
+  //   } catch (err) {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Cancellation Failed",
+  //       description: err.message || "Unable to cancel. Please try again.",
+  //     });
+  //   }
+  // };
+
+  const handleCancelClick = async () => {
+  try {
+    await onCancel(booking.id);  // ← await if it's async
+    toast({
+      title: "Cancelled",
+      description: "Session cancelled successfully.",
+    });
+    onClose();
+  } catch (err) {
+    toast({
+      variant: "destructive",
+      title: "Cancellation Failed",
+      description: err.message || "Unable to cancel session.",
+    });
+  }
+};
+
   return (
     <>
       {/* Overlay */}
@@ -50,7 +105,7 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onResche
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-2xl">
+          <div className="sticky top-0 bg-primary text-white p-6 rounded-t-2xl">
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-2">Session Details</h2>
@@ -71,7 +126,7 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onResche
           <div className="p-6 space-y-6">
             {/* Tutor Info */}
             <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white font-bold text-2xl shadow-lg">
                 {booking.participant_name?.charAt(0).toUpperCase() || "T"}
               </div>
               <div className="flex-1">
@@ -179,20 +234,14 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onResche
               {(booking.status === "pending" || booking.status === "confirmed") && (
                 <>
                   <Button
-                    onClick={() => {
-                      onReschedule(booking);
-                      onClose();
-                    }}
+                    onClick={handleRescheduleClick}
                     variant="outline"
                     className="flex-1"
                   >
                     Reschedule
                   </Button>
                   <Button
-                    onClick={() => {
-                      onCancel(booking.id);
-                      onClose();
-                    }}
+                    onClick={handleCancelClick}
                     variant="outline"
                     className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
                   >
@@ -202,7 +251,7 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onResche
               )}
               <Button
                 onClick={onClose}
-                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                className="flex-1 bg-primary hover:primary-hover"
               >
                 Close
               </Button>
@@ -210,7 +259,6 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onResche
           </div>
         </div>
       </div>
-
     </>
   );
 }

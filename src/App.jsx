@@ -13,7 +13,8 @@ import SettingsPage from "@/pages/admin/SettingsPage";
 import UsersPage from "@/pages/admin/UsersPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 // chats
-import TutorChatPage from "./pages/chat/TutorChatPage"
+// import TutorChatPage from "./pages/chat/TutorChatPage" 
+import UserChatPage from "./pages/chat/UserChatPage"
 // 🧩 Pages
 import Login from "@/pages/index/Login";
 import Register from "@/pages/index/Register";
@@ -81,7 +82,8 @@ function App() {
               <Route path="/exam-selector" element={<ExamSelector />} />
 
               {/* chats */}
-              <Route path="/chat/tutor" element={<TutorChatPage/>} />
+              <Route path="/chat/tutor" element={<UserChatPage/>} />
+              {/* <Route path="/chat/user" element={<TutorChatPage/>} /> */}
               
               
               {/* Payment routes */}

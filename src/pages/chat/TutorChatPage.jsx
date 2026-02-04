@@ -1,9 +1,9 @@
-import  ChatInterface  from '@/components/chat/user-chat/chat-interface';
+import  TutorChat  from '@/components/chat/tutor-chat/TutorChat.jsx';
 
 export default function Home() {
   return (
     <main className="w-full h-screen">
-      <ChatInterface />
+      <TutorChat />
     </main>
   );
 }

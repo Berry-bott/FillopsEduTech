@@ -1,3 +1,4 @@
+
 // import { create } from "zustand";
 // import useAuthStore from "./authStore";
 
@@ -12,14 +13,11 @@
 //   chatHistory: [],
 //   isLoading: false,
 //   isSending: false,
-//   user: null, // Current user information
-
-//   // ---------------- SET USER ----------------
-//   setUser: (user) => set({ user }),
+//   error: null,
 
 //   // ---------------- FETCH TUTORS ----------------
 //   fetchTutors: async ({ search, category } = {}) => {
-//     set({ isLoading: true });
+//     set({ isLoading: true, error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
 //       let url = `${API_BASE}/api/users/tutors`;
@@ -28,52 +26,72 @@
 //       if (category) params.append("category", category);
 //       if (params.toString()) url += `?${params.toString()}`;
 
+//       console.log("Fetching tutors →", url);
+
 //       const res = await fetchWithAuth(url);
-//       if (res.success && Array.isArray(res.data)) {
-//         // Map API data to UI-friendly format
-//         const mappedTutors = res.data.map((tutor) => ({
-//           id: tutor.id,
-//           participant_name: tutor.name,
-//           participant_role: "tutor",
-//           last_message: "",
-//           last_message_time: null,
-//           status: "active",
-//           scheduledAt: null,
-//           duration: null,
-//           unread_count: 0,
-//           avatar: tutor.avatar || null,
-//           bio: tutor.bio || "",
-//           expertise: tutor.expertise || [],
-//           subjects: tutor.subjects || [],
-//           completedSessions: tutor.completedSessions || 0,
-//           isTutor: true, // Flag to identify tutors
-//         }));
 
-//         // Filter out tutors that already have bookings
-//         const bookings = get().bookings;
-//         const bookedTutorIds = bookings.map(b => b.tutorId);
-//         const availableTutors = mappedTutors.filter(t => !bookedTutorIds.includes(t.id));
+//       console.log("Tutors API full response:", res);
 
-//         set({ tutors: availableTutors });
-//       } else {
-//         set({ tutors: [] });
+//       // Safety checks
+//       if (!res?.success) {
+//         console.warn("Tutors fetch failed - no success flag", res);
+//         set({ tutors: [], isLoading: false });
+//         return;
 //       }
+
+//       let rawTutors = res.data || res.tutors || []; // backend might use "data" or "tutors"
+
+//       if (!Array.isArray(rawTutors)) {
+//         console.error("Tutors response is not an array!", rawTutors);
+//         set({ tutors: [], isLoading: false });
+//         return;
+//       }
+
+//       const mappedTutors = rawTutors.map((tutor) => ({
+//         id: tutor.id || tutor._id,
+//         participant_name: tutor.name || "Unknown Tutor",
+//         participant_role: "tutor",
+//         avatar: tutor.avatar || null,
+//         bio: tutor.bio || "",
+//         subjects: tutor.subjects || [],
+//         completedSessions: tutor.completedSessions || 0,
+//         rating: tutor.rating || null,
+//         isTutor: true,
+//         // default values for chat-like display
+//         last_message: "",
+//         last_message_time: null,
+//         status: "available",
+//         scheduledAt: null,
+//         duration: null,
+//         unread_count: 0,
+//       }));
+
+//       // Optional: show ALL tutors in "Tutors" tab (remove booked filter for this view)
+//       // If you want only available → keep the filter below
+//       // const bookedTutorIds = get().bookings.map(b => b.tutorId);
+//       // const availableTutors = mappedTutors.filter(t => !bookedTutorIds.includes(t.id));
+
+//       // For now — show all (most users expect to see tutors even if booked)
+//       const availableTutors = mappedTutors;
+
+//       console.log(`Loaded ${mappedTutors.length} tutors → showing ${availableTutors.length}`);
+
+//       set({ tutors: availableTutors, isLoading: false });
 //     } catch (err) {
-//       console.error("Failed to fetch tutors:", err);
-//       set({ tutors: [] });
-//     } finally {
-//       set({ isLoading: false });
+//       console.error("fetchTutors crashed:", err);
+//       set({ tutors: [], isLoading: false, error: err.message });
 //     }
 //   },
 
 //   // ---------------- FETCH ALL BOOKINGS ----------------
 //   fetchBookings: async () => {
-//     set({ isLoading: true });
+//     set({ isLoading: true, error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings`);
+//       console.log("📚 Bookings response:", res);
+
 //       if (res.success && Array.isArray(res.data)) {
-//         // Map API bookings to UI-friendly format
 //         const mappedBookings = res.data.map((booking) => ({
 //           id: booking.id,
 //           tutorId: booking.tutorId || booking.tutor?.id,
@@ -85,64 +103,64 @@
 //           scheduledAt: booking.scheduledAt || null,
 //           duration: booking.duration || null,
 //           unread_count: booking.unreadCount || 0,
-//           unreadMessages: booking.unreadCount || 0,
 //           purpose: booking.purpose || "",
 //           avatar: booking.tutor?.avatar || null,
 //           bio: booking.tutor?.bio || "",
 //           subjects: booking.tutor?.subjects || [],
 //           completedSessions: booking.tutor?.completedSessions || 0,
-//           isBooking: true, // Flag to identify bookings
+//           rating: booking.rating || null,
+//           feedback: booking.feedback || null,
+//           isBooking: true,
 //         }));
 
-//         // Keep current selection if it still exists
 //         const currentSelection = get().selectedBooking;
 //         let newSelection = currentSelection;
 
-//         // If current selection was a tutor and now has a booking, select the booking
 //         if (currentSelection?.isTutor) {
 //           const bookingForTutor = mappedBookings.find(b => b.tutorId === currentSelection.id);
 //           if (bookingForTutor) {
 //             newSelection = bookingForTutor;
 //           }
 //         } else if (currentSelection?.isBooking) {
-//           // If current selection was a booking, update it
 //           const updatedBooking = mappedBookings.find(b => b.id === currentSelection.id);
 //           newSelection = updatedBooking || currentSelection;
 //         }
 
 //         set({ 
 //           bookings: mappedBookings,
-//           selectedBooking: newSelection
+//           selectedBooking: newSelection,
+//           isLoading: false
 //         });
 
-//         // Remove tutors that now have bookings
 //         const bookedTutorIds = mappedBookings.map(b => b.tutorId);
 //         const tutors = get().tutors;
 //         const availableTutors = tutors.filter(t => !bookedTutorIds.includes(t.id));
 //         set({ tutors: availableTutors });
 //       } else {
-//         set({ bookings: [] });
+//         set({ bookings: [], isLoading: false });
 //       }
 //     } catch (err) {
-//       console.error("Failed to fetch bookings:", err);
-//       set({ bookings: [] });
-//     } finally {
-//       set({ isLoading: false });
+//       console.error("❌ Failed to fetch bookings:", err);
+//       set({ bookings: [], isLoading: false, error: err.message });
 //     }
 //   },
 
 //   // ---------------- CREATE NEW BOOKING ----------------
 //   createBooking: async ({ tutorId, purpose, scheduledAt, duration }) => {
-//     set({ isLoading: true });
+//     set({ isLoading: true, error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
+//       console.log("📝 Creating booking:", { tutorId, purpose, scheduledAt, duration });
+
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings`, {
 //         method: "POST",
+//         headers: { "Content-Type": "application/json" },
 //         body: JSON.stringify({ tutorId, purpose, scheduledAt, duration }),
 //       });
 
+//       console.log("✅ Create booking response:", res);
+
 //       if (res.success && res.data) {
-//         // Map the new booking
 //         const newBooking = {
 //           id: res.data.id,
 //           tutorId: res.data.tutorId || res.data.tutor?.id,
@@ -154,7 +172,6 @@
 //           scheduledAt: res.data.scheduledAt || null,
 //           duration: res.data.duration || null,
 //           unread_count: 0,
-//           unreadMessages: 0,
 //           purpose: res.data.purpose || purpose,
 //           avatar: res.data.tutor?.avatar || null,
 //           bio: res.data.tutor?.bio || "",
@@ -163,144 +180,152 @@
 //           isBooking: true,
 //         };
 
-//         // Add to bookings
 //         set((state) => ({ 
 //           bookings: [...state.bookings, newBooking],
-//           // Remove the tutor from tutors list
 //           tutors: state.tutors.filter(t => t.id !== tutorId),
-//           // Select the new booking if the tutor was selected
-//           selectedBooking: state.selectedBooking?.id === tutorId ? newBooking : state.selectedBooking
+//           selectedBooking: state.selectedBooking?.id === tutorId ? newBooking : state.selectedBooking,
+//           isLoading: false
 //         }));
 
 //         return newBooking;
 //       }
+//       throw new Error(res.message || "Failed to create booking");
 //     } catch (err) {
-//       console.error("Failed to create booking:", err);
+//       console.error("❌ Failed to create booking:", err);
+//       set({ isLoading: false, error: err.message });
 //       throw err;
-//     } finally {
-//       set({ isLoading: false });
 //     }
 //   },
 
-//   // ---------------- FETCH SINGLE BOOKING ----------------
+//   // ---------------- FETCH SINGLE BOOKING DETAILS ----------------
 //   fetchBooking: async (bookingId) => {
-//     set({ isLoading: true });
+//     set({ isLoading: true, error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}`);
+//       console.log("📖 Booking details response:", res);
+
 //       if (res.success && res.data) {
-//         set({ selectedBooking: res.data });
-//         return res.data;
+//         const bookingDetails = {
+//           ...res.data,
+//           participant_name: res.data.tutor?.name || "Unknown",
+//           participant_role: "tutor",
+//           avatar: res.data.tutor?.avatar || null,
+//           bio: res.data.tutor?.bio || "",
+//           subjects: res.data.tutor?.subjects || [],
+//           isBooking: true,
+//         };
+//         set({ selectedBooking: bookingDetails, isLoading: false });
+//         return bookingDetails;
 //       }
+//       throw new Error(res.message || "Failed to fetch booking");
 //     } catch (err) {
-//       console.error("Failed to fetch booking:", err);
-//     } finally {
-//       set({ isLoading: false });
+//       console.error("❌ Failed to fetch booking:", err);
+//       set({ isLoading: false, error: err.message });
+//       throw err;
 //     }
 //   },
 
 //   // ---------------- CONFIRM BOOKING ----------------
 //   confirmBooking: async (bookingId) => {
+//     set({ error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
+//       console.log("✅ Confirming booking:", bookingId);
+
 //       const res = await fetchWithAuth(
 //         `${API_BASE}/api/users/bookings/${bookingId}/confirm`,
-//         { method: "PATCH" }
+//         { 
+//           method: "PATCH",
+//           headers: { "Content-Type": "application/json" }
+//         }
 //       );
-//       if (res.success && res.data) {
+
+//       console.log("✅ Confirm response:", res);
+
+//       if (res.success) {
 //         set((state) => ({
 //           bookings: state.bookings.map((b) => 
 //             b.id === bookingId 
-//               ? { ...b, status: res.data.status || "confirmed" } 
+//               ? { ...b, status: res.data?.status || "confirmed" } 
 //               : b
 //           ),
 //           selectedBooking: state.selectedBooking?.id === bookingId
-//             ? { ...state.selectedBooking, status: res.data.status || "confirmed" }
+//             ? { ...state.selectedBooking, status: res.data?.status || "confirmed" }
 //             : state.selectedBooking
 //         }));
 //         return res.data;
 //       }
+//       throw new Error(res.message || "Failed to confirm booking");
 //     } catch (err) {
-//       console.error("Failed to confirm booking:", err);
+//       console.error("❌ Failed to confirm booking:", err);
+//       set({ error: err.message });
 //       throw err;
 //     }
 //   },
 
 //   // ---------------- CANCEL BOOKING ----------------
 //   cancelBooking: async (bookingId, reason) => {
+//     set({ error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
+//       console.log("❌ Cancelling booking:", bookingId, "Reason:", reason);
+
 //       const res = await fetchWithAuth(
 //         `${API_BASE}/api/users/bookings/${bookingId}/cancel`,
-//         { method: "POST", body: JSON.stringify({ reason }) }
+//         { 
+//           method: "PATCH",
+//           headers: { "Content-Type": "application/json" },
+//           body: JSON.stringify({ reason })
+//         }
 //       );
+
+//       console.log("❌ Cancel response:", res);
+
 //       if (res.success) {
-//         // Get the booking's tutor ID before removing
 //         const booking = get().bookings.find(b => b.id === bookingId);
 //         const tutorId = booking?.tutorId;
 
 //         set((state) => ({
-//           bookings: state.bookings.filter((b) => b.id !== bookingId),
-//           selectedBooking: state.selectedBooking?.id === bookingId ? null : state.selectedBooking
+//           bookings: state.bookings.map((b) => 
+//             b.id === bookingId 
+//               ? { ...b, status: "cancelled" } 
+//               : b
+//           ),
+//           selectedBooking: state.selectedBooking?.id === bookingId 
+//             ? { ...state.selectedBooking, status: "cancelled" }
+//             : state.selectedBooking
 //         }));
 
-//         // Re-fetch tutors to add the cancelled booking's tutor back
 //         if (tutorId) {
 //           get().fetchTutors();
 //         }
 
 //         return res.data;
 //       }
+//       throw new Error(res.message || "Failed to cancel booking");
 //     } catch (err) {
-//       console.error("Failed to cancel booking:", err);
-//       throw err;
-//     }
-//   },
-
-//   // ---------------- DELETE BOOKING/SESSION ----------------
-//   deleteBooking: async (bookingId) => {
-//     try {
-//       const { fetchWithAuth } = useAuthStore.getState();
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/users/bookings/${bookingId}`,
-//         { method: "DELETE" }
-//       );
-      
-//       if (res.success) {
-//         // Get the booking's tutor ID before removing
-//         const booking = get().bookings.find(b => b.id === bookingId);
-//         const tutorId = booking?.tutorId;
-
-//         set((state) => ({
-//           bookings: state.bookings.filter((b) => b.id !== bookingId),
-//           messages: state.selectedBooking?.id === bookingId ? [] : state.messages,
-//           selectedBooking: state.selectedBooking?.id === bookingId ? null : state.selectedBooking
-//         }));
-
-//         // Re-fetch tutors to add the deleted booking's tutor back
-//         if (tutorId) {
-//           get().fetchTutors();
-//         }
-
-//         return true;
-//       }
-//       return false;
-//     } catch (err) {
-//       console.error("Failed to delete booking:", err);
+//       console.error("❌ Failed to cancel booking:", err);
+//       set({ error: err.message });
 //       throw err;
 //     }
 //   },
 
 //   // ---------------- START CHAT ----------------
 //   startChat: async (bookingId) => {
+//     set({ error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
+//       console.log("🚀 Starting chat for booking:", bookingId);
+
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/start`, {
 //         method: "POST",
+//         headers: { "Content-Type": "application/json" }
 //       });
-      
+
+//       console.log("🚀 Start chat response:", res);
+
 //       if (res.success) {
-//         // Update booking status to active
 //         set((state) => ({
 //           bookings: state.bookings.map((b) => 
 //             b.id === bookingId 
@@ -311,41 +336,67 @@
 //             ? { ...state.selectedBooking, status: "active" }
 //             : state.selectedBooking
 //         }));
-//         return true;
+//         return res.data;
 //       }
-//       return false;
+//       throw new Error(res.message || "Failed to start chat");
 //     } catch (err) {
-//       console.error("Failed to start chat:", err);
+//       console.error("❌ Failed to start chat:", err);
+//       set({ error: err.message });
 //       throw err;
 //     }
 //   },
 
 //   // ---------------- SEND MESSAGE ----------------
 //   sendMessage: async (bookingId, content) => {
-//     set({ isSending: true });
+//     set({ isSending: true, error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
+//       console.log("💬 Sending message to booking:", bookingId);
+
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/messages`, {
 //         method: "POST",
+//         headers: { "Content-Type": "application/json" },
 //         body: JSON.stringify({ content, messageType: "TEXT" }),
 //       });
+
+//       console.log("💬 Send message response:", res);
+
 //       if (res.success && res.data) {
-//         set((state) => ({ messages: [...state.messages, res.data] }));
+//         set((state) => ({ 
+//           messages: [...state.messages, res.data],
+//           isSending: false 
+//         }));
+        
+//         // Update last message in bookings
+//         set((state) => ({
+//           bookings: state.bookings.map((b) => 
+//             b.id === bookingId 
+//               ? { 
+//                   ...b, 
+//                   last_message: content,
+//                   last_message_time: new Date().toISOString()
+//                 } 
+//               : b
+//           ),
+//         }));
+        
 //         return res.data;
 //       }
+//       throw new Error(res.message || "Failed to send message");
 //     } catch (err) {
-//       console.error("Failed to send message:", err);
+//       console.error("❌ Failed to send message:", err);
+//       set({ isSending: false, error: err.message });
 //       throw err;
-//     } finally {
-//       set({ isSending: false });
 //     }
 //   },
 
 //   // ---------------- GET MESSAGES ----------------
 //   fetchMessages: async (bookingId) => {
+//     set({ error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/messages`);
+      
 //       if (res.success && Array.isArray(res.data)) {
 //         set({ messages: res.data });
 //         return res.data;
@@ -354,22 +405,27 @@
 //         return [];
 //       }
 //     } catch (err) {
-//       console.error("Failed to fetch messages:", err);
-//       set({ messages: [] });
+//       console.error("❌ Failed to fetch messages:", err);
+//       set({ messages: [], error: err.message });
 //       return [];
 //     }
 //   },
 
 //   // ---------------- END CHAT ----------------
 //   endChat: async (bookingId) => {
+//     set({ error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
+//       console.log("🏁 Ending chat for booking:", bookingId);
+
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/end`, {
 //         method: "POST",
+//         headers: { "Content-Type": "application/json" }
 //       });
-      
+
+//       console.log("🏁 End chat response:", res);
+
 //       if (res.success) {
-//         // Update booking status to completed
 //         set((state) => ({
 //           bookings: state.bookings.map((b) => 
 //             b.id === bookingId 
@@ -380,142 +436,90 @@
 //             ? { ...state.selectedBooking, status: "completed" }
 //             : state.selectedBooking
 //         }));
-//         return true;
+//         return res.data;
 //       }
-//       return false;
+//       throw new Error(res.message || "Failed to end chat");
 //     } catch (err) {
-//       console.error("Failed to end chat:", err);
+//       console.error("❌ Failed to end chat:", err);
+//       set({ error: err.message });
 //       throw err;
 //     }
 //   },
 
 //   // ---------------- RATE SESSION ----------------
 //   rateSession: async (bookingId, rating, feedback) => {
+//     set({ error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
+//       console.log("⭐ Rating session:", bookingId, "Rating:", rating);
+
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/rate`, {
 //         method: "POST",
+//         headers: { "Content-Type": "application/json" },
 //         body: JSON.stringify({ rating, feedback }),
 //       });
-      
+
+//       console.log("⭐ Rate session response:", res);
+
 //       if (res.success) {
-//         // Optionally update the booking with rating info
+//         // Update booking with rating
 //         set((state) => ({
 //           bookings: state.bookings.map((b) => 
 //             b.id === bookingId 
 //               ? { ...b, rating, feedback } 
 //               : b
 //           ),
+//           selectedBooking: state.selectedBooking?.id === bookingId
+//             ? { ...state.selectedBooking, rating, feedback }
+//             : state.selectedBooking
 //         }));
+        
 //         return true;
 //       }
-//       return false;
+//       throw new Error(res.message || "Failed to rate session");
 //     } catch (err) {
-//       console.error("Failed to rate session:", err);
-//       throw err;
+//       console.error("❌ Failed to rate session:", err);
+//       set({ error: err.message });
+//       return false;
 //     }
 //   },
 
 //   // ---------------- CHAT HISTORY ----------------
 //   fetchChatHistory: async (data) => {
+//     set({ isLoading: true, error: null });
 //     try {
 //       const { fetchWithAuth } = useAuthStore.getState();
 //       const res = await fetchWithAuth(`${API_BASE}/api/users/chat/history`, {
 //         method: "POST",
+//         headers: { "Content-Type": "application/json" },
 //         body: JSON.stringify(data),
 //       });
+
+//       console.log("📜 Chat history response:", res);
+
 //       if (res.success && Array.isArray(res.data)) {
-//         set({ chatHistory: res.data });
+//         set({ chatHistory: res.data, isLoading: false });
 //         return res.data;
 //       } else {
-//         set({ chatHistory: [] });
+//         set({ chatHistory: [], isLoading: false });
 //         return [];
 //       }
 //     } catch (err) {
-//       console.error("Failed to fetch chat history:", err);
-//       set({ chatHistory: [] });
+//       console.error("❌ Failed to fetch chat history:", err);
+//       set({ chatHistory: [], isLoading: false, error: err.message });
 //       return [];
 //     }
 //   },
 
-//   // ---------------- RESCHEDULE BOOKING ----------------
-//   rescheduleBooking: async (bookingId, scheduledAt) => {
-//     try {
-//       const { fetchWithAuth } = useAuthStore.getState();
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/users/bookings/${bookingId}/reschedule`,
-//         { 
-//           method: "PATCH",
-//           body: JSON.stringify({ scheduledAt })
-//         }
-//       );
-      
-//       if (res.success && res.data) {
-//         set((state) => ({
-//           bookings: state.bookings.map((b) => 
-//             b.id === bookingId 
-//               ? { ...b, scheduledAt: res.data.scheduledAt || scheduledAt } 
-//               : b
-//           ),
-//           selectedBooking: state.selectedBooking?.id === bookingId
-//             ? { ...state.selectedBooking, scheduledAt: res.data.scheduledAt || scheduledAt }
-//             : state.selectedBooking
-//         }));
-//         return res.data;
-//       }
-//       return false;
-//     } catch (err) {
-//       console.error("Failed to reschedule booking:", err);
-//       throw err;
-//     }
-//   },
+//   // ---------------- CLEAR ERROR ----------------
+//   clearError: () => set({ error: null }),
 
-//   // ---------------- UPDATE BOOKING ----------------
-//   updateBooking: async (bookingId, updates) => {
-//     try {
-//       const { fetchWithAuth } = useAuthStore.getState();
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/users/bookings/${bookingId}`,
-//         { 
-//           method: "PATCH",
-//           body: JSON.stringify(updates)
-//         }
-//       );
-      
-//       if (res.success && res.data) {
-//         set((state) => ({
-//           bookings: state.bookings.map((b) => 
-//             b.id === bookingId 
-//               ? { ...b, ...updates } 
-//               : b
-//           ),
-//           selectedBooking: state.selectedBooking?.id === bookingId
-//             ? { ...state.selectedBooking, ...updates }
-//             : state.selectedBooking
-//         }));
-//         return res.data;
-//       }
-//       return false;
-//     } catch (err) {
-//       console.error("Failed to update booking:", err);
-//       throw err;
-//     }
-//   },
-
-//   // ---------------- CLEAR MESSAGES ----------------
-//   clearMessages: () => set({ messages: [] }),
-
-//   // ---------------- RESET STATE ----------------
-//   resetState: () => set({
-//     tutors: [],
-//     bookings: [],
-//     selectedBooking: null,
-//     messages: [],
-//     chatHistory: [],
-//     isLoading: false,
-//     isSending: false,
-//   }),
+//   // ---------------- SET SELECTED BOOKING ----------------
+//   setSelectedBooking: (booking) => set({ selectedBooking: booking }),
 // }));
+
+
+
 
 
 
@@ -541,7 +545,9 @@ export const useUserChatStore = create((set, get) => ({
 
   // ---------------- FETCH TUTORS ----------------
   fetchTutors: async ({ search, category } = {}) => {
+    console.log("[fetchTutors] START - params:", { search, category });
     set({ isLoading: true, error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
       let url = `${API_BASE}/api/users/tutors`;
@@ -550,68 +556,99 @@ export const useUserChatStore = create((set, get) => ({
       if (category) params.append("category", category);
       if (params.toString()) url += `?${params.toString()}`;
 
+      console.log("[fetchTutors] Fetching URL:", url);
+
       const res = await fetchWithAuth(url);
-      if (res.success && Array.isArray(res.data)) {
-        const mappedTutors = res.data.map((tutor) => ({
-          id: tutor.id,
-          participant_name: tutor.name,
+
+      console.log("[fetchTutors] Full API response:", res);
+
+      if (!res?.success) {
+        console.warn("[fetchTutors] API did not return success flag", res);
+        set({ tutors: [], isLoading: false });
+        return;
+      }
+
+      let rawTutors = res.data || res.tutors || [];
+      console.log("[fetchTutors] Raw tutors count:", rawTutors.length);
+
+      if (!Array.isArray(rawTutors)) {
+        console.error("[fetchTutors] Tutors response is NOT an array!", rawTutors);
+        set({ tutors: [], isLoading: false });
+        return;
+      }
+
+      const mappedTutors = rawTutors.map((tutor) => {
+        const mapped = {
+          id: tutor.id || tutor._id,
+          participant_name: tutor.name || "Unknown Tutor",
           participant_role: "tutor",
-          last_message: "",
-          last_message_time: null,
-          status: "active",
-          scheduledAt: null,
-          duration: null,
-          unread_count: 0,
           avatar: tutor.avatar || null,
           bio: tutor.bio || "",
-          expertise: tutor.expertise || [],
           subjects: tutor.subjects || [],
           completedSessions: tutor.completedSessions || 0,
           rating: tutor.rating || null,
           isTutor: true,
-        }));
+          last_message: "",
+          last_message_time: null,
+          status: "available",
+          scheduledAt: null,
+          duration: null,
+          unread_count: 0,
+        };
+        console.log("[fetchTutors] Mapped single tutor:", mapped.participant_name, mapped.id);
+        return mapped;
+      });
 
-        const bookings = get().bookings;
-        const bookedTutorIds = bookings.map(b => b.tutorId);
-        const availableTutors = mappedTutors.filter(t => !bookedTutorIds.includes(t.id));
+      const availableTutors = mappedTutors; // Showing all for now
+      console.log(
+        `[fetchTutors] SUCCESS - Loaded ${mappedTutors.length} tutors → showing ${availableTutors.length}`
+      );
 
-        set({ tutors: availableTutors, isLoading: false });
-      } else {
-        set({ tutors: [], isLoading: false });
-      }
+      set({ tutors: availableTutors, isLoading: false });
     } catch (err) {
-      console.error("Failed to fetch tutors:", err);
+      console.error("[fetchTutors] CRASH:", err.message, err.stack);
       set({ tutors: [], isLoading: false, error: err.message });
     }
   },
 
   // ---------------- FETCH ALL BOOKINGS ----------------
   fetchBookings: async () => {
+    console.log("[fetchBookings] START");
     set({ isLoading: true, error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(`${API_BASE}/api/users/bookings`);
+      const url = `${API_BASE}/api/users/bookings`;
+      console.log("[fetchBookings] Fetching URL:", url);
+
+      const res = await fetchWithAuth(url);
+      console.log("[fetchBookings] Full API response:", res);
+
       if (res.success && Array.isArray(res.data)) {
-        const mappedBookings = res.data.map((booking) => ({
-          id: booking.id,
-          tutorId: booking.tutorId || booking.tutor?.id,
-          participant_name: booking.tutor?.name || "Unknown",
-          participant_role: "tutor",
-          last_message: booking.lastMessage?.content || "",
-          last_message_time: booking.lastMessage?.createdAt || null,
-          status: booking.status || "pending",
-          scheduledAt: booking.scheduledAt || null,
-          duration: booking.duration || null,
-          unread_count: booking.unreadCount || 0,
-          purpose: booking.purpose || "",
-          avatar: booking.tutor?.avatar || null,
-          bio: booking.tutor?.bio || "",
-          subjects: booking.tutor?.subjects || [],
-          completedSessions: booking.tutor?.completedSessions || 0,
-          rating: booking.rating || null,
-          feedback: booking.feedback || null,
-          isBooking: true,
-        }));
+        const mappedBookings = res.data.map((booking) => {
+          const mapped = {
+            id: booking.id,
+            tutorId: booking.tutorId || booking.tutor?.id,
+            participant_name: booking.tutor?.name || "Unknown",
+            participant_role: "tutor",
+            last_message: booking.lastMessage?.content || "",
+            last_message_time: booking.lastMessage?.createdAt || null,
+            status: booking.status || "pending",
+            scheduledAt: booking.scheduledAt || null,
+            duration: booking.duration || null,
+            unread_count: booking.unreadCount || 0,
+            purpose: booking.purpose || "",
+            avatar: booking.tutor?.avatar || null,
+            bio: booking.tutor?.bio || "",
+            subjects: booking.tutor?.subjects || [],
+            completedSessions: booking.tutor?.completedSessions || 0,
+            rating: booking.rating || null,
+            feedback: booking.feedback || null,
+            isBooking: true,
+          };
+          console.log("[fetchBookings] Mapped booking:", mapped.id, mapped.participant_name, mapped.status);
+          return mapped;
+        });
 
         const currentSelection = get().selectedBooking;
         let newSelection = currentSelection;
@@ -620,40 +657,53 @@ export const useUserChatStore = create((set, get) => ({
           const bookingForTutor = mappedBookings.find(b => b.tutorId === currentSelection.id);
           if (bookingForTutor) {
             newSelection = bookingForTutor;
+            console.log("[fetchBookings] Updated selection from tutor to booking:", newSelection.id);
           }
         } else if (currentSelection?.isBooking) {
           const updatedBooking = mappedBookings.find(b => b.id === currentSelection.id);
           newSelection = updatedBooking || currentSelection;
+          console.log("[fetchBookings] Updated existing booking selection:", newSelection.id);
         }
 
         set({ 
           bookings: mappedBookings,
           selectedBooking: newSelection,
-          isLoading: false
+          isLoading: false 
         });
+        console.log("[fetchBookings] SUCCESS - Bookings count:", mappedBookings.length);
 
         const bookedTutorIds = mappedBookings.map(b => b.tutorId);
         const tutors = get().tutors;
         const availableTutors = tutors.filter(t => !bookedTutorIds.includes(t.id));
         set({ tutors: availableTutors });
+        console.log("[fetchBookings] Available tutors after filter:", availableTutors.length);
       } else {
+        console.warn("[fetchBookings] No success or data not array", res);
         set({ bookings: [], isLoading: false });
       }
     } catch (err) {
-      console.error("Failed to fetch bookings:", err);
+      console.error("[fetchBookings] CRASH:", err.message, err.stack);
       set({ bookings: [], isLoading: false, error: err.message });
     }
   },
 
   // ---------------- CREATE NEW BOOKING ----------------
   createBooking: async ({ tutorId, purpose, scheduledAt, duration }) => {
+    console.log("[createBooking] START - params:", { tutorId, purpose, scheduledAt, duration });
     set({ isLoading: true, error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(`${API_BASE}/api/users/bookings`, {
+      const url = `${API_BASE}/api/users/bookings`;
+      console.log("[createBooking] POST to:", url);
+
+      const res = await fetchWithAuth(url, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tutorId, purpose, scheduledAt, duration }),
       });
+
+      console.log("[createBooking] Full response:", res);
 
       if (res.success && res.data) {
         const newBooking = {
@@ -674,6 +724,7 @@ export const useUserChatStore = create((set, get) => ({
           completedSessions: res.data.tutor?.completedSessions || 0,
           isBooking: true,
         };
+        console.log("[createBooking] Created new booking:", newBooking.id, newBooking.participant_name);
 
         set((state) => ({ 
           bookings: [...state.bookings, newBooking],
@@ -684,115 +735,107 @@ export const useUserChatStore = create((set, get) => ({
 
         return newBooking;
       }
+      throw new Error(res.message || "Failed to create booking");
     } catch (err) {
-      console.error("Failed to create booking:", err);
+      console.error("[createBooking] CRASH:", err.message, err.stack);
       set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
   // ---------------- FETCH SINGLE BOOKING DETAILS ----------------
   fetchBooking: async (bookingId) => {
+    console.log("[fetchBooking] START - ID:", bookingId);
     set({ isLoading: true, error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}`);
+      const url = `${API_BASE}/api/users/bookings/${bookingId}`;
+      console.log("[fetchBooking] Fetching:", url);
+
+      const res = await fetchWithAuth(url);
+      console.log("[fetchBooking] Response:", res);
+
       if (res.success && res.data) {
         const bookingDetails = {
           ...res.data,
           participant_name: res.data.tutor?.name || "Unknown",
           participant_role: "tutor",
+          avatar: res.data.tutor?.avatar || null,
+          bio: res.data.tutor?.bio || "",
+          subjects: res.data.tutor?.subjects || [],
           isBooking: true,
         };
+        console.log("[fetchBooking] Fetched details:", bookingDetails.id, bookingDetails.participant_name);
+
         set({ selectedBooking: bookingDetails, isLoading: false });
         return bookingDetails;
       }
+      throw new Error(res.message || "Failed to fetch booking");
     } catch (err) {
-      console.error("Failed to fetch booking:", err);
+      console.error("[fetchBooking] CRASH:", err.message, err.stack);
       set({ isLoading: false, error: err.message });
-    }
-  },
-
-  // ---------------- RESCHEDULE BOOKING ----------------
-  rescheduleBooking: async (bookingId, scheduledAt, duration) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(
-        `${API_BASE}/api/users/bookings/${bookingId}/reschedule`,
-        { 
-          method: "PATCH",
-          body: JSON.stringify({ scheduledAt, duration })
-        }
-      );
-      
-      if (res.success && res.data) {
-        set((state) => ({
-          bookings: state.bookings.map((b) => 
-            b.id === bookingId 
-              ? { 
-                  ...b, 
-                  scheduledAt: res.data.scheduledAt || scheduledAt,
-                  duration: res.data.duration || duration,
-                  status: res.data.status || b.status
-                } 
-              : b
-          ),
-          selectedBooking: state.selectedBooking?.id === bookingId
-            ? { 
-                ...state.selectedBooking, 
-                scheduledAt: res.data.scheduledAt || scheduledAt,
-                duration: res.data.duration || duration,
-                status: res.data.status || state.selectedBooking.status
-              }
-            : state.selectedBooking,
-          isLoading: false
-        }));
-        return res.data;
-      }
-    } catch (err) {
-      console.error("Failed to reschedule booking:", err);
-      set({ isLoading: false, error: err.message });
+      throw err;
     }
   },
 
   // ---------------- CONFIRM BOOKING ----------------
   confirmBooking: async (bookingId) => {
+    console.log("[confirmBooking] START - ID:", bookingId);
     set({ error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(
-        `${API_BASE}/api/users/bookings/${bookingId}/confirm`,
-        { method: "PATCH" }
-      );
-      if (res.success && res.data) {
+      const url = `${API_BASE}/api/users/bookings/${bookingId}/confirm`;
+      console.log("[confirmBooking] PATCH to:", url);
+
+      const res = await fetchWithAuth(url, { 
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      console.log("[confirmBooking] Response:", res);
+
+      if (res.success) {
         set((state) => ({
           bookings: state.bookings.map((b) => 
             b.id === bookingId 
-              ? { ...b, status: res.data.status || "confirmed" } 
+              ? { ...b, status: res.data?.status || "confirmed" } 
               : b
           ),
           selectedBooking: state.selectedBooking?.id === bookingId
-            ? { ...state.selectedBooking, status: res.data.status || "confirmed" }
+            ? { ...state.selectedBooking, status: res.data?.status || "confirmed" }
             : state.selectedBooking
         }));
+        console.log("[confirmBooking] SUCCESS - Status updated to confirmed/active");
         return res.data;
       }
+      throw new Error(res.message || "Failed to confirm booking");
     } catch (err) {
-      console.error("Failed to confirm booking:", err);
+      console.error("[confirmBooking] CRASH:", err.message, err.stack);
       set({ error: err.message });
+      throw err;
     }
   },
 
   // ---------------- CANCEL BOOKING ----------------
   cancelBooking: async (bookingId, reason) => {
+    console.log("[cancelBooking] START - ID:", bookingId, "Reason:", reason);
     set({ error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(
-        `${API_BASE}/api/users/bookings/${bookingId}/cancel`,
-        { method: "POST", body: JSON.stringify({ reason }) }
-      );
-      
+      const url = `${API_BASE}/api/users/bookings/${bookingId}/cancel`;
+      console.log("[cancelBooking] PATCH to:", url);
+
+      const res = await fetchWithAuth(url, { 
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason })
+      });
+
+      console.log("[cancelBooking] Response:", res);
+
       if (res.success) {
         const booking = get().bookings.find(b => b.id === bookingId);
         const tutorId = booking?.tutorId;
@@ -809,59 +852,84 @@ export const useUserChatStore = create((set, get) => ({
         }));
 
         if (tutorId) {
+          console.log("[cancelBooking] Refreshing tutors after cancel");
           get().fetchTutors();
         }
 
+        console.log("[cancelBooking] SUCCESS");
         return res.data;
       }
+      throw new Error(res.message || "Failed to cancel booking");
     } catch (err) {
-      console.error("Failed to cancel booking:", err);
+      console.error("[cancelBooking] CRASH:", err.message, err.stack);
       set({ error: err.message });
+      throw err;
     }
   },
 
-
   // ---------------- START CHAT ----------------
   startChat: async (bookingId) => {
+    console.log("[startChat] START - ID:", bookingId);
     set({ error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/start`, {
+      const url = `${API_BASE}/api/users/bookings/${bookingId}/start`;
+      console.log("[startChat] POST to:", url);
+
+      const res = await fetchWithAuth(url, {
         method: "POST",
+        headers: { "Content-Type": "application/json" }
       });
-      
-      set((state) => ({
-        bookings: state.bookings.map((b) => 
-          b.id === bookingId 
-            ? { ...b, status: "active" } 
-            : b
-        ),
-        selectedBooking: state.selectedBooking?.id === bookingId
-          ? { ...state.selectedBooking, status: "active" }
-          : state.selectedBooking
-      }));
+
+      console.log("[startChat] Response:", res);
+
+      if (res.success) {
+        set((state) => ({
+          bookings: state.bookings.map((b) => 
+            b.id === bookingId 
+              ? { ...b, status: "active" } 
+              : b
+          ),
+          selectedBooking: state.selectedBooking?.id === bookingId
+            ? { ...state.selectedBooking, status: "active" }
+            : state.selectedBooking
+        }));
+        console.log("[startChat] SUCCESS - Status updated to active");
+        return res.data;
+      }
+      throw new Error(res.message || "Failed to start chat");
     } catch (err) {
-      console.error("Failed to start chat:", err);
+      console.error("[startChat] CRASH:", err.message, err.stack);
       set({ error: err.message });
+      throw err;
     }
   },
 
   // ---------------- SEND MESSAGE ----------------
   sendMessage: async (bookingId, content) => {
+    console.log("[sendMessage] START - Booking:", bookingId, "Content:", content);
     set({ isSending: true, error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/messages`, {
+      const url = `${API_BASE}/api/users/bookings/${bookingId}/messages`;
+      console.log("[sendMessage] POST to:", url);
+
+      const res = await fetchWithAuth(url, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content, messageType: "TEXT" }),
       });
+
+      console.log("[sendMessage] Response:", res);
+
       if (res.success && res.data) {
         set((state) => ({ 
           messages: [...state.messages, res.data],
           isSending: false 
         }));
         
-        // Update last message in bookings
         set((state) => ({
           bookings: state.bookings.map((b) => 
             b.id === bookingId 
@@ -873,30 +941,41 @@ export const useUserChatStore = create((set, get) => ({
               : b
           ),
         }));
-        
+        console.log("[sendMessage] SUCCESS - Message added");
         return res.data;
       }
+      throw new Error(res.message || "Failed to send message");
     } catch (err) {
-      console.error("Failed to send message:", err);
+      console.error("[sendMessage] CRASH:", err.message, err.stack);
       set({ isSending: false, error: err.message });
+      throw err;
     }
   },
 
   // ---------------- GET MESSAGES ----------------
   fetchMessages: async (bookingId) => {
+    console.log("[fetchMessages] START - Booking:", bookingId);
     set({ error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/messages`);
+      const url = `${API_BASE}/api/users/bookings/${bookingId}/messages`;
+      console.log("[fetchMessages] Fetching:", url);
+
+      const res = await fetchWithAuth(url);
+      console.log("[fetchMessages] Response:", res);
+
       if (res.success && Array.isArray(res.data)) {
+        console.log("[fetchMessages] Messages loaded:", res.data.length);
         set({ messages: res.data });
         return res.data;
       } else {
+        console.warn("[fetchMessages] No messages or invalid response", res);
         set({ messages: [] });
         return [];
       }
     } catch (err) {
-      console.error("Failed to fetch messages:", err);
+      console.error("[fetchMessages] CRASH:", err.message, err.stack);
       set({ messages: [], error: err.message });
       return [];
     }
@@ -904,54 +983,78 @@ export const useUserChatStore = create((set, get) => ({
 
   // ---------------- END CHAT ----------------
   endChat: async (bookingId) => {
+    console.log("[endChat] START - ID:", bookingId);
     set({ error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/end`, {
+      const url = `${API_BASE}/api/users/bookings/${bookingId}/end`;
+      console.log("[endChat] POST to:", url);
+
+      const res = await fetchWithAuth(url, {
         method: "POST",
+        headers: { "Content-Type": "application/json" }
       });
-      
-      set((state) => ({
-        bookings: state.bookings.map((b) => 
-          b.id === bookingId 
-            ? { ...b, status: "completed" } 
-            : b
-        ),
-        selectedBooking: state.selectedBooking?.id === bookingId
-          ? { ...state.selectedBooking, status: "completed" }
-          : state.selectedBooking
-      }));
+
+      console.log("[endChat] Response:", res);
+
+      if (res.success) {
+        set((state) => ({
+          bookings: state.bookings.map((b) => 
+            b.id === bookingId 
+              ? { ...b, status: "completed" } 
+              : b
+          ),
+          selectedBooking: state.selectedBooking?.id === bookingId
+            ? { ...state.selectedBooking, status: "completed" }
+            : state.selectedBooking
+        }));
+        console.log("[endChat] SUCCESS - Status updated to completed");
+        return res.data;
+      }
+      throw new Error(res.message || "Failed to end chat");
     } catch (err) {
-      console.error("Failed to end chat:", err);
+      console.error("[endChat] CRASH:", err.message, err.stack);
       set({ error: err.message });
+      throw err;
     }
   },
 
   // ---------------- RATE SESSION ----------------
   rateSession: async (bookingId, rating, feedback) => {
+    console.log("[rateSession] START - ID:", bookingId, "Rating:", rating, "Feedback:", feedback);
     set({ error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/rate`, {
+      const url = `${API_BASE}/api/users/bookings/${bookingId}/rate`;
+      console.log("[rateSession] POST to:", url);
+
+      const res = await fetchWithAuth(url, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating, feedback }),
       });
-      
-      // Update booking with rating
-      set((state) => ({
-        bookings: state.bookings.map((b) => 
-          b.id === bookingId 
-            ? { ...b, rating, feedback } 
-            : b
-        ),
-        selectedBooking: state.selectedBooking?.id === bookingId
-          ? { ...state.selectedBooking, rating, feedback }
-          : state.selectedBooking
-      }));
-      
-      return true;
+
+      console.log("[rateSession] Response:", res);
+
+      if (res.success) {
+        set((state) => ({
+          bookings: state.bookings.map((b) => 
+            b.id === bookingId 
+              ? { ...b, rating, feedback } 
+              : b
+          ),
+          selectedBooking: state.selectedBooking?.id === bookingId
+            ? { ...state.selectedBooking, rating, feedback }
+            : state.selectedBooking
+        }));
+        console.log("[rateSession] SUCCESS");
+        return true;
+      }
+      throw new Error(res.message || "Failed to rate session");
     } catch (err) {
-      console.error("Failed to rate session:", err);
+      console.error("[rateSession] CRASH:", err.message, err.stack);
       set({ error: err.message });
       return false;
     }
@@ -959,32 +1062,46 @@ export const useUserChatStore = create((set, get) => ({
 
   // ---------------- CHAT HISTORY ----------------
   fetchChatHistory: async (data) => {
+    console.log("[fetchChatHistory] START - params:", data);
     set({ isLoading: true, error: null });
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(`${API_BASE}/api/users/chat/history`, {
+      const url = `${API_BASE}/api/users/chat/history`;
+      console.log("[fetchChatHistory] POST to:", url);
+
+      const res = await fetchWithAuth(url, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
+      console.log("[fetchChatHistory] Response:", res);
+
       if (res.success && Array.isArray(res.data)) {
+        console.log("[fetchChatHistory] History loaded:", res.data.length);
         set({ chatHistory: res.data, isLoading: false });
         return res.data;
       } else {
+        console.warn("[fetchChatHistory] Invalid response", res);
         set({ chatHistory: [], isLoading: false });
         return [];
       }
     } catch (err) {
-      console.error("Failed to fetch chat history:", err);
+      console.error("[fetchChatHistory] CRASH:", err.message, err.stack);
       set({ chatHistory: [], isLoading: false, error: err.message });
       return [];
     }
   },
 
+  // ---------------- UTILS ----------------
+  clearError: () => {
+    console.log("[clearError] Clearing error state");
+    set({ error: null });
+  },
 
-
-  // ---------------- CLEAR ERROR ----------------
-  clearError: () => set({ error: null }),
-
-  // ---------------- SET SELECTED BOOKING ----------------
-  setSelectedBooking: (booking) => set({ selectedBooking: booking }),
+  setSelectedBooking: (booking) => {
+    console.log("[setSelectedBooking] Setting:", booking?.id, booking?.participant_name);
+    set({ selectedBooking: booking });
+  },
 }));

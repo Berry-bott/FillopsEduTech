@@ -33,6 +33,7 @@ import TopicsPanel from "@/components/DashboardComponents/lecturer/topics-panel"
 import QuestionsPanel from "@/components/DashboardComponents/lecturer/questions-panel"
 import SettingsPage from "@/pages/lecturer/SettingsPage"
 import DashboardOverview from "@/components/DashboardComponents/lecturer/DashboardOverview"
+import TutorChat from "@/pages/chat/TutorChatPage"
 
 import useTutorAuthStore from "@/store/tutorAuthStore"
 import useTutorStore from "@/store/tutorStore"
@@ -94,8 +95,9 @@ export default function LecturerDashboard() {
     { id: "subjects", label: "Subjects", icon: BookOpen },
     { id: "topics", label: "Topics", icon: FileText },
     { id: "questions", label: "Questions Bank", icon: HelpCircle },
-    { id: "students", label: "Students", icon: Users },
+    // { id: "students", label: "Students", icon: Users },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "chat", label: "Chat", icon: Users },
     { id: "settings", label: "Settings", icon: Settings },
   ]
 
@@ -421,6 +423,7 @@ export default function LecturerDashboard() {
                 
                 {activeTab === "settings" && <SettingsPage context={context} />}
                 {activeTab === "analytics" && <AnalyticsPanel />}
+                {activeTab === "chat" && <TutorChat />}
               </div>
             </div>
           </div>

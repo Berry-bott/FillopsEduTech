@@ -102,51 +102,80 @@ const useTutorAuthStore = create(
       },
 
       // 🔹 CHECK AUTH (on app load)
-      // checkTutorAuth: async () => {
-      //   const token = get().accessToken;
+      checkTutorAuth: async () => {
+  // 🔹 STEP 1: Get token from session storage OR state
+  let token = sessionStorage.getItem("accessToken") || get().accessToken;
 
-      //   // Try existing access token
-      //   if (token) {
-      //     const res = await getProfile(token);
-
-      //     if (res.success) {
-      //       set({ tutor: res.data, isAuthenticated: true });
-      //       return true;
-      //     }
-      //   }
-
-      //   // Try refresh
-      //   const refreshed = await get().refreshAccessToken();
-      //   console.log("🔄 Refresh result:", refreshed);
-      //   if (refreshed) return true;
-
-      //   // Logout fallback
-      //   sessionStorage.removeItem("accessToken");
-      //   set({ tutor: null, accessToken: null, isAuthenticated: false });
-      //   return false;
-      // },
-
-    checkTutorAuth: async () => {
-      let token = get().accessToken || sessionStorage.getItem("accessToken");
-
-      if (token) {
-        try {
-          const res = await getProfile(token);
-          if (res.success) {
-            set({ tutor: res.data, isAuthenticated: true, accessToken: token });
-            return true;
-          }
-        } catch {}
+  if (token) {
+    // Update state with token from sessionStorage
+    set({ accessToken: token });
+    
+    try {
+      const res = await getProfile();
+      
+      if (res.success) {
+        set({ 
+          tutor: res.data, 
+          isAuthenticated: true, 
+          accessToken: token 
+        });
+        console.log("✅ Auth check successful with existing token");
+        return true;
       }
+    } catch (err) {
+      console.warn("⚠️ Profile fetch failed, will try refresh:", err);
+    }
+  }
 
-      const refreshed = await get().refreshAccessToken();
-      console.log("🔄 Refresh result:", refreshed);
-      if (refreshed) return true;
+  // 🔹 STEP 2: Token invalid/missing, try refresh
+  console.log("🔄 Attempting token refresh...");
+  const refreshed = await get().refreshAccessToken();
+  
+  if (refreshed) {
+    try {
+      const res = await getProfile();
+      
+      if (res.success) {
+        set({ 
+          tutor: res.data, 
+          isAuthenticated: true 
+        });
+        console.log("✅ Auth check successful after refresh");
+        return true;
+      }
+    } catch (err) {
+      console.warn("⚠️ Profile fetch failed after refresh:", err);
+    }
+  }
 
-      sessionStorage.removeItem("accessToken");
-      set({ tutor: null, accessToken: null, isAuthenticated: false });
-      return false;
-    },
+  // 🔹 STEP 3: Everything failed - clear auth
+  console.log("❌ Auth check failed - logging out");
+  sessionStorage.removeItem("accessToken");
+  set({ tutor: null, accessToken: null, isAuthenticated: false });
+  return false;
+      },
+
+    // checkTutorAuth: async () => {
+    //   let token = get().accessToken || sessionStorage.getItem("accessToken");
+
+    //   if (token) {
+    //     try {
+    //       const res = await getProfile(token);
+    //       if (res.success) {
+    //         set({ tutor: res.data, isAuthenticated: true, accessToken: token });
+    //         return true;
+    //       }
+    //     } catch {}
+    //   }
+
+    //   const refreshed = await get().refreshAccessToken();
+    //   console.log("🔄 Refresh result:", refreshed);
+    //   if (refreshed) return true;
+
+    //   sessionStorage.removeItem("accessToken");
+    //   set({ tutor: null, accessToken: null, isAuthenticated: false });
+    //   return false;
+    // },
 
 
       // 🔹 UPDATE PROFILE
@@ -354,7 +383,7 @@ const useTutorAuthStore = create(
       // 🔹 FETCH WITH AUTO REFRESH
       fetchWithAuth: async (url, options = {}) => {
         let token = get().accessToken;
-      
+
         const request = () =>
           fetch(url, {
             ...options,
@@ -365,22 +394,62 @@ const useTutorAuthStore = create(
             },
             credentials: "include",
           });
-      
+
         let res = await request();
-      
+
+        // 🔹 If 401, try to refresh and retry
         if (res.status === 401) {
+          console.log("🔄 Got 401, attempting refresh...");
+          
           const refreshed = await get().refreshAccessToken();
-          if (!refreshed) throw new Error("Session expired");
-      
+          
+          if (!refreshed) {
+            console.error("❌ Refresh failed - session expired");
+            
+            // Clear auth state
+            sessionStorage.removeItem("accessToken");
+            set({ tutor: null, accessToken: null, isAuthenticated: false });
+            
+            throw new Error("Session expired");
+          }
+
+          // Get the new token and retry
           token = get().accessToken;
-          res = await request(); // ✅ retry AFTER refresh
+          console.log("✅ Token refreshed, retrying request...");
+          res = await request();
         }
-      
+
         return res.json();
-      },      
-    }),
-    {
-      name: "auth-store",
+      },
+      // fetchWithAuth: async (url, options = {}) => {
+      //   let token = get().accessToken;
+      
+      //   const request = () =>
+      //     fetch(url, {
+      //       ...options,
+      //       headers: {
+      //         "Content-Type": "application/json",
+      //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //         ...options.headers,
+      //       },
+      //       credentials: "include",
+      //     });
+      
+      //   let res = await request();
+      
+      //   if (res.status === 401) {
+      //     const refreshed = await get().refreshAccessToken();
+      //     if (!refreshed) throw new Error("Session expired");
+      
+      //     token = get().accessToken;
+      //     res = await request(); // ✅ retry AFTER refresh
+      //   }
+      
+      //   return res.json();
+      // },      
+      }),
+      {
+        name: "auth-store",
       storage: {
         getItem: (key) => sessionStorage.getItem(key),
         setItem: (key, value) => sessionStorage.setItem(key, value),

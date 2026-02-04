@@ -145,6 +145,33 @@
     /* font-size: 15px; */
   }
 }
+
+.message-bubble {
+  position: relative;
+}
+
+.message-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+}
+
+.message-bubble.bg-gradient-to-br::after { /* own message */
+  right: -8px;
+  border-left-color: #4f46e5; /* indigo-600 */
+  border-right: 0;
+}
+
+.message-bubble.bg-white::after { /* tutor message */
+  left: -8px;
+  border-right-color: white;
+  border-left: 0;
+}
+
+
 /* merriweather-latin-wght-normal */
 @font-face {
     font-family: 'Merriweather Variable';

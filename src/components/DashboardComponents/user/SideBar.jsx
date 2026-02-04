@@ -279,7 +279,7 @@ const menuData = [
           },
           {
             id: "DM Tutor",
-            label: "DM Tutor",
+            label: "Chat Tutor",
             href: "/chat/tutor",
             icon: Mail,
           },
@@ -666,8 +666,8 @@ export default function SideBar() {
               {/* Footer */}
               <div className="px-2 py-4 border-t border-gray-200 dark:border-[#1F1F23]">
                 <div className="space-y-1">
-                  <NavItem item={{ id: "settings", label: "Settings", href: "/settings", icon: Settings }} />
-                  <NavItem item={{ id: "help", label: "Help", href: "/help", icon: HelpCircle }} />
+                  <NavItem item={{ id: "settings", label: "Settings", href: "/users-settings", icon: Settings }} />
+                  <NavItem item={{ id: "help", label: "Help", href: "users/help-center", icon: HelpCircle }} />
                 </div>
               </div>
             </div>
@@ -762,7 +762,7 @@ export default function SideBar() {
             {/* Footer */}
             <div className="px-2 py-4 border-t border-gray-200 dark:border-[#1F1F23]">
               <div className="space-y-1">
-                <NavItem item={{ id: "settings", label: "Settings", href: "/settings", icon: Settings }} />
+                <NavItem item={{ id: "settings", label: "Settings", href: "/users-settings", icon: Settings }} />
                 <NavItem item={{ id: "help", label: "Help", href: "/help", icon: HelpCircle }} />
               </div>
             </div>

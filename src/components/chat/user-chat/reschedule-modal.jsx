@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { X, Calendar, Clock, AlertCircle } from "lucide-react";
+
+
+import { useState, useEffect } from "react";
+import { X, Calendar, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,10 +11,20 @@ export default function RescheduleModal({ booking, isOpen, onClose }) {
   const { rescheduleBooking, isLoading } = useUserChatStore();
   
   const [formData, setFormData] = useState({
-    scheduledAt: booking?.scheduledAt ? new Date(booking.scheduledAt).toISOString().slice(0, 16) : "",
-    duration: booking?.duration || 60,
+    scheduledAt: "",
+    duration: 60,
   });
   const [error, setError] = useState("");
+
+  // Update form when booking changes
+  useEffect(() => {
+    if (booking?.scheduledAt) {
+      setFormData({
+        scheduledAt: new Date(booking.scheduledAt).toISOString().slice(0, 16),
+        duration: booking.duration || 60,
+      });
+    }
+  }, [booking]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,16 +52,24 @@ export default function RescheduleModal({ booking, isOpen, onClose }) {
       return;
     }
 
-    const result = await rescheduleBooking(
-      booking.id,
-      formData.scheduledAt,
-      formData.duration
-    );
+    console.log("🔄 Rescheduling booking:", booking.id, "to", formData.scheduledAt);
+    
+    try {
+      const result = await rescheduleBooking(
+        booking.id,
+        formData.scheduledAt,
+        formData.duration
+      );
 
-    if (result) {
-      onClose();
-    } else {
-      setError("Failed to reschedule. Please try again.");
+      if (result) {
+        console.log("✅ Reschedule successful");
+        onClose();
+      } else {
+        setError("Failed to reschedule. Please try again.");
+      }
+    } catch (err) {
+      console.error("❌ Reschedule failed:", err);
+      setError(err.message || "Failed to reschedule. Please try again.");
     }
   };
 
@@ -70,7 +90,7 @@ export default function RescheduleModal({ booking, isOpen, onClose }) {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-2xl">
+          <div className="bg-primary text-white p-6 rounded-t-2xl">
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-1">Reschedule Session</h2>
@@ -183,37 +203,21 @@ export default function RescheduleModal({ booking, isOpen, onClose }) {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                className="flex-1 bg-primary"
               >
-                {isLoading ? "Rescheduling..." : "Reschedule"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Rescheduling...
+                  </>
+                ) : (
+                  "Reschedule"
+                )}
               </Button>
             </div>
           </form>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.2s ease-out;
-        }
-        .animate-scale-in {
-          animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-      `}</style>
     </>
   );
-}   
+}

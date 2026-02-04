@@ -55,7 +55,7 @@ export default function RatingModal({ booking, isOpen, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-t-2xl">
+        <div className="bg-primary p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">Rate Your Session</h2>
             <Button
@@ -72,7 +72,7 @@ export default function RatingModal({ booking, isOpen, onClose }) {
 
         {/* Tutor Info */}
         <div className="p-6 border-b border-slate-200 text-center">
-          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-3xl shadow-lg mb-3">
+          <div className="w-20 h-20 mx-auto rounded-full bg-primary flex items-center justify-center text-white font-bold text-3xl shadow-lg mb-3">
             {booking.participant_name?.charAt(0).toUpperCase() || "T"}
           </div>
           <h3 className="text-lg font-bold text-slate-900">{booking.participant_name}</h3>
@@ -157,7 +157,7 @@ export default function RatingModal({ booking, isOpen, onClose }) {
             <Button
               type="submit"
               disabled={isSubmitting || rating === 0}
-              className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg"
+              className="flex-1 bgprimary text-white shadow-lg"
             >
               {isSubmitting ? (
                 <>
