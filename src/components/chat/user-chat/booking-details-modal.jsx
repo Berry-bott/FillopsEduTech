@@ -56,22 +56,6 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onResche
     }
   };
 
-  // const handleCancelClick = () => {
-  //   try {
-  //     onCancel(booking.id);
-  //     toast({
-  //       title: "Cancellation Requested",
-  //       description: "Cancelling your session...",
-  //     });
-  //     onClose();
-  //   } catch (err) {
-  //     toast({
-  //       variant: "destructive",
-  //       title: "Cancellation Failed",
-  //       description: err.message || "Unable to cancel. Please try again.",
-  //     });
-  //   }
-  // };
 
   const handleCancelClick = async () => {
   try {

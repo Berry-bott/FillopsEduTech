@@ -526,9 +526,9 @@
 
 
 
-
 import { create } from "zustand";
 import useAuthStore from "./authStore";
+
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com";
 
@@ -543,149 +543,442 @@ export const useUserChatStore = create((set, get) => ({
   isSending: false,
   error: null,
 
-  // ---------------- FETCH TUTORS ----------------
-  fetchTutors: async ({ search, category } = {}) => {
-    console.log("[fetchTutors] START - params:", { search, category });
-    set({ isLoading: true, error: null });
 
-    try {
-      const { fetchWithAuth } = useAuthStore.getState();
-      let url = `${API_BASE}/api/users/tutors`;
-      const params = new URLSearchParams();
-      if (search) params.append("search", search);
-      if (category) params.append("category", category);
-      if (params.toString()) url += `?${params.toString()}`;
 
-      console.log("[fetchTutors] Fetching URL:", url);
+// Add this method
+_refreshBookingsSilent: async ({ status = "" } = {}) => {
+  try {
+    const { fetchWithAuth } = useAuthStore.getState();
+    let url = `${API_BASE}/api/users/bookings`;
+    const params = new URLSearchParams();
+    if (status) params.append("status", status.toUpperCase());
+    if (params.toString()) url += `?${params.toString()}`;
 
-      const res = await fetchWithAuth(url);
+    const res = await fetchWithAuth(url);
 
-      console.log("[fetchTutors] Full API response:", res);
-
-      if (!res?.success) {
-        console.warn("[fetchTutors] API did not return success flag", res);
-        set({ tutors: [], isLoading: false });
-        return;
-      }
-
-      let rawTutors = res.data || res.tutors || [];
-      console.log("[fetchTutors] Raw tutors count:", rawTutors.length);
-
-      if (!Array.isArray(rawTutors)) {
-        console.error("[fetchTutors] Tutors response is NOT an array!", rawTutors);
-        set({ tutors: [], isLoading: false });
-        return;
-      }
-
-      const mappedTutors = rawTutors.map((tutor) => {
-        const mapped = {
-          id: tutor.id || tutor._id,
-          participant_name: tutor.name || "Unknown Tutor",
-          participant_role: "tutor",
-          avatar: tutor.avatar || null,
-          bio: tutor.bio || "",
-          subjects: tutor.subjects || [],
-          completedSessions: tutor.completedSessions || 0,
-          rating: tutor.rating || null,
-          isTutor: true,
-          last_message: "",
-          last_message_time: null,
-          status: "available",
-          scheduledAt: null,
-          duration: null,
-          unread_count: 0,
-        };
-        console.log("[fetchTutors] Mapped single tutor:", mapped.participant_name, mapped.id);
-        return mapped;
-      });
-
-      const availableTutors = mappedTutors; // Showing all for now
-      console.log(
-        `[fetchTutors] SUCCESS - Loaded ${mappedTutors.length} tutors → showing ${availableTutors.length}`
-      );
-
-      set({ tutors: availableTutors, isLoading: false });
-    } catch (err) {
-      console.error("[fetchTutors] CRASH:", err.message, err.stack);
-      set({ tutors: [], isLoading: false, error: err.message });
+    if (!res?.success || !Array.isArray(res?.data)) {
+      console.warn("[Silent Refresh] Invalid response:", res);
+      return;
     }
-  },
+
+    const mapped = res.data.map((booking) => ({
+      id: booking.id,
+      tutorId: booking.tutorId || booking.tutor?.id,
+      participant_name: booking.tutor?.name || "Unknown",
+      participant_role: "tutor",
+      last_message: booking.lastMessage?.content || "",
+      last_message_time: booking.lastMessage?.createdAt || null,
+      status: booking.status || "pending",
+      scheduledAt: booking.scheduledAt || null,
+      duration: booking.duration || null,
+      unread_count: booking.unreadCount || 0,
+      purpose: booking.purpose || "",
+      avatar: booking.tutor?.avatar || null,
+      bio: booking.tutor?.bio || "",
+      subjects: booking.tutor?.subjects || [],
+      completedSessions: booking.tutor?.completedSessions || 0,
+      rating: booking.rating || null,
+      feedback: booking.feedback || null,
+      isBooking: true,
+    }));
+
+    set((state) => {
+      const newBookings = mapped;
+      let newSelected = state.selectedBooking;
+      if (newSelected?.isBooking) {
+        newSelected = newBookings.find(b => b.id === newSelected.id) || newSelected;
+      }
+      return {
+        bookings: newBookings,
+        selectedBooking: newSelected,
+      };
+    });
+  } catch (err) {
+    console.warn("[Silent Refresh] Failed:", err);
+  }
+},
+
+// Update fetchBookings to support status + page
+// fetchBookings: async ({ status = "", page = 1 } = {}) => {
+//   set({ isLoading: true, error: null });
+
+//   const authState = useAuthStore.getState();
+//   if (!authState?.fetchWithAuth) {
+//     console.error("[fetchBookings] fetchWithAuth not available - auth store not loaded");
+//     set({ isLoading: false, error: "Auth not initialized" });
+//     return;
+//   }
+
+//   const { fetchWithAuth } = authState;
+
+//   try {
+//     let url = `${API_BASE}/api/users/bookings`;
+//     const params = new URLSearchParams();
+//     if (status) params.append("status", status.toUpperCase());
+//     if (page > 1) params.append("page", page);
+//     if (params.toString()) url += `?${params.toString()}`;
+
+//     const res = await fetchWithAuth(url);
+
+//     // ... rest of your logic
+//   } catch (err) {
+//     console.error("[fetchBookings] Failed:", err);
+//     set({ isLoading: false, error: err.message });
+//   }
+// },
+// fetchTutors - Keep it simple, use 'name' directly
+fetchTutors: async ({ search, category } = {}) => {
+  console.log("[fetchTutors] START - params:", { search, category });
+  set({ isLoading: true, error: null });
+
+  try {
+    const { fetchWithAuth } = useAuthStore.getState();
+    let url = `${API_BASE}/api/users/tutors`;
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (category) params.append("category", category);
+    if (params.toString()) url += `?${params.toString()}`;
+
+    console.log("[fetchTutors] Fetching URL:", url);
+    const res = await fetchWithAuth(url);
+    console.log("[fetchTutors] Full API response:", res);
+
+    if (!res?.success) {
+      console.warn("[fetchTutors] API did not return success flag", res);
+      set({ tutors: [], isLoading: false });
+      return;
+    }
+
+    let rawTutors = res.data || res.tutors || [];
+    console.log("[fetchTutors] Raw tutors count:", rawTutors.length);
+
+    if (!Array.isArray(rawTutors)) {
+      console.error("[fetchTutors] Tutors response is NOT an array!", rawTutors);
+      set({ tutors: [], isLoading: false });
+      return;
+    }
+
+    const mappedTutors = rawTutors.map((tutor) => ({
+      id: tutor.id || tutor._id,
+      name: tutor.name || "Unknown Tutor", // ✅ Direct name field
+      avatar: tutor.avatar || null,
+      bio: tutor.bio || "",
+      subjects: tutor.subjects || [],
+      completedSessions: tutor.completedSessions || 0,
+      rating: tutor.rating || null,
+      isTutor: true,
+      // Legacy support
+      participant_name: tutor.name || "Unknown Tutor",
+      participant_role: "tutor",
+      last_message: "",
+      last_message_time: null,
+      status: "available",
+      scheduledAt: null,
+      duration: null,
+      unread_count: 0,
+    }));
+
+    console.log("[fetchTutors] SUCCESS - Loaded", mappedTutors.length, "tutors");
+    set({ tutors: mappedTutors, isLoading: false });
+  } catch (err) {
+    console.error("[fetchTutors] CRASH:", err.message, err.stack);
+    set({ tutors: [], isLoading: false, error: err.message });
+  }
+},
+
+// fetchBookings - Also add 'name' field
+// fetchBookings: async ({ status = "", page = 1 } = {}) => {
+//   console.log("[fetchBookings] START - status:", status, "page:", page);
+//   set({ isLoading: true, error: null });
+
+//   const authState = useAuthStore.getState();
+//   if (!authState?.fetchWithAuth) {
+//     console.error("[fetchBookings] fetchWithAuth not available");
+//     set({ isLoading: false, error: "Auth not initialized" });
+//     return;
+//   }
+
+//   const { fetchWithAuth } = authState;
+
+//   try {
+//     let url = `${API_BASE}/api/users/bookings`;
+//     const params = new URLSearchParams();
+//     if (status) params.append("status", status.toUpperCase());
+//     if (page > 1) params.append("page", page);
+//     if (params.toString()) url += `?${params.toString()}`;
+
+//     console.log("[fetchBookings] Fetching URL:", url);
+//     const res = await fetchWithAuth(url);
+//     console.log("[fetchBookings] Response:", res);
+
+//     if (res.success && Array.isArray(res.data)) {
+//       const mappedBookings = res.data.map((booking) => ({
+//         id: booking.id,
+//         name: booking.tutor?.name || "Unknown", 
+//         tutorId: booking.tutorId || booking.tutor?.id,
+//         avatar: booking.tutor?.avatar || null,
+//         bio: booking.tutor?.bio || "",
+//         subjects: booking.tutor?.subjects || [],
+//         completedSessions: booking.tutor?.completedSessions || 0,
+//         rating: booking.rating || null,
+//         feedback: booking.feedback || null,
+//         status: booking.status || "pending",
+//         scheduledAt: booking.scheduledAt || null,
+//         duration: booking.duration || null,
+//         purpose: booking.purpose || "",
+//         unread_count: booking.unreadCount || 0,
+//         isBooking: true,
+//         // Legacy support
+//         participant_name: booking.tutor?.name || "Unknown",
+//         participant_role: "tutor",
+//         last_message: booking.lastMessage?.content || "",
+//         last_message_time: booking.lastMessage?.createdAt || null,
+//       }));
+
+//       const currentSelection = get().selectedBooking;
+//       let newSelection = currentSelection;
+      
+//       if (currentSelection?.isBooking) {
+//         const updatedBooking = mappedBookings.find(b => b.id === currentSelection.id);
+//         newSelection = updatedBooking || currentSelection;
+//       }
+
+//       console.log("[fetchBookings] SUCCESS - Loaded", mappedBookings.length, "bookings");
+//       set({ 
+//         bookings: mappedBookings,
+//         selectedBooking: newSelection,
+//         isLoading: false 
+//       });
+//     } else {
+//       console.warn("[fetchBookings] No success or data not array", res);
+//       set({ bookings: [], isLoading: false });
+//     }
+//   } catch (err) {
+//     console.error("[fetchBookings] CRASH:", err);
+//     set({ isLoading: false, error: err.message });
+//   }
+// },
+// In userChatStore.js
+
+fetchBookings: async ({ status = "", page = 1, limit = 100 } = {}) => {
+  console.log("[fetchBookings] START - status:", status, "page:", page, "limit:", limit);
+  set({ isLoading: true, error: null });
+
+  const authState = useAuthStore.getState();
+  if (!authState?.fetchWithAuth) {
+    console.error("[fetchBookings] fetchWithAuth not available");
+    set({ isLoading: false, error: "Auth not initialized" });
+    return;
+  }
+
+  const { fetchWithAuth } = authState;
+
+  try {
+    let url = `${API_BASE}/api/users/bookings`;
+    const params = new URLSearchParams();
+    if (status) params.append("status", status.toUpperCase());
+    if (page > 1) params.append("page", page);
+    params.append("limit", limit); // ✅ Add limit parameter
+    if (params.toString()) url += `?${params.toString()}`;
+
+    console.log("[fetchBookings] Fetching URL:", url);
+    const res = await fetchWithAuth(url);
+    console.log("[fetchBookings] Response:", res);
+
+    if (res.success && Array.isArray(res.data)) {
+      const mappedBookings = res.data.map((booking) => ({
+        id: booking.id,
+        name: booking.tutor?.name || "Unknown",
+        tutorId: booking.tutorId || booking.tutor?.id,
+        avatar: booking.tutor?.avatar || null,
+        bio: booking.tutor?.bio || "",
+        subjects: booking.tutor?.subjects || [],
+        completedSessions: booking.tutor?.completedSessions || 0,
+        rating: booking.rating || null,
+        feedback: booking.feedback || null,
+        status: booking.status || "pending",
+        scheduledAt: booking.scheduledAt || null,
+        duration: booking.duration || null,
+        purpose: booking.purpose || "",
+        unread_count: booking.unreadCount || 0,
+        isBooking: true,
+        participant_name: booking.tutor?.name || "Unknown",
+        participant_role: "tutor",
+        last_message: booking.lastMessage?.content || "",
+        last_message_time: booking.lastMessage?.createdAt || null,
+      }));
+
+      const currentSelection = get().selectedBooking;
+      let newSelection = currentSelection;
+      
+      if (currentSelection?.isBooking) {
+        const updatedBooking = mappedBookings.find(b => b.id === currentSelection.id);
+        newSelection = updatedBooking || currentSelection;
+      }
+
+      console.log("[fetchBookings] SUCCESS - Loaded", mappedBookings.length, "bookings");
+      set({ 
+        bookings: mappedBookings,
+        selectedBooking: newSelection,
+        isLoading: false 
+      });
+    } else {
+      console.warn("[fetchBookings] No success or data not array", res);
+      set({ bookings: [], isLoading: false });
+    }
+  } catch (err) {
+    console.error("[fetchBookings] CRASH:", err);
+    set({ isLoading: false, error: err.message });
+  }
+},
+
+
+  // ---------------- FETCH TUTORS ----------------
+// In userChatStore.js - Replace your fetchTutors function with this:
+
+fetchTutors: async ({ search, category } = {}) => {
+  console.log("[fetchTutors] START - params:", { search, category });
+  set({ isLoading: true, error: null });
+
+  try {
+    const { fetchWithAuth } = useAuthStore.getState();
+    let url = `${API_BASE}/api/users/tutors`;
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (category) params.append("category", category);
+    if (params.toString()) url += `?${params.toString()}`;
+
+    console.log("[fetchTutors] Fetching URL:", url);
+
+    const res = await fetchWithAuth(url);
+
+    console.log("[fetchTutors] Full API response:", res);
+
+    if (!res?.success) {
+      console.warn("[fetchTutors] API did not return success flag", res);
+      set({ tutors: [], isLoading: false });
+      return;
+    }
+
+    let rawTutors = res.data || res.tutors || [];
+    console.log("[fetchTutors] Raw tutors count:", rawTutors.length);
+
+    if (!Array.isArray(rawTutors)) {
+      console.error("[fetchTutors] Tutors response is NOT an array!", rawTutors);
+      set({ tutors: [], isLoading: false });
+      return;
+    }
+
+    const mappedTutors = rawTutors.map((tutor) => {
+      const mapped = {
+        id: tutor.id || tutor._id,
+        name: tutor.name || "Unknown Tutor", // ✅ ADD THIS LINE
+        participant_name: tutor.name || "Unknown Tutor",
+        participant_role: "tutor",
+        avatar: tutor.avatar || null,
+        bio: tutor.bio || "",
+        subjects: tutor.subjects || [],
+        completedSessions: tutor.completedSessions || 0,
+        rating: tutor.rating || null,
+        isTutor: true,
+        last_message: "",
+        last_message_time: null,
+        status: "available",
+        scheduledAt: null,
+        duration: null,
+        unread_count: 0,
+      };
+      console.log("✅ Mapped tutor:", mapped.name, "ID:", mapped.id); // ✅ ADD DEBUG LOG
+      return mapped;
+    });
+
+    const availableTutors = mappedTutors;
+    console.log(
+      `[fetchTutors] SUCCESS - Loaded ${mappedTutors.length} tutors → showing ${availableTutors.length}`
+    );
+
+    set({ tutors: availableTutors, isLoading: false });
+  } catch (err) {
+    console.error("[fetchTutors] CRASH:", err.message, err.stack);
+    set({ tutors: [], isLoading: false, error: err.message });
+  }
+},
 
   // ---------------- FETCH ALL BOOKINGS ----------------
-  fetchBookings: async () => {
-    console.log("[fetchBookings] START");
-    set({ isLoading: true, error: null });
+  // fetchBookings: async () => {
+  //   console.log("[fetchBookings] START");
+  //   set({ isLoading: true, error: null });
 
-    try {
-      const { fetchWithAuth } = useAuthStore.getState();
-      const url = `${API_BASE}/api/users/bookings`;
-      console.log("[fetchBookings] Fetching URL:", url);
+  //   try {
+  //     const { fetchWithAuth } = useAuthStore.getState();
+  //     const url = `${API_BASE}/api/users/bookings`;
+  //     console.log("[fetchBookings] Fetching URL:", url);
 
-      const res = await fetchWithAuth(url);
-      console.log("[fetchBookings] Full API response:", res);
+  //     const res = await fetchWithAuth(url);
+  //     console.log("[fetchBookings] Full API response:", res);
 
-      if (res.success && Array.isArray(res.data)) {
-        const mappedBookings = res.data.map((booking) => {
-          const mapped = {
-            id: booking.id,
-            tutorId: booking.tutorId || booking.tutor?.id,
-            participant_name: booking.tutor?.name || "Unknown",
-            participant_role: "tutor",
-            last_message: booking.lastMessage?.content || "",
-            last_message_time: booking.lastMessage?.createdAt || null,
-            status: booking.status || "pending",
-            scheduledAt: booking.scheduledAt || null,
-            duration: booking.duration || null,
-            unread_count: booking.unreadCount || 0,
-            purpose: booking.purpose || "",
-            avatar: booking.tutor?.avatar || null,
-            bio: booking.tutor?.bio || "",
-            subjects: booking.tutor?.subjects || [],
-            completedSessions: booking.tutor?.completedSessions || 0,
-            rating: booking.rating || null,
-            feedback: booking.feedback || null,
-            isBooking: true,
-          };
-          console.log("[fetchBookings] Mapped booking:", mapped.id, mapped.participant_name, mapped.status);
-          return mapped;
-        });
+  //     if (res.success && Array.isArray(res.data)) {
+  //       const mappedBookings = res.data.map((booking) => {
+  //         const mapped = {
+  //           id: booking.id,
+  //           tutorId: booking.tutorId || booking.tutor?.id,
+  //           participant_name: booking.tutor?.name || "Unknown",
+  //           participant_role: "tutor",
+  //           last_message: booking.lastMessage?.content || "",
+  //           last_message_time: booking.lastMessage?.createdAt || null,
+  //           status: booking.status || "pending",
+  //           scheduledAt: booking.scheduledAt || null,
+  //           duration: booking.duration || null,
+  //           unread_count: booking.unreadCount || 0,
+  //           purpose: booking.purpose || "",
+  //           avatar: booking.tutor?.avatar || null,
+  //           bio: booking.tutor?.bio || "",
+  //           subjects: booking.tutor?.subjects || [],
+  //           completedSessions: booking.tutor?.completedSessions || 0,
+  //           rating: booking.rating || null,
+  //           feedback: booking.feedback || null,
+  //           isBooking: true,
+  //         };
+  //         console.log("[fetchBookings] Mapped booking:", mapped.id, mapped.participant_name, mapped.status);
+  //         return mapped;
+  //       });
 
-        const currentSelection = get().selectedBooking;
-        let newSelection = currentSelection;
+  //       const currentSelection = get().selectedBooking;
+  //       let newSelection = currentSelection;
 
-        if (currentSelection?.isTutor) {
-          const bookingForTutor = mappedBookings.find(b => b.tutorId === currentSelection.id);
-          if (bookingForTutor) {
-            newSelection = bookingForTutor;
-            console.log("[fetchBookings] Updated selection from tutor to booking:", newSelection.id);
-          }
-        } else if (currentSelection?.isBooking) {
-          const updatedBooking = mappedBookings.find(b => b.id === currentSelection.id);
-          newSelection = updatedBooking || currentSelection;
-          console.log("[fetchBookings] Updated existing booking selection:", newSelection.id);
-        }
+  //       if (currentSelection?.isTutor) {
+  //         const bookingForTutor = mappedBookings.find(b => b.tutorId === currentSelection.id);
+  //         if (bookingForTutor) {
+  //           newSelection = bookingForTutor;
+  //           console.log("[fetchBookings] Updated selection from tutor to booking:", newSelection.id);
+  //         }
+  //       } else if (currentSelection?.isBooking) {
+  //         const updatedBooking = mappedBookings.find(b => b.id === currentSelection.id);
+  //         newSelection = updatedBooking || currentSelection;
+  //         console.log("[fetchBookings] Updated existing booking selection:", newSelection.id);
+  //       }
 
-        set({ 
-          bookings: mappedBookings,
-          selectedBooking: newSelection,
-          isLoading: false 
-        });
-        console.log("[fetchBookings] SUCCESS - Bookings count:", mappedBookings.length);
+  //       set({ 
+  //         bookings: mappedBookings,
+  //         selectedBooking: newSelection,
+  //         isLoading: false 
+  //       });
+  //       console.log("[fetchBookings] SUCCESS - Bookings count:", mappedBookings.length);
 
-        const bookedTutorIds = mappedBookings.map(b => b.tutorId);
-        const tutors = get().tutors;
-        const availableTutors = tutors.filter(t => !bookedTutorIds.includes(t.id));
-        set({ tutors: availableTutors });
-        console.log("[fetchBookings] Available tutors after filter:", availableTutors.length);
-      } else {
-        console.warn("[fetchBookings] No success or data not array", res);
-        set({ bookings: [], isLoading: false });
-      }
-    } catch (err) {
-      console.error("[fetchBookings] CRASH:", err.message, err.stack);
-      set({ bookings: [], isLoading: false, error: err.message });
-    }
-  },
+  //       const bookedTutorIds = mappedBookings.map(b => b.tutorId);
+  //       const tutors = get().tutors;
+  //       const availableTutors = tutors.filter(t => !bookedTutorIds.includes(t.id));
+  //       set({ tutors: availableTutors });
+  //       console.log("[fetchBookings] Available tutors after filter:", availableTutors.length);
+  //     } else {
+  //       console.warn("[fetchBookings] No success or data not array", res);
+  //       set({ bookings: [], isLoading: false });
+  //     }
+  //   } catch (err) {
+  //     console.error("[fetchBookings] CRASH:", err.message, err.stack);
+  //     set({ bookings: [], isLoading: false, error: err.message });
+  //   }
+  // },
 
   // ---------------- CREATE NEW BOOKING ----------------
   createBooking: async ({ tutorId, purpose, scheduledAt, duration }) => {

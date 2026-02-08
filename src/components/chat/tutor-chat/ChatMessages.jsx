@@ -1,338 +1,101 @@
-// import { useEffect, useRef, useState } from "react";
-// import { format, parseISO } from "date-fns";
-// import { Loader2, User, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-// import useTutorAuthStore from "@/store/tutorAuthStore";
-// import { Button } from "@/components/ui/button";
-// import { Badge } from "@/components/ui/badge";
-// import {
-//   AlertDialog,
-//   AlertDialogContent,
-//   AlertDialogHeader,
-//   AlertDialogTitle,
-//   AlertDialogDescription,
-//   AlertDialogFooter,
-//   AlertDialogCancel,
-//   AlertDialogAction,
-// } from "@/components/ui/alert-dialog";
-
-// export default function ChatMessages({ messages, isLoading, bookingStatus, onConfirmMessage, onRejectMessage }) {
-//   const { tutor } = useTutorAuthStore();
-//   const messagesEndRef = useRef(null);
-//   const [selectedMessage, setSelectedMessage] = useState(null);
-//   const [actionType, setActionType] = useState(null); // 'confirm' or 'reject'
-//   const [isProcessing, setIsProcessing] = useState(false);
-
-//   // Auto-scroll to bottom when new messages arrive
-//   useEffect(() => {
-//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-//   }, [messages]);
-
-//   // Handle message confirmation
-//   const handleConfirm = async () => {
-//     if (!selectedMessage) return;
-    
-//     setIsProcessing(true);
-//     try {
-//       await onConfirmMessage?.(selectedMessage.id);
-//       console.log("✅ Message confirmed:", selectedMessage.id);
-//       setSelectedMessage(null);
-//     } catch (err) {
-//       console.error("❌ Failed to confirm message:", err);
-//     } finally {
-//       setIsProcessing(false);
-//     }
-//   };
-
-//   // Handle message rejection
-//   const handleReject = async () => {
-//     if (!selectedMessage) return;
-    
-//     setIsProcessing(true);
-//     try {
-//       await onRejectMessage?.(selectedMessage.id);
-//       console.log("❌ Message rejected:", selectedMessage.id);
-//       setSelectedMessage(null);
-//     } catch (err) {
-//       console.error("❌ Failed to reject message:", err);
-//     } finally {
-//       setIsProcessing(false);
-//     }
-//   };
-
-//   // Open confirmation dialog
-//   const openConfirmDialog = (message, type) => {
-//     setSelectedMessage(message);
-//     setActionType(type);
-//   };
-
-//   if (isLoading && messages.length === 0) {
-//     return (
-//       <div className="flex-1 flex items-center justify-center">
-//         <Loader2 className="size-8 animate-spin text-muted-foreground" />
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <>
-//       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-//         {messages.length === 0 ? (
-//           <div className="flex items-center justify-center h-full">
-//             <p className="text-muted-foreground text-sm">No messages yet</p>
-//           </div>
-//         ) : (
-//           messages.map((message) => {
-//             const isOwnMessage = message.senderId === tutor?.id;
-//             const isPending = message.status === "pending";
-//             const isRejected = message.status === "rejected";
-//             const isConfirmed = message.status === "confirmed";
-            
-//             return (
-//               <div
-//                 key={message.id}
-//                 className={`flex gap-3 ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}
-//               >
-//                 {/* Avatar */}
-//                 <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-//                   {message.sender?.avatar ? (
-//                     <img 
-//                       src={message.sender.avatar} 
-//                       alt={message.sender.name}
-//                       className="size-8 rounded-full object-cover"
-//                     />
-//                   ) : (
-//                     <User className="size-4 text-primary" />
-//                   )}
-//                 </div>
-
-//                 {/* Message Content */}
-//                 <div className={`flex flex-col max-w-[70%] ${isOwnMessage ? "items-end" : "items-left"}`}>
-//                   {/* Message Bubble */}
-//                   <div
-//                     className={`px-4 py-2 rounded-lg ${
-//                       isOwnMessage
-//                         ? "bg-primary text-white"
-//                         : isRejected
-//                         ? "bg-red-100 text-red-900 border border-red-200"
-//                         : isPending
-//                         ? "bg-yellow-50 text-yellow-900 border border-yellow-200"
-//                         : "bg-gray-100 text-gray-900"
-//                     }`}
-//                   >
-//                     <p className="text-sm whitespace-pre-wrap break-words">
-//                       {message.content}
-//                     </p>
-                    
-//                     {/* Status Badge for Student Messages */}
-//                     {!isOwnMessage && (
-//                       <div className="flex items-center gap-2 mt-2">
-//                         {isPending && (
-//                           <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
-//                             <AlertCircle className="size-3 mr-1" />
-//                             Pending Review
-//                           </Badge>
-//                         )}
-//                         {isConfirmed && (
-//                           <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-//                             <CheckCircle className="size-3 mr-1" />
-//                             Confirmed
-//                           </Badge>
-//                         )}
-//                         {isRejected && (
-//                           <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
-//                             <XCircle className="size-3 mr-1" />
-//                             Rejected
-//                           </Badge>
-//                         )}
-//                       </div>
-//                     )}
-//                   </div>
-
-//                   {/* Timestamp */}
-//                   <div className="flex items-center gap-2 mt-1">
-//                     <span className="text-xs text-muted-foreground">
-//                       {format(parseISO(message.createdAt), "HH:mm")}
-//                     </span>
-//                     {!isOwnMessage && message.sender?.name && (
-//                       <span className="text-xs text-muted-foreground">
-//                         • {message.sender.name}
-//                       </span>
-//                     )}
-//                   </div>
-
-//                   {/* Action Buttons for Pending Student Messages */}
-//                   {!isOwnMessage && isPending && (
-//                     <div className="flex gap-2 mt-2">
-//                       <Button
-//                         size="sm"
-//                         variant="outline"
-//                         className="h-7 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-//                         onClick={() => openConfirmDialog(message, 'confirm')}
-//                       >
-//                         <CheckCircle className="size-3 mr-1" />
-//                         Confirm
-//                       </Button>
-//                       <Button
-//                         size="sm"
-//                         variant="outline"
-//                         className="h-7 text-xs bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
-//                         onClick={() => openConfirmDialog(message, 'reject')}
-//                       >
-//                         <XCircle className="size-3 mr-1" />
-//                         Reject
-//                       </Button>
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
-//             );
-//           })
-//         )}
-        
-//         {/* Session Status Messages */}
-//         {bookingStatus === "completed" && (
-//           <div className="text-center py-4">
-//             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
-//               <CheckCircle className="size-4" />
-//               <p className="text-sm font-medium">This session has been completed</p>
-//             </div>
-//           </div>
-//         )}
-        
-//         {bookingStatus === "cancelled" && (
-//           <div className="text-center py-4">
-//             <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg">
-//               <XCircle className="size-4" />
-//               <p className="text-sm font-medium">This booking has been cancelled</p>
-//             </div>
-//           </div>
-//         )}
-        
-//         <div ref={messagesEndRef} />
-//       </div>
-
-//       {/* Confirmation Dialog */}
-//       <AlertDialog 
-//         open={!!selectedMessage} 
-//         onOpenChange={(open) => !open && setSelectedMessage(null)}
-//       >
-//         <AlertDialogContent>
-//           <AlertDialogHeader>
-//             <AlertDialogTitle>
-//               {actionType === 'confirm' ? 'Confirm Message' : 'Reject Message'}
-//             </AlertDialogTitle>
-//             <AlertDialogDescription>
-//               {actionType === 'confirm' 
-//                 ? 'Are you sure you want to confirm this message from the student?' 
-//                 : 'Are you sure you want to reject this message from the student?'}
-//             </AlertDialogDescription>
-//           </AlertDialogHeader>
-          
-//           {selectedMessage && (
-//             <div className="py-4">
-//               <div className="p-3 bg-gray-50 rounded-lg border">
-//                 <p className="text-sm text-gray-700">{selectedMessage.content}</p>
-//                 <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-//                   <User className="size-3" />
-//                   <span>{selectedMessage.sender?.name || 'Student'}</span>
-//                   <span>•</span>
-//                   <span>{format(parseISO(selectedMessage.createdAt), "PPp")}</span>
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-
-//           <AlertDialogFooter>
-//             <AlertDialogCancel onClick={() => setSelectedMessage(null)}>
-//               Cancel
-//             </AlertDialogCancel>
-            
-//             {actionType === 'confirm' ? (
-//               <AlertDialogAction 
-//                 onClick={handleConfirm}
-//                 className="bg-green-600 hover:bg-green-700"
-//               >
-//                 {isProcessing ? (
-//                   <>
-//                     <Loader2 className="size-4 mr-2 animate-spin" />
-//                     Confirming...
-//                   </>
-//                 ) : (
-//                   <>
-//                     <CheckCircle className="size-4 mr-2" />
-//                     Confirm Message
-//                   </>
-//                 )}
-//               </AlertDialogAction>
-//             ) : (
-//               <AlertDialogAction 
-//                 onClick={handleReject}
-//                 className="bg-red-600 hover:bg-red-700"
-//               >
-//                 {isProcessing ? (
-//                   <>
-//                     <Loader2 className="size-4 mr-2 animate-spin" />
-//                     Rejecting...
-//                   </>
-//                 ) : (
-//                   <>
-//                     <XCircle className="size-4 mr-2" />
-//                     Reject Message
-//                   </>
-//                 )}
-//               </AlertDialogAction>
-//             )}
-//           </AlertDialogFooter>
-//         </AlertDialogContent>
-//       </AlertDialog>
-//     </>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-
-
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { format, parseISO } from "date-fns";
-import { Loader2, User, CheckCircle, XCircle, AlertCircle, MessageSquare } from "lucide-react";
+import {
+  Loader2,
+  User,
+  CheckCircle,
+  XCircle,
+  MessageSquare,
+  Clock,
+  ArrowDown,
+} from "lucide-react";
 import useTutorAuthStore from "@/store/tutorAuthStore";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 export default function ChatMessages({
-  messages,
-  isLoading,
+  messages = [],
+  isLoading = false,
   bookingStatus,
+  proposedAt,
   onConfirmMessage,
   onRejectMessage,
+  onAcceptReschedule,
+  onRejectReschedule,
 }) {
   const { tutor } = useTutorAuthStore();
+
+  const containerRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  const prevMessagesLengthRef = useRef(0);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+
   const [selectedMessage, setSelectedMessage] = useState(null);
-  const [actionType, setActionType] = useState(null); // 'confirm' or 'reject'
+  const [actionType, setActionType] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Auto-scroll to bottom
+  // Check if near bottom
+  const isNearBottom = useCallback(() => {
+    if (!containerRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    return scrollHeight - scrollTop - clientHeight < 150;
+  }, []);
+
+  // Handle scroll to re-enable auto-scroll when user reaches bottom
+  const handleScroll = useCallback(() => {
+    if (isNearBottom()) {
+      setAutoScrollEnabled(true);
+      setNewMessagesCount(0);
+    } else {
+      setAutoScrollEnabled(false);
+    }
+  }, [isNearBottom]);
+
+  // Smart auto-scroll + new message detection
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const currentLength = messages.length;
+    const previousLength = prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = currentLength;
+
+    if (currentLength > previousLength) {
+      if (isNearBottom() || autoScrollEnabled) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        setNewMessagesCount(0);
+      } else {
+        setNewMessagesCount(currentLength - previousLength);
+      }
+    } else if (currentLength < previousLength) {
+      setAutoScrollEnabled(true);
+      setNewMessagesCount(0);
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    }
+  }, [messages, isNearBottom, autoScrollEnabled]);
+
+  // Initial scroll to bottom on first load
+  useEffect(() => {
+    if (messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    }
+  }, []);
+
+  const openActionDialog = (message, type) => {
+    setSelectedMessage(message);
+    setActionType(type);
+  };
 
   const handleConfirm = async () => {
     if (!selectedMessage) return;
@@ -341,7 +104,7 @@ export default function ChatMessages({
       await onConfirmMessage?.(selectedMessage.id);
       setSelectedMessage(null);
     } catch (err) {
-      console.error("Failed to confirm message:", err);
+      console.error("Failed to confirm:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -354,170 +117,222 @@ export default function ChatMessages({
       await onRejectMessage?.(selectedMessage.id);
       setSelectedMessage(null);
     } catch (err) {
-      console.error("Failed to reject message:", err);
+      console.error("Failed to reject:", err);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const openConfirmDialog = (message, type) => {
-    setSelectedMessage(message);
-    setActionType(type);
-  };
-
   if (isLoading && messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-5 bg-background relative"
+        onScroll={handleScroll}
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <MessageSquare className="size-14 text-muted-foreground/40 mb-4" />
-            <p className="text-muted-foreground font-medium">No messages yet</p>
+            <MessageSquare className="size-16 text-muted-foreground/30 mb-4" />
+            <p className="text-lg font-medium text-muted-foreground">No messages yet</p>
             <p className="text-sm text-muted-foreground mt-2">
               Start the conversation by sending a message
             </p>
           </div>
         ) : (
           messages.map((message) => {
-            const isTutorMessage = message.senderId === tutor?.id;
-            const isPending = message.status === "pending";
-            const isRejected = message.status === "rejected";
-            const isConfirmed = message.status === "confirmed";
+          const isTutor = message.sender?.id === tutor?.id;
+          const isSystem = message.senderRole === "system" || message.isSystem;
+          const isPending = message.status === "pending";
+          const isRejected = message.status === "rejected";
+          const isConfirmed = message.status === "confirmed";
+          console.log("Message:", {
+          id: message.id,
+          senderId: message.senderId,
+          isTutor: message.senderId === tutor?.id,
+          content: message.content,         
+          contentType: typeof message.content,
+          fullMessage: message
+        });
 
-            return (
-              <div
-                key={message.id}
-                className={`flex gap- border-4 ${isTutorMessage ? "flex-row" : "flex-row-reverse"}`}
-              >
-                {/* Avatar */}
-                <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                  {message.sender?.avatar ? (
-                    <img
-                      src={message.sender.avatar}
-                      alt={message.sender.name || "User"}
-                      className="size-9 rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="size-5 text-primary" />
-                  )}
-                </div>
-
-                {/* Message Content */}
-                <div
-                  className={`flex flex-col max-w-[70%] ${
-                    isTutorMessage ? "items-start" : "items-en"
-                  }`}
-                >
-                  {/* Message Bubble */}
-                  <div
-                    className={`px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap break-words shadow-sm ${
-                      isTutorMessage
-                        ? "bg-gray-100 text-gray-900 rounded-tl-none"
-                        : isRejected
-                        ? "bg-red-50 text-red-900 border border-red-200 rounded-tr-none"
-                        : isPending
-                        ? "bg-yellow-50 text-yellow-900 border border-yellow-200 rounded-tr-none"
-                        : "bg-primary text-white rounded-tr-none"
-                    }`}
-                  >
-                    {message.content}
-
-                    {/* Status badge - only for student messages */}
-                    {!isTutorMessage && (
-                      <div className="flex items-center gap-2 mt-2">
-                        {isPending && (
-                          <Badge
-                            variant="outline"
-                            className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs"
-                          >
-                            <AlertCircle className="size-3 mr-1" />
-                            Pending Review
-                          </Badge>
-                        )}
-                        {isConfirmed && (
-                          <Badge
-                            variant="outline"
-                            className="bg-green-100 text-green-800 border-green-300 text-xs"
-                          >
-                            <CheckCircle className="size-3 mr-1" />
-                            Confirmed
-                          </Badge>
-                        )}
-                        {isRejected && (
-                          <Badge
-                            variant="outline"
-                            className="bg-red-100 text-red-800 border-red-300 text-xs"
-                          >
-                            <XCircle className="size-3 mr-1" />
-                            Rejected
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Timestamp + Sender name */}
-                  <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                    <span>{format(parseISO(message.createdAt), "HH:mm")}</span>
-
-                    {isTutorMessage ? (
-                      <span>• You</span>
-                    ) : (
-                      message.sender?.name && <span>• {message.sender.name}</span>
-                    )}
-                  </div>
-
-                  {/* Action buttons - only for pending student messages */}
-                  {!isTutorMessage && isPending && (
-                    <div className="flex gap-2 mt-3">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                        onClick={() => openConfirmDialog(message, "confirm")}
-                      >
-                        <CheckCircle className="size-3.5 mr-1.5" />
-                        Confirm
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
-                        onClick={() => openConfirmDialog(message, "reject")}
-                      >
-                        <XCircle className="size-3.5 mr-1.5" />
-                        Reject
-                      </Button>
-                    </div>
-                  )}
+        if (isSystem) {
+          return (
+            <div key={message.id} className="flex justify-center">
+              <div className="max-w-[70%] px-5 py-3 bg-gray-100/70 text-gray-700 rounded-xl text-sm text-center shadow-sm">
+                {message.content}
+                <div className="text-xs text-gray-500 mt-1">
+                  {format(parseISO(message.createdAt), "HH:mm")}
                 </div>
               </div>
-            );
-          })
+            </div>
+          );
+        }
+
+      // ────────────────────────────────────────────────
+      // STUDENT MESSAGE ─ LEFT SIDE
+      // ────────────────────────────────────────────────
+      if (!isTutor) {
+        return (
+          <div 
+            key={message.id} 
+            className="flex items-start gap-3 max-w-[80%] justify-left"
+          >
+            {/* Student avatar LEFT */}
+            <Avatar className="h-10 w-10 mt-1 flex-shrink-0">
+              {message.sender?.avatar && message.sender.avatar.trim() !== "" ? (
+                <AvatarImage 
+                  src={message.sender.avatar} 
+                  alt={message.sender.name || "Student"}
+                />
+              ) : null}
+              <AvatarFallback className=" text-muted font-bold bg-primary/80" >
+                {message.sender?.name?.charAt(0)?.toUpperCase() || "S"}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="flex flex-col gap-1">
+              <div
+                className={cn(
+                  "px-4 py-3 rounded-2xl text-sm shadow-sm break-words whitespace-pre-wrap leading-relaxed rounded-tl-none",
+                  isRejected
+                    ? "bg-red-50 text-red-900 border border-red-200"
+                    : isPending
+                    ? "bg-yellow-50 text-yellow-900 border border-yellow-200"
+                    : "bg-muted text-foreground"
+                )}
+              >
+                {message.content}
+
+                <div className="mt-2 flex items-center gap-2">
+                  {isPending && <Badge className="bg-yellow-100 text-yellow-800 text-xs">Pending Review</Badge>}
+                  {isConfirmed && <Badge className="bg-green-100 text-green-800 text-xs">Confirmed</Badge>}
+                  {isRejected && <Badge className="bg-red-100 text-red-800 text-xs">Rejected</Badge>}
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground px-1 flex items-center gap-1.5">
+                {format(parseISO(message.createdAt), "HH:mm")}
+                <span>•</span>
+                <span className="font-medium">{message.sender?.name || "Student"}</span>
+              </div>
+
+              {isPending && (
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" variant="outline" className="h-8 text-xs border-green-200 text-green-700 hover:bg-green-50" onClick={() => openActionDialog(message, "confirm")}>
+                    <CheckCircle className="size-3.5 mr-1.5" /> Confirm
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 text-xs border-red-200 text-red-700 hover:bg-red-50" onClick={() => openActionDialog(message, "reject")}>
+                    <XCircle className="size-3.5 mr-1.5" /> Reject
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // ────────────────────────────────────────────────
+      // TUTOR MESSAGE ─ RIGHT SIDE
+      // ────────────────────────────────────────────────
+      return (
+        <div 
+          key={message.id} 
+          className="flex items-start gap-3 max-w-[80%] ml-auto justify-end "
+        >
+          <div className="flex flex-col gap-1 items-right">
+            <div
+              className="px-4 py-3 rounded-2xl text-md shadow-sm break-words whitespace-pre-wrap 
+              leading-relaxed rounded-tr-none text-gray-500   border"
+            >
+              {message.content}
+            </div>
+
+            <div className="text-xs text-muted-foreground px-1 flex items-center gap-1.5">
+              {format(parseISO(message.createdAt), "HH:mm")}
+              <span>•</span>
+              <span className="font-medium">You</span>
+            </div>
+          </div>
+
+          {/* Tutor avatar RIGHT */}
+          <Avatar className="h-10 w-10 mt-1 flex-shrink-0">
+            {tutor?.avatar && tutor.avatar.trim() !== "" ? (
+              <AvatarImage src={tutor.avatar} alt={tutor.name || "You"} />
+            ) : null}
+            <AvatarFallback className="bg-primary/10 text-primary">
+              {tutor?.name?.charAt(0)?.toUpperCase() || "T"}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      );
+    })
         )}
 
-        {/* Session status banners */}
-        {bookingStatus === "completed" && (
+        {/* New messages indicator */}
+        {newMessagesCount > 0 && (
+          <div className="sticky bottom-6 z-10 flex justify-center">
+            <Button
+              size="sm"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg rounded-full px-5 py-2 flex items-center gap-2"
+              onClick={() => {
+                setAutoScrollEnabled(true);
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                setNewMessagesCount(0);
+              }}
+            >
+              <ArrowDown className="size-4" />
+              {newMessagesCount} new message{newMessagesCount !== 1 ? "s" : ""}
+            </Button>
+          </div>
+        )}
+
+        {/* Reschedule & status banners */}
+        {bookingStatus === "reschedule-proposed" && proposedAt && (
           <div className="text-center py-6">
-            <div className="inline-flex items-center gap-2 px-5 py-3 bg-blue-50 text-blue-700 rounded-xl border border-blue-200">
-              <CheckCircle className="size-5" />
-              <p className="font-medium">This session has been completed</p>
+            <div className="inline-flex flex-col gap-4 px-8 py-6 bg-purple-50 text-purple-900 rounded-2xl border-2 border-purple-300 shadow-lg max-w-md mx-auto">
+              <div className="flex items-center gap-3 justify-center">
+                <Clock className="size-6 text-purple-600" />
+                <p className="font-semibold text-base">Reschedule Proposed</p>
+              </div>
+
+              <div className="bg-white/80 px-4 py-3 rounded-lg border border-purple-200">
+                <p className="text-sm text-purple-700 mb-1 font-medium">New proposed time:</p>
+                <p className="text-base font-bold text-purple-900">
+                  {format(parseISO(proposedAt), "EEEE, MMMM dd, yyyy")}
+                </p>
+                <p className="text-lg font-bold text-purple-900">
+                  {format(parseISO(proposedAt), "hh:mm a")}
+                </p>
+              </div>
+
+              <p className="text-sm text-purple-700">
+                Waiting for student to confirm the new schedule
+              </p>
+            </div>
+          </div>
+        )}
+
+        {bookingStatus === "completed" && (
+          <div className="text-center py-8">
+            <div className="inline-flex items-center gap-3 px-6 py-4 bg-blue-50 text-blue-700 rounded-2xl border border-blue-200 shadow-sm mx-auto">
+              <CheckCircle className="size-6" />
+              <p className="font-medium text-base">This session has been completed</p>
             </div>
           </div>
         )}
 
         {bookingStatus === "cancelled" && (
-          <div className="text-center py-6">
-            <div className="inline-flex items-center gap-2 px-5 py-3 bg-red-50 text-red-700 rounded-xl border border-red-200">
-              <XCircle className="size-5"/>
-              <p className="font-medium">This booking has been cancelled</p>
+          <div className="text-center py-8">
+            <div className="inline-flex items-center gap-3 px-6 py-4 bg-red-50 text-red-700 rounded-2xl border border-red-200 shadow-sm mx-auto">
+              <XCircle className="size-6" />
+              <p className="font-medium text-base">This booking has been cancelled</p>
             </div>
           </div>
         )}
@@ -525,7 +340,7 @@ export default function ChatMessages({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Confirmation/Rejection Dialog */}
+      {/* Confirm / Reject Dialog */}
       <AlertDialog
         open={!!selectedMessage}
         onOpenChange={(open) => !open && setSelectedMessage(null)}
@@ -533,21 +348,19 @@ export default function ChatMessages({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {actionType === "confirm" ? "Confirm Message" : "Reject Message"}
+              {actionType === "confirm" ? "Confirm this message?" : "Reject this message?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {actionType === "confirm"
-                ? "Are you sure you want to confirm this message from the student?"
-                : "Are you sure you want to reject this message from the student?"}
+                ? "Confirming this message will allow the session to proceed."
+                : "Rejecting this message will cancel the request."}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           {selectedMessage && (
             <div className="py-4">
-              <div className="p-4 bg-gray-50 rounded-lg border">
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {selectedMessage.content}
-                </p>
+              <div className="p-4 bg-muted/50 rounded-lg border">
+                <p className="text-sm leading-relaxed">{selectedMessage.content}</p>
                 <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
                   <User className="size-3.5" />
                   <span>{selectedMessage.sender?.name || "Student"}</span>
@@ -559,9 +372,7 @@ export default function ChatMessages({
           )}
 
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSelectedMessage(null)}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
 
             {actionType === "confirm" ? (
               <AlertDialogAction
@@ -577,7 +388,7 @@ export default function ChatMessages({
                 ) : (
                   <>
                     <CheckCircle className="size-4 mr-2" />
-                    Confirm Message
+                    Confirm
                   </>
                 )}
               </AlertDialogAction>
@@ -595,7 +406,7 @@ export default function ChatMessages({
                 ) : (
                   <>
                     <XCircle className="size-4 mr-2" />
-                    Reject Message
+                    Reject
                   </>
                 )}
               </AlertDialogAction>
