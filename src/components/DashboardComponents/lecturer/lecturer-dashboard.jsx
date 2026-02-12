@@ -41,9 +41,12 @@ import QuestionsPanel from "@/components/DashboardComponents/lecturer/questions-
 import SettingsPage from "@/pages/lecturer/SettingsPage"
 import DashboardOverview from "@/components/DashboardComponents/lecturer/DashboardOverview"
 import TutorChat from "@/pages/chat/TutorChatPage"
-
 import useTutorAuthStore from "@/store/tutorAuthStore"
 import useTutorStore from "@/store/tutorStore"
+import { useTutorChatStore } from '@/store/tutorChatStore';
+// import { useTutorStore } from "@/store/tutorStore";
+// import useTutorAuthStore from '@/store/tutorAuthStore';
+
 
 const EXAM_BODIES = [
   { id: "all-catigories", label: "AllCategories", color: "bg-pink-500/10 text-blue-600 dark:text-blue-400" },
@@ -73,11 +76,15 @@ export default function LecturerDashboard() {
   const updateProfile = useTutorAuthStore((state) => state.updateProfile)
   const changePassword = useTutorAuthStore((state) => state.changePassword)
 
+  
+
   // Tutor Store
   const {
     fetchDashboard,
     dashboardData,
   } = useTutorStore()
+
+  
 
   // State
   const [activeTab, setActiveTab] = useState("overview")
@@ -107,6 +114,46 @@ export default function LecturerDashboard() {
     { id: "chat", label: "Chat", icon: Users },
     { id: "settings", label: "Settings", icon: Settings },
   ]
+// In lecturer-dashboard.jsx or wherever the socket effect is
+
+    useEffect(() => {
+      console.log("[Socket Init] Dashboard mounted — starting tutor watch");
+
+      let hasInitialized = false;
+
+      const checkAndInit = () => {
+        const tutor = useTutorAuthStore.getState().tutor; // ← changed!
+        console.log("[Socket Check]", {
+          tutorExists: !!tutor,
+          tutorId: tutor?.id || "missing",
+          hasInitialized,
+        });
+
+        if (tutor?.id && !hasInitialized) {
+          hasInitialized = true;
+          console.log(`[Socket Init] Tutor ready (ID: ${tutor.id}) → connecting now`);
+          useTutorChatStore.getState().initializeSocket();
+        }
+      };
+
+      // Immediate check
+      checkAndInit();
+
+      // Subscribe to auth store instead
+      const unsubscribe = useTutorAuthStore.subscribe(
+        (state) => state.tutor,
+        (newTutor) => {
+          if (newTutor?.id && !hasInitialized) {
+            hasInitialized = true;
+            console.log(`[Socket Init] Tutor became available (ID: ${newTutor.id}) → connecting`);
+            useTutorChatStore.getState().initializeSocket();
+          }
+        },
+        { fireImmediately: false }
+      );
+
+      return () => unsubscribe();
+    }, []);
 
   // Generate years dynamically
   const generateYears = () => {

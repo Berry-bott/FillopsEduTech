@@ -15,7 +15,6 @@ let refreshPromise = null;
 const useAuthStore = create(
   persist(
     (set, get) => ({
-      // 🔐 STATE
       user: null,
       accessToken: null,
       isAuthenticated: false,
