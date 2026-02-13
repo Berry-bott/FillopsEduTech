@@ -21,7 +21,7 @@ const useAuthStore = create(
       loading: false,
       error: "",
       success: "",
-
+      
       verificationPending: false,
       emailToVerify: "",
 
