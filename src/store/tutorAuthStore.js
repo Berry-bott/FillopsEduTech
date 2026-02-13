@@ -94,14 +94,14 @@ const useTutorAuthStore = create(
             console.warn("Refresh failed:", err);
             return false;
           } finally {
-            refreshPromise = null; // 🔓 unlock
+            refreshPromise = null; 
           }
         })();
       
         return refreshPromise;
       },
 
-      // 🔹 CHECK AUTH (on app load)
+     
       checkTutorAuth: async () => {
   // 🔹 STEP 1: Get token from session storage OR state
   let token = sessionStorage.getItem("accessToken") || get().accessToken;
@@ -215,9 +215,9 @@ const useTutorAuthStore = create(
         }
       },
 
-      // 🔹 UPLOAD AVATAR
+
       uploadAvatar: async (formData) => {
-        const token = get().accessToken; // ✅ Direct access to state
+        const token = get().accessToken; 
         
         if (!token) {
           return { success: false, message: "Not authenticated" };
