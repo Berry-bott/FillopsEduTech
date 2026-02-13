@@ -74,15 +74,15 @@ export default function FeaturesSection() {
   }, []);
 
   return (
-    <section className="relative py-16  bg-background overflow-hidden md:mx-8 mx-2 text-center md:text-left">
-      <div className="container mx-auto px-2">
+    <section className="relative py-8  bg-background overflow-hidden md:mx-8 mx-2 text-center md:text-left">
+      <div className="container mx-auto px-2 ">
         {/* HEADER */}
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={fadeUp}
-          className="text-center mb-20 max-w-3xl mx-auto"
+          className="text-center mb-20 max-w-3xl mx-auto "
         >
           <Badge
             variant="secondary"
@@ -112,7 +112,7 @@ export default function FeaturesSection() {
         </motion.div>
 
         {/* SECTION 1 */}
-        <div className="grid md:grid-cols-2 gap-12 items-center mb-20  md:gap-4">
+        <div className="grid md:grid-cols-2 gap-12 items-center mb-20  md:gap-8  w-[85%] m-auto">
           {/* IMAGE */}
           <motion.div
             initial="hidden"
@@ -135,7 +135,7 @@ export default function FeaturesSection() {
             whileInView="visible"
             variants={fadeUp}
             viewport={{ once: true }}
-            className="flex flex-col gap-6 md: self-start"
+            className="flex flex-col gap-6 md: self-start -z-0"
           >
             <motion.h3
               initial={{ opacity: 0, x: -40 }}
@@ -163,7 +163,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* SECTION 2 */}
-        <div className="grid md:grid-cols-2 gap-12 items-center mb-8">
+        <div className="grid md:grid-cols-2 gap-12 items-center mb-8 w-[85%] m-auto">
           {/* TEXT */}
           <motion.div
             initial="hidden"

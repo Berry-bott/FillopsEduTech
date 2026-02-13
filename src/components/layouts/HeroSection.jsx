@@ -1,32 +1,32 @@
+
+
+
 // import React from "react";
 // import { TypeAnimation } from "react-type-animation";
 // import { Button } from "../ui/button";
 // import { Badge } from "../ui/badge";
 // import { ArrowRight, BookOpen, Users, Award } from "lucide-react";
-// // import heroVideo from "../assets/videos/cbtVideo.mp4";
 // import hangoverImage from "../../assets/images/hero-education.jpg";
+// // import ChatBot from "../../chat-bot/BotChat";
+
+
+
 
 // const HeroSection = () => {
 //   return (
-//     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-//       <div className="absolute inset-0 border-2 border-primary-foreground/20 rounded-lg overflow-hidden"
-//       >
-//         {/* <video
-//           src={heroVideo}
-//           autoPlay
-//           muted
-//           loop
-//           playsInline
-//           className="w-full h-full object-cover"
-//         /> */}
-//         <img src={hangoverImage}
-//          className="w-full h-full object-cover object-bottom"
-//          alt=""
-//           />
+//     <section
+//       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background dark:bg-backround transition-colors duration-500"
+//     >
+//       {/* Background Image + Overlay */}
+//       <div className="absolute inset-0 border-2 border-primary-foreground/20 rounded-lg overflow-hidden">
+//         <img
+//           src={hangoverImage}
+//           className="w-full h-full object-cover object-[50%_5%]"
+//           alt="Education background"
+//         />
 
-//         {/* Black + Blue Transparent Overlay */}
-//         <div className="absolute inset-0 bg-black/40 ">
-//           {/* Cinematic Vignette */}
+//         {/* Transparent Overlay */}
+//         <div className="absolute inset-0 bg-black/40 dark:bg-black/70 transition-colors duration-500">
 //           <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_70%,rgba(0,0,0,0.9)_100%)]"></div>
 //         </div>
 //       </div>
@@ -37,9 +37,9 @@
 //           {/* Badge */}
 //           <Badge
 //             variant="secondary"
-//             className="mb-6 px-4 py-2 text-sm font-medium flex items-center"
+//             className="mb-6 px-4 py-2 text-sm font-medium flex items-center bg-background/60 dark:bg-background/30 transition-colors"
 //           >
-//             <div className="relative w-full overflow-hidden ">
+//             <div className="relative w-full overflow-hidden">
 //               <div className="flex items-center animate-slide text-blue-400 font-medium">
 //                 <Award className="w-4 h-4 mr-2 text-yellow-500" />
 //                 Welcome to Fillop Study Platform! Nigeria's #1 CBT Platform
@@ -48,10 +48,9 @@
 //           </Badge>
 
 //           {/* Main Heading */}
-
-//           <h1 className="text-5xl md:text-6xl font-merriweather font-bold text-primary-foreground mb-6 leading-tight">
+//           <h1 className="text-5xl md:text-6xl font-merriweather font-bold text-primary-foreground text-white/90 mb-6 leading-tight transition-colors">
 //             Empowering the Future of{" "}
-//             <span className="text-primaryHover inline-block min-w-[9ch]  mt-2">
+//             <span className="text-primary-hover dark:text-primary-hover inline-block min-w-[9ch] mt-2">
 //               <TypeAnimation
 //                 sequence={[
 //                   "Education.",
@@ -70,7 +69,7 @@
 //           </h1>
 
 //           {/* Subheading */}
-//           <p className="text-xl md:text-base text-primary-foreground/90  mb-8 tracking-wide leading-relaxed max-w-3xl mx-auto">
+//           <p className="text-xl md:text-base text-primary-foreground/90 dark:text-foreground/90 mb-8 tracking-wide leading-relaxed max-w-3xl mx-auto transition-colors">
 //             Our platform is designed to help students and teachers alike by
 //             providing a comprehensive set of tools and resources to support
 //             their learning journey. Join us to experience a seamless and
@@ -79,78 +78,83 @@
 
 //           {/* Feature Pills */}
 //           <div className="flex flex-wrap justify-center gap-4 mb-10">
-//             <div className="flex items-center space-x-2 bg-background/20 backdrop-blur-sm rounded-full px-4 py-2">
-//               <BookOpen className="w-5 h-5 text-accent" />
-//               <span className="text-primary-foreground font-medium text-sm">
+//             <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
+//               <BookOpen className="w-5 h-5 text-accent text-white/70" />
+//               <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
 //                 WAEC/NECO CBT
 //               </span>
 //             </div>
-//             <div className="flex items-center space-x-2 bg-background/20 backdrop-blur-sm rounded-full px-4 py-2">
+//             <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
 //               <Users className="w-5 h-5 text-education-orange" />
-//               <span className="text-primary-foreground font-medium text-sm">
+//               <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
 //                 JAMB/UTME Prep
 //               </span>
 //             </div>
-//             <div className="flex items-center space-x-2 bg-background/20 backdrop-blur-sm rounded-full px-4 py-2">
-//               <Award className="w-5 h-5 text-blue-700 " />
-//               <span className="text-primary-foreground font-medium text-sm">
+//             <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
+//               <Award className="w-5 h-5 text-blue-700 dark:text-blue-400" />
+//               <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
 //                 AI-Powered Learning
 //               </span>
 //             </div>
 //           </div>
 
-//           {/* CTA Buttons */}
+          // {/* CTA Buttons */}
+          // <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+          //   {/* Get Started Button */}
+          //   <Button
+          //     size="lg"
+          //     className="relative overflow-hidden group bg-primary-hover hover:bg-primary text-primary-foreground dark:text-white px-8 py-3 
+          //     text-lg font-semibold shadow-elegant flex items-center justify-center transition-colors"
+          //   >
+          //     <div className="relative h-6 overflow-hidden">
+          //       <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
+          //         Get Started
+          //       </span>
+          //       <span
+          //         className="absolute left-0 top-full w-full text-center transition-transform duration-300 
+          //           ease-in-out group-hover:-translate-y-full text-white"
+          //       >
+          //         Get Started
+          //       </span>
+          //     </div>
+          //     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+          //   </Button>
+          //       {/* chat-bot  */}
+          //   {/* <ChatBot/> */}
 
-//           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-//             {/* Get Started Button */}
-//             <Button
-//               size="lg"
-//               className="relative overflow-hidden group bg-primary-hover hover:bg-primary-hover text-primary-foreground px-8 py-3 
-//               text-lg font-semibold shadow-elegant flex items-center justify-center"
-//             >
-//               <div className="relative h-6 overflow-hidden">
-//                 <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
-//                   Get Started
-//                 </span>
-//                 <span
-//                   className="absolute left-0 top-full w-full text-center transition-transform duration-300 
-//                     ease-in-out
-//                 group-hover:-translate-y-full text-white"
-//                 >
-//                   Get Started
-//                 </span>
-//               </div>
-//               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-//             </Button>
+          //   {/* Download Button */}
+          //   <Button
+          //     variant="outline"
+          //     size="lg"
+          //     className="relative overflow-hidden group border-2 border-primary-foreground/30 text-primary hover:bg-primary-foreground/10 px-8 py-3 text-lg font-semibold backdrop-blur-sm flex items-center justify-center dark:text-blue-300 dark:border-blue-300 transition-colors"
+          //   >
+          //     <div className="relative h-6 overflow-hidden">
+          //         <a href="https://cbt.filloptech.com" className="no-underline"> 
+          //       <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
+                 
+          //         Download CBT Guru
+          //       </span>
+          //         </a>
+          //         <a href="https://cbt.filloptech.com" className="no-underline"> 
+          //       <span
+          //         className="absolute left-0 top-full w-full text-center transition-transform duration-300 ease-in-out
+          //          group-hover:-translate-y-full text-white"
+          //       >
+          //         Get App Now
+          //       </span>
+          //       </a>
 
-//             {/* Download Button */}
-//             <Button
-//               variant="outline"
-//               size="lg"
-//               className="relative overflow-hidden group border-2 border-primary-foreground/30 text-primary
-//      hover:bg-primary-foreground/10 px-8 py-3 text-lg font-semibold backdrop-blur-sm flex items-center justify-center"
-//             >
-//               <div className="relative h-6 overflow-hidden">
-//                 <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
-//                   Download CBT Guru
-//                 </span>
-//                 <span
-//                   className="absolute left-0 top-full w-full text-center transition-transform duration-300 ease-in-out
-//        group-hover:-translate-y-full text-white"
-//                 >
-//                   Get App Now
-//                 </span>
-//               </div>
-//             </Button>
-//           </div>
+          //     </div>
+          //   </Button>
+          // </div>
 
 //           {/* Stats */}
 //           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto">
 //             <div className="text-center">
-//               <div className="text-3xl font-bold text-blue-700 mb-2">
+//               <div className="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-2">
 //                 50,000+
 //               </div>
-//               <div className="text-primary-foreground/80">
+//               <div className="text-primary-foreground/80 dark:text-foreground/80">
 //                 Students Enrolled
 //               </div>
 //             </div>
@@ -158,13 +162,15 @@
 //               <div className="text-3xl font-bold text-education-orange mb-2">
 //                 95%
 //               </div>
-//               <div className="text-primary-foreground/80">Success Rate</div>
+//               <div className="text-primary-foreground/80 dark:text-foreground/80">
+//                 Success Rate
+//               </div>
 //             </div>
 //             <div className="text-center">
-//               <div className="text-3xl font-bold text-blue-700  mb-2">
+//               <div className="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-2">
 //                 1000+
 //               </div>
-//               <div className="text-primary-foreground/80">
+//               <div className="text-primary-foreground/80 dark:text-foreground/80">
 //                 Practice Questions
 //               </div>
 //             </div>
@@ -174,115 +180,116 @@
 
 //       {/* Scroll Indicator */}
 //       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-//         <div className="w-6 h-10 border-2 border-primary-foreground/50 rounded-full flex justify-center">
-//           <div className="w-1 h-3 bg-primary-foreground/50 rounded-full mt-2"></div>
+//         <div className="w-6 h-10 border-2 border-primary-foreground/50 dark:border-foreground/50 rounded-full flex justify-center">
+//           <div className="w-1 h-3 bg-primary-foreground/50 dark:bg-foreground/50 rounded-full mt-2"></div>
 //         </div>
 //       </div>
 //     </section>
 //   );
 // };
+
 // export default HeroSection;
+
+
+
+
+
+
 
 
 import React from "react";
 import { TypeAnimation } from "react-type-animation";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { ArrowRight, BookOpen, Users, Award } from "lucide-react";
+import { ArrowRight, BookOpen, Users, Award, CheckCircle, Sparkles } from "lucide-react";
 import hangoverImage from "../../assets/images/hero-education.jpg";
-// import ChatBot from "../../chat-bot/BotChat";
-
-
-
 
 const HeroSection = () => {
   return (
-    <section
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background dark:bg-backround transition-colors duration-500"
-    >
-      {/* Background Image + Overlay */}
-      <div className="absolute inset-0 border-2 border-primary-foreground/20 rounded-lg overflow-hidden">
-        <img
-          src={hangoverImage}
-          className="w-full h-full object-cover object-[50%_5%]"
-          alt="Education background"
-        />
+    <section className="relative min-h-screen bg- overflow-hidden transition-colors duration-500">
 
-        {/* Transparent Overlay */}
-        <div className="absolute inset-0 bg-black/40 dark:bg-black/70 transition-colors duration-500">
-          <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_70%,rgba(0,0,0,0.9)_100%)]"></div>
-        </div>
-      </div>
+      <div className="relative container mx-auto px-4 lg:px-8 py-20 lg:py-32">
+        <div className="grid lg:grid-cols-[55%_45%] gap-4 ">
+          
+          {/* Left Content */}
+          <div className="space-y-1 z-10 ">
+         
 
-      {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 py-20 mt-1 text-center">
-        <div className="max-w-4xl mx-auto">
-          {/* Badge */}
-          <Badge
-            variant="secondary"
-            className="mb-6 px-4 py-2 text-sm font-medium flex items-center bg-background/60 dark:bg-background/30 transition-colors"
-          >
-            <div className="relative w-full overflow-hidden">
-              <div className="flex items-center animate-slide text-blue-400 font-medium">
-                <Award className="w-4 h-4 mr-2 text-yellow-500" />
-                Welcome to Fillop Study Platform! Nigeria's #1 CBT Platform
-              </div>
+            {/* Main Heading */}
+            <div className="">
+              <h1 className="text-5xl md:text-4xl font-merriweather lg:text-5xl font-bold text-slate-900 dark:text-white leading-tight">
+                Empowering the Future{" "}
+                <span className="block mt-2">
+                 of{" "}
+                  <span className="bg-primary bg-clip-text text-transparent">
+                    <TypeAnimation
+                      sequence={[
+                        "Education.",
+                        3000,
+                        "Learning.",
+                        3000,
+                        "Excellence.",
+                        3000,
+                      ]}
+                      wrapper="span"
+                      speed={50}
+                      repeat={Infinity}
+                      cursor={true}
+                    />
+                  </span>
+                </span>
+              </h1>
+
+              <p className="text-lg md:text-[19px] my-6 text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
+                Our platform is designed to help students and teachers alike by
+                providing  comprehensive tools and resources to support their
+                learning journey.
+              </p>
             </div>
-          </Badge>
 
-          {/* Main Heading */}
-          <h1 className="text-5xl md:text-6xl font-merriweather font-bold text-primary-foreground text-white/90 mb-6 leading-tight transition-colors">
-            Empowering the Future of{" "}
-            <span className="text-primary-hover dark:text-primary-hover inline-block min-w-[9ch] mt-2">
-              <TypeAnimation
-                sequence={[
-                  "Education.",
-                  5000,
-                  "Learning.",
-                  5000,
-                  "Excellence.",
-                  5000,
-                ]}
-                wrapper="span"
-                speed={40}
-                repeat={Infinity}
-                cursor={true}
-              />
-            </span>
-          </h1>
-
-          {/* Subheading */}
-          <p className="text-xl md:text-base text-primary-foreground/90 dark:text-foreground/90 mb-8 tracking-wide leading-relaxed max-w-3xl mx-auto transition-colors">
-            Our platform is designed to help students and teachers alike by
-            providing a comprehensive set of tools and resources to support
-            their learning journey. Join us to experience a seamless and
-            innovative approach to education.
-          </p>
-
-          {/* Feature Pills */}
-          <div className="flex flex-wrap justify-center gap-4 mb-10">
-            <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
-              <BookOpen className="w-5 h-5 text-accent text-white/70" />
-              <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
-                WAEC/NECO CBT
-              </span>
+            {/* Feature List */}
+            <div className="space-y-3">
+              {[
+                { icon: CheckCircle, text: "WAEC/NECO CBT Practice", color: "text-green-500" },
+                { icon: CheckCircle, text: "JAMB/UTME Preparation", color: "text-red-500" },
+                { icon: CheckCircle, text: "AI-Powered Learning Tools", color: "text-purple-500" },
+                { icon: CheckCircle, text: "LMS Platform", color: "text-blue-500" },
+              ].map((feature, index) => (
+                <div key={index} className="flex items-center gap-3 group">
+                  <feature.icon className={`w-5 h-5 ${feature.color} group-hover:scale-110 transition-transform`} />
+                  <span className="text-slate-700 dark:text-slate-200 font-medium">
+                    {feature.text}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
-              <Users className="w-5 h-5 text-education-orange" />
-              <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
-                JAMB/UTME Prep
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 bg-background/20 dark:bg-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 transition-colors">
-              <Award className="w-5 h-5 text-blue-700 dark:text-blue-400" />
-              <span className="text-primary-foreground font-medium text-sm dark:text-white/90">
-                AI-Powered Learning
-              </span>
-            </div>
-          </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+            {/* CTA Buttons */}
+            {/* <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Button
+                size="lg"
+                className="group relative overflow-hidden bg-primary hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+              >
+                <span className="relative z-10 flex items-center">
+                  Get Started Free
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-primary to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="lg"
+                asChild
+                className="border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 px-8 py-6 text-lg font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-blue-500 dark:hover:border-blue-400"
+              >
+                <a href="https://cbt.filloptech.com" className="flex items-center">
+                  Download CBT Guru
+                </a>
+              </Button>
+            </div> */}
+                      {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-4 items-center pb-12">
             {/* Get Started Button */}
             <Button
               size="lg"
@@ -309,9 +316,9 @@ const HeroSection = () => {
             <Button
               variant="outline"
               size="lg"
-              className="relative overflow-hidden group border-2 border-primary-foreground/30 text-primary hover:bg-primary-foreground/10 px-8 py-3 text-lg font-semibold backdrop-blur-sm flex items-center justify-center dark:text-blue-300 dark:border-blue-300 transition-colors"
+              className="relative overflow-hidden group border-2 border-primary text-primary hover:bg-primary px-8 py-3 text-lg font-semibold backdrop-blur-sm flex items-center justify-center dark:text-blue-300 dark:border-blue-300 transition-colors"
             >
-              <div className="relative h-6 overflow-hidden">
+              <div className="relative h-6 overflow-hidden ">
                   <a href="https://cbt.filloptech.com" className="no-underline"> 
                 <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
                  
@@ -331,42 +338,63 @@ const HeroSection = () => {
             </Button>
           </div>
 
-          {/* Stats */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-2">
-                50,000+
-              </div>
-              <div className="text-primary-foreground/80 dark:text-foreground/80">
-                Students Enrolled
-              </div>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-6 pt-3 border-t border-slate-200 dark:border-slate-700">
+              {[
+                { value: "50K+", label: "Students",color: "text-blue-500" },
+                { value: "95%", label: "Success Rate",color: "text-green-500" },
+                { value: "1000+", label: "Questions",color: "text-yellow-500" },
+              ].map((stat, index) => (
+                <div key={index} className="text-center lg:text-left">
+                  <div className={ `text-3xl lg:text-3xl font-bold ${stat.color} bg-clip-text text- -mb-1`}>
+                    {stat.value}
+                  </div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                    {stat.label}
+
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-education-orange mb-2">
-                95%
-              </div>
-              <div className="text-primary-foreground/80 dark:text-foreground/80">
-                Success Rate
-              </div>
+          </div>
+
+          {/* Right Image */}
+          <div className="relative lg:h-[350px] z-10 mt-9">
+            {/* Decorative Elements */}
+            <div className="absolute -top-6 -left-6 w-24 h-24 bg-primary rounded-2xl rotate-12 opacity-20 blur-xl"></div>
+            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary rounded-2xl -rotate-12 opacity-20 blur-xl"></div>
+
+            {/* Main Image Container */}
+            <div className="relative h-full rounded-3xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-500">
+              {/* Image */}
+              <img
+                src={hangoverImage}
+                className="w-full h-[350px] object-cover"
+                alt="Education background"
+              />
+
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-2">
-                1000+
-              </div>
-              <div className="text-primary-foreground/80 dark:text-foreground/80">
-                Practice Questions
-              </div>
-            </div>
+               {/* Floating Badge */}
+            <Badge
+              variant="secondary"
+              className=" absolute top-0 right-0 mt-2 mr-4 inline-flex items-center gap-2 px-2 py-1 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              <Sparkles className="w-4 h-4 text-yellow-500 animate-pulse" />
+              <span className="text-xs font-semibold bg-primary-hover bg-clip-text text-transparent">
+                Nigeria's #1 CBT Platform
+              </span>
+            </Badge>
           </div>
         </div>
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-primary-foreground/50 dark:border-foreground/50 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-primary-foreground/50 dark:bg-foreground/50 rounded-full mt-2"></div>
+      <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 animate-bounce z-10">
+        <div className="w-6 h-10 border-2 border-slate-400 dark:border-slate-500 rounded-full flex justify-center">
+          <div className="w-1 h-3 bg-slate-400 dark:bg-slate-500 rounded-full mt-2"></div>
         </div>
       </div>
+
     </section>
   );
 };

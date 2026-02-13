@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Header from '../../components/layouts/Header'
 import HeroSection from '../../components/layouts/HeroSection'
+import SubjectsDisplay from '../../components/layouts/SubjectsDisplay'
 import FeaturesSection from '../../components/layouts/FeaturesSection'
 import AboutSection from '../../components/layouts/AboutSection'
 import Contact from '../../components/layouts/Contact'
@@ -16,6 +17,7 @@ const LandingPage = ()=>  {
        <div>
         <Header/>
         <HeroSection/>
+        <SubjectsDisplay/>
         <BotChat/>
         <main>
         <FeaturesSection/>
