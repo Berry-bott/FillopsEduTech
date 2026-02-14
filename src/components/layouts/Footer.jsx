@@ -1,7 +1,10 @@
-import { Twitter, Linkedin, Mail, Facebook, Youtube } from "lucide-react";
+import { Twitter, Linkedin, Mail, Facebook, Youtube, MessageCircle, Instagram  } from "lucide-react";
 import logo from "../../assets/images/fillopsLogo.png";
 
 const Footer = () => {
+
+  const whatsappNumber = "2172160029";
+
   return (
     <footer className="relative overflow-hidden py-6 px-6 transition-colors duration-300 bg-white dark:bg-backgroundNext text-gray-700 dark:text-gray-300">
       {/* Decorative gradient overlay */}
@@ -35,9 +38,16 @@ const Footer = () => {
         {/* Social Links */}
         <div className="flex gap-2">
           {[
+             { 
+              icon: MessageCircle, 
+              link: `https://wa.me/${whatsappNumber}`, 
+              color: "text-green-500 dark:text-green-400", 
+              hover: "hover:bg-green-50 dark:hover:bg-green-900/30" 
+            },
             { icon: Facebook, link: "https://facebook.com/filloptech", color: "text-gray-700 dark:text-gray-200 ", hover: "hover:bg-gray-200 dark:hover:bg-gray-700" },
             { icon: Twitter, link: "https://X.com/filloptech", color: "text-blue-500", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
             { icon: Youtube, link: "https://Youtube.com/@filloptech", color: "text-red-700 dark:text-red-400", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
+            { icon: Instagram, link: "https://nstagram.com/filloptech", color: "text-gray-800 dark:text-red-400", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
             { icon: Mail, link: "mailto:help@filloptech.com", color: "text-red-500 dark:text-red-400", hover: "hover:bg-red-50 dark:hover:bg-red-900/30" },
           ].map(({ icon: Icon, link, color, hover }, i) => (
             <a
