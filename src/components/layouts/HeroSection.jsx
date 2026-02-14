@@ -206,9 +206,9 @@ import hangoverImage from "../../assets/images/hero-education.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen bg- overflow-hidden transition-colors duration-500">
+    <section className="relative min-h-screen overflow-hidden transition-colors duration-500">
 
-      <div className="relative container mx-auto px-4 lg:px-8 py-20 lg:py-32">
+      <div className="relative container mx-auto px-4 lg:px-8 py-20 lg:pt-32">
         <div className="grid lg:grid-cols-[55%_45%] gap-4 ">
           
           {/* Left Content */}
@@ -253,7 +253,7 @@ const HeroSection = () => {
                 { icon: CheckCircle, text: "WAEC/NECO CBT Practice", color: "text-green-500" },
                 { icon: CheckCircle, text: "JAMB/UTME Preparation", color: "text-red-500" },
                 { icon: CheckCircle, text: "AI-Powered Learning Tools", color: "text-purple-500" },
-                { icon: CheckCircle, text: "LMS Platform", color: "text-blue-500" },
+                { icon: CheckCircle, text: "Daily Quiz", color: "text-blue-500" },
               ].map((feature, index) => (
                 <div key={index} className="flex items-center gap-3 group">
                   <feature.icon className={`w-5 h-5 ${feature.color} group-hover:scale-110 transition-transform`} />
@@ -265,31 +265,7 @@ const HeroSection = () => {
             </div>
 
             {/* CTA Buttons */}
-            {/* <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button
-                size="lg"
-                className="group relative overflow-hidden bg-primary hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
-              >
-                <span className="relative z-10 flex items-center">
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
-                </span>
-                <div className="absolute inset-0 bg-primary to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </Button>
-
-              <Button
-                variant="outline"
-                size="lg"
-                asChild
-                className="border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 px-8 py-6 text-lg font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-blue-500 dark:hover:border-blue-400"
-              >
-                <a href="https://cbt.filloptech.com" className="flex items-center">
-                  Download CBT Guru
-                </a>
-              </Button>
-            </div> */}
-                      {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4 items-center pb-12">
+          <div className="flex flex-col sm:flex-row gap-4 pt-4 items-center pb-2">
             {/* Get Started Button */}
             <Button
               size="lg"
@@ -377,7 +353,8 @@ const HeroSection = () => {
                {/* Floating Badge */}
             <Badge
               variant="secondary"
-              className=" absolute top-0 right-0 mt-2 mr-4 inline-flex items-center gap-2 px-2 py-1 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              className=" absolute md:min-w-[500px] top-0 right-0 mt-2 mr-4 inline-flex items-center gap-2 px-2 py-1 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border
+               border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               <Sparkles className="w-4 h-4 text-yellow-500 animate-pulse" />
               <span className="text-xs font-semibold bg-primary-hover bg-clip-text text-transparent">

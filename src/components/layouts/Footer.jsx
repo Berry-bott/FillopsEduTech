@@ -1,4 +1,4 @@
-import { Github, Twitter, Linkedin, Mail } from "lucide-react";
+import { Twitter, Linkedin, Mail, Facebook, Youtube } from "lucide-react";
 import logo from "../../assets/images/fillopsLogo.png";
 
 const Footer = () => {
@@ -14,9 +14,9 @@ const Footer = () => {
             alt="Fillops Logo"
             className="w-12 h-12 object-contain transition-all"
           />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Innovating learning through technology.
-          </p>
+           <p className="text-[6px]  md:text-[9px] xmd:text-[px]  text-education-orange dark:text-education-orange font-merriweather ml-[0px] sm:ml-[0px] ">
+                Building skills, powering solutions...  
+              </p>
         </div>
 
         {/* Navigation Links */}
@@ -33,12 +33,12 @@ const Footer = () => {
         </ul>
 
         {/* Social Links */}
-        <div className="flex gap-5">
+        <div className="flex gap-2">
           {[
-            { icon: Github, link: "https://github.com", color: "text-gray-700 dark:text-gray-200", hover: "hover:bg-gray-200 dark:hover:bg-gray-700" },
-            { icon: Twitter, link: "https://twitter.com", color: "text-blue-500", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
-            { icon: Linkedin, link: "https://linkedin.com", color: "text-blue-700 dark:text-blue-400", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
-            { icon: Mail, link: "mailto:youremail@example.com", color: "text-red-500 dark:text-red-400", hover: "hover:bg-red-50 dark:hover:bg-red-900/30" },
+            { icon: Facebook, link: "https://facebook.com/filloptech", color: "text-gray-700 dark:text-gray-200 ", hover: "hover:bg-gray-200 dark:hover:bg-gray-700" },
+            { icon: Twitter, link: "https://X.com/filloptech", color: "text-blue-500", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
+            { icon: Youtube, link: "https://Youtube.com/@filloptech", color: "text-red-700 dark:text-red-400", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
+            { icon: Mail, link: "mailto:help@filloptech.com", color: "text-red-500 dark:text-red-400", hover: "hover:bg-red-50 dark:hover:bg-red-900/30" },
           ].map(({ icon: Icon, link, color, hover }, i) => (
             <a
               key={i}

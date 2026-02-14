@@ -953,6 +953,8 @@ export default function ChatMessages({
   const [actionType, setActionType] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+
+  
   // Check if user is near bottom (within 150px)
   const isNearBottom = useCallback(() => {
     if (!containerRef.current) return true;

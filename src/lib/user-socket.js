@@ -107,8 +107,23 @@ export const connectUserSocket = (token = null) => {
     });
 
     // Online status
+// In userSocket.js, update the online users listener:
+
     socket.on("onlineUsers", (users) => {
-      useUserChatStore.getState().handleOnlineUsers(users);
+    console.log("👥 [UserSocket] onlineUsers", users);
+    
+    const currentBooking = useUserChatStore.getState().selectedBooking;
+    
+    if (currentBooking?.tutorId) {
+        // Check if the current tutor is online
+        const isOnline = users?.some((u) => 
+        u.id === currentBooking.tutorId && u.userType === "tutor"
+        );
+        
+        console.log(`🟢 Tutor ${currentBooking.tutorId} is ${isOnline ? 'online' : 'offline'}`);
+        
+        useUserChatStore.setState({ isParticipantOnline: !!isOnline });
+    }
     });
 
     // Booking status updates

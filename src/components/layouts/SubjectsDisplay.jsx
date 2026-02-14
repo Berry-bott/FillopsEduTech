@@ -41,7 +41,7 @@ const SubjectsGrid = () => {
   ];
 
   return (
-    <section className="py-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+    <section className="py-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 max-h-[500px]">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-center text-5xl font-bold mb-16 bg-primary bg-clip-text text-transparent">
           Explore Subjects
@@ -110,7 +110,7 @@ const ScrollRow = ({ subjects, hoveredId, setHoveredId }) => {
   return (
     <div
       ref={ref}
-      className="overflow-x-auto pb-12 border select-none w-[94%] m-auto"
+      className="overflow-x-auto pb-12 border select-none  m-auto"
       style={{ scrollbarWidth:"none" }}
     >
       <div className="flex gap-6 min-w-max">
@@ -165,7 +165,7 @@ const SubjectCard = ({ subject, hoveredId, setHoveredId }) => {
         onMouseLeave={hide}
         className="w-64 flex-shrink-0 cursor-pointer"
       >
-        <div className="bg-white rounded-xl shadow-md border hover:shadow-xl hover:scale-[1.03] transition-all duration-300 p-4 flex gap-4">
+        <div className="bg-white rounded-xl shadow-md  hover:shadow-xl hover:scale-[1.03] transition-all duration-300 p-4 flex gap-4">
           <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-md`}>
             <Icon className="text-white w-7 h-7" />
           </div>

@@ -29,11 +29,11 @@ const Header = () => {
               className="w-12 h-12 object-contain"
             />
             <div className="leading-none mx-4 md:ml-2">
-              <p className="text-primary dark:text-primary text-xl md:text-[1rem] xmd:text-2xl lg:text-3xl font-bold font-merriweather">
-                FILLOP TECH
+              <p className="text-primary dark:text-primary text-xl md:text-[1rem] xmd:text-2xl lg:text-3xl font-extrabold">
+                F<span>illop</span>Tech
               </p>
-              <p className="text-[8px]  md:text-[10px] xmd:text-[11.5px] lg:text-sm text-education-orange dark:text-education-orange font-merriweather ml-[0px] sm:ml-[0px] md:ml-[10px]">
-                ....simplifying your tech world
+              <p className="text-[6px]  md:text-[9px] xmd:text-[px]  text-education-orange dark:text-education-orange font-merriweather ml-[0px] sm:ml-[0px] ">
+                Building skills, powering solutions...  
               </p>
             </div>
           </div>
@@ -47,7 +47,7 @@ const Header = () => {
                 type="search"
                 placeholder="Search..."
                 className="w-full border border-gray-200 dark:border-gray-700 rounded-2xl py-2 pl-10 pr-4 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary 
-                focus:outline-none transition-all duration-300 ease-in-out focus:w-[110%]"
+                focus:outline-none transition-all duration-300 ease-in-out focus:w-[100%]"
               />
               <svg
                 className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"
@@ -155,11 +155,9 @@ const Header = () => {
               <button className="relative overflow-hidden text-sm text-Graphite dark:text-gray-100 font-medium h-6">
                 <span className="relative block">
                   <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
-                    Teach in our platform
+                    Become a Tutor
                   </span>
-                  <span className="absolute left-0 top-full transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
-                    Teach in our platform
-                  </span>
+
                 </span>
               </button>
 
@@ -167,9 +165,6 @@ const Header = () => {
               <div className="absolute top-[10px] left-1/2 -translate-x-1/2 mt-3 w-40 bg-white dark:bg-gray-800 border border-gray-200
                dark:border-gray-700 rounded shadow-xl py-8 px-4 z-50 origin-top transition-all duration-300 opacity-0 scale-y-0 -translate-y-4 
                pointer-events-none group-hover:opacity-100 group-hover:scale-y-100 group-hover:translate-y-0 group-hover:pointer-events-auto">
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 text-center">
-                  Become a Tutor
-                </p>
 
                 <div className="space-y-2">
                   <button

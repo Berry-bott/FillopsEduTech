@@ -1417,11 +1417,71 @@ export const useUserChatStore = create((set, get) => ({
   // ────────────────────────────────────────────────────────────────
   // Socket event handlers (called by global listeners in userSocket.js)
   // ────────────────────────────────────────────────────────────────
-  handleNewMessage: (msg) => {
+  // handleNewMessage: (msg) => {
+  //   console.log("📨 [USER] handleNewMessage called:", msg);
+    
+  //   set((state) => {
+  //     // Prevent duplicate messages by ID
+  //     if (state.messages.some((m) => m.id === msg.id)) {
+  //       console.log("⚠️ Duplicate message (by ID) skipped:", msg.id);
+  //       return state;
+  //     }
+
+  //     const isCurrent = msg.bookingId === state.selectedBooking?.id;
+  //     let updatedMessages = [...state.messages];
+
+  //     // 1️⃣ Try to find optimistic message by tempId
+  //     let optimisticIndex = -1;
+  //     if (msg.tempId) {
+  //       optimisticIndex = updatedMessages.findIndex((m) => m.tempId === msg.tempId);
+  //       console.log("🔎 Searching for tempId:", msg.tempId, "→ Found at index:", optimisticIndex);
+  //     }
+
+  //     // 2️⃣ Fallback: match by content + sender + recent time
+  //     if (optimisticIndex === -1 && msg.sender?.id && msg.content) {
+  //       const msgTime = new Date(msg.createdAt).getTime();
+  //       optimisticIndex = updatedMessages.findIndex((m) => 
+  //         m.isOptimistic === true &&
+  //         m.content === msg.content &&
+  //         m.sender?.id === msg.sender?.id &&
+  //         Math.abs(new Date(m.createdAt).getTime() - msgTime) < 10000
+  //       );
+  //       console.log("🔎 Fallback search by content+sender:", optimisticIndex);
+  //     }
+
+  //     if (optimisticIndex !== -1) {
+  //       console.log("✅ REPLACING optimistic message at index:", optimisticIndex);
+  //       updatedMessages[optimisticIndex] = {
+  //         ...msg,
+  //         tempId: undefined,
+  //         isOptimistic: false,
+  //         status: "sent",
+  //       };
+  //     } else {
+  //       console.log("➕ Adding new message (no optimistic found)");
+  //       updatedMessages.push({ ...msg, status: "sent" });
+  //     }
+
+  //     updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+  //     // Update unread count if not current chat
+  //     if (!isCurrent && msg.senderRole === "tutor") {
+  //       const updatedBookings = state.bookings.map((b) =>
+  //         b.id === msg.bookingId
+  //           ? { ...b, unread_count: (b.unread_count || 0) + 1, last_message: msg.content }
+  //           : b
+  //       );
+  //       return { messages: updatedMessages, bookings: updatedBookings };
+  //     }
+
+  //     return { messages: updatedMessages };
+  //   });
+  // },
+   handleNewMessage: (msg) => {
     console.log("📨 [USER] handleNewMessage called:", msg);
     
     set((state) => {
-      // Prevent duplicate messages by ID
+      // Prevent duplicate by ID
       if (state.messages.some((m) => m.id === msg.id)) {
         console.log("⚠️ Duplicate message (by ID) skipped:", msg.id);
         return state;
@@ -1437,7 +1497,7 @@ export const useUserChatStore = create((set, get) => ({
         console.log("🔎 Searching for tempId:", msg.tempId, "→ Found at index:", optimisticIndex);
       }
 
-      // 2️⃣ Fallback: match by content + sender + recent time
+      // 2️⃣ Fallback: match by content + sender + recent time (within 10 seconds)
       if (optimisticIndex === -1 && msg.sender?.id && msg.content) {
         const msgTime = new Date(msg.createdAt).getTime();
         optimisticIndex = updatedMessages.findIndex((m) => 
@@ -1464,7 +1524,7 @@ export const useUserChatStore = create((set, get) => ({
 
       updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-      // Update unread count if not current chat
+      // Update sidebar unread count if not current chat
       if (!isCurrent && msg.senderRole === "tutor") {
         const updatedBookings = state.bookings.map((b) =>
           b.id === msg.bookingId
@@ -1477,6 +1537,8 @@ export const useUserChatStore = create((set, get) => ({
       return { messages: updatedMessages };
     });
   },
+
+  
 
   handleMessagesReadByTutor: (timestamp) => {
     console.log("📖 Tutor read messages up to:", timestamp);
@@ -1736,16 +1798,31 @@ export const useUserChatStore = create((set, get) => ({
   }
 },
 
-  sendTyping: (isTyping = true) => {
-    const { selectedBooking, socketConnected } = get();
-    if (!selectedBooking?.id || !socketConnected) return;
 
-    const socket = getUserSocket();
-    if (socket?.connected) {
-      const event = isTyping ? "typing:start" : "typing:stop";
-      socket.emit(event, selectedBooking.id);
-    }
-  },
+sendTyping: (isTyping = true) => {
+  const { selectedBooking, socketConnected } = get();
+  
+  if (!selectedBooking?.id || !socketConnected) {
+    console.warn("[sendTyping] Cannot send - no booking or socket disconnected");
+    return;
+  }
+
+  const socket = getUserSocket();
+  if (!socket?.connected) {
+    console.warn("[sendTyping] Socket not connected");
+    return;
+  }
+
+  const event = isTyping ? "typing:start" : "typing:stop";
+  
+  console.log(`📝 [USER] Emitting ${event} for booking:`, selectedBooking.id);
+  
+  socket.emit(event, {
+    bookingId: selectedBooking.id,
+    userType: "user",
+    userName: useAuthStore.getState().user?.name || "User"
+  });
+},
 
   markMessagesAsRead: (bookingId) => {
     const socket = getUserSocket();
