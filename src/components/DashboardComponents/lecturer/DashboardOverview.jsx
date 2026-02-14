@@ -27,7 +27,7 @@ export default function DashboardOverview({ context, setActiveTab }) {
   const [loadingEnrollment, setLoadingEnrollment] = useState(false);
 
   useEffect(() => {
-    console.log("👨‍🏫 Tutor profile (state change):", tutor);
+    // console.log("👨‍🏫 Tutor profile (state change):", tutor);
   }, [tutor]);
 
   const [showTooltip, setShowTooltip] = useState(false)
@@ -38,11 +38,11 @@ export default function DashboardOverview({ context, setActiveTab }) {
   useEffect(() => {
     const loadDashboard = async () => {
       if (!dashboardData) {
-        console.log("📊 Fetching dashboard data...");
+        // console.log("📊 Fetching dashboard data...");
         const result = await fetchDashboard();
         
         if (!result || !result.success) {
-          console.log("⚠️ Dashboard fetch failed, loading individual data...");
+          // console.log("⚠️ Dashboard fetch failed, loading individual data...");
           // Fallback: fetch individual data if dashboard fails
           await Promise.all([
             getSubjects(),
@@ -58,7 +58,7 @@ export default function DashboardOverview({ context, setActiveTab }) {
   // ---------------- FETCH DASHBOARD ONCE ----------------
 useEffect(() => {
   const loadDashboard = async () => {
-    console.log("📊 Starting dashboard load...");
+    // console.log("📊 Starting dashboard load...");
     
     // Fetch all data in parallel
     const [dashResult, subjectsResult, topicsResult, questionsResult] = await Promise.all([
@@ -68,8 +68,8 @@ useEffect(() => {
       getQuestions()
     ]);
     
-    console.log("✅ Dashboard load complete");
-    console.log("📊 Subjects loaded:", subjectsResult);
+    // console.log("✅ Dashboard load complete");
+    // console.log("📊 Subjects loaded:", subjectsResult);
   };
   
   loadDashboard();
@@ -78,43 +78,43 @@ useEffect(() => {
 // ---------------- FETCH ENROLLED STUDENTS FOR EACH SUBJECT ----------------
 useEffect(() => {
   const loadEnrolledStudents = async () => {
-    console.log("🔍 subjects:", subjects);
-    console.log("🔍 subjects.length:", subjects.length);
+    // console.log("🔍 subjects:", subjects);
+    // console.log("🔍 subjects.length:", subjects.length);
     
     if (!subjects || subjects.length === 0) {
-      console.log("⚠️ No subjects available, skipping enrollment fetch");
+      // console.log("⚠️ No subjects available, skipping enrollment fetch");
       return;
     }
 
     setLoadingEnrollment(true);
-    console.log("👥 Fetching enrolled students for", subjects.length, "subjects...");
+    // console.log("👥 Fetching enrolled students for", subjects.length, "subjects...");
     
     const subjectsWithStudents = await Promise.all(
       subjects.map(async (subject) => {
-        console.log(`🔍 Fetching students for: ${subject.name} (${subject._id})`);
+        // console.log(`🔍 Fetching students for: ${subject.name} (${subject._id})`);
         
         const result = await getSubjectEnrolledStudents(subject._id);
         
-        console.log(`📊 Enrollment result for ${subject.name}:`, result);
+        // console.log(`📊 Enrollment result for ${subject.name}:`, result);
         
         if (result.success) {
           const enrolledStudents = result.data || [];
           
-          console.log(`
-╔════════════════════════════════════════════╗
-║  Subject: ${subject.name.padEnd(33)} ║
-╠════════════════════════════════════════════╣
-║  Enrolled Students: ${enrolledStudents.length.toString().padEnd(24)} ║
-╚════════════════════════════════════════════╝
-          `);
+//           console.log(`
+// ╔════════════════════════════════════════════╗
+// ║  Subject: ${subject.name.padEnd(33)} ║
+// ╠════════════════════════════════════════════╣
+// ║  Enrolled Students: ${enrolledStudents.length.toString().padEnd(24)} ║
+// ╚════════════════════════════════════════════╝
+//           `);
           
           if (enrolledStudents.length > 0) {
-            console.log(`📚 Students in "${subject.name}":`);
+            // console.log(`📚 Students in "${subject.name}":`);
             enrolledStudents.forEach((student, idx) => {
-              console.log(`   ${idx + 1}. ${student.name || student.email || 'Unknown'} (ID: ${student._id})`);
+              // console.log(`   ${idx + 1}. ${student.name || student.email || 'Unknown'} (ID: ${student._id})`);
             });
           } else {
-            console.log(`   No students enrolled in ${subject.name}`);
+            // console.log(`   No students enrolled in ${subject.name}`);
           }
           
           return {
@@ -124,7 +124,7 @@ useEffect(() => {
           };
         }
         
-        console.warn(`⚠️ Failed to fetch students for ${subject.name}`);
+        // console.warn(`⚠️ Failed to fetch students for ${subject.name}`);
         
         return {
           ...subject,
@@ -134,7 +134,7 @@ useEffect(() => {
       })
     );
 
-    console.log("✅ Final subjectsWithEnrollment:", subjectsWithStudents);
+    // console.log("✅ Final subjectsWithEnrollment:", subjectsWithStudents);
     setSubjectsWithEnrollment(subjectsWithStudents);
     setLoadingEnrollment(false);
   };
@@ -228,11 +228,11 @@ useEffect(() => {
   }
 
   // Add this right before the return statement
-console.log("🎨 Render state:", {
-  loadingEnrollment,
-  subjectsWithEnrollment,
-  subjectsWithEnrollmentLength: subjectsWithEnrollment.length
-});
+// console.log("🎨 Render state:", {
+//   loadingEnrollment,
+//   subjectsWithEnrollment,
+//   subjectsWithEnrollmentLength: subjectsWithEnrollment.length
+// });
 
 
 

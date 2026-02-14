@@ -24,7 +24,7 @@ export default function ChatHeader({
   onDeleteSession 
 }) {
   const selectedBooking = useUserChatStore(state => state.selectedBooking);
-
+  const socketConnected = useUserChatStore(state => state.socketConnected);
   // Debug log in useEffect to prevent repeated logs on re-renders
   useEffect(() => {
     if (selectedBooking) {
@@ -42,6 +42,8 @@ export default function ChatHeader({
 
   if (!selectedBooking) return null;
 
+
+  
   const isBooking = !!selectedBooking.isBooking;
   const status = (selectedBooking.status || "").toLowerCase().trim();
 
@@ -74,6 +76,7 @@ export default function ChatHeader({
                 )}
               />
             )}
+            
           </div>
 
           <div>

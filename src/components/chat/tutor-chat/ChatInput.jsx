@@ -154,7 +154,7 @@ import debounce from "lodash.debounce";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Ban } from "lucide-react";
-import { getSocket } from "@/lib/socket";           // your socket helper
+import { getSocket } from "@/lib/tutor-socket";           // your socket helper
 import { useTutorChatStore } from "@/store/tutorChatStore";
 
 export default function ChatInput({
@@ -178,6 +178,14 @@ export default function ChatInput({
       }, 400),
     [socket, selectedBookingId, message]
   );
+
+    const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    console.log("ChatInput → calling sendMessage with:", input.trim());
+    onSend(input.trim());
+    setInput("");
+  };
 
   // Trigger typing when message changes
   useEffect(() => {

@@ -1,6 +1,3 @@
-
-
-
 import { useEffect } from "react";
 import { useUserChatStore } from "@/store/userChatStore";
 import { Badge } from "@/components/ui/badge";
@@ -165,13 +162,14 @@ export default function EnhancedConversationList({
         ) : (
           <div className="p-3 space-y-2">
             {displayItems.map(item => {
-              console.log("🔍 Rendering item:", {
-                id: item.id,
-                name: item.name,
-                status: item.status,
-                isTutor: item.isTutor,
-                activeTab: activeTab
-              });
+            //   console.log("🔍 Rendering item:", {
+            //     id: item.id,
+            //     name: item.name,
+            //     status: item.status,
+            //     isTutor: item.isTutor,
+            //     activeTab: activeTab
+            //   }
+            // );
 
               return (
                 <div
