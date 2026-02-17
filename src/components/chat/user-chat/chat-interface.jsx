@@ -59,6 +59,8 @@ export default function ChatInterface() {
   const [bookingToReschedule, setBookingToReschedule] = useState(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const hasFetchedBookings = useUserChatStore(state => state.hasFetchedBookings);
+  const hasFetchedTutors = useUserChatStore(state => state.hasFetchedTutors);
   
 
   const [activeTab, setActiveTab] = useState("sessions");
@@ -264,20 +266,34 @@ useEffect(() => {
 }, [selectedBooking?.id]);
 
   // ─── Initial data load ──────────────────────────────────────
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        await Promise.all([fetchBookings(), fetchTutors()]);
-      } catch (err) {
-        toast({
-          variant: "destructive",
-          title: "Failed to load",
-          description: "Could not load conversations or tutors.",
-        });
+useEffect(() => {
+  const loadData = async () => {
+    try {
+      const promises = [];
+      
+      // Only fetch bookings if not already fetched
+      if (!hasFetchedBookings) {
+        promises.push(fetchBookings());
       }
-    };
-    loadData();
-  }, [fetchBookings, fetchTutors, toast]);
+      
+      // Only fetch tutors if not already fetched
+      if (!hasFetchedTutors) {
+        promises.push(fetchTutors());
+      }
+      
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Failed to load",
+        description: "Could not load conversations or tutors.",
+      });
+    }
+  };
+  loadData();
+}, [fetchBookings, fetchTutors, hasFetchedBookings, hasFetchedTutors, toast]);
 
   // ─── Load messages when selection changes ───────────────────
   useEffect(() => {

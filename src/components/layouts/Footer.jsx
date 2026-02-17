@@ -37,7 +37,7 @@ const Footer = () => {
 
         {/* Social Links */}
         <div className="flex gap-2">
-          {[
+            {[
              { 
               icon: MessageCircle, 
               link: `https://wa.me/${whatsappNumber}`, 

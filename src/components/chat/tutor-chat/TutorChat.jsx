@@ -1,8 +1,7 @@
 
-
-
 // import { useEffect, useState, useCallback } from "react";
 // import { useTutorChatStore } from "@/store/tutorChatStore";
+// import { getSocket } from "@/lib/tutor-socket";
 // import { Card } from "@/components/ui/card";
 // import { Badge } from "@/components/ui/badge";
 // import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@
 //   SheetTitle,
 //   SheetTrigger,
 // } from "@/components/ui/sheet";
+
 // import {
 //   MessageSquare,
 //   Calendar,
@@ -50,406 +50,200 @@
 //     rejectReschedule,
 //     setActiveFilter,
 //     getCurrentBookings,
-//     socketConnected, // ← added: we use this from the store
+//     socketConnected,
 //   } = useTutorChatStore();
 
 //   const [activeFilter, setLocalActiveFilter] = useState("all");
 //   const [selectedBookingId, setSelectedBookingId] = useState(null);
-//   const [isAccepting, setIsAccepting] = useState(false);
 //   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
-
 //   const [showToast, setShowToast] = useState(false);
-
-//   // Track loaded & fetching filters
-//   const [loadedFilters, setLoadedFilters] = useState(new Set());
-//   const [fetchingFilters, setFetchingFilters] = useState(new Set());
-
-//   // Local state for connection status message
-//   const [showConnectionMessage, setShowConnectionMessage] = useState(false);
+//   const [showReconnectOverlay, setShowReconnectOverlay] = useState(false);
 //   const [reconnectAttempts, setReconnectAttempts] = useState(0);
-// const [showReconnectOverlay, setShowReconnectOverlay] = useState(false);
 
-//   // Show message when socket becomes connected
-//   // Show toast reliably when entering chat
+//   // ─── Socket: Auto-join room when booking selected ───────────────────────────────
 //   useEffect(() => {
-//     // 1. If socket is already connected → show toast right away
+//     if (!selectedBookingId) return;
+
+//     const socket = getSocket();
+//     if (!socket) return;
+
+//     console.log("[TutorChat] → Joining room:", selectedBookingId);
+
+//     socket.emit("join:booking", selectedBookingId, (response) => {
+//       if (response?.success) {
+//         console.log("%c[TutorChat] ✓ Joined room OK", "background:#4CAF50;color:white;padding:6px;");
+//         useTutorChatStore.getState().markMessagesAsRead(selectedBookingId);
+//       } else {
+//         console.error("[TutorChat] ✗ Join failed:", response);
+//       }
+//     });
+
+//     return () => {
+//       console.log("[TutorChat] ← Leaving room:", selectedBookingId);
+//       socket.emit("leaveBooking", selectedBookingId);
+//     };
+//   }, [selectedBookingId]);
+
+//   // ─── Connection indicators ──────────────────────────────────────────────────────
+//   useEffect(() => {
 //     if (socketConnected) {
 //       setShowToast(true);
 //       const timer = setTimeout(() => setShowToast(false), 4200);
 //       return () => clearTimeout(timer);
 //     }
+//   }, [socketConnected]);
 
-//     // 2. Listen for future connections / reconnections
-//     const unsubscribe = useTutorChatStore.subscribe(
-//       (state) => state.socketConnected,
-//       (connected, wasConnected) => {
-//         if (connected && !wasConnected) {
-//           setShowToast(true);
-//           const timer = setTimeout(() => setShowToast(false), 4200);
-//           return () => clearTimeout(timer);
-//         }
-//       }
-//     );
-
-//     return unsubscribe;
-//   }, []); // empty deps → only on mount + cleanup
-
-//   // Show overlay only after 3 seconds of being disconnected
-// useEffect(() => {
-//   let timeout;
-
-//   if (!socketConnected) {
-//     timeout = setTimeout(() => {
-//       setShowReconnectOverlay(true);
-//     }, 3000); // don't flash immediately
-//   } else {
-//     setShowReconnectOverlay(false);
-//     setReconnectAttempts(0); // reset counter when connected
-//   }
-
-//   return () => clearTimeout(timeout);
-// }, [socketConnected]);
-
-// // Listen for reconnect attempts (optional visual feedback)
-// useEffect(() => {
-//   const unsubscribe = useTutorChatStore.subscribe(
-//     s => s.socketConnected,
-//     (connected) => {
-//       if (!connected) {
-//         setReconnectAttempts(prev => prev + 1);
-//       }
-//     }
-//   );
-//   return unsubscribe;
-// }, []);
-  
-//   // useEffect(() => {
-//   //   if (socketConnected) {
-//   //     setShowConnectionMessage(true);
-//   //     const timer = setTimeout(() => {
-//   //       setShowConnectionMessage(false);
-//   //     }, 4000);
-//   //     return () => clearTimeout(timer);
-//   //   }
-//   // }, [socketConnected]);
-
-//   // Load filter data when tab clicked
-//   const loadFilter = useCallback(
-//     async (filter, force = false) => {
-//       if (loadedFilters.has(filter) && !force) return;
-
-//       setFetchingFilters((prev) => new Set([...prev, filter]));
-
-//       try {
-//         await fetchBookings(filter);
-//         setLoadedFilters((prev) => new Set([...prev, filter]));
-//       } catch (err) {
-//         console.warn(`Failed to load ${filter}:`, err);
-//       } finally {
-//         setFetchingFilters((prev) => {
-//           const next = new Set(prev);
-//           next.delete(filter);
-//           return next;
-//         });
-//       }
-//     },
-//     [fetchBookings, loadedFilters]
-//   );
-
-//   // Load all filters on mount to show badge counts immediately
 //   useEffect(() => {
-//     const loadAllFilters = async () => {
-//       const filters = ["all", "active", "pending", "rescheduled", "completed", "cancelled"];
+//     let timeout;
+//     if (!socketConnected) {
+//       timeout = setTimeout(() => setShowReconnectOverlay(true), 3000);
+//       setReconnectAttempts((prev) => prev + 1);
+//     } else {
+//       setShowReconnectOverlay(false);
+//       setReconnectAttempts(0);
+//     }
+//     return () => clearTimeout(timeout);
+//   }, [socketConnected]);
 
-//       console.log("🚀 Loading all filters on mount...");
-
-//       await Promise.all(filters.map((filter) => loadFilter(filter)));
-
+//   // ─── Load filters on mount ──────────────────────────────────────────────────────
+//   useEffect(() => {
+//     const filters = ["all", "active", "pending", "rescheduled", "completed", "cancelled"];
+//     console.log("🚀 Loading all filters on mount...");
+//     Promise.all(filters.map((f) => fetchBookings(f, false))).then(() => {
 //       console.log("✅ All filters loaded!");
-//     };
+//     });
+//   }, [fetchBookings]);
 
-//     loadAllFilters();
-//   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-//   // Handle tab click
-//   const handleTabClick = (filter) => {
-//     setLocalActiveFilter(filter);
-//     setActiveFilter(filter);
-
-//     if (!loadedFilters.has(filter)) {
-//       loadFilter(filter);
-//     }
-//   };
-
-//   // Load booking + messages when ID changes
+//   // ─── Load selected booking + messages ───────────────────────────────────────────
 //   useEffect(() => {
-//     if (selectedBookingId) {
-//       console.log("Loading booking + messages for ID:", selectedBookingId);
-//       fetchBooking(selectedBookingId);
-//       fetchMessages(selectedBookingId);
-//     }
+//     if (!selectedBookingId) return;
+
+//     console.log("Loading booking + messages:", selectedBookingId);
+//     fetchBooking(selectedBookingId);
+//     fetchMessages(selectedBookingId);
 //   }, [selectedBookingId, fetchBooking, fetchMessages]);
 
-//   // Handlers
+//   // ─── Handlers ───────────────────────────────────────────────────────────────────
 //   const handleSelectBooking = (bookingId) => {
-//     console.log("Clicked booking → setting ID:", bookingId);
+//     console.log("Selected booking:", bookingId);
 //     setSelectedBookingId(bookingId);
-//     setMobileSheetOpen(false); // Close drawer on mobile when booking selected
+//     setMobileSheetOpen(false);
 //   };
 
 //   const handleAcceptBooking = async () => {
-//     if (!selectedBooking) return;
-//     setIsAccepting(true);
+//     if (!selectedBooking?.id) return;
 //     try {
 //       await confirmBooking(selectedBooking.id);
-//       loadFilter("confirmed", true);
-//       setLocalActiveFilter("confirmed");
-//       setActiveFilter("confirmed");
 //     } catch (err) {
-//       alert("Failed to accept: " + (err.message || "Unknown error"));
-//     } finally {
-//       setIsAccepting(false);
+//       alert("Failed to accept booking: " + (err.message || "Unknown error"));
 //     }
 //   };
 
-//   const handleSendMessage = async (content, messageType = "TEXT") => {
+//   const handleSend = async (content) => {
 //     if (!selectedBookingId || !content.trim()) return;
-//     if (selectedBooking?.status === "cancelled") {
-//       alert("Cannot send messages to cancelled bookings.");
+//     if (["cancelled", "completed"].includes(selectedBooking?.status?.toLowerCase())) {
+//       alert(`Cannot send messages — booking is ${selectedBooking.status}`);
 //       return;
 //     }
 //     try {
-//       await sendMessage(selectedBookingId, content, messageType);
-//       await fetchMessages(selectedBookingId);
-//       loadFilter(activeFilter, true);
+//       await sendMessage(selectedBookingId, content);
+//       // await fetchMessages(selectedBookingId);
 //     } catch (err) {
-//       alert("Failed to send: " + (err.message || "Unknown error"));
+//       console.error("Send failed:", err);
+//       alert("Failed to send message");
 //     }
 //   };
 
-//   const handleAcceptReschedule = async () => {
-//     if (!selectedBooking) return;
-//     try {
-//       await acceptReschedule(selectedBooking.id);
-//       loadFilter(activeFilter, true);
-//       alert("Reschedule accepted successfully!");
-//     } catch (err) {
-//       alert("Failed to accept reschedule: " + (err.message || "Unknown error"));
-//     }
-//   };
-
-//   const handleRejectReschedule = async () => {
-//     if (!selectedBooking) return;
-//     const reason = prompt("Reason for rejecting the reschedule (optional):")?.trim() || "";
-    
-//     try {
-//       await rejectReschedule(selectedBooking.id, reason);
-//       loadFilter(activeFilter, true);
-//       alert("Reschedule rejected. Booking reverted to pending.");
-//     } catch (err) {
-//       alert("Failed to reject reschedule: " + (err.message || "Unknown error"));
-//     }
-//   };
-
-//   // Get current bookings
+//   // ─── UI Helpers ─────────────────────────────────────────────────────────────────
 //   const currentBookings = getCurrentBookings();
 
-//   // Unread counts - now counts total bookings in each filter
-//   const unreadCounts = (() => {
-//     const counts = {
-//       all: 0,
-//       pending: 0,
-//       active: 0,
-//       rescheduled: 0,
-//       completed: 0,
-//       cancelled: 0,
-//     };
-
-//     // Count bookings in each filter
-//     Object.entries(bookingsByFilter).forEach(([filter, bookings]) => {
-//       if (Array.isArray(bookings)) {
-//         const filterKey = filter.toLowerCase();
-//         if (filterKey in counts) {
-//           counts[filterKey] = bookings.length;
-//         }
-//       }
-//     });
-
-//     // If 'all' filter exists in store, use its length
-//     if (bookingsByFilter.all?.length) {
-//       counts.all = bookingsByFilter.all.length;
-//     }
-
-//     console.log("📊 Badge Counts:", counts);
-//     console.log("📦 Bookings by Filter:", Object.entries(bookingsByFilter).map(([k, v]) => `${k}: ${v?.length || 0}`));
-
-//     return counts;
-//   })();
-
-//   // Status helpers
-//   const getStatusColor = (status) => {
-//     const colors = {
-//       pending: "bg-yellow-500",
-//       confirmed: "bg-green-500",
-//       active: "bg-green-500",
-//       completed: "bg-blue-500",
-//       cancelled: "bg-red-500",
-//       "reschedule-proposed": "bg-purple-500",
-//       rescheduled: "bg-purple-500",
-//     };
-//     return colors[status?.toLowerCase()] || "bg-gray-500";
+//   const unreadCounts = {
+//     all: bookingsByFilter.all?.length || 0,
+//     active: bookingsByFilter.active?.length || 0,
+//     pending: bookingsByFilter.pending?.length || 0,
+//     rescheduled: bookingsByFilter.rescheduled?.length || 0,
+//     completed: bookingsByFilter.completed?.length || 0,
+//     cancelled: bookingsByFilter.cancelled?.length || 0,
 //   };
 
-//   const getStatusIcon = (status) => {
-//     const icons = {
-//       pending: Clock,
-//       confirmed: CheckCircle,
-//       active: CheckCircle,
-//       completed: CheckCircle,
-//       cancelled: XCircle,
-//       "reschedule-proposed": RotateCw,
-//       rescheduled: RotateCw,
-//     };
-//     const Icon = icons[status?.toLowerCase()] || AlertCircle;
-//     return <Icon className="size-4" />;
+//   const getBadgeColor = (filter) => {
+//     if (filter === "pending") return "bg-yellow-500";
+//     if (filter === "rescheduled") return "bg-orange-500";
+//     return "bg-green-500";
 //   };
 
+//   // ─── Render ─────────────────────────────────────────────────────────────────────
 //   return (
-//     <div className="h-[calc(110vh-2rem)] flex flex-col lg:flex-row gap-4">
-
-//       {/* Mobile: Floating Menu Button */}
-//       <div className="lg:hidden  z-50">
+//     <div className="h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-2 overflow-hidden">
+//       {/* Mobile Menu Button */}
+//       <div className="lg:hidden fixed bottom-4 right-4 z-50">
 //         <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-//           <div className=" flex gap-2">
-
 //           <SheetTrigger asChild>
-//             <Button size="lg" className="rounded shadow-lg h-8 w-8 px-12">
-//               {/* <Menu className="size-6" />  */}
-//               Chat Menu
+//             <Button size="lg" className="rounded-full shadow-lg h-14 w-14">
+//               <Menu className="size-6" />
 //             </Button>
 //           </SheetTrigger>
-//             {/* <p className="text-xl font-bold">Chat</p> */}
-//           </div>
-
-//           <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-0 flex flex-col z-[9999]">
-//             <SheetHeader className="pt-12 pb-2 px-4 border-b">
-//               <div className="flex justify-between items-center">
-//                 <SheetTitle>Bookings</SheetTitle>
-//                 <Button
-//                   variant="outline"
-//                   size="sm"
-//                   onClick={() => loadFilter(activeFilter, true)}
-//                   className="h-8  border"
-//                 >
-//                   <RotateCw className="size-3.5 mr-1" />
-                  
-//                 </Button>
-//               </div>
+//           <SheetContent side="left" className="w-[85vw] sm:w-96 p-0">
+//             <SheetHeader className="p-4 border-b">
+//               <SheetTitle>Bookings</SheetTitle>
 //             </SheetHeader>
 
-//             {/* Filter Tabs - Mobile */}
-//             <div className="p-4 pb-2 border-b">
+//             {/* Filters */}
+//             <div className="p-4 border-b">
 //               <div className="grid grid-cols-3 gap-2">
-//                 {["all", "active", "pending", "rescheduled", "completed", "cancelled"].map((filter) => {
-//                   const isActive = activeFilter === filter;
-//                   const isFetching = fetchingFilters.has(filter);
-//                   const count = unreadCounts[filter] || 0;
-                  
-//                   const badgeColor = 
-//                     filter === "pending" ? "bg-yellow-500" : 
-//                     filter === "rescheduled" ? "bg-orange-500" : 
-//                     "bg-green-500";
-
-//                   return (
-//                     <button
-//                       key={filter}
-//                       onClick={() => handleTabClick(filter)}
-//                       className={`relative px-2 py-1.5 rounded-lg text-xs font-medium transition-all 
-//                         flex justify-between items-center gap-1 ${
-//                         isActive
-//                           ? "bg-primary text-white shadow-sm"
-//                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-//                       } ${isFetching ? "opacity-80 cursor-wait" : ""}`}
-//                     >
-//                       <span className="capitalize">{filter}</span>
-//                       {count > 0 && (
-//                         <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full ${badgeColor} text-[10px] font-bold text-white px-1.5 shadow`}>
-//                           {count > 99 ? "99+" : count}
-//                         </span>
-//                       )}
-//                     </button>
-//                   );
-//                 })}
+//                 {["all", "active", "pending", "rescheduled", "completed", "cancelled"].map((f) => (
+//                   <button
+//                     key={f}
+//                     onClick={() => {
+//                       setLocalActiveFilter(f);
+//                       setActiveFilter(f);
+//                       setMobileSheetOpen(false);
+//                     }}
+//                     className={cn(
+//                       "px-3 py-2 rounded text-sm font-medium",
+//                       activeFilter === f ? "bg-primary text-white" : "bg-muted hover:bg-muted/80"
+//                     )}
+//                   >
+//                     {f.charAt(0).toUpperCase() + f.slice(1)}
+//                     {unreadCounts[f] > 0 && (
+//                       <Badge className="ml-1.5 bg-white text-primary">{unreadCounts[f]}</Badge>
+//                     )}
+//                   </button>
+//                 ))}
 //               </div>
 //             </div>
 
-//             {/* Bookings List - Mobile */}
-//             <div className="flex-1 overflow-y-auto">
-//               {fetchingFilters.has(activeFilter) ? (
-//                 <div className="flex flex-col items-center justify-center h-full p-6">
-//                   <Loader2 className="size-10 animate-spin text-primary mb-4" />
-//                   <p className="text-sm text-muted-foreground">
-//                     Loading {activeFilter} bookings...
-//                   </p>
-//                 </div>
-//               ) : currentBookings.length === 0 ? (
-//                 <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-//                   <MessageSquare className="size-12 text-muted-foreground/40 mb-3" />
-//                   <p className="text-sm text-muted-foreground">No bookings found</p>
+//             {/* Bookings list */}
+//             <div className="flex-1 overflow-y-auto p-2">
+//               {currentBookings.length === 0 ? (
+//                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
+//                   <MessageSquare className="size-12 text-muted-foreground mb-3" />
+//                   <p className="text-muted-foreground">No bookings in this filter</p>
 //                 </div>
 //               ) : (
-//                 currentBookings.map((booking) => (
+//                 currentBookings.map((b) => (
 //                   <div
-//                     key={booking.id}
-//                     onClick={() => handleSelectBooking(booking.id)}
-//                     className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition ${
-//                       selectedBookingId === booking.id ? "bg-blue-50 border-l-4 border-l-primary" : ""
-//                     }`}
+//                     key={b.id}
+//                     onClick={() => handleSelectBooking(b.id)}
+//                     className={cn(
+//                       "p-3 rounded-lg mb-2 cursor-pointer transition",
+//                       selectedBookingId === b.id ? "bg-primary/10 border-l-4 border-primary" : "hover:bg-muted"
+//                     )}
 //                   >
-//                     <div className="flex items-start gap-3 mb-2">
-//                       <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-//                         {booking.avatar ? (
-//                           <img
-//                             src={booking.avatar}
-//                             alt={booking.participant_name}
-//                             className="size-10 rounded-full object-cover"
-//                           />
+//                     <div className="flex items-center gap-3">
+//                       <div className="size-10 rounded-full bg-primary/10 flex-center">
+//                         {b.avatar ? (
+//                           <img src={b.avatar} alt="" className="size-full rounded-full object-cover" />
 //                         ) : (
 //                           <User className="size-5 text-primary" />
 //                         )}
 //                       </div>
-
 //                       <div className="flex-1 min-w-0">
-//                         <div className="flex items-center justify-between mb-1">
-//                           <h3 className="font-medium text-sm truncate">
-//                             {booking.participant_name}
-//                           </h3>
-//                           {booking.unread_count > 0 && (
-//                             <Badge variant="destructive" className="text-xs px-1.5 min-w-[20px]">
-//                               {booking.unread_count > 99 ? "99+" : booking.unread_count}
-//                             </Badge>
-//                           )}
-//                         </div>
-
-//                         <div className="flex items-center gap-1.5 mb-1">
-//                           <div className={`size-2.5 rounded-full ${getStatusColor(booking.status)}`} />
-//                           <span className="text-xs text-muted-foreground capitalize">
-//                             {booking.status.replace(/-/g, ' ')}
-//                           </span>
-//                         </div>
-
-//                         {booking.last_message && (
-//                           <p className="text-xs text-muted-foreground truncate">
-//                             {booking.last_message}
-//                           </p>
-//                         )}
-
-//                         {booking.scheduledAt && (
-//                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-//                             <Calendar className="size-3" />
-//                             {format(parseISO(booking.scheduledAt), "MMM d, h:mm a")}
-//                           </div>
-//                         )}
+//                         <p className="font-medium truncate">{b.participant_name}</p>
+//                         <p className="text-xs text-muted-foreground truncate">
+//                           {b.purpose || "No messages yet"}
+//                         </p>
+//                         <p className="text-xs">{format(parseISO(b.scheduledAt), "PPP p")}</p>
 //                       </div>
 //                     </div>
 //                   </div>
@@ -460,365 +254,185 @@
 //         </Sheet>
 //       </div>
 
-//       {/* Desktop: Sidebar */}
-//       <Card className="hidden lg:flex flex-col w-80 xl:w-96 p-3">
-//         <div className="border-b">
-//           <div className="flex justify-between items-center mb-4">
-//             <h2 className="text-lg font-semibold">Bookings</h2>
-//             <Button
-//               variant="outline"
-//               size="sm"
-//               onClick={() => loadFilter(activeFilter, true)}
-//               className="h-6 "
-//             >
-//               <RotateCw className="size-3 mr-1" />
-//             </Button>
-//           </div>
+//       {/* Desktop Sidebar */}
+//       <Card className="hidden lg:flex w-80 xl:w-96 flex-col border-r">
+//         <div className="p-2 border-b">
+//           <h2 className="text-lg font-semibold">Bookings</h2>
+//         </div>
 
-//           {/* Filter Tabs - Desktop */}
-//           <div className="grid grid-cols-3 md:grid-cols-6 gap-1.5 md:gap-2 mb-4">
-//             {["all", "active", "pending", "rescheduled", "completed", "cancelled"].map((filter) => {
-//               const isActive = activeFilter === filter;
-//               const isFetching = fetchingFilters.has(filter);
-//               const count = unreadCounts[filter] || 0;
-              
-//               const badgeColor = 
-//                 filter === "pending" ? "bg-yellow-500" : 
-//                 filter === "rescheduled" ? "bg-orange-500" : 
-//                 "bg-green-500";
-
-//               const tooltipText = {
-//                 all: "View all bookings",
-//                 active: "Currently active sessions",
-//                 pending: "Awaiting confirmation",
-//                 rescheduled: "Reschedule session",
-//                 completed: "Completed sessions",
-//                 cancelled: "Cancelled bookings"
-//               };
-
-//               return (
-//                 <div key={filter} className="relative group">
-//                   <button
-//                     onClick={() => handleTabClick(filter)}
-//                     className={cn(
-//                       "relative px-1 py-2 rounded-lg w-full",
-//                       "text-[10px] md:text-xs font-medium",
-//                       "flex flex-col items-center justify-center gap-1",
-//                       "transition-all duration-200",
-//                       "min-h-[35px]",
-//                       isActive
-//                         ? "bg-primary text-white shadow-md ring-2 ring-primary/20"
-//                         : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
-//                       isFetching && "opacity-70 cursor-wait"
-//                     )}
-//                   >
-//                     {/* Badge on top */}
-//                     {count > 0 && (
-//                       <span 
-//                         className={cn(
-//                           "absolute -top-1 -right-1",
-//                           "flex items-center justify-center",
-//                           "h-4 md:h-5 min-w-[16px] md:min-w-[20px] px-1",
-//                           "rounded-full",
-//                           "text-[8px] md:text-[9px] font-bold text-white",
-//                           "shadow-md border-2 border-white dark:border-gray-900",
-//                           badgeColor
-//                         )}
-//                       >
-//                         {count > 99 ? "99+" : count}
-//                       </span>
-//                     )}
-                    
-//                     {/* Label */}
-//                     <span className="truncate max-w-full text-center leading-tight">
-//                       {filter === "rescheduled" ? "Resched" : filter.charAt(0).toUpperCase() + filter.slice(1)}
-//                     </span>
-//                   </button>
-                  
-//                   {/* Custom Tooltip */}
-//                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 pointer-events-none">
-//                     <div className="text-center">
-//                       <p>{tooltipText[filter]}</p>
-//                       {count > 0 && (
-//                         <p className="text-[10px] opacity-80 mt-0.5">
-//                           {count} {count === 1 ? 'booking' : 'bookings'}
-//                         </p>
-//                       )}
-//                     </div>
-//                     {/* Arrow */}
-//                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-//                       <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
-//                     </div>
-//                   </div>
-//                 </div>
-//               );
-//             })}
+//         {/* Filters */}
+//         <div className="py-4 border-b">
+//           <div className="grid grid-cols-3 gap-2">
+//             {["all", "active", "pending", "resched..", "completed", "cancelled"].map((f) => (
+//               <button
+//                 key={f}
+//                 onClick={() => {
+//                   setLocalActiveFilter(f);
+//                   setActiveFilter(f);
+//                 }}
+//                 className={cn(
+//                   "px-3 py-2 rounded text-sm font-medium text-center",
+//                   activeFilter === f ? "bg-primary text-white shadow-sm" : "bg-muted hover:bg-muted/80"
+//                 )}
+//               >
+//                 {f.charAt(0).toUpperCase() + f.slice(1)}
+//                 {unreadCounts[f] > 0 && (
+//                   <Badge className="ml-1.5 bg-white text-primary text-xs">{unreadCounts[f]}</Badge>
+//                 )}
+//               </button>
+//             ))}
 //           </div>
 //         </div>
 
-//         {/* Bookings List - Desktop */}
-//         <div className="flex-1 overflow-y-auto">
-//           {fetchingFilters.has(activeFilter) ? (
-//             <div className="flex flex-col items-center justify-center h-full p-6">
-//               <Loader2 className="size-10 animate-spin text-primary mb-4" />
-//               <p className="text-sm text-muted-foreground">
-//                 Loading {activeFilter} bookings...
-//               </p>
-//             </div>
-//           ) : currentBookings.length === 0 ? (
-//             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-//               <MessageSquare className="size-12 text-muted-foreground/40 mb-3" />
-//               <p className="text-sm text-muted-foreground">No bookings found</p>
+//         {/* Bookings */}
+//         <div className="flex-1 overflow-y-auto p-2">
+//           {currentBookings.length === 0 ? (
+//             <div className="flex flex-col items-center justify-center h-full text-center p-6">
+//               <MessageSquare className="size-12 text-muted-foreground mb-3" />
+//               <p className="text-muted-foreground">No bookings found</p>
 //             </div>
 //           ) : (
-//             currentBookings.map((booking) => (
+//             currentBookings.map((b) => (
 //               <div
-//                 key={booking.id}
-//                 onClick={() => handleSelectBooking(booking.id)}
-//                 className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition ${
-//                   selectedBookingId === booking.id ? "bg-blue-50 border-l-4 border-l-primary" : ""
-//                 }`}
+//                 key={b.id}
+//                 onClick={() => handleSelectBooking(b.id)}
+//                 className={cn(
+//                   "p-3 rounded-lg mb-1 cursor-pointer transition",
+//                   selectedBookingId === b.id ? "bg-primary/10 border-l-4 border-primary" : "hover:bg-muted"
+//                 )}
 //               >
-//                 <div className="flex items-start gap-3 mb-2">
-//                   <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-//                     {booking.avatar ? (
-//                       <img
-//                         src={booking.avatar}
-//                         alt={booking.participant_name}
-//                         className="size-10 rounded-full object-cover"
-//                       />
+//                 <div className="flex items-center gap-3">
+//                   <div className="size-10 rounded-full bg-primary/10 flex-center">
+//                     {b.avatar ? (
+//                       <img src={b.avatar} alt="" className="size-full rounded-full object-cover" />
 //                     ) : (
 //                       <User className="size-5 text-primary" />
 //                     )}
 //                   </div>
-
 //                   <div className="flex-1 min-w-0">
-//                     <div className="flex items-center justify-between mb-1">
-//                       <h3 className="font-medium text-sm truncate">
-//                         {booking.participant_name}
-//                       </h3>
-//                       {booking.unread_count > 0 && (
-//                         <Badge variant="destructive" className="text-xs px-1.5 min-w-[20px]">
-//                           {booking.unread_count > 99 ? "99+" : booking.unread_count}
-//                         </Badge>
-//                       )}
-//                     </div>
-
-//                     <div className="flex items-center gap-1.5 mb-1">
-//                       <div className={`size-2.5 rounded-full ${getStatusColor(booking.status)}`} />
-//                       <span className="text-xs text-muted-foreground capitalize">
-//                         {booking.status.replace(/-/g, ' ')}
-//                       </span>
-//                     </div>
-
-//                     {booking.last_message && (
-//                       <p className="text-xs text-muted-foreground truncate">
-//                         {booking.last_message}
-//                       </p>
-//                     )}
-
-//                     {booking.scheduledAt && (
-//                       <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-//                         <Calendar className="size-3" />
-//                         {format(parseISO(booking.scheduledAt), "MMM d, h:mm a")}
-//                       </div>
-//                     )}
+//                     <p className="font-medium truncate">{b.participant_name}</p>
+//                     <p className="text-xs text-muted-foreground truncate">
+//                       {b.purpose || "No messages yet"}
+//                     </p>
+//                      <p className="text-xs">{format(parseISO(b.scheduledAt), "PPP p")}</p>
 //                   </div>
 //                 </div>
 //               </div>
 //             ))
 //           )}
 //         </div>
-        
 //       </Card>
 
-//       {/* Chat Area - Responsive */}
-//       <Card className="flex-1 flex flex-col w-full lg:w-auto">
+//       {/* Main Chat Area */}
+//       <Card className="flex-1 flex flex-col overflow-hidden">
 //         {selectedBooking ? (
 //           <>
-//             {/* Header - Responsive */}
-//             <div className="border-b">
-//               <div className="flex items-start justify-between gap-2">
-//                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-//                   <div className="size-10 sm:size-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+//             {/* Header */}
+//             <div className="p-4 border-b">
+//               <div className="flex items-center justify-between gap-4 flex-wrap">
+//                 <div className="flex items-center gap-3 min-w-0">
+//                   <div className="size-12 rounded-full bg-primary/10 flex-center flex-shrink-0">
 //                     {selectedBooking.avatar ? (
 //                       <img
 //                         src={selectedBooking.avatar}
-//                         alt={selectedBooking.participant_name}
-//                         className="size-12 rounded-full object-cover"
+//                         alt=""
+//                         className="size-full rounded-full object-cover"
 //                       />
 //                     ) : (
 //                       <User className="size-6 text-primary" />
 //                     )}
 //                   </div>
 //                   <div className="min-w-0">
-//                     <h2 className="font-semibold text-base sm:text-lg truncate">
-//                       {selectedBooking.participant_name}
-//                     </h2>
-//                     <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
-//                       {getStatusIcon(selectedBooking.status)}
-//                       <span className="text-xs sm:text-sm text-muted-foreground capitalize truncate">
-//                         {selectedBooking.status.replace(/-/g, ' ')}
-//                       </span>
-//                     </div>
+//                     <h2 className="font-semibold truncate">{selectedBooking.participant_name}</h2>
+//                     <p className="text-sm text-muted-foreground capitalize">
+//                       {selectedBooking.status?.replace("-", " ") || "Unknown"}
+//                     </p>
 //                   </div>
 //                 </div>
 
-//                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-//                   {selectedBooking.status === "pending" && (
+//                 <div className="flex items-center gap-2 flex-wrap">
+//                   {/* Accept Booking Button – visible only for pending */}
+//                   {selectedBooking?.status?.toLowerCase() === "pending" && (
 //                     <Button
 //                       onClick={handleAcceptBooking}
-//                       disabled={isAccepting}
-//                       className="bg-green-600 hover:bg-green-700 text-white h-8 sm:h-9 px-2 sm:px-4 text-xs sm:text-sm"
+//                       disabled={isSending}
+//                       className="bg-green-600 hover:bg-green-700 text-white"
 //                     >
-//                       {isAccepting ? (
-//                         <>
-//                           <Loader2 className="size-3 sm:size-4 sm:mr-2 animate-spin" />
-//                           <span className="hidden sm:inline">Accepting...</span>
-//                         </>
-//                       ) : (
-//                         <>
-//                           <CheckCircle className="size-3 sm:size-4 sm:mr-2" />
-//                           <span className="hidden sm:inline">Accept Booking</span>
-//                           <span className="sm:hidden">Accept</span>
-//                         </>
-//                       )}
+//                       Accept Booking
 //                     </Button>
 //                   )}
+
 //                   <BookingActions booking={selectedBooking} />
 //                 </div>
 //               </div>
 
 //               {selectedBooking.purpose && (
 //                 <>
-//                   <Separator className="my-2 sm:my-3" />
-//                   <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
-//                     <p className="truncate"><strong>Purpose:</strong> {selectedBooking.purpose}</p>
+//                   <Separator className="my-3" />
+//                   <div className="space-y-2 text-sm">
+//                     <p><strong>Purpose:</strong> {selectedBooking.purpose}</p>
 //                     {selectedBooking.scheduledAt && (
-//                       <p className="truncate"><strong>Scheduled:</strong> {format(parseISO(selectedBooking.scheduledAt), "PPpp")}</p>
+//                       <p><strong>Scheduled:</strong> {format(parseISO(selectedBooking.scheduledAt), "PPP p")}</p>
 //                     )}
-//                     {selectedBooking.proposedAt && selectedBooking.status === "reschedule-proposed" && (
-//                       <p className="text-purple-700 truncate">
-//                         <strong>Proposed Time:</strong> {format(parseISO(selectedBooking.proposedAt), "PPpp")}
-//                         </p>
-                      
-//                     )}
-//                     {selectedBooking.duration && (
-//                       <p><strong>Duration:</strong> {selectedBooking.duration} minutes</p>
+//                     {selectedBooking.proposedAt && selectedBooking.status?.toLowerCase() === "reschedule_proposed" && (
+//                       <p className="text-purple-700">
+//                         <strong>Proposed Time:</strong> {format(parseISO(selectedBooking.proposedAt), "PPP p")}
+//                       </p>
 //                     )}
 //                   </div>
 //                 </>
 //               )}
 //             </div>
 
-//             <ChatMessages
-//               messages={messages}
-//               isLoading={fetchingFilters.has(activeFilter)}
-//               bookingStatus={selectedBooking.status}
-//               proposedAt={selectedBooking.proposedAt}
-//               onConfirmMessage={confirmMessage}
-//               onRejectMessage={rejectMessage}
-//               onAcceptReschedule={handleAcceptReschedule}
-//               onRejectReschedule={handleRejectReschedule}
-//             />
+//             {/* Messages */}
+//             <div className="flex-1 overflow-y-auto">
+//               <ChatMessages
+//                 messages={messages}
+//                 isLoading={isLoading}
+//                 bookingStatus={selectedBooking.status}
+//                 proposedAt={selectedBooking.proposedAt}
+//                 onConfirmMessage={confirmMessage}
+//                 onRejectMessage={rejectMessage}
+//                 onAcceptReschedule={acceptReschedule}
+//                 onRejectReschedule={rejectReschedule}
+//               />
+//             </div>
 
+//             {/* Input */}
 //             <ChatInput
-//               onSend={handleSendMessage}
+//               onSend={handleSend}
 //               isSending={isSending}
-//               disabled={selectedBooking.status === "cancelled" || selectedBooking.status === "completed"}
+//               disabled={["cancelled", "completed"].includes(selectedBooking?.status?.toLowerCase())}
+//               selectedBookingId={selectedBookingId}
 //             />
 //           </>
 //         ) : (
-//           <div className="flex-1 flex items-center justify-center p-4">
-//             <div className="text-center max-w-sm">
-//               <MessageSquare className="size-12 sm:size-16 text-muted-foreground/30 mx-auto mb-3 sm:mb-4" />
-//               <h3 className="text-base sm:text-lg font-medium text-muted-foreground mb-1 sm:mb-2">
-//                 No Booking Selected
-//               </h3>
-//               <p className="text-xs sm:text-sm text-muted-foreground">
-//                 <span className="hidden lg:inline">Select a booking from the list to start chatting</span>
-//                 <span className="lg:hidden">Tap the menu button to view bookings</span>
-//               </p>
-//             </div>
+//           <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+//             <MessageSquare className="size-16 text-muted-foreground/40 mb-4" />
+//             <h3 className="text-xl font-medium mb-2">No booking selected</h3>
+//             <p className="text-muted-foreground">
+//               Choose a booking from the list to start chatting
+//             </p>
 //           </div>
-          
 //         )}
-
-//         {/* ─── Connection Toast Overlay ─── */}
-//       {showToast && socketConnected && (
-//         <div
-//           className={`
-//             fixed bottom-5 sm:bottom-8 left-1/2 -translate-x-1/2 z-[9999]
-//             flex items-center gap-2.5 px-5 sm:px-7 py-3 sm:py-3.5
-//             bg-gradient-to-r from-emerald-600 to-green-700
-//             text-white font-medium text-sm sm:text-base tracking-tight
-//             rounded-full shadow-2xl border border-green-400/30
-//             animate-[fadeInOut_4.2s_ease-in-out_forwards]
-//           `}
-//         >
-//           <div className="size-2.5 sm:size-3 rounded-full bg-white animate-pulse" />
-//           Chat connected successfully ✓
-//         </div>
-//       )}
-//       {showReconnectOverlay && !socketConnected && (
-//       <div className="
-//         fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999]
-//         flex items-center justify-center
-//       ">
-//         <div className="
-//           bg-white dark:bg-gray-900 rounded-xl p-8 shadow-2xl
-//           text-center max-w-md mx-4 border border-gray-200 dark:border-gray-700
-//         ">
-//           <Loader2 className="size-12 mx-auto mb-4 animate-spin text-primary" />
-//           <h3 className="text-xl font-semibold mb-2">Reconnecting...</h3>
-//           <p className="text-muted-foreground mb-4">
-//             {reconnectAttempts > 0 
-//               ? `Attempt ${reconnectAttempts}...` 
-//               : "Trying to reconnect to real-time chat"}
-//           </p>
-//           <p className="text-xs text-muted-foreground">
-//             Please wait a moment. If this persists, try refreshing.
-//           </p>
-//         </div>
-//       </div>
-//     )}
-//     {!socketConnected && (
-//   <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] flex items-center justify-center">
-//     <div className="bg-white dark:bg-gray-900 rounded-2xl p-10 text-center max-w-md mx-4 border shadow-2xl">
-//       <Loader2 className="size-14 mx-auto mb-6 animate-spin text-amber-600" />
-//       <h3 className="text-2xl font-bold mb-3 text-amber-900 dark:text-amber-200">
-//         Connecting to real-time chat...
-//       </h3>
-//       <p className="text-muted-foreground mb-6">
-//         This may take a moment. If it doesn't connect soon, try refreshing.
-//       </p>
-//       <Button 
-//         variant="outline" 
-//         onClick={() => window.location.reload()}
-//       >
-//         Refresh Page
-//       </Button>
-//     </div>
-//   </div>
-// )}
-
-//       {/* Optional: Reconnecting indicator */}
-//       {!socketConnected && (
-//         <div
-//           className={`
-//             fixed bottom-5 sm:bottom-8 left-1/2 -translate-x-1/2 z-[9999]
-//             flex items-center gap-2.5 px-5 sm:px-7 py-3 sm:py-3.5
-//             bg-amber-600/90 text-white font-medium text-sm sm:text-base
-//             rounded-full shadow-xl animate-pulse
-//           `}
-//         >
-//           <Loader2 className="size-4 sm:size-5 animate-spin" />
-//           Reconnecting to chat...
-//         </div>
-//       )}
-
 //       </Card>
-      
+
+//       {/* Connection Indicators */}
+//       {showToast && socketConnected && (
+//         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg animate-fade-in-out">
+//           Chat connected ✓
+//         </div>
+//       )}
+
+//       {showReconnectOverlay && !socketConnected && (
+//         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+//           <div className="bg-white dark:bg-gray-900 p-8 rounded-xl text-center max-w-md mx-4">
+//             <Loader2 className="size-12 animate-spin mx-auto mb-4 text-primary" />
+//             <h3 className="text-xl font-semibold mb-2">Reconnecting...</h3>
+//             <p className="text-muted-foreground">Please wait a moment</p>
+//           </div>
+//         </div>
+//       )}
 //     </div>
 //   );
 // }
@@ -831,13 +445,8 @@
 
 
 
-
-
-
-
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useTutorChatStore } from "@/store/tutorChatStore";
-import { getSocket } from "@/lib/tutor-socket";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -850,17 +459,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
 import {
   MessageSquare,
-  Calendar,
-  Clock,
   User,
-  CheckCircle,
-  XCircle,
-  RotateCw,
   Loader2,
-  AlertCircle,
   Menu,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -868,16 +470,17 @@ import BookingActions from "./BookingActions";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 
+const FILTERS = ["all", "active", "pending", "resched..", "completed", "cancelled"];
+
 export default function TutorChat() {
   const {
     bookingsByFilter,
     selectedBooking,
     messages,
-    isLoading,
+    isLoadingMessages,
     isSending,
     fetchBookings,
-    fetchBooking,
-    fetchMessages,
+    setSelectedBooking,
     sendMessage,
     confirmMessage,
     rejectMessage,
@@ -890,128 +493,224 @@ export default function TutorChat() {
   } = useTutorChatStore();
 
   const [activeFilter, setLocalActiveFilter] = useState("all");
-  const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [showReconnectOverlay, setShowReconnectOverlay] = useState(false);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
-  // ─── Socket: Auto-join room when booking selected ───────────────────────────────
+  // ─── Load all filters on mount ──────────────────────────────────
   useEffect(() => {
-    if (!selectedBookingId) return;
+    console.log("🚀 Loading all filters on mount...");
+    Promise.all(FILTERS.map((f) => fetchBookings(f, false)))
+      .then(() => console.log("✅ All filters loaded!"))
+      .catch((err) => console.error("❌ Failed to load filters:", err));
+  }, [fetchBookings]);
 
-    const socket = getSocket();
-    if (!socket) return;
-
-    console.log("[TutorChat] → Joining room:", selectedBookingId);
-
-    socket.emit("join:booking", selectedBookingId, (response) => {
-      if (response?.success) {
-        console.log("%c[TutorChat] ✓ Joined room OK", "background:#4CAF50;color:white;padding:6px;");
-        useTutorChatStore.getState().markMessagesAsRead(selectedBookingId);
-      } else {
-        console.error("[TutorChat] ✗ Join failed:", response);
-      }
-    });
-
-    return () => {
-      console.log("[TutorChat] ← Leaving room:", selectedBookingId);
-      socket.emit("leaveBooking", selectedBookingId);
-    };
-  }, [selectedBookingId]);
-
-  // ─── Connection indicators ──────────────────────────────────────────────────────
+  // ─── Connection toast ───────────────────────────────────────────
   useEffect(() => {
     if (socketConnected) {
       setShowToast(true);
-      const timer = setTimeout(() => setShowToast(false), 4200);
+      const timer = setTimeout(() => setShowToast(false), 4000);
       return () => clearTimeout(timer);
     }
   }, [socketConnected]);
 
+  // ─── Reconnect overlay ──────────────────────────────────────────
   useEffect(() => {
     let timeout;
     if (!socketConnected) {
       timeout = setTimeout(() => setShowReconnectOverlay(true), 3000);
-      setReconnectAttempts((prev) => prev + 1);
     } else {
       setShowReconnectOverlay(false);
-      setReconnectAttempts(0);
     }
     return () => clearTimeout(timeout);
   }, [socketConnected]);
 
-  // ─── Load filters on mount ──────────────────────────────────────────────────────
-  useEffect(() => {
-    const filters = ["all", "active", "pending", "rescheduled", "completed", "cancelled"];
-    console.log("🚀 Loading all filters on mount...");
-    Promise.all(filters.map((f) => fetchBookings(f, false))).then(() => {
-      console.log("✅ All filters loaded!");
-    });
-  }, [fetchBookings]);
+  // ─── Handlers ───────────────────────────────────────────────────
+  const handleFilterChange = (filter) => {
+    setLocalActiveFilter(filter);
+    setActiveFilter(filter);
+    setMobileSheetOpen(false);
+  };
 
-  // ─── Load selected booking + messages ───────────────────────────────────────────
-  useEffect(() => {
-    if (!selectedBookingId) return;
-
-    console.log("Loading booking + messages:", selectedBookingId);
-    fetchBooking(selectedBookingId);
-    fetchMessages(selectedBookingId);
-  }, [selectedBookingId, fetchBooking, fetchMessages]);
-
-  // ─── Handlers ───────────────────────────────────────────────────────────────────
-  const handleSelectBooking = (bookingId) => {
-    console.log("Selected booking:", bookingId);
-    setSelectedBookingId(bookingId);
+  const handleSelectBooking = (booking) => {
+    console.log("📍 Selected booking:", booking.id);
+    setSelectedBooking(booking); 
     setMobileSheetOpen(false);
   };
 
   const handleAcceptBooking = async () => {
-    if (!selectedBooking?.id) return;
-    try {
-      await confirmBooking(selectedBooking.id);
-    } catch (err) {
-      alert("Failed to accept booking: " + (err.message || "Unknown error"));
-    }
-  };
+  if (!selectedBooking?.id) return;
 
-  const handleSend = async (content) => {
-    if (!selectedBookingId || !content.trim()) return;
-    if (["cancelled", "completed"].includes(selectedBooking?.status?.toLowerCase())) {
-      alert(`Cannot send messages — booking is ${selectedBooking.status}`);
-      return;
-    }
-    try {
-      await sendMessage(selectedBookingId, content);
-      // await fetchMessages(selectedBookingId);
-    } catch (err) {
-      console.error("Send failed:", err);
-      alert("Failed to send message");
-    }
-  };
+  try {
+    await confirmBooking(selectedBooking.id);
 
-  // ─── UI Helpers ─────────────────────────────────────────────────────────────────
+    toast({
+      description: "Booking accepted successfully",
+    });
+
+  } catch (err) {
+    console.error("Failed to accept booking:", err);
+
+    toast({
+      description: "Failed to accept booking: " + (err.message || "Unknown error"),
+      variant: "destructive", 
+    });
+  }
+};
+
+const handleSendMessage = async (content) => {
+  if (!selectedBooking?.id || !content.trim()) return;
+
+  const status = selectedBooking.status?.toLowerCase();
+
+  if (["cancelled", "completed"].includes(status)) {
+    toast({
+      description: `Cannot send messages — booking is ${selectedBooking.status}`,
+    });
+    return;
+  }
+
+  try {
+    await sendMessage(selectedBooking.id, content);
+
+    toast({
+      description: "Message sent successfully",
+    });
+
+  } catch (err) {
+    console.error("Send message failed:", err);
+
+    toast({
+      description: "Failed to send message. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
+
+
+
+
+  // const handleAcceptBooking = async () => {
+  //   if (!selectedBooking?.id) return;
+  //   try {
+  //     await confirmBooking(selectedBooking.id);
+  //   } catch (err) {
+  //     console.error("Failed to accept booking:", err);
+  //     alert("Failed to accept booking: " + (err.message || "Unknown error"));
+  //   }
+  // };
+
+  // const handleSendMessage = async (content) => {
+  //   if (!selectedBooking?.id || !content.trim()) return;
+    
+  //   const status = selectedBooking.status?.toLowerCase();
+  //   if (["cancelled", "completed"].includes(status)) {
+  //     alert(`Cannot send messages — booking is ${selectedBooking.status}`);
+  //     return;
+  //   }
+    
+  //   try {
+  //     await sendMessage(selectedBooking.id, content);
+  //   } catch (err) {
+  //     console.error("Send message failed:", err);
+  //     alert("Failed to send message. Please try again.");
+  //   }
+  // };
+
+  // ─── Computed values ────────────────────────────────────────────
   const currentBookings = getCurrentBookings();
 
-  const unreadCounts = {
-    all: bookingsByFilter.all?.length || 0,
-    active: bookingsByFilter.active?.length || 0,
-    pending: bookingsByFilter.pending?.length || 0,
-    rescheduled: bookingsByFilter.rescheduled?.length || 0,
-    completed: bookingsByFilter.completed?.length || 0,
-    cancelled: bookingsByFilter.cancelled?.length || 0,
+  const unreadCounts = FILTERS.reduce((acc, filter) => {
+    acc[filter] = bookingsByFilter[filter]?.length || 0;
+    return acc;
+  }, {});
+
+  // ─── Render helpers ─────────────────────────────────────────────
+  const renderBookingCard = (booking, onClick) => (
+    <div
+      key={booking.id}
+      onClick={() => onClick(booking)}
+      className={cn(
+        "p-3 rounded-lg mb-1 cursor-pointer transition-all",
+        selectedBooking?.id === booking.id
+          ? "bg-primary/10 border-l-4 border-primary shadow-sm"
+          : "hover:bg-muted hover:shadow-sm"
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          {booking.avatar ? (
+            <img
+              src={booking.avatar}
+              alt={booking.participant_name}
+              className="size-full rounded-full object-cover"
+            />
+          ) : (
+            <User className="size-5 text-primary" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{booking.participant_name}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {booking.purpose || "No description"}
+          </p>
+          {booking.scheduledAt && (
+            <p className="text-xs text-muted-foreground">
+              {format(parseISO(booking.scheduledAt), "PPP p")}
+              <span> {booking.duration}mins</span>
+            </p>
+            
+          )}
+        </div>
+        {booking.unread_count > 0 && (
+          <Badge variant="destructive" className="text-xs">
+            {booking.unread_count}
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderFilterButton = (filter, isMobile = false) => {
+    const label = isMobile && filter === "rescheduled" 
+      ? "Resched." 
+      : filter.charAt(0).toUpperCase() + filter.slice(1);
+
+    return (
+      <button
+        key={filter}
+        onClick={() => handleFilterChange(filter)}
+        className={cn(
+          "px-3 py-2 rounded text-sm font-medium transition-all",
+          activeFilter === filter
+            ? "bg-primary text-white shadow-sm"
+            : "bg-muted hover:bg-muted/80"
+        )}
+      >
+        {label}
+        {unreadCounts[filter] > 0 && (
+          <Badge className="ml-1.5 bg-white text-primary text-xs">
+            {unreadCounts[filter]}
+          </Badge>
+        )}
+      </button>
+    );
   };
 
-  const getBadgeColor = (filter) => {
-    if (filter === "pending") return "bg-yellow-500";
-    if (filter === "rescheduled") return "bg-orange-500";
-    return "bg-green-500";
-  };
+  const renderEmptyState = () => (
+    <div className="flex flex-col items-center justify-center h-full text-center p-6">
+      <MessageSquare className="size-12 text-muted-foreground/50 mb-3" />
+      <p className="text-muted-foreground">No bookings in this filter</p>
+    </div>
+  );
 
-  // ─── Render ─────────────────────────────────────────────────────────────────────
+  // ─── Main Render ────────────────────────────────────────────────
   return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-4 overflow-hidden">
-      {/* Mobile Menu Button */}
+    <div className="h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-2 overflow-hidden">
+      
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* Mobile Menu */}
+      {/* ═══════════════════════════════════════════════════════════ */}
       <div className="lg:hidden fixed bottom-4 right-4 z-50">
         <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
           <SheetTrigger asChild>
@@ -1019,157 +718,69 @@ export default function TutorChat() {
               <Menu className="size-6" />
             </Button>
           </SheetTrigger>
+          
           <SheetContent side="left" className="w-[85vw] sm:w-96 p-0">
             <SheetHeader className="p-4 border-b">
               <SheetTitle>Bookings</SheetTitle>
             </SheetHeader>
 
             {/* Filters */}
-            <div className="p-4 border-b">
+            <div className="py-4 border-b">
               <div className="grid grid-cols-3 gap-2">
-                {["all", "active", "pending", "rescheduled", "completed", "cancelled"].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => {
-                      setLocalActiveFilter(f);
-                      setActiveFilter(f);
-                      setMobileSheetOpen(false);
-                    }}
-                    className={cn(
-                      "px-3 py-2 rounded text-sm font-medium",
-                      activeFilter === f ? "bg-primary text-white" : "bg-muted hover:bg-muted/80"
-                    )}
-                  >
-                    {f.charAt(0).toUpperCase() + f.slice(1)}
-                    {unreadCounts[f] > 0 && (
-                      <Badge className="ml-1.5 bg-white text-primary">{unreadCounts[f]}</Badge>
-                    )}
-                  </button>
-                ))}
+                {FILTERS.map((f) => renderFilterButton(f, true))}
               </div>
             </div>
 
-            {/* Bookings list */}
+            {/* Bookings List */}
             <div className="flex-1 overflow-y-auto p-2">
-              {currentBookings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                  <MessageSquare className="size-12 text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">No bookings in this filter</p>
-                </div>
-              ) : (
-                currentBookings.map((b) => (
-                  <div
-                    key={b.id}
-                    onClick={() => handleSelectBooking(b.id)}
-                    className={cn(
-                      "p-3 rounded-lg mb-2 cursor-pointer transition",
-                      selectedBookingId === b.id ? "bg-primary/10 border-l-4 border-primary" : "hover:bg-muted"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 rounded-full bg-primary/10 flex-center">
-                        {b.avatar ? (
-                          <img src={b.avatar} alt="" className="size-full rounded-full object-cover" />
-                        ) : (
-                          <User className="size-5 text-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{b.participant_name}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {b.last_message || "No messages yet"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+              {currentBookings.length === 0
+                ? renderEmptyState()
+                : currentBookings.map((b) => renderBookingCard(b, handleSelectBooking))
+              }
             </div>
           </SheetContent>
         </Sheet>
       </div>
 
+      {/* ═══════════════════════════════════════════════════════════ */}
       {/* Desktop Sidebar */}
-      <Card className="hidden lg:flex w-80 xl:w-96 flex-col border-r">
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <Card className="hidden lg:flex w-80 xl:w-96 flex-col border-r shadow-sm">
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">Bookings</h2>
         </div>
 
         {/* Filters */}
-        <div className="p-4 border-b">
-          <div className="grid grid-cols-3 gap-2">
-            {["all", "active", "pending", "rescheduled", "completed", "cancelled"].map((f) => (
-              <button
-                key={f}
-                onClick={() => {
-                  setLocalActiveFilter(f);
-                  setActiveFilter(f);
-                }}
-                className={cn(
-                  "px-3 py-2 rounded text-sm font-medium text-center",
-                  activeFilter === f ? "bg-primary text-white shadow-sm" : "bg-muted hover:bg-muted/80"
-                )}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-                {unreadCounts[f] > 0 && (
-                  <Badge className="ml-1.5 bg-white text-primary text-xs">{unreadCounts[f]}</Badge>
-                )}
-              </button>
-            ))}
+        <div className="py-4 border-b">
+          <div className="grid grid-cols-3 gap-2 ">
+            {FILTERS.map((f) => renderFilterButton(f))}
           </div>
         </div>
 
-        {/* Bookings */}
-        <div className="flex-1 overflow-y-auto p-2">
-          {currentBookings.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <MessageSquare className="size-12 text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">No bookings found</p>
-            </div>
-          ) : (
-            currentBookings.map((b) => (
-              <div
-                key={b.id}
-                onClick={() => handleSelectBooking(b.id)}
-                className={cn(
-                  "p-3 rounded-lg mb-1 cursor-pointer transition",
-                  selectedBookingId === b.id ? "bg-primary/10 border-l-4 border-primary" : "hover:bg-muted"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-primary/10 flex-center">
-                    {b.avatar ? (
-                      <img src={b.avatar} alt="" className="size-full rounded-full object-cover" />
-                    ) : (
-                      <User className="size-5 text-primary" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{b.participant_name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {b.last_message || "No messages yet"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+        {/* Bookings List */}
+        <div className="flex-1 overflow-y-auto ">
+          {currentBookings.length === 0
+            ? renderEmptyState()
+            : currentBookings.map((b) => renderBookingCard(b, handleSelectBooking))
+          }
         </div>
       </Card>
 
+      {/* ═══════════════════════════════════════════════════════════ */}
       {/* Main Chat Area */}
-      <Card className="flex-1 flex flex-col overflow-hidden">
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <Card className="flex-1 flex flex-col overflow-hidden shadow-sm">
         {selectedBooking ? (
           <>
-            {/* Header */}
-            <div className="p-4 border-b">
+            {/* ─── Chat Header ─── */}
+            <div className="p-4 border-b bg-white/50 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-12 rounded-full bg-primary/10 flex-center flex-shrink-0">
+                  <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     {selectedBooking.avatar ? (
                       <img
                         src={selectedBooking.avatar}
-                        alt=""
+                        alt={selectedBooking.participant_name}
                         className="size-full rounded-full object-cover"
                       />
                     ) : (
@@ -1177,7 +788,9 @@ export default function TutorChat() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h2 className="font-semibold truncate">{selectedBooking.participant_name}</h2>
+                    <h2 className="font-semibold truncate">
+                      {selectedBooking.participant_name}
+                    </h2>
                     <p className="text-sm text-muted-foreground capitalize">
                       {selectedBooking.status?.replace("-", " ") || "Unknown"}
                     </p>
@@ -1185,8 +798,8 @@ export default function TutorChat() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Accept Booking Button – visible only for pending */}
-                  {selectedBooking?.status?.toLowerCase() === "pending" && (
+                  {/* Accept Button - Only for pending */}
+                  {selectedBooking.status?.toLowerCase() === "pending" && (
                     <Button
                       onClick={handleAcceptBooking}
                       disabled={isSending}
@@ -1195,34 +808,41 @@ export default function TutorChat() {
                       Accept Booking
                     </Button>
                   )}
-
                   <BookingActions booking={selectedBooking} />
                 </div>
               </div>
 
+              {/* Booking Details */}
               {selectedBooking.purpose && (
                 <>
                   <Separator className="my-3" />
                   <div className="space-y-2 text-sm">
-                    <p><strong>Purpose:</strong> {selectedBooking.purpose}</p>
+                    <p>
+                      <strong>Purpose:</strong> {selectedBooking.purpose}
+                    </p>
                     {selectedBooking.scheduledAt && (
-                      <p><strong>Scheduled:</strong> {format(parseISO(selectedBooking.scheduledAt), "PPP p")}</p>
-                    )}
-                    {selectedBooking.proposedAt && selectedBooking.status?.toLowerCase() === "reschedule_proposed" && (
-                      <p className="text-purple-700">
-                        <strong>Proposed Time:</strong> {format(parseISO(selectedBooking.proposedAt), "PPP p")}
+                      <p>
+                        <strong>Scheduled:</strong>{" "}
+                        {format(parseISO(selectedBooking.scheduledAt), "PPP p")}
                       </p>
                     )}
+                    {selectedBooking.proposedAt &&
+                      selectedBooking.status?.toLowerCase() === "reschedule_proposed" && (
+                        <p className="text-orange-600">
+                          <strong>Proposed Time:</strong>{" "}
+                          {format(parseISO(selectedBooking.proposedAt), "PPP p")}
+                        </p>
+                      )}
                   </div>
                 </>
               )}
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto">
+            {/* ─── Messages Area ─── */}
+            <div className="flex-1 overflow-y-auto bg-gray-50/50">
               <ChatMessages
                 messages={messages}
-                isLoading={isLoading}
+                isLoading={isLoadingMessages}
                 bookingStatus={selectedBooking.status}
                 proposedAt={selectedBooking.proposedAt}
                 onConfirmMessage={confirmMessage}
@@ -1232,15 +852,18 @@ export default function TutorChat() {
               />
             </div>
 
-            {/* Input */}
+            {/* ─── Message Input ─── */}
             <ChatInput
-              onSend={handleSend}
+              onSend={handleSendMessage}
               isSending={isSending}
-              disabled={["cancelled", "completed"].includes(selectedBooking?.status?.toLowerCase())}
-              selectedBookingId={selectedBookingId}
+              disabled={["cancelled", "completed"].includes(
+                selectedBooking.status?.toLowerCase()
+              )}
+              selectedBookingId={selectedBooking.id}
             />
           </>
         ) : (
+          // Empty State
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
             <MessageSquare className="size-16 text-muted-foreground/40 mb-4" />
             <h3 className="text-xl font-medium mb-2">No booking selected</h3>
@@ -1251,19 +874,29 @@ export default function TutorChat() {
         )}
       </Card>
 
+      {/* ═══════════════════════════════════════════════════════════ */}
       {/* Connection Indicators */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      
+      {/* Connected Toast */}
       {showToast && socketConnected && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg animate-fade-in-out">
-          Chat connected ✓
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-2">
+            <div className="size-2 rounded-full bg-white animate-pulse" />
+            Chat connected
+          </div>
         </div>
       )}
 
+      {/* Reconnecting Overlay */}
       {showReconnectOverlay && !socketConnected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl text-center max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl text-center max-w-md mx-4 shadow-2xl">
             <Loader2 className="size-12 animate-spin mx-auto mb-4 text-primary" />
             <h3 className="text-xl font-semibold mb-2">Reconnecting...</h3>
-            <p className="text-muted-foreground">Please wait a moment</p>
+            <p className="text-muted-foreground">
+              Connection lost. Attempting to reconnect...
+            </p>
           </div>
         </div>
       )}

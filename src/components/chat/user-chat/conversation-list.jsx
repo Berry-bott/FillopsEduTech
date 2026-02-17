@@ -370,7 +370,7 @@ export default function EnhancedConversationList({
 
   return (
     <Card className="h-full border-0 rounded-none bg-white shadow-2xl flex flex-col">
-      <div className="px-6 py-4 border-b border-slate-200/60 bg-gradient-to-br from-slate-50 to-white">
+      <div className="px-2 py-4 border-b border-slate-200/60 bg-gradient-to-br from-slate-50 to-white">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
           <Button 
@@ -390,7 +390,7 @@ export default function EnhancedConversationList({
         </div>
 
         {/* ✅ Tabs with notification badges */}
-        <div className="grid grid-cols-5 gap-2 mb-4">
+        <div className="grid grid-cols-3 gap-2 mb-4">
           {[
             { key: "sessions", label: "All" },
             { key: "pending", label: "Pending" },
