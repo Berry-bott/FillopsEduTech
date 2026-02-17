@@ -61,7 +61,9 @@ export default function ChatInterface() {
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const hasFetchedBookings = useUserChatStore(state => state.hasFetchedBookings);
   const hasFetchedTutors = useUserChatStore(state => state.hasFetchedTutors);
-  
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
 
   const [activeTab, setActiveTab] = useState("sessions");
   const [searchQuery, setSearchQuery] = useState("");
@@ -167,6 +169,54 @@ useEffect(() => {
   };
 }, [selectedBooking?.id]);
 
+{cancelModalOpen && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <Card className="w-96 p-6 space-y-4">
+      <h3 className="text-lg font-semibold">Cancel Booking</h3>
+      <p>Enter a reason for cancellation (optional):</p>
+      <input
+        type="text"
+        value={cancelReason}
+        onChange={(e) => setCancelReason(e.target.value)}
+        placeholder="Reason (optional)"
+        className="w-full border rounded px-3 py-2 text-sm"
+      />
+      <div className="flex justify-end gap-2 mt-2">
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setCancelModalOpen(false);
+            setCancelReason("");
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={async () => {
+            try {
+              await cancelBooking(selectedBooking.id, cancelReason || "No reason provided");
+              await fetchBookings();
+              setSelectedBooking(null);
+              toast({ title: "Cancelled", description: "Session cancelled." });
+            } catch (err) {
+              toast({
+                variant: "destructive",
+                title: "Cancellation Failed",
+                description: err.message || "Could not cancel.",
+              });
+            } finally {
+              setCancelModalOpen(false);
+              setCancelReason("");
+            }
+          }}
+          className="bg-red-600 hover:bg-red-700 text-white"
+        >
+          Confirm
+        </Button>
+      </div>
+    </Card>
+  </div>
+)}
 
 
 
@@ -363,25 +413,29 @@ useEffect(() => {
     }
   };
 
-  const handleCancelBooking = async () => {
-    if (!selectedBooking?.id) return;
+  // const handleCancelBooking = async () => {
+  //   if (!selectedBooking?.id) return;
 
-    const reason = prompt("Reason for cancellation (optional):");
-    if (!reason && !window.confirm("Are you sure you want to cancel?")) return;
+  //   const reason = prompt("Reason for cancellation (optional):");
+  //   if (!reason && !window.confirm("Are you sure you want to cancel?")) return;
 
-    try {
-      await cancelBooking(selectedBooking.id, reason || "No reason provided");
-      await fetchBookings();
-      setSelectedBooking(null);
-      toast({ title: "Cancelled", description: "Session cancelled." });
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Cancellation Failed",
-        description: err.message || "Could not cancel.",
-      });
-    }
-  };
+  //   try {
+  //     await cancelBooking(selectedBooking.id, reason || "No reason provided");
+  //     await fetchBookings();
+  //     setSelectedBooking(null);
+  //     toast({ title: "Cancelled", description: "Session cancelled." });
+  //   } catch (err) {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Cancellation Failed",
+  //       description: err.message || "Could not cancel.",
+  //     });
+  //   }
+  // };
+const handleCancelBooking = () => {
+  if (!selectedBooking?.id) return;
+  setCancelModalOpen(true); // open modal instead of using window.prompt
+};
 
   const handleViewDetails = () => {
     if (!selectedBooking) return;

@@ -770,108 +770,71 @@ const handleSendMessage = async (content) => {
       {/* Main Chat Area */}
       {/* ═══════════════════════════════════════════════════════════ */}
       <Card className="flex-1 flex flex-col overflow-hidden shadow-sm">
-        {selectedBooking ? (
-          <>
-            {/* ─── Chat Header ─── */}
-            <div className="p-4 border-b bg-white/50 backdrop-blur-sm">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    {selectedBooking.avatar ? (
-                      <img
-                        src={selectedBooking.avatar}
-                        alt={selectedBooking.participant_name}
-                        className="size-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="size-6 text-primary" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="font-semibold truncate">
-                      {selectedBooking.participant_name}
-                    </h2>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {selectedBooking.status?.replace("-", " ") || "Unknown"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Accept Button - Only for pending */}
-                  {selectedBooking.status?.toLowerCase() === "pending" && (
-                    <Button
-                      onClick={handleAcceptBooking}
-                      disabled={isSending}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      Accept Booking
-                    </Button>
-                  )}
-                  <BookingActions booking={selectedBooking} />
-                </div>
-              </div>
-
-              {/* Booking Details */}
-              {selectedBooking.purpose && (
-                <>
-                  <Separator className="my-3" />
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <strong>Purpose:</strong> {selectedBooking.purpose}
-                    </p>
-                    {selectedBooking.scheduledAt && (
-                      <p>
-                        <strong>Scheduled:</strong>{" "}
-                        {format(parseISO(selectedBooking.scheduledAt), "PPP p")}
-                      </p>
-                    )}
-                    {selectedBooking.proposedAt &&
-                      selectedBooking.status?.toLowerCase() === "reschedule_proposed" && (
-                        <p className="text-orange-600">
-                          <strong>Proposed Time:</strong>{" "}
-                          {format(parseISO(selectedBooking.proposedAt), "PPP p")}
-                        </p>
-                      )}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* ─── Messages Area ─── */}
-            <div className="flex-1 overflow-y-auto bg-gray-50/50">
-              <ChatMessages
-                messages={messages}
-                isLoading={isLoadingMessages}
-                bookingStatus={selectedBooking.status}
-                proposedAt={selectedBooking.proposedAt}
-                onConfirmMessage={confirmMessage}
-                onRejectMessage={rejectMessage}
-                onAcceptReschedule={acceptReschedule}
-                onRejectReschedule={rejectReschedule}
-              />
-            </div>
-
-            {/* ─── Message Input ─── */}
-            <ChatInput
-              onSend={handleSendMessage}
-              isSending={isSending}
-              disabled={["cancelled", "completed"].includes(
-                selectedBooking.status?.toLowerCase()
-              )}
-              selectedBookingId={selectedBooking.id}
+    {selectedBooking && (
+  <div className="p-4 border-b bg-white/50 backdrop-blur-sm">
+    <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          {selectedBooking.avatar ? (
+            <img
+              src={selectedBooking.avatar}
+              alt={selectedBooking.participant_name}
+              className="w-full h-full rounded-full object-cover"
             />
-          </>
-        ) : (
-          // Empty State
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-            <MessageSquare className="size-16 text-muted-foreground/40 mb-4" />
-            <h3 className="text-xl font-medium mb-2">No booking selected</h3>
-            <p className="text-muted-foreground">
-              Choose a booking from the list to start chatting
-            </p>
-          </div>
+          ) : (
+            <User className="w-6 h-6 text-primary" />
+          )}
+        </div>
+
+        <div className="min-w-0">
+          <h2 className="font-semibold truncate">{selectedBooking.participant_name}</h2>
+          <p className="text-sm text-muted-foreground capitalize">
+            {selectedBooking.status?.replace("-", " ") || "Unknown"}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {selectedBooking.status?.toLowerCase() === "pending" && (
+          <Button
+            onClick={handleAcceptBooking}
+            disabled={isSending}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            Accept Booking
+          </Button>
         )}
+        <BookingActions booking={selectedBooking} />
+      </div>
+    </div>
+
+    {selectedBooking.purpose && (
+      <>
+        <Separator className="my-3" />
+        <div className="space-y-2 text-sm">
+          <p>
+            <strong>Purpose:</strong> {selectedBooking.purpose}
+          </p>
+          {selectedBooking.scheduledAt && (
+            <p>
+              <strong>Scheduled:</strong>{" "}
+              {format(parseISO(selectedBooking.scheduledAt), "PPP p")}
+            </p>
+          )}
+          {selectedBooking.proposedAt &&
+            (selectedBooking.status || "").toLowerCase().replace("-", "_") ===
+              "reschedule_proposed" && (
+              <p className="text-orange-600">
+                <strong>Proposed Time:</strong>{" "}
+                {format(parseISO(selectedBooking.proposedAt), "PPP p")}
+              </p>
+            )}
+        </div>
+      </>
+    )}
+  </div>
+)}
+
       </Card>
 
       {/* ═══════════════════════════════════════════════════════════ */}

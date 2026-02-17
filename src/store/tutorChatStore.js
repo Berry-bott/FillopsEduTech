@@ -21,6 +21,7 @@ const mapBookingToUI = (booking) => ({
   purpose: booking.purpose || "",
   avatar: booking.user?.avatar || null,
   isBooking: true,
+  isOnline: false,
 });
 
 // ✅ Helper to check if booking is older than 1 month
@@ -185,12 +186,37 @@ export const useTutorChatStore = create((set, get) => ({
     });
   },
 
+  // handleOnlineUsers: (users) => {
+  //   console.log("👥 Online users:", users);
+  //   const studentId = get().selectedBooking?.studentId;
+  //   const isOnline = users?.some((u) => u.id === studentId && u.userType === "user");
+  //   set({ isParticipantOnline: !!isOnline });
+  // },
+
   handleOnlineUsers: (users) => {
-    console.log("👥 Online users:", users);
-    const studentId = get().selectedBooking?.studentId;
-    const isOnline = users?.some((u) => u.id === studentId && u.userType === "user");
-    set({ isParticipantOnline: !!isOnline });
-  },
+  console.log("👥 Online users:", users);
+
+  const { bookingsByFilter, selectedBooking } = get();
+
+  // Loop through all bookings and set isOnline
+  const updatedFilters = {};
+  Object.keys(bookingsByFilter).forEach((filter) => {
+    updatedFilters[filter] = bookingsByFilter[filter].map((b) => {
+      const isOnline = users.some((u) => u.id === b.studentId && u.userType === "user");
+      return { ...b, isOnline };
+    });
+  });
+
+  // Update selectedBooking if online
+  const updatedSelected = selectedBooking
+    ? {
+        ...selectedBooking,
+        isOnline: users.some((u) => u.id === selectedBooking.studentId && u.userType === "user"),
+      }
+    : null;
+
+  set({ bookingsByFilter: updatedFilters, selectedBooking: updatedSelected });
+},
 
   handleNewBookingNotification: (data) => {
     console.log("🔔 New booking notification:", data);
