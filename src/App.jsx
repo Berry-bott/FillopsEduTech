@@ -39,6 +39,7 @@ import ExamSelector from "./components/DashboardComponents/user/ExamSelector";
 
 // community
 import UserCommunity from "./pages/community/UserCommunity";
+import UseSocket from "./hooks/useSocket";
 
 import "./App.css";
 
@@ -50,6 +51,7 @@ function App() {
     <BrowserRouter>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthProvider>
+        <UseSocket/>
          {/* <TutorAuthProvider> */}
           <Toaster />
           <Routes>
