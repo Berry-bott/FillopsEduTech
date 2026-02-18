@@ -2,7 +2,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import useCommunityStore from "@/store/userCommunityStore";
 import MessageBubble from "./MessageBubble";
-import ChatInput from "./ChatInput";
+import ChatInput from "./Chatinput";
 import { TypingDots, Spinner, OnlineBadge } from "./ChatAtoms";
 
 export default function ChatPanel({ isDark }) {
