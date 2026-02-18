@@ -27,148 +27,149 @@ export default function Sidebar() {
   );
 
   return (
-    <aside style={{
-      width: sidebarOpen ? 280 : 0,
-      background: "#0a0f1e",
-      borderRight: "1px solid rgba(255,255,255,0.07)",
-      transition: "width 0.3s ease",
-      overflow: "hidden",
-      flexShrink: 0,
-    }}>
-      <div style={{ width: 280, height: "100%", display: "flex", flexDirection: "column" }}>
-        {/* Header */}
-        <div style={{ padding: "20px 16px 12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18,
-            }}>🌐</div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#c084fc" }}>
+    /**
+     * SIDEBAR SCROLL FIX:
+     * The aside clips to 0 width when closed. The inner div is always 272px wide.
+     * The inner div is flex-col h-full — header and footer are flex-shrink-0,
+     * and the groups list is flex-1 overflow-y-auto min-h-0, making it the
+     * only section that scrolls.
+     */
+    <aside
+      className="flex-shrink-0 h-full overflow-hidden transition-all duration-300
+        bg-white dark:bg-slate-950
+        border-r border-slate-200 dark:border-slate-800"
+      style={{ width: sidebarOpen ? 272 : 0 }}
+    >
+      {/* Fixed-width inner — always 272px so content clips cleanly on collapse */}
+      <div className="w-[272px] h-full flex flex-col min-h-0">
+
+        {/* ── Brand + Search (fixed, never scrolls) ─────────────── */}
+        <div className="flex-shrink-0 px-4 pt-5 pb-3 border-b border-slate-200 dark:border-slate-800/70">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-base shadow-lg shadow-indigo-500/20">
+              🌐
+            </div>
+            <h1 className="text-lg font-extrabold bg-gradient-to-r from-indigo-500 to-violet-600 bg-clip-text text-transparent">
               Community
             </h1>
           </div>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search groups..."
-            style={{
-              width: "100%", boxSizing: "border-box",
-              padding: "9px 12px",
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 10, color: "white",
-              fontSize: 13, outline: "none",
-              transition: "border-color 0.2s",
-            }}
-            onFocus={(e) => e.target.style.borderColor = "rgba(99,102,241,0.6)"}
-            onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
-          />
+
+          {/* Search */}
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search groups…"
+              className="w-full pl-9 pr-3 py-2
+                bg-slate-100 dark:bg-slate-800/60
+                border border-slate-200 dark:border-slate-700/60
+                rounded-xl text-sm
+                text-slate-700 dark:text-slate-200
+                placeholder-slate-400 dark:placeholder-slate-500
+                outline-none focus:border-indigo-400 dark:focus:border-indigo-500/60
+                focus:bg-white dark:focus:bg-slate-800
+                transition-all"
+            />
+          </div>
         </div>
 
-        {/* Groups */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 8px" }}>
+        {/* ── Section label (fixed) ─────────────────────────────── */}
+        <div className="flex-shrink-0 px-4 pt-3 pb-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-600">
+            Groups {filtered.length > 0 && `· ${filtered.length}`}
+          </span>
+        </div>
+
+        {/* ── Groups list — THIS IS THE SCROLLABLE SECTION ──────── */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto px-2 pb-2"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(148,163,184,0.25) transparent" }}
+        >
           {loadingGroups ? (
-            <div style={{ textAlign: "center", padding: 48 }}>
-              <Spinner size={32} />
+            <div className="flex justify-center pt-12">
+              <Spinner size="md" />
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 32, color: "#475569", fontSize: 13 }}>
+            <div className="text-center pt-10 text-slate-400 dark:text-slate-600 text-sm">
               {search ? "No groups found" : "No groups available"}
             </div>
           ) : (
             filtered.map((group) => {
               const isActive = activeGroupId === group.id;
               return (
-                <div
+                <button
                   key={group.id}
                   onClick={() => openGroup(group.id)}
-                  style={{
-                    padding: "10px 12px", margin: "3px 0",
-                    borderRadius: 12,
-                    background: isActive
-                      ? "rgba(99,102,241,0.18)"
-                      : "transparent",
-                    borderLeft: isActive
-                      ? "3px solid #6366f1"
-                      : "3px solid transparent",
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.background = "transparent";
-                  }}
+                  className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1
+                    transition-all duration-150 cursor-pointer border group
+                    ${isActive
+                      ? "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/30 shadow-sm"
+                      : "bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:border-slate-200 dark:hover:border-slate-700/50"
+                    }`}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{
-                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                  {/* Group icon */}
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg text-white flex-shrink-0 transition-all ${isActive ? "shadow-md" : "shadow-sm"}`}
+                    style={{
                       background: group.subject?.color || "#6366f1",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 20, color: "white",
-                      boxShadow: isActive ? "0 4px 12px rgba(99,102,241,0.35)" : "none",
-                    }}>
-                      {group.iconUrl
-                        ? <img src={group.iconUrl} alt="" style={{ width: "100%", height: "100%", borderRadius: 12 }} />
-                        : "📚"
+                      boxShadow: isActive ? `0 4px 12px ${group.subject?.color || "#6366f1"}40` : undefined,
+                    }}
+                  >
+                    {group.iconUrl
+                      ? <img src={group.iconUrl} alt="" className="w-full h-full rounded-xl object-cover" />
+                      : "📚"
+                    }
+                  </div>
+
+                  {/* Text */}
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-sm font-semibold truncate leading-tight
+                      ${isActive
+                        ? "text-indigo-600 dark:text-indigo-300"
+                        : "text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white"
+                      }`}
+                    >
+                      {group.name}
+                    </div>
+                    <div className="text-xs truncate mt-0.5 leading-tight text-slate-400 dark:text-slate-500">
+                      {group.lastMessage
+                        ? group.lastMessage.content.slice(0, 34) + (group.lastMessage.content.length > 34 ? "…" : "")
+                        : group.subject?.subjectName || "No messages yet"
                       }
                     </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontWeight: 600, fontSize: 14,
-                        color: isActive ? "#c4b5fd" : "#e2e8f0",
-                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                      }}>
-                        {group.name}
-                      </div>
-                      <div style={{
-                        fontSize: 12, color: "#64748b", marginTop: 2,
-                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                      }}>
-                        {group.lastMessage
-                          ? group.lastMessage.content.slice(0, 35) +
-                            (group.lastMessage.content.length > 35 ? "…" : "")
-                          : group.subject?.subjectName || "No messages yet"}
-                      </div>
-                    </div>
-
-                    {(group.onlineCount > 0) && (
-                      <OnlineBadge count={group.onlineCount} />
-                    )}
                   </div>
-                </div>
+
+                  {/* Online badge */}
+                  {group.onlineCount > 0 && (
+                    <OnlineBadge count={group.onlineCount} />
+                  )}
+                </button>
               );
             })
           )}
         </div>
 
-        {/* User footer */}
+        {/* ── User footer (fixed, never scrolls) ───────────────── */}
         {currentUser && (
-          <div style={{
-            padding: "12px 16px",
-            borderTop: "1px solid rgba(255,255,255,0.07)",
-            display: "flex", alignItems: "center", gap: 10,
-            background: "rgba(0,0,0,0.2)",
-          }}>
-            <Avatar name={currentUser.name || "You"} size={36} type={currentUser.type} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontWeight: 600, fontSize: 13, color: "#e2e8f0",
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              }}>
+          <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3
+            border-t border-slate-200 dark:border-slate-800
+            bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm">
+            <Avatar name={currentUser.name || "You"} size={34} type={currentUser.type} />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate leading-tight text-slate-800 dark:text-slate-200">
                 {currentUser.name || "You"}
               </div>
-              <div style={{ fontSize: 11, color: "#10b981", display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-                Online
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 block" />
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Online</span>
               </div>
             </div>
           </div>
         )}
+
       </div>
     </aside>
   );

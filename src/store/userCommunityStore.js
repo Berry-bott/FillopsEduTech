@@ -1,48 +1,416 @@
-// // src/store/communityStore.js
+// // // src/store/communityStore.js
+// // import { create } from "zustand";
+// // import { devtools } from "zustand/middleware";
+// // import useAuthStore from "./authStore";
+// // import { getSocket, joinGroup, leaveGroup, sendGroupMessage, startGroupTyping, stopGroupTyping } from "@/lib/communitySocketService";
+
+// // const BASE_URL = "https://fillops-server-5fuf.onrender.com";
+
+// // const getAuthToken = () => useAuthStore.getState().accessToken || null;
+
+// // // ──────────────────────────────────────────────────────────────────────
+// // // COMMUNITY STORE
+// // // ──────────────────────────────────────────────────────────────────────
+// // const useCommunityStore = create(
+// //   devtools(
+// //     (set, get) => ({
+// //       // ── State ───────────────────────────────────────────────────────
+// //       groups: [],                     // Array<Group>
+// //       activeGroupId: null,
+// //       activeGroup: null,              // current detailed group object
+
+// //       messages: {},                   // { [groupId]: Message[] }
+// //       pagination: {},                 // { [groupId]: { hasMore, nextCursor } }
+
+// //       typingUsers: {},                // { [groupId]: Map<userId, userName> }
+// //       onlineCounts: {},               // { [groupId]: number }
+
+// //       loadingGroups: false,
+// //       loadingMessages: false,
+// //       loadingOlder: false,
+// //       sendingMessage: false,
+// //       error: null,
+
+// //       typingTimeout: null,            // for auto-stop typing
+
+// //       // ── Auth / Token ────────────────────────────────────────────────
+// //       // Token is now read from auth store on demand
+
+// //       // ── Groups ──────────────────────────────────────────────────────
+// //       fetchGroups: async () => {
+// //         const token = getAuthToken();
+// //         if (!token) return set({ error: "Not authenticated" });
+
+// //         set({ loadingGroups: true, error: null });
+
+// //         try {
+// //           const res = await fetch(`${BASE_URL}/api/community/groups`, {
+// //             headers: { Authorization: `Bearer ${token}` },
+// //           });
+// //           if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+// //           const { data: groups = [] } = await res.json();
+
+// //           const onlineCounts = {};
+// //           groups.forEach(g => { onlineCounts[g.id] = g.onlineCount || 0; });
+
+// //           set({ groups, onlineCounts, loadingGroups: false });
+// //         } catch (err) {
+// //           set({ error: "Failed to load groups", loadingGroups: false });
+// //         }
+// //       },
+
+// //       fetchGroupDetails: async (groupId) => {
+// //         const token = getAuthToken();
+// //         if (!token || !groupId) return;
+
+// //         try {
+// //           const res = await fetch(`${BASE_URL}/api/community/groups/${groupId}`, {
+// //             headers: { Authorization: `Bearer ${token}` },
+// //           });
+// //           if (!res.ok) throw new Error(`HTTP ${res.status}`);
+// //           const { data } = await res.json();
+// //           set({ activeGroup: data });
+// //         } catch {
+// //           set({ error: "Failed to load group details" });
+// //         }
+// //       },
+
+// //       // ── Open / Close Group ──────────────────────────────────────────
+// //       openGroup: async (groupId) => {
+// //         const { activeGroupId } = get();
+
+// //         // Leave previous room
+// //         if (activeGroupId && activeGroupId !== groupId) {
+// //           leaveGroup(activeGroupId);
+// //           get().stopTyping();
+// //         }
+
+// //         set({
+// //           activeGroupId: groupId,
+// //           activeGroup: null,
+// //           messages: { ...get().messages, [groupId]: get().messages[groupId] || [] },
+// //           typingUsers: { ...get().typingUsers, [groupId]: new Map() },
+// //         });
+
+// //         // Load data
+// //         await Promise.all([
+// //           get().fetchGroupDetails(groupId),
+// //           get().fetchMessages(groupId), // always refresh on open (or check cache if desired)
+// //         ]);
+
+// //         // Join socket room
+// //         const socket = getSocket();
+// //         if (socket?.connected) {
+// //           joinGroup(groupId, (res) => {
+// //             if (res?.success) {
+// //               set(state => ({
+// //                 onlineCounts: { ...state.onlineCounts, [groupId]: res.onlineCount }
+// //               }));
+// //             } else {
+// //               set({ error: res?.message || "Failed to join group" });
+// //             }
+// //           });
+// //         }
+// //       },
+
+// //       closeGroup: (groupId) => {
+// //         if (get().activeGroupId === groupId) {
+// //           leaveGroup(groupId);
+// //           get().stopTyping();
+// //           set({ activeGroupId: null, activeGroup: null });
+// //         }
+// //       },
+
+// //       // ── Messages ────────────────────────────────────────────────────
+// //       fetchMessages: async (groupId, cursor = null) => {
+// //         const token = getAuthToken();
+// //         if (!token || !groupId) return;
+
+// //         const isOlder = !!cursor;
+// //         set(isOlder ? { loadingOlder: true } : { loadingMessages: true });
+
+// //         try {
+// //           let url = `${BASE_URL}/api/community/groups/${groupId}/messages?limit=50`;
+// //           if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
+
+// //           const res = await fetch(url, {
+// //             headers: { Authorization: `Bearer ${token}` },
+// //           });
+// //           if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+// //           const { data: { messages: newMsgs, pagination } } = await res.json();
+
+// //           set(state => ({
+// //             messages: {
+// //               ...state.messages,
+// //               [groupId]: isOlder
+// //                 ? [...newMsgs, ...(state.messages[groupId] || [])]
+// //                 : newMsgs,
+// //             },
+// //             pagination: {
+// //               ...state.pagination,
+// //               [groupId]: pagination,
+// //             },
+// //             loadingMessages: false,
+// //             loadingOlder: false,
+// //           }));
+// //         } catch {
+// //           set({ loadingMessages: false, loadingOlder: false });
+// //         }
+// //       },
+
+// //       loadOlderMessages: async () => {
+// //         const { activeGroupId, pagination, loadingOlder } = get();
+// //         if (!activeGroupId || loadingOlder) return;
+
+// //         const page = pagination[activeGroupId];
+// //         if (!page?.hasMore || !page?.nextCursor) return;
+
+// //         await get().fetchMessages(activeGroupId, page.nextCursor);
+// //       },
+
+// //       sendMessage: async (content) => {
+// //         const { activeGroupId } = get();
+// //         if (!activeGroupId || !content?.trim()) return;
+
+// //         const trimmed = content.trim();
+// //         set({ sendingMessage: true });
+
+// //         const socket = getSocket();
+
+// //         if (socket?.connected) {
+// //           sendGroupMessage(
+// //             { groupId: activeGroupId, content: trimmed, type: "TEXT" },
+// //             (ack) => {
+// //               set({ sendingMessage: false });
+// //               if (!ack?.success) {
+// //                 set({ error: ack?.message || "Failed to send" });
+// //               }
+// //             }
+// //           );
+// //           get().stopTyping();
+// //         } else {
+// //           // REST fallback
+// //           const token = getAuthToken();
+// //           try {
+// //             await fetch(`${BASE_URL}/api/community/groups/${activeGroupId}/messages`, {
+// //               method: "POST",
+// //               headers: {
+// //                 "Content-Type": "application/json",
+// //                 Authorization: `Bearer ${token}`,
+// //               },
+// //               body: JSON.stringify({ content: trimmed, type: "TEXT" }),
+// //             });
+// //           } catch {
+// //             set({ error: "No connection — message not sent" });
+// //           }
+// //           set({ sendingMessage: false });
+// //         }
+// //       },
+
+// //       // ── Typing ──────────────────────────────────────────────────────
+// //       startTyping: () => {
+// //         const { activeGroupId, typingTimeout } = get();
+// //         if (!activeGroupId) return;
+
+// //         startGroupTyping(activeGroupId);
+
+// //         if (typingTimeout) clearTimeout(typingTimeout);
+// //         set({
+// //           typingTimeout: setTimeout(() => get().stopTyping(), 2500),
+// //         });
+// //       },
+
+// //       stopTyping: () => {
+// //         const { activeGroupId, typingTimeout } = get();
+// //         if (typingTimeout) clearTimeout(typingTimeout);
+// //         if (activeGroupId) stopGroupTyping(activeGroupId);
+// //         set({ typingTimeout: null });
+// //       },
+
+// //       // ── Socket Listeners Registration ───────────────────────────────
+// //       initializeListeners: () => {
+// //         const socket = getSocket();
+// //         if (!socket) return;
+
+// //         const handlers = {
+// //           "group:new_message": (msg) => {
+// //             set(state => ({
+// //               messages: {
+// //                 ...state.messages,
+// //                 [msg.groupId]: [...(state.messages[msg.groupId] || []), msg],
+// //               },
+// //               groups: state.groups.map(g =>
+// //                 g.id === msg.groupId ? { ...g, lastMessage: msg } : g
+// //               ),
+// //             }));
+// //           },
+
+// //           "group:typing": (data) => {
+// //             const groupId = data.groupId || get().activeGroupId;
+// //             if (!groupId) return;
+
+// //             set(state => {
+// //               const map = new Map(state.typingUsers[groupId] || []);
+// //               if (data.isTyping) {
+// //                 map.set(data.userId, data.userName);
+// //               } else {
+// //                 map.delete(data.userId);
+// //               }
+// //               return {
+// //                 typingUsers: { ...state.typingUsers, [groupId]: map },
+// //               };
+// //             });
+// //           },
+
+// //           "group:member_count": (data) => {
+// //             if (data.groupId) {
+// //               set(state => ({
+// //                 onlineCounts: { ...state.onlineCounts, [data.groupId]: data.count },
+// //               }));
+// //             }
+// //           },
+
+// //           "group:user_joined": (data) => {
+// //             if (data.groupId) {
+// //               set(state => ({
+// //                 onlineCounts: { ...state.onlineCounts, [data.groupId]: data.onlineCount },
+// //               }));
+// //             }
+// //           },
+
+// //           "group:user_left": (data) => {
+// //             if (data.groupId) {
+// //               set(state => ({
+// //                 onlineCounts: { ...state.onlineCounts, [data.groupId]: data.onlineCount },
+// //               }));
+// //             }
+// //           },
+
+// //           "group:deactivated": (data) => {
+// //             get().handleGroupRemoved(data.groupId, data.message);
+// //           },
+
+// //           "group:deleted": (data) => {
+// //             get().handleGroupRemoved(data.groupId, data.message);
+// //           },
+// //         };
+
+// //         // Register all
+// //         Object.entries(handlers).forEach(([event, fn]) => {
+// //           socket.on(event, fn);
+// //         });
+
+// //         // Return cleanup function
+// //         return () => {
+// //           Object.keys(handlers).forEach(event => socket.off(event, handlers[event]));
+// //         };
+// //       },
+
+// //       // ── Group removal handler ───────────────────────────────────────
+// //       handleGroupRemoved: (groupId, message) => {
+// //         set(state => ({
+// //           groups: state.groups.filter(g => g.id !== groupId),
+// //           activeGroupId: state.activeGroupId === groupId ? null : state.activeGroupId,
+// //           activeGroup: state.activeGroup?.id === groupId ? null : state.activeGroup,
+// //           messages: { ...state.messages, [groupId]: undefined },
+// //           pagination: { ...state.pagination, [groupId]: undefined },
+// //           typingUsers: { ...state.typingUsers, [groupId]: undefined },
+// //           error: message || "This group is no longer available.",
+// //         }));
+// //       },
+
+// //       // ── Reset / cleanup ─────────────────────────────────────────────
+// //       reset: () => {
+// //         set({
+// //           groups: [],
+// //           activeGroupId: null,
+// //           activeGroup: null,
+// //           messages: {},
+// //           pagination: {},
+// //           typingUsers: {},
+// //           onlineCounts: {},
+// //           error: null,
+// //         });
+// //       },
+// //     }),
+// //     { name: "CommunityStore" }
+// //   )
+// // );
+
+// // // Optional: auto-register listeners on first import (or call manually after login)
+// // if (typeof window !== "undefined") {
+// //   useCommunityStore.getState().initializeListeners();
+// // }
+
+// // export default useCommunityStore;
+
+
+
+
+
+
+
+
+
+
+
+
+// // src/store/userCommunityStore.js
 // import { create } from "zustand";
 // import { devtools } from "zustand/middleware";
 // import useAuthStore from "./authStore";
-// import { getSocket, joinGroup, leaveGroup, sendGroupMessage, startGroupTyping, stopGroupTyping } from "@/lib/communitySocketService";
+// import {
+//   getSocket,
+//   joinGroup,
+//   leaveGroup,
+//   sendGroupMessage,
+//   startGroupTyping,
+//   stopGroupTyping,
+// } from "@/lib/communitySocketService";
 
 // const BASE_URL = "https://fillops-server-5fuf.onrender.com";
 
-// const getAuthToken = () => useAuthStore.getState().accessToken || null;
+// const getToken = () => useAuthStore.getState().accessToken || null;
 
-// // ──────────────────────────────────────────────────────────────────────
-// // COMMUNITY STORE
-// // ──────────────────────────────────────────────────────────────────────
 // const useCommunityStore = create(
 //   devtools(
 //     (set, get) => ({
-//       // ── State ───────────────────────────────────────────────────────
-//       groups: [],                     // Array<Group>
+//       // ── State ──────────────────────────────────────────────────────
+//       groups: [],
 //       activeGroupId: null,
-//       activeGroup: null,              // current detailed group object
+//       activeGroup: null,
 
-//       messages: {},                   // { [groupId]: Message[] }
-//       pagination: {},                 // { [groupId]: { hasMore, nextCursor } }
-
-//       typingUsers: {},                // { [groupId]: Map<userId, userName> }
-//       onlineCounts: {},               // { [groupId]: number }
+//       messages: {},        // { [groupId]: Message[] }
+//       pagination: {},      // { [groupId]: { hasMore, nextCursor } }
+//       typingUsers: {},     // { [groupId]: Map<userId, userName> }
+//       onlineCounts: {},    // { [groupId]: number }
 
 //       loadingGroups: false,
 //       loadingMessages: false,
 //       loadingOlder: false,
 //       sendingMessage: false,
+//       sidebarOpen: true,
 //       error: null,
 
-//       typingTimeout: null,            // for auto-stop typing
+//       currentUser: null,
+//       typingTimeout: null,
+//       listenersRegistered: false,
 
-//       // ── Auth / Token ────────────────────────────────────────────────
-//       // Token is now read from auth store on demand
+//       // ── Auth ───────────────────────────────────────────────────────
+//       setCurrentUser: (user) => set({ currentUser: user }),
 
-//       // ── Groups ──────────────────────────────────────────────────────
+//       // ── UI ─────────────────────────────────────────────────────────
+//       setSidebarOpen: (val) => set({ sidebarOpen: val }),
+//       clearError: () => set({ error: null }),
+
+//       // ── Groups ─────────────────────────────────────────────────────
 //       fetchGroups: async () => {
-//         const token = getAuthToken();
+//         const token = getToken();
 //         if (!token) return set({ error: "Not authenticated" });
 
 //         set({ loadingGroups: true, error: null });
-
 //         try {
 //           const res = await fetch(`${BASE_URL}/api/community/groups`, {
 //             headers: { Authorization: `Bearer ${token}` },
@@ -50,9 +418,8 @@
 //           if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
 //           const { data: groups = [] } = await res.json();
-
 //           const onlineCounts = {};
-//           groups.forEach(g => { onlineCounts[g.id] = g.onlineCount || 0; });
+//           groups.forEach((g) => { onlineCounts[g.id] = g.onlineCount || 0; });
 
 //           set({ groups, onlineCounts, loadingGroups: false });
 //         } catch (err) {
@@ -61,9 +428,8 @@
 //       },
 
 //       fetchGroupDetails: async (groupId) => {
-//         const token = getAuthToken();
+//         const token = getToken();
 //         if (!token || !groupId) return;
-
 //         try {
 //           const res = await fetch(`${BASE_URL}/api/community/groups/${groupId}`, {
 //             headers: { Authorization: `Bearer ${token}` },
@@ -76,36 +442,33 @@
 //         }
 //       },
 
-//       // ── Open / Close Group ──────────────────────────────────────────
+//       // ── Open / Close Group ─────────────────────────────────────────
 //       openGroup: async (groupId) => {
 //         const { activeGroupId } = get();
 
-//         // Leave previous room
 //         if (activeGroupId && activeGroupId !== groupId) {
 //           leaveGroup(activeGroupId);
 //           get().stopTyping();
 //         }
 
-//         set({
+//         set((state) => ({
 //           activeGroupId: groupId,
 //           activeGroup: null,
-//           messages: { ...get().messages, [groupId]: get().messages[groupId] || [] },
-//           typingUsers: { ...get().typingUsers, [groupId]: new Map() },
-//         });
+//           messages: { ...state.messages, [groupId]: state.messages[groupId] || [] },
+//           typingUsers: { ...state.typingUsers, [groupId]: new Map() },
+//         }));
 
-//         // Load data
 //         await Promise.all([
 //           get().fetchGroupDetails(groupId),
-//           get().fetchMessages(groupId), // always refresh on open (or check cache if desired)
+//           get().fetchMessages(groupId),
 //         ]);
 
-//         // Join socket room
 //         const socket = getSocket();
 //         if (socket?.connected) {
 //           joinGroup(groupId, (res) => {
 //             if (res?.success) {
-//               set(state => ({
-//                 onlineCounts: { ...state.onlineCounts, [groupId]: res.onlineCount }
+//               set((state) => ({
+//                 onlineCounts: { ...state.onlineCounts, [groupId]: res.onlineCount },
 //               }));
 //             } else {
 //               set({ error: res?.message || "Failed to join group" });
@@ -122,9 +485,9 @@
 //         }
 //       },
 
-//       // ── Messages ────────────────────────────────────────────────────
+//       // ── Messages ───────────────────────────────────────────────────
 //       fetchMessages: async (groupId, cursor = null) => {
-//         const token = getAuthToken();
+//         const token = getToken();
 //         if (!token || !groupId) return;
 
 //         const isOlder = !!cursor;
@@ -141,17 +504,14 @@
 
 //           const { data: { messages: newMsgs, pagination } } = await res.json();
 
-//           set(state => ({
+//           set((state) => ({
 //             messages: {
 //               ...state.messages,
 //               [groupId]: isOlder
 //                 ? [...newMsgs, ...(state.messages[groupId] || [])]
 //                 : newMsgs,
 //             },
-//             pagination: {
-//               ...state.pagination,
-//               [groupId]: pagination,
-//             },
+//             pagination: { ...state.pagination, [groupId]: pagination },
 //             loadingMessages: false,
 //             loadingOlder: false,
 //           }));
@@ -163,19 +523,19 @@
 //       loadOlderMessages: async () => {
 //         const { activeGroupId, pagination, loadingOlder } = get();
 //         if (!activeGroupId || loadingOlder) return;
-
 //         const page = pagination[activeGroupId];
 //         if (!page?.hasMore || !page?.nextCursor) return;
-
 //         await get().fetchMessages(activeGroupId, page.nextCursor);
 //       },
 
+//       // ── Send Message ───────────────────────────────────────────────
 //       sendMessage: async (content) => {
 //         const { activeGroupId } = get();
 //         if (!activeGroupId || !content?.trim()) return;
 
 //         const trimmed = content.trim();
 //         set({ sendingMessage: true });
+//         get().stopTyping();
 
 //         const socket = getSocket();
 
@@ -184,15 +544,11 @@
 //             { groupId: activeGroupId, content: trimmed, type: "TEXT" },
 //             (ack) => {
 //               set({ sendingMessage: false });
-//               if (!ack?.success) {
-//                 set({ error: ack?.message || "Failed to send" });
-//               }
+//               if (!ack?.success) set({ error: ack?.message || "Failed to send" });
 //             }
 //           );
-//           get().stopTyping();
 //         } else {
-//           // REST fallback
-//           const token = getAuthToken();
+//           const token = getToken();
 //           try {
 //             await fetch(`${BASE_URL}/api/community/groups/${activeGroupId}/messages`, {
 //               method: "POST",
@@ -209,17 +565,13 @@
 //         }
 //       },
 
-//       // ── Typing ──────────────────────────────────────────────────────
+//       // ── Typing ─────────────────────────────────────────────────────
 //       startTyping: () => {
 //         const { activeGroupId, typingTimeout } = get();
 //         if (!activeGroupId) return;
-
 //         startGroupTyping(activeGroupId);
-
 //         if (typingTimeout) clearTimeout(typingTimeout);
-//         set({
-//           typingTimeout: setTimeout(() => get().stopTyping(), 2500),
-//         });
+//         set({ typingTimeout: setTimeout(() => get().stopTyping(), 2500) });
 //       },
 
 //       stopTyping: () => {
@@ -229,19 +581,19 @@
 //         set({ typingTimeout: null });
 //       },
 
-//       // ── Socket Listeners Registration ───────────────────────────────
+//       // ── Socket Listeners ───────────────────────────────────────────
 //       initializeListeners: () => {
 //         const socket = getSocket();
-//         if (!socket) return;
+//         if (!socket || get().listenersRegistered) return;
 
 //         const handlers = {
 //           "group:new_message": (msg) => {
-//             set(state => ({
+//             set((state) => ({
 //               messages: {
 //                 ...state.messages,
 //                 [msg.groupId]: [...(state.messages[msg.groupId] || []), msg],
 //               },
-//               groups: state.groups.map(g =>
+//               groups: state.groups.map((g) =>
 //                 g.id === msg.groupId ? { ...g, lastMessage: msg } : g
 //               ),
 //             }));
@@ -250,68 +602,44 @@
 //           "group:typing": (data) => {
 //             const groupId = data.groupId || get().activeGroupId;
 //             if (!groupId) return;
-
-//             set(state => {
+//             set((state) => {
 //               const map = new Map(state.typingUsers[groupId] || []);
-//               if (data.isTyping) {
-//                 map.set(data.userId, data.userName);
-//               } else {
-//                 map.delete(data.userId);
-//               }
-//               return {
-//                 typingUsers: { ...state.typingUsers, [groupId]: map },
-//               };
+//               data.isTyping ? map.set(data.userId, data.userName) : map.delete(data.userId);
+//               return { typingUsers: { ...state.typingUsers, [groupId]: map } };
 //             });
 //           },
 
 //           "group:member_count": (data) => {
-//             if (data.groupId) {
-//               set(state => ({
-//                 onlineCounts: { ...state.onlineCounts, [data.groupId]: data.count },
-//               }));
-//             }
+//             if (data.groupId)
+//               set((state) => ({ onlineCounts: { ...state.onlineCounts, [data.groupId]: data.count } }));
 //           },
 
 //           "group:user_joined": (data) => {
-//             if (data.groupId) {
-//               set(state => ({
-//                 onlineCounts: { ...state.onlineCounts, [data.groupId]: data.onlineCount },
-//               }));
-//             }
+//             if (data.groupId)
+//               set((state) => ({ onlineCounts: { ...state.onlineCounts, [data.groupId]: data.onlineCount } }));
 //           },
 
 //           "group:user_left": (data) => {
-//             if (data.groupId) {
-//               set(state => ({
-//                 onlineCounts: { ...state.onlineCounts, [data.groupId]: data.onlineCount },
-//               }));
-//             }
+//             if (data.groupId)
+//               set((state) => ({ onlineCounts: { ...state.onlineCounts, [data.groupId]: data.onlineCount } }));
 //           },
 
-//           "group:deactivated": (data) => {
-//             get().handleGroupRemoved(data.groupId, data.message);
-//           },
-
-//           "group:deleted": (data) => {
-//             get().handleGroupRemoved(data.groupId, data.message);
-//           },
+//           "group:deactivated": (data) => get().handleGroupRemoved(data.groupId, data.message),
+//           "group:deleted": (data) => get().handleGroupRemoved(data.groupId, data.message),
 //         };
 
-//         // Register all
-//         Object.entries(handlers).forEach(([event, fn]) => {
-//           socket.on(event, fn);
-//         });
+//         Object.entries(handlers).forEach(([event, fn]) => socket.on(event, fn));
+//         set({ listenersRegistered: true });
 
-//         // Return cleanup function
 //         return () => {
-//           Object.keys(handlers).forEach(event => socket.off(event, handlers[event]));
+//           Object.entries(handlers).forEach(([event, fn]) => socket.off(event, fn));
+//           set({ listenersRegistered: false });
 //         };
 //       },
 
-//       // ── Group removal handler ───────────────────────────────────────
 //       handleGroupRemoved: (groupId, message) => {
-//         set(state => ({
-//           groups: state.groups.filter(g => g.id !== groupId),
+//         set((state) => ({
+//           groups: state.groups.filter((g) => g.id !== groupId),
 //           activeGroupId: state.activeGroupId === groupId ? null : state.activeGroupId,
 //           activeGroup: state.activeGroup?.id === groupId ? null : state.activeGroup,
 //           messages: { ...state.messages, [groupId]: undefined },
@@ -321,7 +649,6 @@
 //         }));
 //       },
 
-//       // ── Reset / cleanup ─────────────────────────────────────────────
 //       reset: () => {
 //         set({
 //           groups: [],
@@ -332,6 +659,7 @@
 //           typingUsers: {},
 //           onlineCounts: {},
 //           error: null,
+//           listenersRegistered: false,
 //         });
 //       },
 //     }),
@@ -339,12 +667,8 @@
 //   )
 // );
 
-// // Optional: auto-register listeners on first import (or call manually after login)
-// if (typeof window !== "undefined") {
-//   useCommunityStore.getState().initializeListeners();
-// }
-
 // export default useCommunityStore;
+
 
 
 
@@ -362,69 +686,41 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import useAuthStore from "./authStore";
 import {
-  getSocket,
-  joinGroup,
-  leaveGroup,
-  sendGroupMessage,
-  startGroupTyping,
-  stopGroupTyping,
+  getSocket, joinGroup, leaveGroup,
+  sendGroupMessage, startGroupTyping, stopGroupTyping,
 } from "@/lib/communitySocketService";
 
 const BASE_URL = "https://fillops-server-5fuf.onrender.com";
-
 const getToken = () => useAuthStore.getState().accessToken || null;
 
 const useCommunityStore = create(
   devtools(
     (set, get) => ({
-      // ── State ──────────────────────────────────────────────────────
-      groups: [],
-      activeGroupId: null,
-      activeGroup: null,
+      groups: [], activeGroupId: null, activeGroup: null,
+      messages: {}, pagination: {}, typingUsers: {}, onlineCounts: {},
+      loadingGroups: false, loadingMessages: false,
+      loadingOlder: false, sendingMessage: false,
+      sidebarOpen: true, error: null,
+      currentUser: null, typingTimeout: null, listenersRegistered: false,
 
-      messages: {},        // { [groupId]: Message[] }
-      pagination: {},      // { [groupId]: { hasMore, nextCursor } }
-      typingUsers: {},     // { [groupId]: Map<userId, userName> }
-      onlineCounts: {},    // { [groupId]: number }
+      setSidebarOpen:  (val)  => set({ sidebarOpen: val }),
+      clearError:      ()     => set({ error: null }),
+      setCurrentUser:  (user) => set({ currentUser: user }),
 
-      loadingGroups: false,
-      loadingMessages: false,
-      loadingOlder: false,
-      sendingMessage: false,
-      sidebarOpen: true,
-      error: null,
-
-      currentUser: null,
-      typingTimeout: null,
-      listenersRegistered: false,
-
-      // ── Auth ───────────────────────────────────────────────────────
-      setCurrentUser: (user) => set({ currentUser: user }),
-
-      // ── UI ─────────────────────────────────────────────────────────
-      setSidebarOpen: (val) => set({ sidebarOpen: val }),
-      clearError: () => set({ error: null }),
-
-      // ── Groups ─────────────────────────────────────────────────────
       fetchGroups: async () => {
         const token = getToken();
         if (!token) return set({ error: "Not authenticated" });
-
         set({ loadingGroups: true, error: null });
         try {
           const res = await fetch(`${BASE_URL}/api/community/groups`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
           const { data: groups = [] } = await res.json();
           const onlineCounts = {};
           groups.forEach((g) => { onlineCounts[g.id] = g.onlineCount || 0; });
-
           set({ groups, onlineCounts, loadingGroups: false });
-        } catch (err) {
-          set({ error: "Failed to load groups", loadingGroups: false });
-        }
+        } catch { set({ error: "Failed to load groups", loadingGroups: false }); }
       },
 
       fetchGroupDetails: async (groupId) => {
@@ -437,87 +733,55 @@ const useCommunityStore = create(
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const { data } = await res.json();
           set({ activeGroup: data });
-        } catch {
-          set({ error: "Failed to load group details" });
-        }
+        } catch { set({ error: "Failed to load group details" }); }
       },
 
-      // ── Open / Close Group ─────────────────────────────────────────
       openGroup: async (groupId) => {
         const { activeGroupId } = get();
-
-        if (activeGroupId && activeGroupId !== groupId) {
-          leaveGroup(activeGroupId);
-          get().stopTyping();
-        }
-
-        set((state) => ({
-          activeGroupId: groupId,
-          activeGroup: null,
-          messages: { ...state.messages, [groupId]: state.messages[groupId] || [] },
-          typingUsers: { ...state.typingUsers, [groupId]: new Map() },
+        if (activeGroupId && activeGroupId !== groupId) { leaveGroup(activeGroupId); get().stopTyping(); }
+        set((s) => ({
+          activeGroupId: groupId, activeGroup: null,
+          messages:    { ...s.messages,    [groupId]: s.messages[groupId]    || [] },
+          typingUsers: { ...s.typingUsers, [groupId]: new Map() },
         }));
-
-        await Promise.all([
-          get().fetchGroupDetails(groupId),
-          get().fetchMessages(groupId),
-        ]);
-
+        await Promise.all([get().fetchGroupDetails(groupId), get().fetchMessages(groupId)]);
         const socket = getSocket();
         if (socket?.connected) {
           joinGroup(groupId, (res) => {
-            if (res?.success) {
-              set((state) => ({
-                onlineCounts: { ...state.onlineCounts, [groupId]: res.onlineCount },
-              }));
-            } else {
-              set({ error: res?.message || "Failed to join group" });
-            }
+            if (res?.success) set((s) => ({ onlineCounts: { ...s.onlineCounts, [groupId]: res.onlineCount } }));
+            else set({ error: res?.message || "Failed to join group" });
           });
         }
       },
 
       closeGroup: (groupId) => {
         if (get().activeGroupId === groupId) {
-          leaveGroup(groupId);
-          get().stopTyping();
+          leaveGroup(groupId); get().stopTyping();
           set({ activeGroupId: null, activeGroup: null });
         }
       },
 
-      // ── Messages ───────────────────────────────────────────────────
       fetchMessages: async (groupId, cursor = null) => {
         const token = getToken();
         if (!token || !groupId) return;
-
         const isOlder = !!cursor;
         set(isOlder ? { loadingOlder: true } : { loadingMessages: true });
-
         try {
           let url = `${BASE_URL}/api/community/groups/${groupId}/messages?limit=50`;
           if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
-
-          const res = await fetch(url, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
           const { data: { messages: newMsgs, pagination } } = await res.json();
-
-          set((state) => ({
+          set((s) => ({
             messages: {
-              ...state.messages,
-              [groupId]: isOlder
-                ? [...newMsgs, ...(state.messages[groupId] || [])]
-                : newMsgs,
+              ...s.messages,
+              [groupId]: isOlder ? [...newMsgs, ...(s.messages[groupId] || [])] : newMsgs,
             },
-            pagination: { ...state.pagination, [groupId]: pagination },
+            pagination:      { ...s.pagination, [groupId]: pagination },
             loadingMessages: false,
-            loadingOlder: false,
+            loadingOlder:    false,
           }));
-        } catch {
-          set({ loadingMessages: false, loadingOlder: false });
-        }
+        } catch { set({ loadingMessages: false, loadingOlder: false }); }
       },
 
       loadOlderMessages: async () => {
@@ -528,44 +792,31 @@ const useCommunityStore = create(
         await get().fetchMessages(activeGroupId, page.nextCursor);
       },
 
-      // ── Send Message ───────────────────────────────────────────────
       sendMessage: async (content) => {
         const { activeGroupId } = get();
         if (!activeGroupId || !content?.trim()) return;
-
         const trimmed = content.trim();
         set({ sendingMessage: true });
         get().stopTyping();
-
         const socket = getSocket();
-
         if (socket?.connected) {
-          sendGroupMessage(
-            { groupId: activeGroupId, content: trimmed, type: "TEXT" },
-            (ack) => {
-              set({ sendingMessage: false });
-              if (!ack?.success) set({ error: ack?.message || "Failed to send" });
-            }
-          );
+          sendGroupMessage({ groupId: activeGroupId, content: trimmed, type: "TEXT" }, (ack) => {
+            set({ sendingMessage: false });
+            if (!ack?.success) set({ error: ack?.message || "Failed to send" });
+          });
         } else {
           const token = getToken();
           try {
             await fetch(`${BASE_URL}/api/community/groups/${activeGroupId}/messages`, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
               body: JSON.stringify({ content: trimmed, type: "TEXT" }),
             });
-          } catch {
-            set({ error: "No connection — message not sent" });
-          }
+          } catch { set({ error: "No connection — message not sent" }); }
           set({ sendingMessage: false });
         }
       },
 
-      // ── Typing ─────────────────────────────────────────────────────
       startTyping: () => {
         const { activeGroupId, typingTimeout } = get();
         if (!activeGroupId) return;
@@ -581,87 +832,61 @@ const useCommunityStore = create(
         set({ typingTimeout: null });
       },
 
-      // ── Socket Listeners ───────────────────────────────────────────
       initializeListeners: () => {
         const socket = getSocket();
         if (!socket || get().listenersRegistered) return;
 
         const handlers = {
           "group:new_message": (msg) => {
-            set((state) => ({
-              messages: {
-                ...state.messages,
-                [msg.groupId]: [...(state.messages[msg.groupId] || []), msg],
-              },
-              groups: state.groups.map((g) =>
-                g.id === msg.groupId ? { ...g, lastMessage: msg } : g
-              ),
+            set((s) => ({
+              messages: { ...s.messages, [msg.groupId]: [...(s.messages[msg.groupId] || []), msg] },
+              groups:   s.groups.map((g) => g.id === msg.groupId ? { ...g, lastMessage: msg } : g),
             }));
           },
-
           "group:typing": (data) => {
             const groupId = data.groupId || get().activeGroupId;
             if (!groupId) return;
-            set((state) => {
-              const map = new Map(state.typingUsers[groupId] || []);
+            set((s) => {
+              const map = new Map(s.typingUsers[groupId] || []);
               data.isTyping ? map.set(data.userId, data.userName) : map.delete(data.userId);
-              return { typingUsers: { ...state.typingUsers, [groupId]: map } };
+              return { typingUsers: { ...s.typingUsers, [groupId]: map } };
             });
           },
-
           "group:member_count": (data) => {
-            if (data.groupId)
-              set((state) => ({ onlineCounts: { ...state.onlineCounts, [data.groupId]: data.count } }));
+            if (data.groupId) set((s) => ({ onlineCounts: { ...s.onlineCounts, [data.groupId]: data.count } }));
           },
-
           "group:user_joined": (data) => {
-            if (data.groupId)
-              set((state) => ({ onlineCounts: { ...state.onlineCounts, [data.groupId]: data.onlineCount } }));
+            if (data.groupId) set((s) => ({ onlineCounts: { ...s.onlineCounts, [data.groupId]: data.onlineCount } }));
           },
-
           "group:user_left": (data) => {
-            if (data.groupId)
-              set((state) => ({ onlineCounts: { ...state.onlineCounts, [data.groupId]: data.onlineCount } }));
+            if (data.groupId) set((s) => ({ onlineCounts: { ...s.onlineCounts, [data.groupId]: data.onlineCount } }));
           },
-
           "group:deactivated": (data) => get().handleGroupRemoved(data.groupId, data.message),
-          "group:deleted": (data) => get().handleGroupRemoved(data.groupId, data.message),
+          "group:deleted":     (data) => get().handleGroupRemoved(data.groupId, data.message),
         };
 
-        Object.entries(handlers).forEach(([event, fn]) => socket.on(event, fn));
+        Object.entries(handlers).forEach(([e, fn]) => socket.on(e, fn));
         set({ listenersRegistered: true });
-
-        return () => {
-          Object.entries(handlers).forEach(([event, fn]) => socket.off(event, fn));
-          set({ listenersRegistered: false });
-        };
+        return () => { Object.entries(handlers).forEach(([e, fn]) => socket.off(e, fn)); set({ listenersRegistered: false }); };
       },
 
       handleGroupRemoved: (groupId, message) => {
-        set((state) => ({
-          groups: state.groups.filter((g) => g.id !== groupId),
-          activeGroupId: state.activeGroupId === groupId ? null : state.activeGroupId,
-          activeGroup: state.activeGroup?.id === groupId ? null : state.activeGroup,
-          messages: { ...state.messages, [groupId]: undefined },
-          pagination: { ...state.pagination, [groupId]: undefined },
-          typingUsers: { ...state.typingUsers, [groupId]: undefined },
-          error: message || "This group is no longer available.",
+        set((s) => ({
+          groups:        s.groups.filter((g) => g.id !== groupId),
+          activeGroupId: s.activeGroupId === groupId ? null : s.activeGroupId,
+          activeGroup:   s.activeGroup?.id === groupId ? null : s.activeGroup,
+          messages:      { ...s.messages,    [groupId]: undefined },
+          pagination:    { ...s.pagination,  [groupId]: undefined },
+          typingUsers:   { ...s.typingUsers, [groupId]: undefined },
+          error:         message || "This group is no longer available.",
         }));
       },
 
-      reset: () => {
-        set({
-          groups: [],
-          activeGroupId: null,
-          activeGroup: null,
-          messages: {},
-          pagination: {},
-          typingUsers: {},
-          onlineCounts: {},
-          error: null,
-          listenersRegistered: false,
-        });
-      },
+      reset: () => set({
+        groups: [], activeGroupId: null, activeGroup: null,
+        messages: {}, pagination: {}, typingUsers: {}, onlineCounts: {},
+        error: null, listenersRegistered: false,
+      }),
     }),
     { name: "CommunityStore" }
   )

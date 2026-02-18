@@ -1,223 +1,40 @@
-// // src/components/community/atoms/ChatAtoms.jsx
-// import { memo } from "react";
-
-// // ─────────────────────────────────────────────
-// // SHARED CONSTANTS
-// // ─────────────────────────────────────────────
-// const SUBJECT_COLORS = [
-//   "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
-//   "#FFEAA7", "#DDA0DD", "#98D8C8", "#F7DC6F",
-//   "#BB8FCE", "#85C1E9",
-// ];
-
-// const getColor = (str = "") => SUBJECT_COLORS[str.charCodeAt(0) % SUBJECT_COLORS.length] || "#64748B";
-
-// const getInitials = (name = "?") =>
-//   name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-
-// // ─────────────────────────────────────────────
-// // AVATAR
-// // ─────────────────────────────────────────────
-// export const Avatar = memo(({ 
-//   name = "?", 
-//   avatar, 
-//   size = 36, 
-//   type = "USER", 
-//   className = "" 
-// }) => {
-//   const bg = avatar ? "transparent" : `linear-gradient(135deg, ${getColor(name)}, ${getColor(name)}88)`;
-
-//   return (
-//     <div
-//       className={`avatar ${className}`}
-//       style={{
-//         width: size,
-//         height: size,
-//         borderRadius: "50%",
-//         flexShrink: 0,
-//         background: bg,
-//         display: "flex",
-//         alignItems: "center",
-//         justifyContent: "center",
-//         fontSize: size * 0.36,
-//         fontWeight: 700,
-//         color: "#fff",
-//         border: type === "TUTOR" ? "2px solid #F59E0B" : "none",
-//         overflow: "hidden",
-//         position: "relative",
-//         boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-//       }}
-//     >
-//       {avatar ? (
-//         <img
-//           src={avatar}
-//           alt={name}
-//           style={{ width: "100%", height: "100%", objectFit: "cover" }}
-//         />
-//       ) : (
-//         getInitials(name)
-//       )}
-
-//       {type === "TUTOR" && (
-//         <div
-//           style={{
-//             position: "absolute",
-//             bottom: -1,
-//             right: -1,
-//             width: size * 0.32,
-//             height: size * 0.32,
-//             borderRadius: "50%",
-//             background: "#F59E0B",
-//             display: "flex",
-//             alignItems: "center",
-//             justifyContent: "center",
-//             fontSize: size * 0.17,
-//           }}
-//         >
-//           ⭐
-//         </div>
-//       )}
-//     </div>
-//   );
-// });
-
-// // ─────────────────────────────────────────────
-// // ONLINE BADGE
-// // ─────────────────────────────────────────────
-// export const OnlineBadge = memo(({ count = 0, className = "" }) => {
-//   if (count <= 0) return null;
-
-//   return (
-//     <div
-//       className={`online-badge ${className}`}
-//       style={{
-//         display: "flex",
-//         alignItems: "center",
-//         gap: 6,
-//         background: "rgba(16, 185, 129, 0.12)",
-//         borderRadius: 20,
-//         padding: "4px 11px",
-//         fontSize: 12,
-//         color: "#10B981",
-//         fontWeight: 600,
-//       }}
-//     >
-//       <div
-//         style={{
-//           width: 7,
-//           height: 7,
-//           borderRadius: "50%",
-//           background: "#10B981",
-//           animation: "pulse 2s infinite",
-//         }}
-//       />
-//       {count} online
-//     </div>
-//   );
-// });
-
-// // ─────────────────────────────────────────────
-// // SPINNER
-// // ─────────────────────────────────────────────
-// export const Spinner = memo(({ size = 24, color = "#6366F1", className = "" }) => {
-//   return (
-//     <div
-//       className={`spinner ${className}`}
-//       style={{
-//         width: size,
-//         height: size,
-//         borderRadius: "50%",
-//         border: `3px solid ${color}33`,
-//         borderTopColor: color,
-//         animation: "spin 0.8s linear infinite",
-//         display: "inline-block",
-//       }}
-//     />
-//   );
-// });
-
-// // ─────────────────────────────────────────────
-// // TYPING DOTS
-// // ─────────────────────────────────────────────
-// export const TypingDots = memo(({ className = "" }) => {
-//   return (
-//     <div
-//       className={`typing-dots ${className}`}
-//       style={{
-//         display: "flex",
-//         gap: 4,
-//         alignItems: "center",
-//       }}
-//     >
-//       {[0, 1, 2].map((i) => (
-//         <div
-//           key={i}
-//           style={{
-//             width: 6,
-//             height: 6,
-//             borderRadius: "50%",
-//             background: "#64748B",
-//             animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-//           }}
-//         />
-//       ))}
-//     </div>
-//   );
-// });
-
-
-
-
-
-
-
-
-
-
-
 // src/components/community/atoms/ChatAtoms.jsx
 import { memo } from "react";
 
-// ── Colors ────────────────────────────────────────────────────────────
-const COLORS = [
-  "#FF6B6B","#4ECDC4","#45B7D1","#96CEB4",
-  "#FFEAA7","#DDA0DD","#98D8C8","#F7DC6F",
-  "#BB8FCE","#85C1E9",
+const GRADIENTS = [
+  ["#f43f5e","#e11d48"], ["#14b8a6","#0d9488"], ["#0ea5e9","#0284c7"],
+  ["#10b981","#059669"], ["#f59e0b","#d97706"], ["#a855f7","#9333ea"],
+  ["#6366f1","#4f46e5"], ["#f97316","#ea580c"], ["#d946ef","#c026d3"],
+  ["#06b6d4","#0891b2"],
 ];
-const getColor = (str = "") => COLORS[str.charCodeAt(0) % COLORS.length] || "#64748B";
+
+const getColor  = (str = "") => GRADIENTS[str.charCodeAt(0) % GRADIENTS.length] || GRADIENTS[0];
 const getInitials = (name = "?") =>
   name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 
 // ── Avatar ────────────────────────────────────────────────────────────
 export const Avatar = memo(({ name = "?", avatar, size = 36, type = "USER", className = "" }) => {
-  const bg = avatar ? "transparent" : `linear-gradient(135deg, ${getColor(name)}, ${getColor(name)}88)`;
+  const [c1, c2] = getColor(name);
+  const isTutor = type === "TUTOR";
   return (
     <div
-      className={`avatar ${className}`}
+      className={`relative flex-shrink-0 rounded-full flex items-center justify-center font-bold text-white overflow-hidden shadow-md
+        ${isTutor ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-950" : ""}
+        ${className}`}
       style={{
-        width: size, height: size,
-        borderRadius: "50%",
-        flexShrink: 0,
-        background: bg,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: size * 0.36, fontWeight: 700, color: "#fff",
-        border: type === "TUTOR" ? "2px solid #F59E0B" : "none",
-        overflow: "hidden", position: "relative",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+        width: size, height: size, fontSize: size * 0.36,
+        background: avatar ? "transparent" : `linear-gradient(135deg, ${c1}, ${c2})`,
       }}
     >
       {avatar
-        ? <img src={avatar} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
         : getInitials(name)
       }
-      {type === "TUTOR" && (
-        <div style={{
-          position: "absolute", bottom: -1, right: -1,
-          width: size * 0.32, height: size * 0.32,
-          borderRadius: "50%", background: "#F59E0B",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: size * 0.17,
-        }}>⭐</div>
+      {isTutor && (
+        <div
+          className="absolute -bottom-0.5 -right-0.5 rounded-full bg-amber-400 flex items-center justify-center"
+          style={{ width: size * 0.32, height: size * 0.32, fontSize: size * 0.18 }}
+        >⭐</div>
       )}
     </div>
   );
@@ -227,37 +44,33 @@ export const Avatar = memo(({ name = "?", avatar, size = 36, type = "USER", clas
 export const OnlineBadge = memo(({ count = 0, className = "" }) => {
   if (count <= 0) return null;
   return (
-    <div className={`online-badge ${className}`} style={{
-      display: "flex", alignItems: "center", gap: 6,
-      background: "rgba(16,185,129,0.12)", borderRadius: 20,
-      padding: "4px 11px", fontSize: 12, color: "#10B981", fontWeight: 600,
-    }}>
-      <div style={{
-        width: 7, height: 7, borderRadius: "50%",
-        background: "#10B981", animation: "pulse 2s infinite",
-      }} />
+    <div className={`flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 ${className}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse block" />
       {count} online
     </div>
   );
 });
 
 // ── Spinner ───────────────────────────────────────────────────────────
-export const Spinner = memo(({ size = 24, color = "#6366F1", className = "" }) => (
-  <div className={`spinner ${className}`} style={{
-    width: size, height: size, borderRadius: "50%",
-    border: `3px solid ${color}33`, borderTopColor: color,
-    animation: "spin 0.8s linear infinite", display: "inline-block",
-  }} />
-));
+export const Spinner = memo(({ size = "md", className = "" }) => {
+  const cls = { sm: "w-5 h-5", md: "w-8 h-8", lg: "w-12 h-12" }[size] || "w-8 h-8";
+  return (
+    <div
+      className={`${cls} rounded-full border-indigo-500/30 border-t-indigo-500 animate-spin ${className}`}
+      style={{ borderWidth: size === "sm" ? 2 : size === "lg" ? 4 : 3 }}
+    />
+  );
+});
 
 // ── TypingDots ────────────────────────────────────────────────────────
 export const TypingDots = memo(({ className = "" }) => (
-  <div className={`typing-dots ${className}`} style={{ display: "flex", gap: 4, alignItems: "center" }}>
+  <div className={`flex gap-1 items-center ${className}`}>
     {[0, 1, 2].map((i) => (
-      <div key={i} style={{
-        width: 6, height: 6, borderRadius: "50%", background: "#64748B",
-        animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-      }} />
+      <span
+        key={i}
+        className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce block"
+        style={{ animationDelay: `${i * 0.15}s`, animationDuration: "0.9s" }}
+      />
     ))}
   </div>
 ));

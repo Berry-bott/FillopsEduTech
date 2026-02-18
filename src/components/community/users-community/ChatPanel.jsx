@@ -1,11 +1,11 @@
 // src/components/community/ChatPanel.jsx
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import useCommunityStore from "@/store/userCommunityStore";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
-import { Avatar, TypingDots, Spinner, OnlineBadge } from "./ChatAtoms";
+import { TypingDots, Spinner, OnlineBadge } from "./ChatAtoms";
 
-export default function ChatPanel() {
+export default function ChatPanel({ isDark }) {
   const {
     activeGroupId,
     activeGroup,
@@ -14,149 +14,158 @@ export default function ChatPanel() {
     onlineCounts,
     currentUser,
     loadingMessages,
-    loadOlderMessages,
     loadingOlder,
+    loadOlderMessages,
   } = useCommunityStore();
 
   const [autoScroll, setAutoScroll] = useState(true);
-  const messagesEndRef = useRef(null);
-  const containerRef = useRef(null);
+  const messagesEndRef    = useRef(null);
+  const scrollContainerRef = useRef(null);
 
-  const msgs = messages[activeGroupId] || [];
+  const msgs       = messages[activeGroupId] || [];
   const typerNames = typingUsers[activeGroupId]
-    ? Array.from(typingUsers[activeGroupId].values())
-    : [];
-  const online = onlineCounts[activeGroupId] ?? activeGroup?.onlineCount ?? 0;
+    ? Array.from(typingUsers[activeGroupId].values()) : [];
+  const online     = onlineCounts[activeGroupId] ?? activeGroup?.onlineCount ?? 0;
+
+  const scrollToBottom = useCallback((behavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+  }, []);
 
   useEffect(() => {
-    if (autoScroll && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [msgs.length, autoScroll]);
+    if (autoScroll) scrollToBottom("smooth");
+  }, [msgs.length, autoScroll, scrollToBottom]);
 
-  const handleScroll = () => {
-    if (!containerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    if (scrollTop === 0) loadOlderMessages();
-    setAutoScroll(scrollHeight - scrollTop - clientHeight < 120);
-  };
+  useEffect(() => {
+    setAutoScroll(true);
+    // tiny delay so DOM updates before scroll
+    setTimeout(() => scrollToBottom("instant"), 50);
+  }, [activeGroupId]);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    if (scrollTop < 80) loadOlderMessages();
+    setAutoScroll(scrollHeight - scrollTop - clientHeight < 150);
+  }, [loadOlderMessages]);
 
   if (!activeGroupId) {
     return (
-      <div style={{
-        flex: 1, display: "flex", alignItems: "center",
-        justifyContent: "center", color: "#64748b",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-      }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 80, opacity: 0.2, marginBottom: 16 }}>💬</div>
-          <h2 style={{ margin: "0 0 8px", fontSize: 22, color: "#cbd5e1" }}>Select a group</h2>
-          <p style={{ margin: 0, fontSize: 14 }}>Choose a community to start chatting</p>
+      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+        <div className="text-center select-none">
+          <div className="text-7xl opacity-20 mb-5">💬</div>
+          <h2 className="text-xl font-bold text-slate-600 dark:text-slate-300 mb-2">Select a group</h2>
+          <p className="text-slate-400 text-sm">Choose a community to start chatting</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <div style={{
-        padding: "12px 20px",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(15,23,42,0.95)",
-        backdropFilter: "blur(10px)",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        flexShrink: 0,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 12,
-            background: activeGroup?.subject?.color || "#6366f1",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 20, color: "white", flexShrink: 0,
-            boxShadow: "0 4px 12px rgba(99,102,241,0.3)",
-          }}>
+    <div className="flex flex-col h-full min-h-0">
+
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 z-10">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg text-white flex-shrink-0 shadow"
+            style={{ background: activeGroup?.subject?.color || "#6366f1" }}
+          >
             {activeGroup?.iconUrl
-              ? <img src={activeGroup.iconUrl} alt="" style={{ width: "100%", height: "100%", borderRadius: 12 }} />
+              ? <img src={activeGroup.iconUrl} alt="" className="w-full h-full rounded-xl object-cover" />
               : "💬"
             }
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#f1f5f9" }}>
-              {activeGroup?.name || "Loading..."}
+            <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+              {activeGroup?.name || "Loading…"}
             </h2>
-            <p style={{ margin: 0, fontSize: 12, color: "#94a3b8" }}>
+            <p className="text-xs text-slate-400 leading-tight mt-0.5">
               {activeGroup?.subject?.subjectName || "Community Group"}
             </p>
           </div>
         </div>
-
         <OnlineBadge count={online} />
       </div>
 
-      {/* Load older indicator */}
+      {/* ── Load older indicator ───────────────────────────────── */}
       {loadingOlder && (
-        <div style={{ textAlign: "center", padding: "8px", background: "rgba(99,102,241,0.05)" }}>
-          <Spinner size={20} />
+        <div className="flex-shrink-0 flex justify-center py-2 bg-slate-50/80 dark:bg-slate-950/50">
+          <Spinner size="sm" />
         </div>
       )}
 
-      {/* Messages */}
+      {/* ── Message scroll container ───────────────────────────── */}
       <div
-        ref={containerRef}
+        ref={scrollContainerRef}
         onScroll={handleScroll}
-        style={{
-          flex: 1, overflowY: "auto", padding: "16px 20px",
-          display: "flex", flexDirection: "column",
-          background: "linear-gradient(180deg, #0f172a 0%, #111827 100%)",
-        }}
+        className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col bg-white dark:bg-slate-900/50"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(148,163,184,0.25) transparent" }}
       >
         {loadingMessages && msgs.length === 0 ? (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ textAlign: "center" }}>
-              <Spinner size={48} />
-              <p style={{ color: "#64748b", marginTop: 16 }}>Loading messages...</p>
-            </div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <Spinner size="lg" />
+            <p className="text-slate-400 text-sm">Loading messages…</p>
           </div>
         ) : msgs.length === 0 ? (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ textAlign: "center", color: "#64748b" }}>
-              <div style={{ fontSize: 48, opacity: 0.3, marginBottom: 16 }}>✉️</div>
-              <p style={{ margin: 0 }}>No messages yet — be the first!</p>
-            </div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <div className="text-5xl opacity-20">✉️</div>
+            <p className="text-slate-400 text-sm">No messages yet — be the first!</p>
           </div>
         ) : (
-          msgs.map((msg, i) => {
-            const prevMsg = msgs[i - 1];
-            const showAvatar = !prevMsg || prevMsg.sender?.id !== msg.sender?.id;
-            return (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                isOwn={msg.sender?.id === currentUser?.id}
-                showAvatar={showAvatar}
-              />
-            );
-          })
+          <>
+            {/* Pushes messages to the bottom when list is short */}
+            <div className="flex-1" />
+
+            {msgs.map((msg, i) => {
+              const prevMsg    = msgs[i - 1];
+              const showAvatar = !prevMsg || prevMsg.sender?.id !== msg.sender?.id;
+              return (
+                <MessageBubble
+                  key={msg.id || i}
+                  message={msg}
+                  isOwn={msg.sender?.id === currentUser?.id}
+                  showAvatar={showAvatar}
+                />
+              );
+            })}
+          </>
         )}
 
         {/* Typing indicator */}
         {typerNames.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0 8px" }}>
-            <TypingDots />
-            <span style={{ color: "#94a3b8", fontSize: 13, fontStyle: "italic" }}>
-              {typerNames.length === 1
-                ? `${typerNames[0]} is typing...`
-                : `${typerNames.join(", ")} are typing...`}
-            </span>
+          <div className="flex items-center gap-2.5 py-2 pl-10">
+            <div className="bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 rounded-2xl rounded-bl-sm px-4 py-2.5 flex items-center gap-2 shadow-sm">
+              <TypingDots />
+              <span className="text-xs text-slate-400 italic">
+                {typerNames.length === 1
+                  ? `${typerNames[0]} is typing`
+                  : `${typerNames.slice(0, 2).join(", ")} are typing`}
+              </span>
+            </div>
           </div>
         )}
 
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-px shrink-0" />
       </div>
 
-      {/* Input */}
-      <ChatInput groupId={activeGroupId} />
+      {/* ── Jump to latest button ──────────────────────────────── */}
+      {!autoScroll && (
+        <div className="flex-shrink-0 flex justify-center -mt-10 mb-1.5 relative z-10 pointer-events-none">
+          <button
+            onClick={() => { setAutoScroll(true); scrollToBottom("smooth"); }}
+            className="pointer-events-auto bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg shadow-indigo-500/30 flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            Jump to latest
+          </button>
+        </div>
+      )}
+
+      {/* ── Input ─────────────────────────────────────────────── */}
+      <ChatInput />
     </div>
   );
 }
