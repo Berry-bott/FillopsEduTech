@@ -36,6 +36,10 @@ import CheckoutPage from "./payment/Checkout";
 import PaymentVerification from "./payment/PaymentVerification";
 import LecturerDashboard from "@/pages/lecturer/LecturerDashboard";
 import ExamSelector from "./components/DashboardComponents/user/ExamSelector";
+
+// community
+import UserCommunity from "./pages/community/UserCommunity";
+
 import "./App.css";
 
 
@@ -80,6 +84,7 @@ function App() {
               <Route path="/exam" element={<ExamsPage />} />
               <Route path="exam-results/:examId" element={<ExamResultPage />} />
               <Route path="/exam-selector" element={<ExamSelector />} />
+              <Route path="/chat/community" element={<UserCommunity />} />
 
               {/* chats */}
               <Route path="/chat/tutor" element={<UserChatPage/>} />

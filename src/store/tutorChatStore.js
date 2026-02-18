@@ -2,7 +2,7 @@
 // src/store/tutorChatStore.js
 import { create } from "zustand";
 import useTutorAuthStore from "./tutorAuthStore";
-import { connectSocket, getSocket } from "@/lib/tutor-socket";
+import { connectSocket, getSocket } from "@/lib/tutorChatSocket";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com";
 

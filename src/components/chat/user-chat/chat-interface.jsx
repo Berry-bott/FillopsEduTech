@@ -16,7 +16,7 @@ import BookingModal from "./booking-modal";
 import RatingModal from "./rating-modal";
 import BookingDetailsModal from "./booking-details-modal";
 import RescheduleModal from "./reschedule-modal";
-import { getUserSocket } from "@/lib/user-socket";
+import { getUserSocket } from "@/lib/userChatSocket";
 import { useUserChatStore } from "@/store/userChatStore";
 import  useAuthStore from "@/store/authStore";
 

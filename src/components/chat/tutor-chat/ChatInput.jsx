@@ -272,7 +272,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Ban } from "lucide-react";
-import { getSocket } from "@/lib/tutor-socket";
+import { getSocket } from "@/lib/tutorChatSocket";
 import { useTutorChatStore } from "@/store/tutorChatStore";
 
 export default function ChatInput({
@@ -403,4 +403,3 @@ export default function ChatInput({
     </div>
   );
 }
-  

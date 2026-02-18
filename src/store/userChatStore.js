@@ -2968,7 +2968,7 @@
 // src/store/userChatStore.js
 import { create } from "zustand";
 import useAuthStore from "./authStore";
-import { connectUserSocket, getUserSocket } from "@/lib/user-socket";
+import { connectUserSocket, getUserSocket } from "@/lib/userChatSocket";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com";
 
@@ -3141,7 +3141,7 @@ export const useUserChatStore = create((set, get) => ({
   },
 
   handleSessionKick: (data) => {
-    console.log("👢 Kicked from session:", data);
+    console.log("Kicked from session:", data);
     const socket = getUserSocket();
     if (socket && data?.bookingId) {
       socket.emit("leave:booking", data.bookingId);
