@@ -40,7 +40,7 @@ export default function ChatPanel({ isDark }) {
     // tiny delay so DOM updates before scroll
     setTimeout(() => scrollToBottom("instant"), 50);
   }, [activeGroupId]);
-  
+
 
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
