@@ -1,6 +1,6 @@
 // src/components/tutor-community/TutorCommunityChat.jsx
 import { useEffect, useState } from "react";
-import useTutorCommunityStore from "@/store/Tutorcommunitystore.js";
+import useTutorCommunityStore from "@/store/tutorCommunityStore";
 import useTutorSocket from "@/hooks/useSocket";
 import Sidebar from "../users-community/Sidebar";
 import ChatPanel from "../users-community/ChatPanel";
@@ -37,15 +37,7 @@ export default function TutorCommunityChat() {
   }, [isMobile]);
 
   return (
-    /**
-     * LAYOUT CONTRACT — must be preserved for scrolling to work:
-     *  • Outer:     h-screen flex overflow-hidden
-     *  • Sidebar:   h-full flex-shrink-0, inner = flex flex-col h-full min-h-0
-     *  •            groups list = flex-1 min-h-0 overflow-y-auto   ← only scroll zone
-     *  • Main area: flex-1 min-w-0 flex flex-col overflow-hidden
-     *  • ChatPanel: flex flex-col h-full min-h-0
-     *  •            messages  = flex-1 min-h-0 overflow-y-auto     ← only scroll zone
-     */
+
     <div className="flex h-screen overflow-hidden font-sans antialiased
       bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 
