@@ -1,10 +1,1693 @@
 
+// // // src/store/tutorChatStore.js
+// // import { create } from "zustand";
+// // import useTutorAuthStore from "./tutorAuthStore";
+// // import { connectSocket, getSocket } from "@/lib/tutorChatSocket";
+
+// // const API_BASE = "https://fillops-server-5fuf.onrender.com";
+
+// // const mapBookingToUI = (booking) => ({
+// //   id: booking.id,
+// //   studentId: booking.userId || booking.user?.id,
+// //   participant_name: booking.user?.name || "Student",
+// //   participant_role: "student",
+// //   last_message: booking.lastMessage?.content || "",
+// //   last_message_time: booking.lastMessage?.createdAt || null,
+// //   status: (booking.status || "pending").toLowerCase(),
+// //   scheduledAt: booking.scheduledAt || null,
+// //   proposedAt: booking.proposedAt || null,
+// //   duration: booking.duration || null,
+// //   unread_count: booking.unreadCount || 0,
+// //   purpose: booking.purpose || "",
+// //   avatar: booking.user?.avatar || null,
+// //   isBooking: true,
+// //   isOnline: false,
+// // });
+
+// // // ✅ Helper to check if booking is older than 1 month
+// // const isOlderThanMonth = (booking) => {
+// //   const oneMonthAgo = new Date();
+// //   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  
+// //   const bookingDate = new Date(
+// //     booking.scheduledAt || 
+// //     booking.updatedAt || 
+// //     booking.createdAt || 
+// //     0
+// //   );
+  
+// //   return bookingDate < oneMonthAgo;
+// // };
+
+// // export const useTutorChatStore = create((set, get) => ({
+// //   bookingsByFilter: {},
+// //   loadedFilters: new Set(),
+// //   activeFilter: "all",
+// //   selectedBooking: null,
+// //   messages: [],
+// //   isLoading: false,
+// //    isLoadingMessages: false,
+// //   isSending: false,
+// //   socketConnected: false,
+// //   isSomeoneTyping: false,
+// //   typingUserName: null,
+// //   isParticipantOnline: false,
+
+// //   // ────────────────────────────────────────────────────────────────
+// //   // Socket connection
+// //   // ────────────────────────────────────────────────────────────────
+// //   initializeSocket: () => {
+// //     console.log("[TutorChatStore] initializeSocket called");
+    
+// //     const token = useTutorAuthStore.getState().accessToken;
+// //     if (!token) {
+// //       console.warn("[TutorChatStore] No token → cannot initialize socket");
+// //       return;
+// //     }
+
+// //     const socket = connectSocket(token);
+// //     set({ socketConnected: socket?.connected || false });
+// //   },
+
+// //   disconnectSocket: () => {
+// //     const socket = getSocket();
+// //     if (socket?.connected) {
+// //       socket.disconnect();
+// //     }
+// //     set({ socketConnected: false });
+// //   },
+
+// //   // ────────────────────────────────────────────────────────────────
+// //   // Socket event handlers
+// //   // ────────────────────────────────────────────────────────────────
+// //   handleNewMessage: (msg) => {
+// //     console.log("📨 handleNewMessage called:", msg);
+    
+// //     set((state) => {
+// //       if (state.messages.some((m) => m.id === msg.id)) {
+// //         console.log("⚠️ Duplicate message (by ID) skipped:", msg.id);
+// //         return state;
+// //       }
+
+// //       const isCurrent = msg.bookingId === state.selectedBooking?.id;
+// //       let updatedMessages = [...state.messages];
+
+// //       let optimisticIndex = -1;
+// //       if (msg.tempId) {
+// //         optimisticIndex = updatedMessages.findIndex((m) => m.tempId === msg.tempId);
+// //         console.log("🔎 Searching for tempId:", msg.tempId, "→ Found at index:", optimisticIndex);
+// //       }
+
+// //       if (optimisticIndex === -1 && msg.sender?.id && msg.content) {
+// //         const msgTime = new Date(msg.createdAt).getTime();
+// //         optimisticIndex = updatedMessages.findIndex((m) => 
+// //           m.isOptimistic === true &&
+// //           m.content === msg.content &&
+// //           m.sender?.id === msg.sender?.id &&
+// //           Math.abs(new Date(m.createdAt).getTime() - msgTime) < 10000
+// //         );
+// //         console.log("🔎 Fallback search by content+sender:", optimisticIndex);
+// //       }
+
+// //       if (optimisticIndex !== -1) {
+// //         console.log("✅ REPLACING optimistic message at index:", optimisticIndex);
+// //         updatedMessages[optimisticIndex] = {
+// //           ...msg,
+// //           tempId: undefined,
+// //           isOptimistic: false,
+// //           status: "sent",
+// //         };
+// //       } else {
+// //         console.log("➕ Adding new message (no optimistic found)");
+// //         updatedMessages.push({ ...msg, status: "sent" });
+// //       }
+
+// //       updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+// //       if (!isCurrent && msg.senderRole !== "tutor") {
+// //         const updatedFilters = { ...state.bookingsByFilter };
+// //         Object.keys(updatedFilters).forEach((filter) => {
+// //           updatedFilters[filter] = updatedFilters[filter]?.map((b) =>
+// //             b.id === msg.bookingId
+// //               ? { ...b, unread_count: (b.unread_count || 0) + 1, last_message: msg.content }
+// //               : b
+// //           );
+// //         });
+// //         return { messages: updatedMessages, bookingsByFilter: updatedFilters };
+// //       }
+
+// //       return { messages: updatedMessages };
+// //     });
+// //   },
+
+// //   handleMessagesReadByStudent: (timestamp) => {
+// //     console.log("📖 Student read messages up to:", timestamp);
+// //     set((state) => ({
+// //       messages: state.messages.map((m) =>
+// //         m.senderRole === "tutor" && new Date(m.createdAt) <= new Date(timestamp)
+// //           ? { ...m, isRead: true }
+// //           : m
+// //       ),
+// //     }));
+// //   },
+
+// //   handleSessionEnded: (data) => {
+// //     console.log("🏁 Session ended:", data);
+// //     const { bookingId } = data;
+// //     set((state) => {
+// //       if (state.selectedBooking?.id !== bookingId) return state;
+// //       return {
+// //         selectedBooking: { ...state.selectedBooking, status: "completed" },
+// //       };
+// //     });
+// //   },
+
+// //   handleSessionKick: (data) => {
+// //     console.log("👢 Kicked from session:", data);
+// //     const socket = getSocket();
+// //     if (socket && data?.bookingId) {
+// //       socket.emit("leave:booking", data.bookingId);
+// //     }
+
+// //     set((state) => ({
+// //       selectedBooking: state.selectedBooking?.id === data?.bookingId ? null : state.selectedBooking,
+// //       messages: state.selectedBooking?.id === data?.bookingId ? [] : state.messages,
+// //     }));
+// //   },
+
+// //   handleSessionExpired: (data) => {
+// //     console.log("⏰ Session expired:", data);
+// //     const { bookingId } = data;
+// //     set((state) => {
+// //       if (state.selectedBooking?.id !== bookingId) return state;
+// //       return {
+// //         selectedBooking: { ...state.selectedBooking, status: "completed" },
+// //       };
+// //     });
+// //   },
+
+// //   // handleOnlineUsers: (users) => {
+// //   //   console.log("👥 Online users:", users);
+// //   //   const studentId = get().selectedBooking?.studentId;
+// //   //   const isOnline = users?.some((u) => u.id === studentId && u.userType === "user");
+// //   //   set({ isParticipantOnline: !!isOnline });
+// //   // },
+
+// //   handleOnlineUsers: (users) => {
+// //   console.log("👥 Online users:", users);
+
+// //   const { bookingsByFilter, selectedBooking } = get();
+
+// //   // Loop through all bookings and set isOnline
+// //   const updatedFilters = {};
+// //   Object.keys(bookingsByFilter).forEach((filter) => {
+// //     updatedFilters[filter] = bookingsByFilter[filter].map((b) => {
+// //       const isOnline = users.some((u) => u.id === b.studentId && u.userType === "user");
+// //       return { ...b, isOnline };
+// //     });
+// //   });
+
+// //   // Update selectedBooking if online
+// //   const updatedSelected = selectedBooking
+// //     ? {
+// //         ...selectedBooking,
+// //         isOnline: users.some((u) => u.id === selectedBooking.studentId && u.userType === "user"),
+// //       }
+// //     : null;
+
+// //   set({ bookingsByFilter: updatedFilters, selectedBooking: updatedSelected });
+// // },
+
+// //   handleNewBookingNotification: (data) => {
+// //     console.log("🔔 New booking notification:", data);
+// //     get().fetchBookings("pending", true);
+// //     get().fetchBookings("all", true);
+// //   },
+
+// //   handleBookingCancelled: (data) => {
+// //     console.log("❌ Booking cancelled:", data);
+// //     get().fetchBookings("cancelled", true);
+// //     get().fetchBookings("all", true);
+// //   },
+
+// //   handleBookingRescheduled: (data) => {
+// //     console.log("📅 Booking rescheduled:", data);
+// //     get().fetchBookings("rescheduled", true);
+// //     get().fetchBookings("all", true);
+// //   },
+
+// //   // ────────────────────────────────────────────────────────────────
+// //   // Core chat actions// In tutorChatStore.js - Replace your setSelectedBooking with this:
+
+// // setSelectedBooking: (booking) => {
+// //   const prevId = get().selectedBooking?.id;
+// //   const socket = getSocket();
+
+// //   // Leave previous room
+// //   if (prevId && socket?.connected) {
+// //     socket.emit("leave:booking", prevId);
+// //   }
+
+// //   // ✅ INSTANT UI UPDATE - Show chat interface immediately
+// //   set({
+// //     selectedBooking: booking, // Show booking data immediately
+// //     messages: [], // Empty messages (chat UI shows instantly)
+// //     isLoading: false, // ✅ UI is ready - no spinner!
+// //     isLoadingMessages: false, // Start fresh
+// //     isSending: false,
+// //     isSomeoneTyping: false,
+// //     typingUserName: null,
+// //     isParticipantOnline: false,
+// //   });
+
+// //   if (!booking?.id) return;
+
+// //   // ✅ Join room in background (non-blocking)
+// //   if (socket?.connected) {
+// //     socket.emit("join:booking", booking.id, (ack) => {
+// //       if (ack?.success) {
+// //         console.log("✅ Joined booking room:", booking.id);
+// //         get().markMessagesAsRead(booking.id);
+// //       } else {
+// //         console.error("❌ Failed to join room:", ack);
+// //       }
+// //     });
+// //   }
+
+// //   // ✅ Fetch messages in background (non-blocking)
+// //   set({ isLoadingMessages: true });
+// //   get().fetchMessages(booking.id).finally(() => {
+// //     set({ isLoadingMessages: false });
+// //   });
+// // },
+// //   // ────────────────────────────────────────────────────────────────
+// //   // setSelectedBooking: (booking) => {
+// //   //   const prevId = get().selectedBooking?.id;
+// //   //   const socket = getSocket();
+
+// //   //   if (prevId && socket?.connected) {
+// //   //     socket.emit("leave:booking", prevId);
+// //   //   }
+
+// //   //   set({
+// //   //     selectedBooking: booking,
+// //   //     messages: [],
+// //   //     isLoading: true,
+// //   //     isSomeoneTyping: false,
+// //   //     typingUserName: null,
+// //   //     isParticipantOnline: false,
+// //   //   });
+
+// //   //   if (!booking?.id) return;
+
+// //   //   if (socket?.connected) {
+// //   //     socket.emit("join:booking", booking.id, (ack) => {
+// //   //       if (ack?.success) {
+// //   //         console.log("✅ Joined booking room:", booking.id);
+// //   //         get().markMessagesAsRead(booking.id);
+// //   //       } else {
+// //   //         console.error("❌ Failed to join room:", ack);
+// //   //       }
+// //   //     });
+// //   //   }
+
+// //   //   get().fetchMessages(booking.id);
+// //   // },
+// //   setSelectedBooking: (booking) => {
+// //   const prevId = get().selectedBooking?.id;
+// //   const socket = getSocket();
+
+// //   // Leave previous room
+// //   if (prevId && socket?.connected) {
+// //     socket.emit("leave:booking", prevId);
+// //   }
+
+// //   // ✅ INSTANT UI UPDATE - Show chat interface immediately with empty messages
+// //   set({
+// //     selectedBooking: booking,
+// //     messages: [], // Empty array = chat UI shows instantly
+// //     isLoading: false, // ✅ NOT loading - UI is ready!
+// //     isSending: false,
+// //     isSomeoneTyping: false,
+// //     typingUserName: null,
+// //     isParticipantOnline: false,
+// //   });
+
+// //   if (!booking?.id) return;
+
+// //   // ✅ Join room in background (non-blocking)
+// //   if (socket?.connected) {
+// //     socket.emit("join:booking", booking.id, (ack) => {
+// //       if (ack?.success) {
+// //         console.log("✅ Joined booking room:", booking.id);
+// //         get().markMessagesAsRead(booking.id);
+// //       } else {
+// //         console.error("❌ Failed to join room:", ack);
+// //       }
+// //     });
+// //   }
+
+// //   // ✅ Fetch messages in background (non-blocking)
+// //   get().fetchMessages(booking.id);
+// // },
+
+// //   sendMessage: async (bookingId, content, messageType = "TEXT") => {
+// //     if (!content?.trim() || !bookingId) return;
+
+// //     const socket = getSocket();
+// //     if (!socket?.connected) {
+// //       console.warn("[sendMessage] Socket not connected");
+// //       return;
+// //     }
+
+// //     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+// //     const tutorId = useTutorAuthStore.getState().tutor?.id;
+
+// //     const optimisticMsg = {
+// //       tempId,
+// //       content,
+// //       messageType,
+// //       bookingId,
+// //       sender: { 
+// //         id: tutorId,
+// //         type: 'TUTOR',
+// //         name: useTutorAuthStore.getState().tutor?.name || 'You'
+// //       },
+// //       senderRole: "tutor",
+// //       createdAt: new Date().toISOString(),
+// //       status: "sending",
+// //       isOptimistic: true,
+// //     };
+
+// //     console.log("📤 Sending message with tempId:", tempId);
+
+// //     set((s) => ({
+// //       messages: [...s.messages, optimisticMsg],
+// //       isSending: true,
+// //     }));
+
+// //     try {
+// //       socket.emit("message:send", {
+// //         bookingId,
+// //         content: content.trim(),
+// //         messageType,
+// //         tempId,
+// //       });
+      
+// //       console.log("✅ Message emitted to socket");
+// //     } catch (err) {
+// //       console.error("[sendMessage] failed:", err);
+// //       set((s) => ({
+// //         messages: s.messages.filter((m) => m.tempId !== tempId),
+// //       }));
+// //     } finally {
+// //       set({ isSending: false });
+// //     }
+// //   },
+
+// //   sendTyping: (isTyping = true) => {
+// //     const { selectedBooking, socketConnected } = get();
+// //     if (!selectedBooking?.id || !socketConnected) return;
+
+// //     const socket = getSocket();
+// //     if (socket?.connected) {
+// //       const event = isTyping ? "typing:start" : "typing:stop";
+// //       socket.emit(event, selectedBooking.id);
+// //     }
+// //   },
+
+// //   markMessagesAsRead: (bookingId) => {
+// //     const socket = getSocket();
+// //     if (socket?.connected) {
+// //       socket.emit("messages:read", bookingId);
+// //     }
+
+// //     set((s) => ({
+// //       bookingsByFilter: {
+// //         ...s.bookingsByFilter,
+// //         [s.activeFilter]: s.bookingsByFilter[s.activeFilter]?.map((b) =>
+// //           b.id === bookingId ? { ...b, unread_count: 0 } : b
+// //         ),
+// //       },
+// //     }));
+// //   },
+
+// //   // ────────────────────────────────────────────────────────────────
+// //   // ✅ OPTIMIZED REST API calls
+// //   // ────────────────────────────────────────────────────────────────
+// //   // fetchMessages: async (bookingId) => {
+// //   //   console.log("[FETCH] Messages for booking:", bookingId);
+// //   //   set({ isLoading: true });
+
+// //   //   try {
+// //   //     const { fetchWithAuth } = useTutorAuthStore.getState();
+// //   //     const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}/messages`);
+
+// //   //     if (res.success && Array.isArray(res.data)) {
+// //   //       // ✅ Filter out messages older than 1 month
+// //   //       const oneMonthAgo = new Date();
+// //   //       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        
+// //   //       const recentMessages = res.data.filter(msg => {
+// //   //         const msgDate = new Date(msg.createdAt);
+// //   //         return msgDate >= oneMonthAgo;
+// //   //       });
+
+// //   //       const sorted = [...recentMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+// //   //       set({ messages: sorted });
+// //   //       console.log(`[FETCH] Loaded ${sorted.length} recent messages (filtered ${res.data.length - sorted.length} old messages)`);
+// //   //     } else {
+// //   //       set({ messages: [] });
+// //   //     }
+// //   //   } catch (err) {
+// //   //     console.error("[FETCH] Messages failed:", err);
+// //   //     set({ messages: [] });
+// //   //   } finally {
+// //   //     set({ isLoading: false });
+// //   //   }
+// //   // },
+// //   fetchMessages: async (bookingId) => {
+// //   console.log("[FETCH] Messages for booking:", bookingId);
+  
+// //   try {
+// //     const { fetchWithAuth } = useTutorAuthStore.getState();
+// //     const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}/messages`);
+
+// //     if (res.success && Array.isArray(res.data)) {
+// //       const oneMonthAgo = new Date();
+// //       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      
+// //       const recentMessages = res.data.filter(msg => {
+// //         const msgDate = new Date(msg.createdAt);
+// //         return msgDate >= oneMonthAgo;
+// //       });
+
+// //       const sorted = [...recentMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      
+// //       // ✅ Only update if still viewing this booking
+// //       const currentBookingId = get().selectedBooking?.id;
+// //       if (currentBookingId === bookingId) {
+// //         set({ messages: sorted });
+// //       }
+      
+// //       console.log(`[FETCH] Loaded ${sorted.length} messages`);
+// //       return sorted;
+// //     } else {
+// //       set({ messages: [] });
+// //       return [];
+// //     }
+// //   } catch (err) {
+// //     console.error("[FETCH] Messages failed:", err);
+// //     // Don't clear messages on error - keep UI stable
+// //     return [];
+// //   }
+// // },
+
+// //   fetchBookings: async (filter = "all", force = false) => {
+// //     if (!force && get().loadedFilters.has(filter)) {
+// //       console.log(`[fetchBookings] Using cached data for "${filter}"`);
+// //       return;
+// //     }
+
+// //     console.log("[fetchBookings] START", { filter, forced: force });
+// //     set({ isLoading: true });
+
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+      
+// //       // ✅ Fetch only 30 items per filter (much faster!)
+// //       let url = `${API_BASE}/api/tutor/bookings?limit=50`;
+      
+// //       if (filter !== "all") {
+// //         const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
+// //         url += `&status=${backendStatus}`;
+// //       }
+
+// //       const res = await fetchWithAuth(url);
+
+// //       if (!res.success || !Array.isArray(res.data)) {
+// //         console.warn("[fetchBookings] Invalid response", res);
+// //         set((state) => ({
+// //           bookingsByFilter: { ...state.bookingsByFilter, [filter]: [] },
+// //           isLoading: false,
+// //         }));
+// //         return;
+// //       }
+
+// //       // ✅ Filter out bookings older than 1 month
+// //       const recentBookings = res.data.filter(b => !isOlderThanMonth(b));
+
+// //       // Sort by date
+// //       recentBookings.sort((a, b) => {
+// //         const dateA = new Date(a.scheduledAt || a.createdAt || a.updatedAt || 0);
+// //         const dateB = new Date(b.scheduledAt || b.createdAt || b.updatedAt || 0);
+// //         return dateB - dateA;
+// //       });
+
+// //       const mapped = recentBookings.map(mapBookingToUI);
+
+// //       set((state) => ({
+// //         bookingsByFilter: {
+// //           ...state.bookingsByFilter,
+// //           [filter]: mapped,
+// //         },
+// //         loadedFilters: new Set([...state.loadedFilters, filter]),
+// //         isLoading: false,
+// //       }));
+
+// //       console.log(`[fetchBookings] Loaded ${mapped.length} recent bookings for "${filter}" (filtered ${res.data.length - recentBookings.length} old bookings)`);
+// //     } catch (err) {
+// //       console.error("[fetchBookings] FAILED:", err);
+// //       set((state) => ({
+// //         bookingsByFilter: { ...state.bookingsByFilter, [filter]: [] },
+// //         isLoading: false,
+// //       }));
+// //     }
+// //   },
+
+// //   fetchBooking: async (bookingId) => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+// //       const url = `${API_BASE}/api/tutor/bookings/${bookingId}`;
+// //       console.log("[fetchBooking] Fetching:", url);
+
+// //       const res = await fetchWithAuth(url);
+
+// //       if (res.success && res.data) {
+// //         const booking = mapBookingToUI(res.data);
+// //         console.log("[fetchBooking] Success:", booking.id);
+
+// //         set({ selectedBooking: booking });
+
+// //         set((state) => {
+// //           const updatedFilters = { ...state.bookingsByFilter };
+// //           Object.keys(updatedFilters).forEach((key) => {
+// //             updatedFilters[key] = updatedFilters[key].map((b) =>
+// //               b.id === bookingId ? booking : b
+// //             );
+// //           });
+// //           return { bookingsByFilter: updatedFilters };
+// //         });
+
+// //         return booking;
+// //       } else {
+// //         console.warn("[fetchBooking] No data for ID:", bookingId);
+// //         return null;
+// //       }
+// //     } catch (err) {
+// //       console.error("[fetchBooking] FAILED:", err.message || err);
+// //       return null;
+// //     }
+// //   },
+
+// //   confirmMessage: async (messageId) => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+
+// //       set((state) => ({
+// //         messages: state.messages.map((m) =>
+// //           m.id === messageId ? { ...m, status: "confirmed" } : m
+// //         ),
+// //       }));
+
+// //       const res = await fetchWithAuth(
+// //         `${API_BASE}/api/tutor/bookings/messages/${messageId}/confirm`,
+// //         { method: "PATCH" }
+// //       );
+
+// //       if (res.success && res.data) {
+// //         set((state) => ({
+// //           messages: state.messages.map((m) =>
+// //             m.id === messageId ? res.data : m
+// //           ),
+// //         }));
+// //         return res.data;
+// //       }
+// //       throw new Error("Confirm failed");
+// //     } catch (err) {
+// //       console.error("confirmMessage failed:", err);
+// //       const bookingId = get().selectedBooking?.id;
+// //       if (bookingId) await get().fetchMessages(bookingId);
+// //       throw err;
+// //     }
+// //   },
+
+// //   rejectMessage: async (messageId) => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+
+// //       set((state) => ({
+// //         messages: state.messages.map((m) =>
+// //           m.id === messageId ? { ...m, status: "rejected" } : m
+// //         ),
+// //       }));
+
+// //       const res = await fetchWithAuth(
+// //         `${API_BASE}/api/tutor/bookings/messages/${messageId}/reject`,
+// //         { method: "PATCH" }
+// //       );
+
+// //       if (res.success && res.data) {
+// //         set((state) => ({
+// //           messages: state.messages.map((m) =>
+// //             m.id === messageId ? res.data : m
+// //           ),
+// //         }));
+// //         return res.data;
+// //       }
+// //       throw new Error("Reject failed");
+// //     } catch (err) {
+// //       console.error("rejectMessage failed:", err);
+// //       const bookingId = get().selectedBooking?.id;
+// //       if (bookingId) await get().fetchMessages(bookingId);
+// //       throw err;
+// //     }
+// //   },
+
+// //   proposeReschedule: async (bookingId, proposedAt) => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+
+// //       const proposedDateTime = new Date(proposedAt).toISOString();
+
+// //       set((state) => {
+// //         const updatedFilters = { ...state.bookingsByFilter };
+// //         Object.keys(updatedFilters).forEach((key) => {
+// //           updatedFilters[key] = updatedFilters[key].map((b) =>
+// //             b.id === bookingId ? { ...b, status: "reschedule-proposed", proposedAt: proposedDateTime } : b
+// //           );
+// //         });
+// //         return {
+// //           bookingsByFilter: updatedFilters,
+// //           selectedBooking:
+// //             state.selectedBooking?.id === bookingId
+// //               ? { ...state.selectedBooking, status: "reschedule-proposed", proposedAt: proposedDateTime }
+// //               : state.selectedBooking,
+// //         };
+// //       });
+
+// //       const res = await fetchWithAuth(
+// //         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule`,
+// //         {
+// //           method: "PATCH",
+// //           body: JSON.stringify({ proposedAt: proposedDateTime }),
+// //         }
+// //       );
+
+// //       if (res.success && res.data) {
+// //         const updatedBooking = mapBookingToUI(res.data);
+// //         set((state) => {
+// //           const updatedFilters = { ...state.bookingsByFilter };
+// //           Object.keys(updatedFilters).forEach((key) => {
+// //             updatedFilters[key] = updatedFilters[key].map((b) =>
+// //               b.id === bookingId ? updatedBooking : b
+// //             );
+// //           });
+// //           return {
+// //             bookingsByFilter: updatedFilters,
+// //             selectedBooking:
+// //               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+// //           };
+// //         });
+// //         return res.data;
+// //       }
+
+// //       throw new Error(res.message || "Reschedule failed");
+// //     } catch (err) {
+// //       console.error("proposeReschedule failed:", err);
+// //       throw err;
+// //     }
+// //   },
+
+// //   acceptReschedule: async (bookingId) => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+
+// //       set((state) => {
+// //         const updatedFilters = { ...state.bookingsByFilter };
+// //         Object.keys(updatedFilters).forEach((key) => {
+// //           updatedFilters[key] = updatedFilters[key].map((b) =>
+// //             b.id === bookingId ? { ...b, status: "confirmed" } : b
+// //           );
+// //         });
+// //         return {
+// //           bookingsByFilter: updatedFilters,
+// //           selectedBooking:
+// //             state.selectedBooking?.id === bookingId
+// //               ? { ...state.selectedBooking, status: "confirmed" }
+// //               : state.selectedBooking,
+// //         };
+// //       });
+
+// //       const res = await fetchWithAuth(
+// //         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/accept`,
+// //         { method: "PATCH" }
+// //       );
+
+// //       if (res.success && res.data) {
+// //         const updatedBooking = mapBookingToUI(res.data);
+// //         set((state) => {
+// //           const updatedFilters = { ...state.bookingsByFilter };
+// //           Object.keys(updatedFilters).forEach((key) => {
+// //             updatedFilters[key] = updatedFilters[key].map((b) =>
+// //               b.id === bookingId ? updatedBooking : b
+// //             );
+// //           });
+// //           return {
+// //             bookingsByFilter: updatedFilters,
+// //             selectedBooking:
+// //               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+// //           };
+// //         });
+// //         return res.data;
+// //       }
+
+// //       throw new Error("Accept reschedule failed");
+// //     } catch (err) {
+// //       console.error("acceptReschedule failed:", err);
+// //       throw err;
+// //     }
+// //   },
+
+// //   rejectReschedule: async (bookingId, reason) => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+
+// //       set((state) => {
+// //         const updatedFilters = { ...state.bookingsByFilter };
+// //         Object.keys(updatedFilters).forEach((key) => {
+// //           updatedFilters[key] = updatedFilters[key].map((b) =>
+// //             b.id === bookingId ? { ...b, status: "pending" } : b
+// //           );
+// //         });
+// //         return {
+// //           bookingsByFilter: updatedFilters,
+// //           selectedBooking:
+// //             state.selectedBooking?.id === bookingId
+// //               ? { ...state.selectedBooking, status: "pending" }
+// //               : state.selectedBooking,
+// //         };
+// //       });
+
+// //       const res = await fetchWithAuth(
+// //         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/reject`,
+// //         {
+// //           method: "PATCH",
+// //           body: JSON.stringify({ reason }),
+// //         }
+// //       );
+
+// //       if (res.success && res.data) {
+// //         const updatedBooking = mapBookingToUI(res.data);
+// //         set((state) => {
+// //           const updatedFilters = { ...state.bookingsByFilter };
+// //           Object.keys(updatedFilters).forEach((key) => {
+// //             updatedFilters[key] = updatedFilters[key].map((b) =>
+// //               b.id === bookingId ? updatedBooking : b
+// //             );
+// //           });
+// //           return {
+// //             bookingsByFilter: updatedFilters,
+// //             selectedBooking:
+// //               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+// //           };
+// //         });
+// //         return res.data;
+// //       }
+
+// //       throw new Error("Reject reschedule failed");
+// //     } catch (err) {
+// //       console.error("rejectReschedule failed:", err);
+// //       throw err;
+// //     }
+// //   },
+
+// //   confirmBooking: async (bookingId) => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+
+// //       set((state) => {
+// //         const updatedFilters = { ...state.bookingsByFilter };
+// //         Object.keys(updatedFilters).forEach((key) => {
+// //           updatedFilters[key] = updatedFilters[key].map((b) =>
+// //             b.id === bookingId ? { ...b, status: "confirmed" } : b
+// //           );
+// //         });
+// //         return {
+// //           bookingsByFilter: updatedFilters,
+// //           selectedBooking:
+// //             state.selectedBooking?.id === bookingId
+// //               ? { ...state.selectedBooking, status: "confirmed" }
+// //               : state.selectedBooking,
+// //         };
+// //       });
+
+// //       const res = await fetchWithAuth(
+// //         `${API_BASE}/api/tutor/bookings/${bookingId}/confirm`,
+// //         { method: "PATCH" }
+// //       );
+
+// //       if (res.success && res.data) {
+// //         const updatedBooking = mapBookingToUI(res.data);
+// //         set((state) => {
+// //           const updatedFilters = { ...state.bookingsByFilter };
+// //           Object.keys(updatedFilters).forEach((key) => {
+// //             updatedFilters[key] = updatedFilters[key].map((b) =>
+// //               b.id === bookingId ? updatedBooking : b
+// //             );
+// //           });
+// //           return {
+// //             bookingsByFilter: updatedFilters,
+// //             selectedBooking:
+// //               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+// //           };
+// //         });
+// //         return res.data;
+// //       }
+
+// //       throw new Error("Confirm failed");
+// //     } catch (err) {
+// //       console.error("confirmBooking failed:", err);
+// //       throw err;
+// //     }
+// //   },
+
+// //   cancelBooking: async (bookingId, reason) => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+
+// //       if (!reason || !reason.trim()) {
+// //         throw new Error("Cancellation reason is required");
+// //       }
+
+// //       set((state) => {
+// //         const updatedFilters = { ...state.bookingsByFilter };
+// //         Object.keys(updatedFilters).forEach((key) => {
+// //           updatedFilters[key] = updatedFilters[key].map((b) =>
+// //             b.id === bookingId ? { ...b, status: "cancelled" } : b
+// //           );
+// //         });
+// //         return {
+// //           bookingsByFilter: updatedFilters,
+// //           selectedBooking:
+// //             state.selectedBooking?.id === bookingId
+// //               ? { ...state.selectedBooking, status: "cancelled" }
+// //               : state.selectedBooking,
+// //         };
+// //       });
+
+// //       const res = await fetchWithAuth(
+// //         `${API_BASE}/api/tutor/bookings/${bookingId}/cancel`,
+// //         {
+// //           method: "POST",
+// //           body: JSON.stringify({ reason: reason.trim() }),
+// //         }
+// //       );
+
+// //       if (res.success) {
+// //         return true;
+// //       }
+
+// //       throw new Error(res.message || "Cancel failed");
+// //     } catch (err) {
+// //       console.error("cancelBooking failed:", err);
+// //       throw err;
+// //     }
+// //   },
+
+// //   endSession: async (bookingId, notes = "") => {
+// //     try {
+// //       const { fetchWithAuth } = useTutorAuthStore.getState();
+
+// //       set((state) => {
+// //         const updatedFilters = { ...state.bookingsByFilter };
+// //         Object.keys(updatedFilters).forEach((key) => {
+// //           updatedFilters[key] = updatedFilters[key].map((b) =>
+// //             b.id === bookingId ? { ...b, status: "completed" } : b
+// //           );
+// //         });
+// //         return {
+// //           bookingsByFilter: updatedFilters,
+// //           selectedBooking:
+// //             state.selectedBooking?.id === bookingId
+// //               ? { ...state.selectedBooking, status: "completed" }
+// //               : state.selectedBooking,
+// //         };
+// //       });
+
+// //       const res = await fetchWithAuth(
+// //         `${API_BASE}/api/tutor/bookings/${bookingId}/end`,
+// //         {
+// //           method: "POST",
+// //           body: JSON.stringify({ notes }),
+// //         }
+// //       );
+
+// //       if (res.success) {
+// //         return true;
+// //       }
+
+// //       throw new Error("End session failed");
+// //     } catch (err) {
+// //       console.error("endSession failed:", err);
+// //       throw err;
+// //     }
+// //   },
+
+// //   reset: () => {
+// //     get().disconnectSocket();
+// //     set({
+// //       bookingsByFilter: {},
+// //       loadedFilters: new Set(),
+// //       activeFilter: "all",
+// //       selectedBooking: null,
+// //       messages: [],
+// //       isLoading: false,
+// //       isSending: false,
+// //       socketConnected: false,
+// //       isSomeoneTyping: false,
+// //       typingUserName: null,
+// //       isParticipantOnline: false,
+// //     });
+// //   },
+
+// //   setActiveFilter: (filter) => set({ activeFilter: filter }),
+
+// //   getCurrentBookings: () => {
+// //     const { bookingsByFilter, activeFilter } = get();
+// //     return bookingsByFilter[activeFilter] || [];
+// //   },
+// // }));
+
+
+
+
+
+
+
+
+// // src/store/tutorChatStore.js
+
+// import { create } from "zustand";
+// import useTutorAuthStore from "./tutorAuthStore";
+// import { connectSocket, getSocket } from "@/lib/tutorChatSocket";
+
+// const API_BASE = "https://fillops-server-5fuf.onrender.com";
+
+// const mapBookingToUI = (booking) => ({
+//   id: booking.id,
+//   studentId: booking.userId || booking.user?.id,
+//   participant_name: booking.user?.name || "Student",
+//   participant_role: "student",
+//   last_message: booking.lastMessage?.content || "",
+//   last_message_time: booking.lastMessage?.createdAt || null,
+//   status: (booking.status || "pending").toLowerCase(),
+//   scheduledAt: booking.scheduledAt || null,
+//   proposedAt: booking.proposedAt || null,
+//   duration: booking.duration || null,
+//   unread_count: booking.unreadCount || 0,
+//   purpose: booking.purpose || "",
+//   avatar: booking.user?.avatar || null,
+//   isBooking: true,
+//   isOnline: false,   // populated by handleOnlineUsers
+// });
+
+// const isOlderThanMonth = (booking) => {
+//   const oneMonthAgo = new Date();
+//   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+//   const bookingDate = new Date(
+//     booking.scheduledAt || booking.updatedAt || booking.createdAt || 0
+//   );
+//   return bookingDate < oneMonthAgo;
+// };
+
+// export const useTutorChatStore = create((set, get) => ({
+//   // ── State ──────────────────────────────────────────────────────
+//   bookingsByFilter: {},
+//   loadedFilters: new Set(),
+//   activeFilter: "all",
+//   selectedBooking: null,
+//   messages: [],
+//   isLoading: false,
+//   isLoadingMessages: false,   // ← was missing in some versions
+//   isSending: false,
+//   socketConnected: false,
+//   isSomeoneTyping: false,
+//   typingUserName: null,
+//   isParticipantOnline: false,
+
+//   // ── Socket ─────────────────────────────────────────────────────
+//   initializeSocket: () => {
+//     const token = useTutorAuthStore.getState().accessToken;
+//     if (!token) {
+//       console.warn("[TutorChatStore] No token — cannot initialize socket");
+//       return;
+//     }
+//     const socket = connectSocket(token);
+//     set({ socketConnected: socket?.connected || false });
+//   },
+
+//   disconnectSocket: () => {
+//     const socket = getSocket();
+//     if (socket?.connected) socket.disconnect();
+//     set({ socketConnected: false });
+//   },
+
+//   // ── Socket event handlers ──────────────────────────────────────
+
+//   handleNewMessage: (msg) => {
+//     set((state) => {
+//       if (state.messages.some((m) => m.id === msg.id)) return state;
+
+//       const isCurrent = msg.bookingId === state.selectedBooking?.id;
+//       let updatedMessages = [...state.messages];
+
+//       // Try to replace an optimistic message
+//       let optimisticIndex = -1;
+//       if (msg.tempId) {
+//         optimisticIndex = updatedMessages.findIndex((m) => m.tempId === msg.tempId);
+//       }
+//       if (optimisticIndex === -1 && msg.sender?.id && msg.content) {
+//         const msgTime = new Date(msg.createdAt).getTime();
+//         optimisticIndex = updatedMessages.findIndex(
+//           (m) =>
+//             m.isOptimistic === true &&
+//             m.content === msg.content &&
+//             m.sender?.id === msg.sender?.id &&
+//             Math.abs(new Date(m.createdAt).getTime() - msgTime) < 10000
+//         );
+//       }
+
+//       if (optimisticIndex !== -1) {
+//         updatedMessages[optimisticIndex] = {
+//           ...msg,
+//           tempId: undefined,
+//           isOptimistic: false,
+//           status: "sent",
+//         };
+//       } else {
+//         updatedMessages.push({ ...msg, status: "sent" });
+//       }
+
+//       updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+//       // Update unread count in sidebar if this isn't the active booking
+//       if (!isCurrent && msg.senderRole !== "tutor") {
+//         const updatedFilters = { ...state.bookingsByFilter };
+//         Object.keys(updatedFilters).forEach((filter) => {
+//           updatedFilters[filter] = updatedFilters[filter]?.map((b) =>
+//             b.id === msg.bookingId
+//               ? { ...b, unread_count: (b.unread_count || 0) + 1, last_message: msg.content }
+//               : b
+//           );
+//         });
+//         return { messages: updatedMessages, bookingsByFilter: updatedFilters };
+//       }
+
+//       return { messages: updatedMessages };
+//     });
+//   },
+
+//   handleMessagesReadByStudent: (timestamp) => {
+//     set((state) => ({
+//       messages: state.messages.map((m) =>
+//         m.senderRole === "tutor" && new Date(m.createdAt) <= new Date(timestamp)
+//           ? { ...m, isRead: true }
+//           : m
+//       ),
+//     }));
+//   },
+
+//   handleSessionEnded: (data) => {
+//     const { bookingId } = data;
+//     set((state) => {
+//       if (state.selectedBooking?.id !== bookingId) return state;
+//       return { selectedBooking: { ...state.selectedBooking, status: "completed" } };
+//     });
+//   },
+
+//   handleSessionKick: (data) => {
+//     const socket = getSocket();
+//     if (socket && data?.bookingId) socket.emit("leave:booking", data.bookingId);
+//     set((state) => ({
+//       selectedBooking: state.selectedBooking?.id === data?.bookingId ? null : state.selectedBooking,
+//       messages: state.selectedBooking?.id === data?.bookingId ? [] : state.messages,
+//     }));
+//   },
+
+//   handleSessionExpired: (data) => {
+//     const { bookingId } = data;
+//     set((state) => {
+//       if (state.selectedBooking?.id !== bookingId) return state;
+//       return { selectedBooking: { ...state.selectedBooking, status: "completed" } };
+//     });
+//   },
+
+//   // FIX: marks isOnline on every booking in every filter, AND on selectedBooking
+//   handleOnlineUsers: (users) => {
+//     const { bookingsByFilter, selectedBooking } = get();
+
+//     const isOnlineCheck = (studentId) =>
+//       users.some((u) => u.id === studentId && (u.userType === "user" || u.userType === "student"));
+
+//     const updatedFilters = {};
+//     Object.keys(bookingsByFilter).forEach((filter) => {
+//       updatedFilters[filter] = bookingsByFilter[filter].map((b) => ({
+//         ...b,
+//         isOnline: isOnlineCheck(b.studentId),
+//       }));
+//     });
+
+//     const updatedSelected = selectedBooking
+//       ? { ...selectedBooking, isOnline: isOnlineCheck(selectedBooking.studentId) }
+//       : null;
+
+//     set({ bookingsByFilter: updatedFilters, selectedBooking: updatedSelected });
+//   },
+
+//   handleNewBookingNotification: () => {
+//     get().fetchBookings("pending", true);
+//     get().fetchBookings("all", true);
+//   },
+
+//   handleBookingCancelled: () => {
+//     get().fetchBookings("cancelled", true);
+//     get().fetchBookings("all", true);
+//   },
+
+//   handleBookingRescheduled: () => {
+//     get().fetchBookings("rescheduled", true);
+//     get().fetchBookings("all", true);
+//   },
+
+//   // ── FIX: setSelectedBooking defined exactly ONCE ───────────────
+//   // Your original file had this function defined twice. The second
+//   // definition replaced the first at runtime, sometimes with a
+//   // version that didn't set isLoadingMessages properly.
+//   setSelectedBooking: (booking) => {
+//     const prevId = get().selectedBooking?.id;
+//     const socket = getSocket();
+
+//     // Leave previous room
+//     if (prevId && socket?.connected) {
+//       socket.emit("leave:booking", prevId);
+//     }
+
+//     // Instant UI update — chat interface appears immediately
+//     set({
+//       selectedBooking: booking,
+//       messages: [],
+//       isLoading: false,
+//       isLoadingMessages: false,
+//       isSending: false,
+//       isSomeoneTyping: false,
+//       typingUserName: null,
+//       isParticipantOnline: false,
+//     });
+
+//     if (!booking?.id) return;
+
+//     // Join room (non-blocking)
+//     if (socket?.connected) {
+//       socket.emit("join:booking", booking.id, (ack) => {
+//         if (ack?.success) {
+//           get().markMessagesAsRead(booking.id);
+//         } else {
+//           console.error("❌ Failed to join room:", ack);
+//         }
+//       });
+//     }
+
+//     // Fetch messages (non-blocking)
+//     set({ isLoadingMessages: true });
+//     get()
+//       .fetchMessages(booking.id)
+//       .finally(() => set({ isLoadingMessages: false }));
+//   },
+
+//   // ── Core actions ───────────────────────────────────────────────
+
+//   sendMessage: async (bookingId, content, messageType = "TEXT") => {
+//     if (!content?.trim() || !bookingId) return;
+
+//     const socket = getSocket();
+//     if (!socket?.connected) {
+//       console.warn("[sendMessage] Socket not connected");
+//       return;
+//     }
+
+//     const tempId   = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+//     const tutorId  = useTutorAuthStore.getState().tutor?.id;
+
+//     const optimisticMsg = {
+//       tempId,
+//       content,
+//       messageType,
+//       bookingId,
+//       sender: {
+//         id: tutorId,
+//         type: "TUTOR",
+//         name: useTutorAuthStore.getState().tutor?.name || "You",
+//       },
+//       senderRole: "tutor",
+//       createdAt: new Date().toISOString(),
+//       status: "sending",
+//       isOptimistic: true,
+//     };
+
+//     set((s) => ({ messages: [...s.messages, optimisticMsg], isSending: true }));
+
+//     try {
+//       socket.emit("message:send", {
+//         bookingId,
+//         content: content.trim(),
+//         messageType,
+//         tempId,
+//       });
+//     } catch (err) {
+//       console.error("[sendMessage] failed:", err);
+//       set((s) => ({ messages: s.messages.filter((m) => m.tempId !== tempId) }));
+//     } finally {
+//       set({ isSending: false });
+//     }
+//   },
+
+//   sendTyping: (isTyping = true) => {
+//     const { selectedBooking, socketConnected } = get();
+//     if (!selectedBooking?.id || !socketConnected) return;
+//     const socket = getSocket();
+//     if (socket?.connected) {
+//       socket.emit(isTyping ? "typing:start" : "typing:stop", selectedBooking.id);
+//     }
+//   },
+
+//   markMessagesAsRead: (bookingId) => {
+//     const socket = getSocket();
+//     if (socket?.connected) socket.emit("messages:read", bookingId);
+
+//     set((s) => ({
+//       bookingsByFilter: Object.fromEntries(
+//         Object.entries(s.bookingsByFilter).map(([k, v]) => [
+//           k,
+//           v?.map((b) => (b.id === bookingId ? { ...b, unread_count: 0 } : b)),
+//         ])
+//       ),
+//     }));
+//   },
+
+//   // ── REST calls ─────────────────────────────────────────────────
+
+//   fetchMessages: async (bookingId) => {
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}/messages`);
+
+//       if (res.success && Array.isArray(res.data)) {
+//         const oneMonthAgo = new Date();
+//         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+//         const sorted = res.data
+//           .filter((m) => new Date(m.createdAt) >= oneMonthAgo)
+//           .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+//         // Only update if the user hasn't already switched to a different booking
+//         if (get().selectedBooking?.id === bookingId) {
+//           set({ messages: sorted });
+//         }
+//         return sorted;
+//       }
+//       set({ messages: [] });
+//       return [];
+//     } catch (err) {
+//       console.error("[fetchMessages] failed:", err);
+//       return [];
+//     }
+//   },
+
+//   fetchBookings: async (filter = "all", force = false) => {
+//     if (!force && get().loadedFilters.has(filter)) return;
+
+//     set({ isLoading: true });
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       let url = `${API_BASE}/api/tutor/bookings?limit=50`;
+//       if (filter !== "all") {
+//         const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
+//         url += `&status=${backendStatus}`;
+//       }
+
+//       const res = await fetchWithAuth(url);
+//       if (!res.success || !Array.isArray(res.data)) {
+//         set((s) => ({ bookingsByFilter: { ...s.bookingsByFilter, [filter]: [] }, isLoading: false }));
+//         return;
+//       }
+
+//       const recent = res.data
+//         .filter((b) => !isOlderThanMonth(b))
+//         .sort((a, b) => {
+//           const da = new Date(a.scheduledAt || a.createdAt || a.updatedAt || 0);
+//           const db = new Date(b.scheduledAt || b.createdAt || b.updatedAt || 0);
+//           return db - da;
+//         })
+//         .map(mapBookingToUI);
+
+//       set((s) => ({
+//         bookingsByFilter: { ...s.bookingsByFilter, [filter]: recent },
+//         loadedFilters: new Set([...s.loadedFilters, filter]),
+//         isLoading: false,
+//       }));
+//     } catch (err) {
+//       console.error("[fetchBookings] failed:", err);
+//       set((s) => ({ bookingsByFilter: { ...s.bookingsByFilter, [filter]: [] }, isLoading: false }));
+//     }
+//   },
+
+//   fetchBooking: async (bookingId) => {
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}`);
+//       if (res.success && res.data) {
+//         const booking = mapBookingToUI(res.data);
+//         set({ selectedBooking: booking });
+//         set((s) => {
+//           const updated = { ...s.bookingsByFilter };
+//           Object.keys(updated).forEach((k) => {
+//             updated[k] = updated[k].map((b) => (b.id === bookingId ? booking : b));
+//           });
+//           return { bookingsByFilter: updated };
+//         });
+//         return booking;
+//       }
+//       return null;
+//     } catch (err) {
+//       console.error("[fetchBooking] failed:", err);
+//       return null;
+//     }
+//   },
+
+//   confirmMessage: async (messageId) => {
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       set((s) => ({
+//         messages: s.messages.map((m) => (m.id === messageId ? { ...m, status: "confirmed" } : m)),
+//       }));
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/tutor/bookings/messages/${messageId}/confirm`,
+//         { method: "PATCH" }
+//       );
+//       if (res.success && res.data) {
+//         set((s) => ({ messages: s.messages.map((m) => (m.id === messageId ? res.data : m)) }));
+//       }
+//     } catch (err) {
+//       console.error("confirmMessage failed:", err);
+//       const bid = get().selectedBooking?.id;
+//       if (bid) get().fetchMessages(bid);
+//     }
+//   },
+
+//   rejectMessage: async (messageId) => {
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       set((s) => ({
+//         messages: s.messages.map((m) => (m.id === messageId ? { ...m, status: "rejected" } : m)),
+//       }));
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/tutor/bookings/messages/${messageId}/reject`,
+//         { method: "PATCH" }
+//       );
+//       if (res.success && res.data) {
+//         set((s) => ({ messages: s.messages.map((m) => (m.id === messageId ? res.data : m)) }));
+//       }
+//     } catch (err) {
+//       console.error("rejectMessage failed:", err);
+//       const bid = get().selectedBooking?.id;
+//       if (bid) get().fetchMessages(bid);
+//     }
+//   },
+
+//   proposeReschedule: async (bookingId, proposedAt) => {
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       const proposedDateTime = new Date(proposedAt).toISOString();
+//       const applyStatus = (b) =>
+//         b.id === bookingId ? { ...b, status: "reschedule-proposed", proposedAt: proposedDateTime } : b;
+
+//       set((s) => ({
+//         bookingsByFilter: Object.fromEntries(
+//           Object.entries(s.bookingsByFilter).map(([k, v]) => [k, v.map(applyStatus)])
+//         ),
+//         selectedBooking:
+//           s.selectedBooking?.id === bookingId ? applyStatus(s.selectedBooking) : s.selectedBooking,
+//       }));
+
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule`,
+//         { method: "PATCH", body: JSON.stringify({ proposedAt: proposedDateTime }) }
+//       );
+//       if (!res.success) throw new Error(res.message || "Reschedule failed");
+//       return res.data;
+//     } catch (err) {
+//       console.error("proposeReschedule failed:", err);
+//       throw err;
+//     }
+//   },
+
+//   acceptReschedule: async (bookingId) => {
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       const applyStatus = (b) => (b.id === bookingId ? { ...b, status: "confirmed" } : b);
+//       set((s) => ({
+//         bookingsByFilter: Object.fromEntries(
+//           Object.entries(s.bookingsByFilter).map(([k, v]) => [k, v.map(applyStatus)])
+//         ),
+//         selectedBooking:
+//           s.selectedBooking?.id === bookingId ? applyStatus(s.selectedBooking) : s.selectedBooking,
+//       }));
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/accept`,
+//         { method: "PATCH" }
+//       );
+//       if (!res.success) throw new Error("Accept reschedule failed");
+//       return res.data;
+//     } catch (err) {
+//       console.error("acceptReschedule failed:", err);
+//       throw err;
+//     }
+//   },
+
+//   rejectReschedule: async (bookingId, reason) => {
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       const applyStatus = (b) => (b.id === bookingId ? { ...b, status: "pending" } : b);
+//       set((s) => ({
+//         bookingsByFilter: Object.fromEntries(
+//           Object.entries(s.bookingsByFilter).map(([k, v]) => [k, v.map(applyStatus)])
+//         ),
+//         selectedBooking:
+//           s.selectedBooking?.id === bookingId ? applyStatus(s.selectedBooking) : s.selectedBooking,
+//       }));
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/reject`,
+//         { method: "PATCH", body: JSON.stringify({ reason }) }
+//       );
+//       if (!res.success) throw new Error("Reject reschedule failed");
+//       return res.data;
+//     } catch (err) {
+//       console.error("rejectReschedule failed:", err);
+//       throw err;
+//     }
+//   },
+
+//   // confirmBooking: async (bookingId) => {
+//   //   try {
+//   //     const { fetchWithAuth } = useTutorAuthStore.getState();
+//   //     const applyStatus = (b) => (b.id === bookingId ? { ...b, status: "confirmed" } : b);
+//   //     set((s) => ({
+//   //       bookingsByFilter: Object.fromEntries(
+//   //         Object.entries(s.bookingsByFilter).map(([k, v]) => [k, v.map(applyStatus)])
+//   //       ),
+//   //       selectedBooking:
+//   //         s.selectedBooking?.id === bookingId ? applyStatus(s.selectedBooking) : s.selectedBooking,
+//   //     }));
+//   //     const res = await fetchWithAuth(
+//   //       `${API_BASE}/api/tutor/bookings/${bookingId}/confirm`,
+//   //       { method: "PATCH" }
+//   //     );
+//   //     if (!res.success) throw new Error("Confirm failed");
+//   //     return res.data;
+//   //   } catch (err) {
+//   //     console.error("confirmBooking failed:", err);
+//   //     throw err;
+//   //   }
+//   // },
+//   confirmBooking: async (bookingId) => {
+//   try {
+//     const { fetchWithAuth } = useTutorAuthStore.getState();
+
+//     // Optimistic update
+//     set((state) => {
+//       const updatedFilters = { ...state.bookingsByFilter };
+//       Object.keys(updatedFilters).forEach((key) => {
+//         updatedFilters[key] = updatedFilters[key].map((b) =>
+//           b.id === bookingId ? { ...b, status: "confirmed" } : b
+//         );
+//       });
+//       return {
+//         bookingsByFilter: updatedFilters,
+//         selectedBooking:
+//           state.selectedBooking?.id === bookingId
+//             ? { ...state.selectedBooking, status: "confirmed" }
+//             : state.selectedBooking,
+//       };
+//     });
+
+//     const res = await fetchWithAuth(
+//       `${API_BASE}/api/tutor/bookings/${bookingId}/confirm`,
+//       { method: "PATCH" }
+//     );
+
+//     if (res.success && res.data) {
+//       const updatedBooking = mapBookingToUI(res.data);
+//       const newStatus = updatedBooking.status; // whatever server returns — "active", "confirmed", etc.
+
+//       set((state) => {
+//         const updatedFilters = { ...state.bookingsByFilter };
+
+//         Object.keys(updatedFilters).forEach((key) => {
+//           if (key === "pending") {
+//             // Remove from pending buffer
+//             updatedFilters[key] = updatedFilters[key].filter((b) => b.id !== bookingId);
+//           } else {
+//             // Update in all other buffers
+//             updatedFilters[key] = updatedFilters[key]?.map((b) =>
+//               b.id === bookingId ? updatedBooking : b
+//             );
+//           }
+//         });
+
+//         // Add to the new status buffer if not already there
+//         if (updatedFilters[newStatus]) {
+//           const exists = updatedFilters[newStatus].some((b) => b.id === bookingId);
+//           if (!exists) {
+//             updatedFilters[newStatus] = [updatedBooking, ...updatedFilters[newStatus]];
+//           }
+//         }
+
+//         return {
+//           bookingsByFilter: updatedFilters,
+//           selectedBooking:
+//             state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+//           // ← This is the key line — switches the tab
+//           activeFilter:
+//             state.selectedBooking?.id === bookingId ? newStatus : state.activeFilter,
+//         };
+//       });
+
+//       // Force refresh the new status filter so count badge is accurate
+//       get().fetchBookings(newStatus, true);
+
+//       return res.data;
+//     }
+
+//     throw new Error("Confirm failed");
+//   } catch (err) {
+//     console.error("confirmBooking failed:", err);
+//     throw err;
+//   }
+// },
+
+//   cancelBooking: async (bookingId, reason) => {
+//     if (!reason?.trim()) throw new Error("Cancellation reason is required");
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       const applyStatus = (b) => (b.id === bookingId ? { ...b, status: "cancelled" } : b);
+//       set((s) => ({
+//         bookingsByFilter: Object.fromEntries(
+//           Object.entries(s.bookingsByFilter).map(([k, v]) => [k, v.map(applyStatus)])
+//         ),
+//         selectedBooking:
+//           s.selectedBooking?.id === bookingId ? applyStatus(s.selectedBooking) : s.selectedBooking,
+//       }));
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/tutor/bookings/${bookingId}/cancel`,
+//         { method: "POST", body: JSON.stringify({ reason: reason.trim() }) }
+//       );
+//       if (!res.success) throw new Error(res.message || "Cancel failed");
+//       return true;
+//     } catch (err) {
+//       console.error("cancelBooking failed:", err);
+//       throw err;
+//     }
+//   },
+
+//   endSession: async (bookingId, notes = "") => {
+//     try {
+//       const { fetchWithAuth } = useTutorAuthStore.getState();
+//       const applyStatus = (b) => (b.id === bookingId ? { ...b, status: "completed" } : b);
+//       set((s) => ({
+//         bookingsByFilter: Object.fromEntries(
+//           Object.entries(s.bookingsByFilter).map(([k, v]) => [k, v.map(applyStatus)])
+//         ),
+//         selectedBooking:
+//           s.selectedBooking?.id === bookingId ? applyStatus(s.selectedBooking) : s.selectedBooking,
+//       }));
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/tutor/bookings/${bookingId}/end`,
+//         { method: "POST", body: JSON.stringify({ notes }) }
+//       );
+//       if (!res.success) throw new Error("End session failed");
+//       return true;
+//     } catch (err) {
+//       console.error("endSession failed:", err);
+//       throw err;
+//     }
+//   },
+
+//   // ── Misc ───────────────────────────────────────────────────────
+//   setActiveFilter: (filter) => set({ activeFilter: filter }),
+
+//   getCurrentBookings: () => {
+//     const { bookingsByFilter, activeFilter } = get();
+//     return bookingsByFilter[activeFilter] || [];
+//   },
+
+//   reset: () => {
+//     get().disconnectSocket();
+//     set({
+//       bookingsByFilter: {},
+//       loadedFilters: new Set(),
+//       activeFilter: "all",
+//       selectedBooking: null,
+//       messages: [],
+//       isLoading: false,
+//       isLoadingMessages: false,
+//       isSending: false,
+//       socketConnected: false,
+//       isSomeoneTyping: false,
+//       typingUserName: null,
+//       isParticipantOnline: false,
+//     });
+//   },
+// }));
+
+
+
+
+
+
+
+
+
+
+
 // src/store/tutorChatStore.js
 import { create } from "zustand";
 import useTutorAuthStore from "./tutorAuthStore";
 import { connectSocket, getSocket } from "@/lib/tutorChatSocket";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com";
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 const mapBookingToUI = (booking) => ({
   id: booking.id,
@@ -24,70 +1707,277 @@ const mapBookingToUI = (booking) => ({
   isOnline: false,
 });
 
-// ✅ Helper to check if booking is older than 1 month
 const isOlderThanMonth = (booking) => {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  
   const bookingDate = new Date(
-    booking.scheduledAt || 
-    booking.updatedAt || 
-    booking.createdAt || 
-    0
+    booking.scheduledAt || booking.updatedAt || booking.createdAt || 0
   );
-  
   return bookingDate < oneMonthAgo;
 };
 
+// Apply a booking update across ALL filter buffers at once
+const applyToAllFilters = (bookingsByFilter, bookingId, patch) => {
+  const updated = {};
+  Object.keys(bookingsByFilter).forEach((key) => {
+    updated[key] = bookingsByFilter[key]?.map((b) =>
+      b.id === bookingId ? { ...b, ...patch } : b
+    );
+  });
+  return updated;
+};
+
+// Move booking from one status bucket to another across all filters
+const moveBookingInFilters = (bookingsByFilter, bookingId, updatedBooking) => {
+  const newStatus = updatedBooking.status;
+  const updated = {};
+
+  Object.keys(bookingsByFilter).forEach((key) => {
+    if (key === "all") {
+      // Update in "all" filter
+      updated[key] = bookingsByFilter[key]?.map((b) =>
+        b.id === bookingId ? updatedBooking : b
+      );
+    } else if (key === newStatus) {
+      // Add to new status bucket if not already there
+      const exists = bookingsByFilter[key]?.some((b) => b.id === bookingId);
+      updated[key] = exists
+        ? bookingsByFilter[key].map((b) => (b.id === bookingId ? updatedBooking : b))
+        : [updatedBooking, ...(bookingsByFilter[key] || [])];
+    } else {
+      // Remove from old status buckets
+      updated[key] = bookingsByFilter[key]?.filter((b) => b.id !== bookingId);
+    }
+  });
+
+  return updated;
+};
+
+// ── Store ──────────────────────────────────────────────────────────────────────
+
 export const useTutorChatStore = create((set, get) => ({
+  // ── State ──────────────────────────────────────────────────────
   bookingsByFilter: {},
   loadedFilters: new Set(),
   activeFilter: "all",
   selectedBooking: null,
   messages: [],
   isLoading: false,
-   isLoadingMessages: false,
+  isLoadingMessages: false,
   isSending: false,
   socketConnected: false,
   isSomeoneTyping: false,
   typingUserName: null,
   isParticipantOnline: false,
+  bookingsPagesLoaded: {},    
+  hasMoreBookings: {},             
+  loadingOlderBookings: false,
 
-  // ────────────────────────────────────────────────────────────────
-  // Socket connection
-  // ────────────────────────────────────────────────────────────────
+  // ── Socket setup ───────────────────────────────────────────────
+
   initializeSocket: () => {
-    console.log("[TutorChatStore] initializeSocket called");
-    
     const token = useTutorAuthStore.getState().accessToken;
     if (!token) {
-      console.warn("[TutorChatStore] No token → cannot initialize socket");
+      console.warn("[TutorChatStore] No token — cannot initialize socket");
       return;
     }
-
     const socket = connectSocket(token);
     set({ socketConnected: socket?.connected || false });
   },
 
   disconnectSocket: () => {
     const socket = getSocket();
-    if (socket?.connected) {
-      socket.disconnect();
-    }
+    if (socket?.connected) socket.disconnect();
     set({ socketConnected: false });
   },
 
-  // ────────────────────────────────────────────────────────────────
-  // Socket event handlers
-  // ────────────────────────────────────────────────────────────────
+  // ── initializeListeners: wires ALL socket events ───────────────
+  // Call this once after initializeSocket. Returns a cleanup fn.
+  initializeListeners: () => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handlers = {
+
+      "connect": () => {
+        set({ socketConnected: true });
+        socket.emit("getOnlineUsers");
+        const { selectedBooking } = get();
+        if (selectedBooking?.id) {
+          socket.emit("join:booking", selectedBooking.id, (ack) => {
+            if (ack?.success) get().markMessagesAsRead(selectedBooking.id);
+          });
+        }
+      },
+
+      "disconnect": () => set({ socketConnected: false, isParticipantOnline: false }),
+
+      // ── Messages ──────────────────────────────────────────────
+      "message:new": (msg) => get().handleNewMessage(msg),
+      "messages:read": (ts) => get().handleMessagesReadByStudent(ts),
+
+      // ── Typing ────────────────────────────────────────────────
+      "typing:start": (data) => {
+        const { selectedBooking } = get();
+        if (data?.bookingId !== selectedBooking?.id) return;
+        if (data.userType === "tutor") return;
+        set({ isSomeoneTyping: true, typingUserName: data.userName || "Student" });
+      },
+      "typing:stop": (data) => {
+        const { selectedBooking } = get();
+        if (data?.bookingId !== selectedBooking?.id) return;
+        set({ isSomeoneTyping: false, typingUserName: null });
+      },
+
+      // ── Online presence ───────────────────────────────────────
+      "users:online": (users) => get().handleOnlineUsers(users),
+      "onlineUsers":  (users) => get().handleOnlineUsers(users),
+
+      "user:online": (data) => {
+        if (data?.userType !== "user" && data?.userType !== "student") return;
+        set((s) => ({
+          bookingsByFilter: applyToAllFilters(
+            s.bookingsByFilter,
+            // find booking by studentId
+            Object.values(s.bookingsByFilter)
+              .flat()
+              .find((b) => b.studentId === data.userId)?.id,
+            { isOnline: true }
+          ),
+          isParticipantOnline:
+            s.selectedBooking?.studentId === data.userId ? true : s.isParticipantOnline,
+        }));
+      },
+
+      "user:offline": (data) => {
+        if (data?.userType !== "user" && data?.userType !== "student") return;
+        set((s) => ({
+          isParticipantOnline:
+            s.selectedBooking?.studentId === data.userId ? false : s.isParticipantOnline,
+        }));
+      },
+
+      // ── Booking status changes (the core of instant updates) ──
+      "booking:confirmed": (data) => {
+        set((s) => {
+          const updatedBooking = { 
+            ...(s.bookingsByFilter["all"]?.find((b) => b.id === data.bookingId) ||
+                s.selectedBooking || { id: data.bookingId }),
+            status: data.booking ? mapBookingToUI(data.booking).status : "confirmed",
+            ...(data.booking ? mapBookingToUI(data.booking) : {}),
+          };
+          const newStatus = updatedBooking.status;
+          return {
+            bookingsByFilter: moveBookingInFilters(s.bookingsByFilter, data.bookingId, updatedBooking),
+            selectedBooking: s.selectedBooking?.id === data.bookingId ? updatedBooking : s.selectedBooking,
+            activeFilter: s.selectedBooking?.id === data.bookingId ? newStatus : s.activeFilter,
+          };
+        });
+        // Refresh counts for affected filters
+        get().fetchBookings("confirmed", true);
+        get().fetchBookings("pending", true);
+        get().fetchBookings("all", true);
+      },
+
+      "booking:active": (data) => {
+        set((s) => {
+          const existing = 
+            s.bookingsByFilter["all"]?.find((b) => b.id === data.bookingId) ||
+            s.selectedBooking || { id: data.bookingId };
+          const updatedBooking = {
+            ...existing,
+            status: "active",
+            ...(data.booking ? mapBookingToUI(data.booking) : {}),
+          };
+          return {
+            bookingsByFilter: moveBookingInFilters(s.bookingsByFilter, data.bookingId, updatedBooking),
+            selectedBooking: s.selectedBooking?.id === data.bookingId ? updatedBooking : s.selectedBooking,
+            activeFilter: s.selectedBooking?.id === data.bookingId ? "active" : s.activeFilter,
+          };
+        });
+        get().fetchBookings("active", true);
+        get().fetchBookings("confirmed", true);
+        get().fetchBookings("all", true);
+      },
+
+      "booking:cancelled": (data) => {
+        set((s) => {
+          const existing =
+            s.bookingsByFilter["all"]?.find((b) => b.id === data.bookingId) ||
+            s.selectedBooking || { id: data.bookingId };
+          const updatedBooking = { ...existing, status: "cancelled" };
+          return {
+            bookingsByFilter: moveBookingInFilters(s.bookingsByFilter, data.bookingId, updatedBooking),
+            selectedBooking: s.selectedBooking?.id === data.bookingId ? updatedBooking : s.selectedBooking,
+          };
+        });
+        get().fetchBookings("cancelled", true);
+        get().fetchBookings("all", true);
+      },
+
+      "booking:completed": (data) => {
+        set((s) => {
+          const existing =
+            s.bookingsByFilter["all"]?.find((b) => b.id === data.bookingId) ||
+            s.selectedBooking || { id: data.bookingId };
+          const updatedBooking = { ...existing, status: "completed" };
+          return {
+            bookingsByFilter: moveBookingInFilters(s.bookingsByFilter, data.bookingId, updatedBooking),
+            selectedBooking: s.selectedBooking?.id === data.bookingId ? updatedBooking : s.selectedBooking,
+            activeFilter: s.selectedBooking?.id === data.bookingId ? "completed" : s.activeFilter,
+          };
+        });
+        get().fetchBookings("completed", true);
+        get().fetchBookings("all", true);
+      },
+
+      "booking:new": () => {
+        get().fetchBookings("pending", true);
+        get().fetchBookings("all", true);
+      },
+      "booking:rescheduled": (data) => {
+  set((s) => ({
+    bookingsByFilter: applyToAllFilters(
+      s.bookingsByFilter, data.bookingId,
+      { status: "reschedule-proposed", proposedAt: data.proposedAt }
+    ),
+    selectedBooking: s.selectedBooking?.id === data.bookingId
+      ? { ...s.selectedBooking, status: "reschedule-proposed", proposedAt: data.proposedAt }
+      : s.selectedBooking,
+  }));
+},
+
+      // "booking:rescheduled": (data) => {
+      //   set((s) => ({
+      //     bookingsByFilter: applyToAllFilters(
+      //       s.bookingsByFilter, data.bookingId,
+      //       { status: "reschedule-proposed", proposedAt: data.proposedAt }
+      //     ),
+      //     selectedBooking: s.selectedBooking?.id === data.bookingId
+      //       ? { ...s.selectedBooking, status: "reschedule-proposed", proposedAt: data.proposedAt }
+      //       : s.selectedBooking,
+      //   }));
+      // },
+
+      // ── Session events ─────────────────────────────────────────
+      "session:ended":   (data) => get().handleSessionEnded(data),
+      "session:kick":    (data) => get().handleSessionKick(data),
+      "session:expired": (data) => get().handleSessionExpired(data),
+    };
+
+    Object.entries(handlers).forEach(([event, fn]) => socket.on(event, fn));
+
+    // Return cleanup
+    return () => {
+      Object.entries(handlers).forEach(([event, fn]) => socket.off(event, fn));
+    };
+  },
+
+  // ── Socket event handlers ──────────────────────────────────────
+
   handleNewMessage: (msg) => {
-    console.log("📨 handleNewMessage called:", msg);
-    
     set((state) => {
-      if (state.messages.some((m) => m.id === msg.id)) {
-        console.log("⚠️ Duplicate message (by ID) skipped:", msg.id);
-        return state;
-      }
+      if (state.messages.some((m) => m.id === msg.id)) return state;
 
       const isCurrent = msg.bookingId === state.selectedBooking?.id;
       let updatedMessages = [...state.messages];
@@ -95,45 +1985,36 @@ export const useTutorChatStore = create((set, get) => ({
       let optimisticIndex = -1;
       if (msg.tempId) {
         optimisticIndex = updatedMessages.findIndex((m) => m.tempId === msg.tempId);
-        console.log("🔎 Searching for tempId:", msg.tempId, "→ Found at index:", optimisticIndex);
       }
-
       if (optimisticIndex === -1 && msg.sender?.id && msg.content) {
         const msgTime = new Date(msg.createdAt).getTime();
-        optimisticIndex = updatedMessages.findIndex((m) => 
-          m.isOptimistic === true &&
-          m.content === msg.content &&
-          m.sender?.id === msg.sender?.id &&
-          Math.abs(new Date(m.createdAt).getTime() - msgTime) < 10000
+        optimisticIndex = updatedMessages.findIndex(
+          (m) =>
+            m.isOptimistic === true &&
+            m.content === msg.content &&
+            m.sender?.id === msg.sender?.id &&
+            Math.abs(new Date(m.createdAt).getTime() - msgTime) < 10000
         );
-        console.log("🔎 Fallback search by content+sender:", optimisticIndex);
       }
 
       if (optimisticIndex !== -1) {
-        console.log("✅ REPLACING optimistic message at index:", optimisticIndex);
         updatedMessages[optimisticIndex] = {
-          ...msg,
-          tempId: undefined,
-          isOptimistic: false,
-          status: "sent",
+          ...msg, tempId: undefined, isOptimistic: false, status: "sent",
         };
       } else {
-        console.log("➕ Adding new message (no optimistic found)");
         updatedMessages.push({ ...msg, status: "sent" });
       }
 
       updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
       if (!isCurrent && msg.senderRole !== "tutor") {
-        const updatedFilters = { ...state.bookingsByFilter };
-        Object.keys(updatedFilters).forEach((filter) => {
-          updatedFilters[filter] = updatedFilters[filter]?.map((b) =>
-            b.id === msg.bookingId
-              ? { ...b, unread_count: (b.unread_count || 0) + 1, last_message: msg.content }
-              : b
-          );
-        });
-        return { messages: updatedMessages, bookingsByFilter: updatedFilters };
+        return {
+          messages: updatedMessages,
+          bookingsByFilter: applyToAllFilters(
+            state.bookingsByFilter, msg.bookingId,
+            { unread_count: (state.bookingsByFilter["all"]?.find((b) => b.id === msg.bookingId)?.unread_count || 0) + 1, last_message: msg.content }
+          ),
+        };
       }
 
       return { messages: updatedMessages };
@@ -141,215 +2022,95 @@ export const useTutorChatStore = create((set, get) => ({
   },
 
   handleMessagesReadByStudent: (timestamp) => {
-    console.log("📖 Student read messages up to:", timestamp);
     set((state) => ({
       messages: state.messages.map((m) =>
         m.senderRole === "tutor" && new Date(m.createdAt) <= new Date(timestamp)
-          ? { ...m, isRead: true }
-          : m
+          ? { ...m, isRead: true } : m
       ),
     }));
   },
 
   handleSessionEnded: (data) => {
-    console.log("🏁 Session ended:", data);
-    const { bookingId } = data;
-    set((state) => {
-      if (state.selectedBooking?.id !== bookingId) return state;
-      return {
-        selectedBooking: { ...state.selectedBooking, status: "completed" },
-      };
-    });
+    set((s) => ({
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, data.bookingId, { status: "completed" }),
+      selectedBooking: s.selectedBooking?.id === data.bookingId
+        ? { ...s.selectedBooking, status: "completed" } : s.selectedBooking,
+    }));
   },
 
   handleSessionKick: (data) => {
-    console.log("👢 Kicked from session:", data);
     const socket = getSocket();
-    if (socket && data?.bookingId) {
-      socket.emit("leave:booking", data.bookingId);
-    }
-
-    set((state) => ({
-      selectedBooking: state.selectedBooking?.id === data?.bookingId ? null : state.selectedBooking,
-      messages: state.selectedBooking?.id === data?.bookingId ? [] : state.messages,
+    if (socket && data?.bookingId) socket.emit("leave:booking", data.bookingId);
+    set((s) => ({
+      selectedBooking: s.selectedBooking?.id === data?.bookingId ? null : s.selectedBooking,
+      messages: s.selectedBooking?.id === data?.bookingId ? [] : s.messages,
     }));
   },
 
   handleSessionExpired: (data) => {
-    console.log("⏰ Session expired:", data);
-    const { bookingId } = data;
-    set((state) => {
-      if (state.selectedBooking?.id !== bookingId) return state;
-      return {
-        selectedBooking: { ...state.selectedBooking, status: "completed" },
-      };
-    });
+    set((s) => ({
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, data.bookingId, { status: "completed" }),
+      selectedBooking: s.selectedBooking?.id === data.bookingId
+        ? { ...s.selectedBooking, status: "completed" } : s.selectedBooking,
+    }));
   },
-
-  // handleOnlineUsers: (users) => {
-  //   console.log("👥 Online users:", users);
-  //   const studentId = get().selectedBooking?.studentId;
-  //   const isOnline = users?.some((u) => u.id === studentId && u.userType === "user");
-  //   set({ isParticipantOnline: !!isOnline });
-  // },
 
   handleOnlineUsers: (users) => {
-  console.log("👥 Online users:", users);
+    const { bookingsByFilter, selectedBooking } = get();
 
-  const { bookingsByFilter, selectedBooking } = get();
+    const isOnlineCheck = (studentId) =>
+      users.some((u) => u.id === studentId && (u.userType === "user" || u.userType === "student"));
 
-  // Loop through all bookings and set isOnline
-  const updatedFilters = {};
-  Object.keys(bookingsByFilter).forEach((filter) => {
-    updatedFilters[filter] = bookingsByFilter[filter].map((b) => {
-      const isOnline = users.some((u) => u.id === b.studentId && u.userType === "user");
-      return { ...b, isOnline };
+    const updatedFilters = {};
+    Object.keys(bookingsByFilter).forEach((filter) => {
+      updatedFilters[filter] = bookingsByFilter[filter]?.map((b) => ({
+        ...b, isOnline: isOnlineCheck(b.studentId),
+      }));
     });
-  });
 
-  // Update selectedBooking if online
-  const updatedSelected = selectedBooking
-    ? {
-        ...selectedBooking,
-        isOnline: users.some((u) => u.id === selectedBooking.studentId && u.userType === "user"),
-      }
-    : null;
-
-  set({ bookingsByFilter: updatedFilters, selectedBooking: updatedSelected });
-},
-
-  handleNewBookingNotification: (data) => {
-    console.log("🔔 New booking notification:", data);
-    get().fetchBookings("pending", true);
-    get().fetchBookings("all", true);
-  },
-
-  handleBookingCancelled: (data) => {
-    console.log("❌ Booking cancelled:", data);
-    get().fetchBookings("cancelled", true);
-    get().fetchBookings("all", true);
-  },
-
-  handleBookingRescheduled: (data) => {
-    console.log("📅 Booking rescheduled:", data);
-    get().fetchBookings("rescheduled", true);
-    get().fetchBookings("all", true);
-  },
-
-  // ────────────────────────────────────────────────────────────────
-  // Core chat actions// In tutorChatStore.js - Replace your setSelectedBooking with this:
-
-setSelectedBooking: (booking) => {
-  const prevId = get().selectedBooking?.id;
-  const socket = getSocket();
-
-  // Leave previous room
-  if (prevId && socket?.connected) {
-    socket.emit("leave:booking", prevId);
-  }
-
-  // ✅ INSTANT UI UPDATE - Show chat interface immediately
-  set({
-    selectedBooking: booking, // Show booking data immediately
-    messages: [], // Empty messages (chat UI shows instantly)
-    isLoading: false, // ✅ UI is ready - no spinner!
-    isLoadingMessages: false, // Start fresh
-    isSending: false,
-    isSomeoneTyping: false,
-    typingUserName: null,
-    isParticipantOnline: false,
-  });
-
-  if (!booking?.id) return;
-
-  // ✅ Join room in background (non-blocking)
-  if (socket?.connected) {
-    socket.emit("join:booking", booking.id, (ack) => {
-      if (ack?.success) {
-        console.log("✅ Joined booking room:", booking.id);
-        get().markMessagesAsRead(booking.id);
-      } else {
-        console.error("❌ Failed to join room:", ack);
-      }
+    set({
+      bookingsByFilter: updatedFilters,
+      selectedBooking: selectedBooking
+        ? { ...selectedBooking, isOnline: isOnlineCheck(selectedBooking.studentId) }
+        : null,
+      isParticipantOnline: selectedBooking
+        ? isOnlineCheck(selectedBooking.studentId) : false,
     });
-  }
+  },
 
-  // ✅ Fetch messages in background (non-blocking)
-  set({ isLoadingMessages: true });
-  get().fetchMessages(booking.id).finally(() => {
-    set({ isLoadingMessages: false });
-  });
-},
-  // ────────────────────────────────────────────────────────────────
-  // setSelectedBooking: (booking) => {
-  //   const prevId = get().selectedBooking?.id;
-  //   const socket = getSocket();
+  // ── Core actions ───────────────────────────────────────────────
 
-  //   if (prevId && socket?.connected) {
-  //     socket.emit("leave:booking", prevId);
-  //   }
-
-  //   set({
-  //     selectedBooking: booking,
-  //     messages: [],
-  //     isLoading: true,
-  //     isSomeoneTyping: false,
-  //     typingUserName: null,
-  //     isParticipantOnline: false,
-  //   });
-
-  //   if (!booking?.id) return;
-
-  //   if (socket?.connected) {
-  //     socket.emit("join:booking", booking.id, (ack) => {
-  //       if (ack?.success) {
-  //         console.log("✅ Joined booking room:", booking.id);
-  //         get().markMessagesAsRead(booking.id);
-  //       } else {
-  //         console.error("❌ Failed to join room:", ack);
-  //       }
-  //     });
-  //   }
-
-  //   get().fetchMessages(booking.id);
-  // },
   setSelectedBooking: (booking) => {
-  const prevId = get().selectedBooking?.id;
-  const socket = getSocket();
+    const prevId = get().selectedBooking?.id;
+    const socket = getSocket();
 
-  // Leave previous room
-  if (prevId && socket?.connected) {
-    socket.emit("leave:booking", prevId);
-  }
+    if (prevId && socket?.connected) socket.emit("leave:booking", prevId);
 
-  // ✅ INSTANT UI UPDATE - Show chat interface immediately with empty messages
-  set({
-    selectedBooking: booking,
-    messages: [], // Empty array = chat UI shows instantly
-    isLoading: false, // ✅ NOT loading - UI is ready!
-    isSending: false,
-    isSomeoneTyping: false,
-    typingUserName: null,
-    isParticipantOnline: false,
-  });
-
-  if (!booking?.id) return;
-
-  // ✅ Join room in background (non-blocking)
-  if (socket?.connected) {
-    socket.emit("join:booking", booking.id, (ack) => {
-      if (ack?.success) {
-        console.log("✅ Joined booking room:", booking.id);
-        get().markMessagesAsRead(booking.id);
-      } else {
-        console.error("❌ Failed to join room:", ack);
-      }
+    set({
+      selectedBooking: booking,
+      messages: [],
+      isLoading: false,
+      isLoadingMessages: false,
+      isSending: false,
+      isSomeoneTyping: false,
+      typingUserName: null,
+      isParticipantOnline: booking?.studentId
+        ? get().bookingsByFilter["all"]?.find((b) => b.id === booking.id)?.isOnline || false
+        : false,
     });
-  }
 
-  // ✅ Fetch messages in background (non-blocking)
-  get().fetchMessages(booking.id);
-},
+    if (!booking?.id) return;
+
+    if (socket?.connected) {
+      socket.emit("join:booking", booking.id, (ack) => {
+        if (ack?.success) get().markMessagesAsRead(booking.id);
+        else console.error("❌ Failed to join room:", ack);
+      });
+    }
+
+    set({ isLoadingMessages: true });
+    get().fetchMessages(booking.id).finally(() => set({ isLoadingMessages: false }));
+  },
 
   sendMessage: async (bookingId, content, messageType = "TEXT") => {
     if (!content?.trim() || !bookingId) return;
@@ -360,46 +2121,26 @@ setSelectedBooking: (booking) => {
       return;
     }
 
-    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const tempId  = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const tutorId = useTutorAuthStore.getState().tutor?.id;
 
-    const optimisticMsg = {
-      tempId,
-      content,
-      messageType,
-      bookingId,
-      sender: { 
-        id: tutorId,
-        type: 'TUTOR',
-        name: useTutorAuthStore.getState().tutor?.name || 'You'
-      },
-      senderRole: "tutor",
-      createdAt: new Date().toISOString(),
-      status: "sending",
-      isOptimistic: true,
-    };
-
-    console.log("📤 Sending message with tempId:", tempId);
-
     set((s) => ({
-      messages: [...s.messages, optimisticMsg],
+      messages: [...s.messages, {
+        tempId, content, messageType, bookingId,
+        sender: { id: tutorId, type: "TUTOR", name: useTutorAuthStore.getState().tutor?.name || "You" },
+        senderRole: "tutor",
+        createdAt: new Date().toISOString(),
+        status: "sending",
+        isOptimistic: true,
+      }],
       isSending: true,
     }));
 
     try {
-      socket.emit("message:send", {
-        bookingId,
-        content: content.trim(),
-        messageType,
-        tempId,
-      });
-      
-      console.log("✅ Message emitted to socket");
+      socket.emit("message:send", { bookingId, content: content.trim(), messageType, tempId });
     } catch (err) {
       console.error("[sendMessage] failed:", err);
-      set((s) => ({
-        messages: s.messages.filter((m) => m.tempId !== tempId),
-      }));
+      set((s) => ({ messages: s.messages.filter((m) => m.tempId !== tempId) }));
     } finally {
       set({ isSending: false });
     }
@@ -408,550 +2149,379 @@ setSelectedBooking: (booking) => {
   sendTyping: (isTyping = true) => {
     const { selectedBooking, socketConnected } = get();
     if (!selectedBooking?.id || !socketConnected) return;
-
     const socket = getSocket();
     if (socket?.connected) {
-      const event = isTyping ? "typing:start" : "typing:stop";
-      socket.emit(event, selectedBooking.id);
+      socket.emit(isTyping ? "typing:start" : "typing:stop", selectedBooking.id);
     }
   },
 
   markMessagesAsRead: (bookingId) => {
     const socket = getSocket();
-    if (socket?.connected) {
-      socket.emit("messages:read", bookingId);
-    }
-
+    if (socket?.connected) socket.emit("messages:read", bookingId);
     set((s) => ({
-      bookingsByFilter: {
-        ...s.bookingsByFilter,
-        [s.activeFilter]: s.bookingsByFilter[s.activeFilter]?.map((b) =>
-          b.id === bookingId ? { ...b, unread_count: 0 } : b
-        ),
-      },
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, bookingId, { unread_count: 0 }),
     }));
   },
 
-  // ────────────────────────────────────────────────────────────────
-  // ✅ OPTIMIZED REST API calls
-  // ────────────────────────────────────────────────────────────────
-  // fetchMessages: async (bookingId) => {
-  //   console.log("[FETCH] Messages for booking:", bookingId);
-  //   set({ isLoading: true });
+  // ── REST calls ─────────────────────────────────────────────────
 
-  //   try {
-  //     const { fetchWithAuth } = useTutorAuthStore.getState();
-  //     const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}/messages`);
-
-  //     if (res.success && Array.isArray(res.data)) {
-  //       // ✅ Filter out messages older than 1 month
-  //       const oneMonthAgo = new Date();
-  //       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-        
-  //       const recentMessages = res.data.filter(msg => {
-  //         const msgDate = new Date(msg.createdAt);
-  //         return msgDate >= oneMonthAgo;
-  //       });
-
-  //       const sorted = [...recentMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  //       set({ messages: sorted });
-  //       console.log(`[FETCH] Loaded ${sorted.length} recent messages (filtered ${res.data.length - sorted.length} old messages)`);
-  //     } else {
-  //       set({ messages: [] });
-  //     }
-  //   } catch (err) {
-  //     console.error("[FETCH] Messages failed:", err);
-  //     set({ messages: [] });
-  //   } finally {
-  //     set({ isLoading: false });
-  //   }
-  // },
   fetchMessages: async (bookingId) => {
-  console.log("[FETCH] Messages for booking:", bookingId);
-  
-  try {
-    const { fetchWithAuth } = useTutorAuthStore.getState();
-    const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}/messages`);
+    try {
+      const { fetchWithAuth } = useTutorAuthStore.getState();
+      const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}/messages`);
 
-    if (res.success && Array.isArray(res.data)) {
-      const oneMonthAgo = new Date();
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      
-      const recentMessages = res.data.filter(msg => {
-        const msgDate = new Date(msg.createdAt);
-        return msgDate >= oneMonthAgo;
-      });
+      if (res.success && Array.isArray(res.data)) {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-      const sorted = [...recentMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      
-      // ✅ Only update if still viewing this booking
-      const currentBookingId = get().selectedBooking?.id;
-      if (currentBookingId === bookingId) {
-        set({ messages: sorted });
+        const sorted = res.data
+          .filter((m) => new Date(m.createdAt) >= oneMonthAgo)
+          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+        if (get().selectedBooking?.id === bookingId) set({ messages: sorted });
+        return sorted;
       }
-      
-      console.log(`[FETCH] Loaded ${sorted.length} messages`);
-      return sorted;
-    } else {
       set({ messages: [] });
       return [];
+    } catch (err) {
+      console.error("[fetchMessages] failed:", err);
+      return [];
     }
+  },
+
+  // fetchBookings: async (filter = "all", force = false) => {
+  //   if (!force && get().loadedFilters.has(filter)) return;
+
+  //   set({ isLoading: true });
+  //   try {
+  //     const { fetchWithAuth } = useTutorAuthStore.getState();
+  //     let url = `${API_BASE}/api/tutor/bookings?limit=50`;
+  //     if (filter !== "all") {
+  //       const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
+  //       url += `&status=${backendStatus}`;
+  //     }
+
+  //     const res = await fetchWithAuth(url);
+  //     if (!res.success || !Array.isArray(res.data)) {
+  //       set((s) => ({ bookingsByFilter: { ...s.bookingsByFilter, [filter]: [] }, isLoading: false }));
+  //       return;
+  //     }
+
+  //     const recent = res.data
+  //       .filter((b) => !isOlderThanMonth(b))
+  //       .sort((a, b) => {
+  //         const da = new Date(a.scheduledAt || a.createdAt || a.updatedAt || 0);
+  //         const db = new Date(b.scheduledAt || b.createdAt || b.updatedAt || 0);
+  //         return db - da;
+  //       })
+  //       .map(mapBookingToUI);
+
+  //     set((s) => ({
+  //       bookingsByFilter: { ...s.bookingsByFilter, [filter]: recent },
+  //       loadedFilters: new Set([...s.loadedFilters, filter]),
+  //       isLoading: false,
+  //     }));
+  //   } catch (err) {
+  //     console.error("[fetchBookings] failed:", err);
+  //     set((s) => ({ bookingsByFilter: { ...s.bookingsByFilter, [filter]: [] }, isLoading: false }));
+  //   }
+  // },
+
+  // Add to state
+bookingsPagesLoaded: {},          // e.g. { all: 1, pending: 2, confirmed: 1, ... }
+hasMoreBookings: {},              // e.g. { all: true, pending: false, ... }
+loadingOlderBookings: false,      // global loading flag for older (or per-filter if you want)
+
+// In fetchBookings – support append/prepend older
+fetchBookings: async (filter = "all", mode = "replace") => {  // mode: "replace" | "older"
+  const currentPage = (get().bookingsPagesLoaded?.[filter] || 0) + (mode === "older" ? 1 : 1);
+
+  set({ isLoading: mode !== "older", loadingOlderBookings: mode === "older" });
+
+  try {
+    const { fetchWithAuth } = useTutorAuthStore.getState();
+    let url = `${API_BASE}/api/tutor/bookings?limit=30&page=${currentPage}&sort=-updatedAt`;  // newest first on page 1
+
+    if (filter !== "all") {
+      const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
+      url += `&status=${backendStatus}`;
+    }
+
+    const res = await fetchWithAuth(url);
+
+    if (!res.success || !Array.isArray(res.data)) {
+      throw new Error("Invalid response");
+    }
+
+    const newBookings = res.data
+      .map(mapBookingToUI)
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)); // ensure newest last
+
+    set((s) => {
+      const key = filter;
+      let currentList = s.bookingsByFilter[key] || [];
+
+      let updatedList;
+      if (mode === "older") {
+        updatedList = [...newBookings, ...currentList]; // prepend older
+      } else {
+        updatedList = newBookings; // replace (initial / refresh)
+      }
+
+      return {
+        bookingsByFilter: { ...s.bookingsByFilter, [key]: updatedList },
+        bookingsPagesLoaded: { ...s.bookingsPagesLoaded, [key]: currentPage },
+        hasMoreBookings: { ...s.hasMoreBookings, [key]: newBookings.length === 30 },
+        loadedFilters: mode !== "older" ? new Set([...s.loadedFilters, filter]) : s.loadedFilters,
+        isLoading: false,
+        loadingOlderBookings: false,
+      };
+    });
   } catch (err) {
-    console.error("[FETCH] Messages failed:", err);
-    // Don't clear messages on error - keep UI stable
-    return [];
+    console.error("[fetchBookings]", err);
+    set({ isLoading: false, loadingOlderBookings: false });
   }
 },
 
-  fetchBookings: async (filter = "all", force = false) => {
-    if (!force && get().loadedFilters.has(filter)) {
-      console.log(`[fetchBookings] Using cached data for "${filter}"`);
-      return;
-    }
+// New action
+loadOlderBookings: () => {
+  const { activeFilter, hasMoreBookings, loadingOlderBookings } = get();
+  if (loadingOlderBookings || !hasMoreBookings?.[activeFilter]) return;
 
-    console.log("[fetchBookings] START", { filter, forced: force });
-    set({ isLoading: true });
-
-    try {
-      const { fetchWithAuth } = useTutorAuthStore.getState();
-      
-      // ✅ Fetch only 30 items per filter (much faster!)
-      let url = `${API_BASE}/api/tutor/bookings?limit=50`;
-      
-      if (filter !== "all") {
-        const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
-        url += `&status=${backendStatus}`;
-      }
-
-      const res = await fetchWithAuth(url);
-
-      if (!res.success || !Array.isArray(res.data)) {
-        console.warn("[fetchBookings] Invalid response", res);
-        set((state) => ({
-          bookingsByFilter: { ...state.bookingsByFilter, [filter]: [] },
-          isLoading: false,
-        }));
-        return;
-      }
-
-      // ✅ Filter out bookings older than 1 month
-      const recentBookings = res.data.filter(b => !isOlderThanMonth(b));
-
-      // Sort by date
-      recentBookings.sort((a, b) => {
-        const dateA = new Date(a.scheduledAt || a.createdAt || a.updatedAt || 0);
-        const dateB = new Date(b.scheduledAt || b.createdAt || b.updatedAt || 0);
-        return dateB - dateA;
-      });
-
-      const mapped = recentBookings.map(mapBookingToUI);
-
-      set((state) => ({
-        bookingsByFilter: {
-          ...state.bookingsByFilter,
-          [filter]: mapped,
-        },
-        loadedFilters: new Set([...state.loadedFilters, filter]),
-        isLoading: false,
-      }));
-
-      console.log(`[fetchBookings] Loaded ${mapped.length} recent bookings for "${filter}" (filtered ${res.data.length - recentBookings.length} old bookings)`);
-    } catch (err) {
-      console.error("[fetchBookings] FAILED:", err);
-      set((state) => ({
-        bookingsByFilter: { ...state.bookingsByFilter, [filter]: [] },
-        isLoading: false,
-      }));
-    }
+  get().fetchBookings(activeFilter, "older");
+},
+  
+  
+  // Refresh ALL loaded filters at once (use sparingly — prefer socket events)
+  refreshAllFilters: () => {
+    const loaded = [...get().loadedFilters];
+    Promise.all(loaded.map((f) => get().fetchBookings(f, true)));
   },
 
   fetchBooking: async (bookingId) => {
     try {
       const { fetchWithAuth } = useTutorAuthStore.getState();
-      const url = `${API_BASE}/api/tutor/bookings/${bookingId}`;
-      console.log("[fetchBooking] Fetching:", url);
-
-      const res = await fetchWithAuth(url);
-
+      const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}`);
       if (res.success && res.data) {
         const booking = mapBookingToUI(res.data);
-        console.log("[fetchBooking] Success:", booking.id);
-
-        set({ selectedBooking: booking });
-
-        set((state) => {
-          const updatedFilters = { ...state.bookingsByFilter };
-          Object.keys(updatedFilters).forEach((key) => {
-            updatedFilters[key] = updatedFilters[key].map((b) =>
-              b.id === bookingId ? booking : b
-            );
-          });
-          return { bookingsByFilter: updatedFilters };
-        });
-
+        set((s) => ({
+          selectedBooking: s.selectedBooking?.id === bookingId ? booking : s.selectedBooking,
+          bookingsByFilter: applyToAllFilters(s.bookingsByFilter, bookingId, booking),
+        }));
         return booking;
-      } else {
-        console.warn("[fetchBooking] No data for ID:", bookingId);
-        return null;
       }
+      return null;
     } catch (err) {
-      console.error("[fetchBooking] FAILED:", err.message || err);
+      console.error("[fetchBooking] failed:", err);
       return null;
     }
   },
 
-  confirmMessage: async (messageId) => {
-    try {
-      const { fetchWithAuth } = useTutorAuthStore.getState();
-
-      set((state) => ({
-        messages: state.messages.map((m) =>
-          m.id === messageId ? { ...m, status: "confirmed" } : m
-        ),
-      }));
-
-      const res = await fetchWithAuth(
-        `${API_BASE}/api/tutor/bookings/messages/${messageId}/confirm`,
-        { method: "PATCH" }
-      );
-
-      if (res.success && res.data) {
-        set((state) => ({
-          messages: state.messages.map((m) =>
-            m.id === messageId ? res.data : m
-          ),
-        }));
-        return res.data;
-      }
-      throw new Error("Confirm failed");
-    } catch (err) {
-      console.error("confirmMessage failed:", err);
-      const bookingId = get().selectedBooking?.id;
-      if (bookingId) await get().fetchMessages(bookingId);
-      throw err;
-    }
-  },
-
-  rejectMessage: async (messageId) => {
-    try {
-      const { fetchWithAuth } = useTutorAuthStore.getState();
-
-      set((state) => ({
-        messages: state.messages.map((m) =>
-          m.id === messageId ? { ...m, status: "rejected" } : m
-        ),
-      }));
-
-      const res = await fetchWithAuth(
-        `${API_BASE}/api/tutor/bookings/messages/${messageId}/reject`,
-        { method: "PATCH" }
-      );
-
-      if (res.success && res.data) {
-        set((state) => ({
-          messages: state.messages.map((m) =>
-            m.id === messageId ? res.data : m
-          ),
-        }));
-        return res.data;
-      }
-      throw new Error("Reject failed");
-    } catch (err) {
-      console.error("rejectMessage failed:", err);
-      const bookingId = get().selectedBooking?.id;
-      if (bookingId) await get().fetchMessages(bookingId);
-      throw err;
-    }
-  },
-
-  proposeReschedule: async (bookingId, proposedAt) => {
-    try {
-      const { fetchWithAuth } = useTutorAuthStore.getState();
-
-      const proposedDateTime = new Date(proposedAt).toISOString();
-
-      set((state) => {
-        const updatedFilters = { ...state.bookingsByFilter };
-        Object.keys(updatedFilters).forEach((key) => {
-          updatedFilters[key] = updatedFilters[key].map((b) =>
-            b.id === bookingId ? { ...b, status: "reschedule-proposed", proposedAt: proposedDateTime } : b
-          );
-        });
-        return {
-          bookingsByFilter: updatedFilters,
-          selectedBooking:
-            state.selectedBooking?.id === bookingId
-              ? { ...state.selectedBooking, status: "reschedule-proposed", proposedAt: proposedDateTime }
-              : state.selectedBooking,
-        };
-      });
-
-      const res = await fetchWithAuth(
-        `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ proposedAt: proposedDateTime }),
-        }
-      );
-
-      if (res.success && res.data) {
-        const updatedBooking = mapBookingToUI(res.data);
-        set((state) => {
-          const updatedFilters = { ...state.bookingsByFilter };
-          Object.keys(updatedFilters).forEach((key) => {
-            updatedFilters[key] = updatedFilters[key].map((b) =>
-              b.id === bookingId ? updatedBooking : b
-            );
-          });
-          return {
-            bookingsByFilter: updatedFilters,
-            selectedBooking:
-              state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-          };
-        });
-        return res.data;
-      }
-
-      throw new Error(res.message || "Reschedule failed");
-    } catch (err) {
-      console.error("proposeReschedule failed:", err);
-      throw err;
-    }
-  },
-
-  acceptReschedule: async (bookingId) => {
-    try {
-      const { fetchWithAuth } = useTutorAuthStore.getState();
-
-      set((state) => {
-        const updatedFilters = { ...state.bookingsByFilter };
-        Object.keys(updatedFilters).forEach((key) => {
-          updatedFilters[key] = updatedFilters[key].map((b) =>
-            b.id === bookingId ? { ...b, status: "confirmed" } : b
-          );
-        });
-        return {
-          bookingsByFilter: updatedFilters,
-          selectedBooking:
-            state.selectedBooking?.id === bookingId
-              ? { ...state.selectedBooking, status: "confirmed" }
-              : state.selectedBooking,
-        };
-      });
-
-      const res = await fetchWithAuth(
-        `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/accept`,
-        { method: "PATCH" }
-      );
-
-      if (res.success && res.data) {
-        const updatedBooking = mapBookingToUI(res.data);
-        set((state) => {
-          const updatedFilters = { ...state.bookingsByFilter };
-          Object.keys(updatedFilters).forEach((key) => {
-            updatedFilters[key] = updatedFilters[key].map((b) =>
-              b.id === bookingId ? updatedBooking : b
-            );
-          });
-          return {
-            bookingsByFilter: updatedFilters,
-            selectedBooking:
-              state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-          };
-        });
-        return res.data;
-      }
-
-      throw new Error("Accept reschedule failed");
-    } catch (err) {
-      console.error("acceptReschedule failed:", err);
-      throw err;
-    }
-  },
-
-  rejectReschedule: async (bookingId, reason) => {
-    try {
-      const { fetchWithAuth } = useTutorAuthStore.getState();
-
-      set((state) => {
-        const updatedFilters = { ...state.bookingsByFilter };
-        Object.keys(updatedFilters).forEach((key) => {
-          updatedFilters[key] = updatedFilters[key].map((b) =>
-            b.id === bookingId ? { ...b, status: "pending" } : b
-          );
-        });
-        return {
-          bookingsByFilter: updatedFilters,
-          selectedBooking:
-            state.selectedBooking?.id === bookingId
-              ? { ...state.selectedBooking, status: "pending" }
-              : state.selectedBooking,
-        };
-      });
-
-      const res = await fetchWithAuth(
-        `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/reject`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ reason }),
-        }
-      );
-
-      if (res.success && res.data) {
-        const updatedBooking = mapBookingToUI(res.data);
-        set((state) => {
-          const updatedFilters = { ...state.bookingsByFilter };
-          Object.keys(updatedFilters).forEach((key) => {
-            updatedFilters[key] = updatedFilters[key].map((b) =>
-              b.id === bookingId ? updatedBooking : b
-            );
-          });
-          return {
-            bookingsByFilter: updatedFilters,
-            selectedBooking:
-              state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-          };
-        });
-        return res.data;
-      }
-
-      throw new Error("Reject reschedule failed");
-    } catch (err) {
-      console.error("rejectReschedule failed:", err);
-      throw err;
-    }
-  },
+  // ── Booking actions ────────────────────────────────────────────
+  // Pattern: optimistic update → API call → socket event drives final state
+  // The socket listener (booking:confirmed, booking:active, etc.) will
+  // do the real state update, so these just need to call the API.
 
   confirmBooking: async (bookingId) => {
+    // Optimistic
+    set((s) => ({
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, bookingId, { status: "confirmed" }),
+      selectedBooking: s.selectedBooking?.id === bookingId
+        ? { ...s.selectedBooking, status: "confirmed" } : s.selectedBooking,
+    }));
+
     try {
       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-      set((state) => {
-        const updatedFilters = { ...state.bookingsByFilter };
-        Object.keys(updatedFilters).forEach((key) => {
-          updatedFilters[key] = updatedFilters[key].map((b) =>
-            b.id === bookingId ? { ...b, status: "confirmed" } : b
-          );
-        });
-        return {
-          bookingsByFilter: updatedFilters,
-          selectedBooking:
-            state.selectedBooking?.id === bookingId
-              ? { ...state.selectedBooking, status: "confirmed" }
-              : state.selectedBooking,
-        };
-      });
-
       const res = await fetchWithAuth(
-        `${API_BASE}/api/tutor/bookings/${bookingId}/confirm`,
-        { method: "PATCH" }
+        `${API_BASE}/api/tutor/bookings/${bookingId}/confirm`, { method: "PATCH" }
       );
+      if (!res.success) throw new Error("Confirm failed");
 
-      if (res.success && res.data) {
+      // Final state from server response (don't wait for socket)
+      if (res.data) {
         const updatedBooking = mapBookingToUI(res.data);
-        set((state) => {
-          const updatedFilters = { ...state.bookingsByFilter };
-          Object.keys(updatedFilters).forEach((key) => {
-            updatedFilters[key] = updatedFilters[key].map((b) =>
-              b.id === bookingId ? updatedBooking : b
-            );
-          });
-          return {
-            bookingsByFilter: updatedFilters,
-            selectedBooking:
-              state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-          };
-        });
-        return res.data;
+        const newStatus = updatedBooking.status;
+        set((s) => ({
+          bookingsByFilter: moveBookingInFilters(s.bookingsByFilter, bookingId, updatedBooking),
+          selectedBooking: s.selectedBooking?.id === bookingId ? updatedBooking : s.selectedBooking,
+          activeFilter: s.selectedBooking?.id === bookingId ? newStatus : s.activeFilter,
+        }));
+        get().fetchBookings(newStatus, true);
+        get().fetchBookings("pending", true);
       }
-
-      throw new Error("Confirm failed");
+      return res.data;
     } catch (err) {
       console.error("confirmBooking failed:", err);
+      // Revert optimistic update
+      get().fetchBooking(bookingId);
       throw err;
     }
   },
 
   cancelBooking: async (bookingId, reason) => {
+    if (!reason?.trim()) throw new Error("Cancellation reason is required");
+
+    set((s) => ({
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, bookingId, { status: "cancelled" }),
+      selectedBooking: s.selectedBooking?.id === bookingId
+        ? { ...s.selectedBooking, status: "cancelled" } : s.selectedBooking,
+    }));
+
     try {
       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-      if (!reason || !reason.trim()) {
-        throw new Error("Cancellation reason is required");
-      }
-
-      set((state) => {
-        const updatedFilters = { ...state.bookingsByFilter };
-        Object.keys(updatedFilters).forEach((key) => {
-          updatedFilters[key] = updatedFilters[key].map((b) =>
-            b.id === bookingId ? { ...b, status: "cancelled" } : b
-          );
-        });
-        return {
-          bookingsByFilter: updatedFilters,
-          selectedBooking:
-            state.selectedBooking?.id === bookingId
-              ? { ...state.selectedBooking, status: "cancelled" }
-              : state.selectedBooking,
-        };
-      });
-
       const res = await fetchWithAuth(
         `${API_BASE}/api/tutor/bookings/${bookingId}/cancel`,
-        {
-          method: "POST",
-          body: JSON.stringify({ reason: reason.trim() }),
-        }
+        { method: "POST", body: JSON.stringify({ reason: reason.trim() }) }
       );
-
-      if (res.success) {
-        return true;
-      }
-
-      throw new Error(res.message || "Cancel failed");
+      if (!res.success) throw new Error(res.message || "Cancel failed");
+      get().fetchBookings("cancelled", true);
+      get().fetchBookings("all", true);
+      return true;
     } catch (err) {
       console.error("cancelBooking failed:", err);
+      get().fetchBooking(bookingId);
       throw err;
     }
   },
 
   endSession: async (bookingId, notes = "") => {
+    set((s) => ({
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, bookingId, { status: "completed" }),
+      selectedBooking: s.selectedBooking?.id === bookingId
+        ? { ...s.selectedBooking, status: "completed" } : s.selectedBooking,
+    }));
+
     try {
       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-      set((state) => {
-        const updatedFilters = { ...state.bookingsByFilter };
-        Object.keys(updatedFilters).forEach((key) => {
-          updatedFilters[key] = updatedFilters[key].map((b) =>
-            b.id === bookingId ? { ...b, status: "completed" } : b
-          );
-        });
-        return {
-          bookingsByFilter: updatedFilters,
-          selectedBooking:
-            state.selectedBooking?.id === bookingId
-              ? { ...state.selectedBooking, status: "completed" }
-              : state.selectedBooking,
-        };
-      });
-
       const res = await fetchWithAuth(
         `${API_BASE}/api/tutor/bookings/${bookingId}/end`,
-        {
-          method: "POST",
-          body: JSON.stringify({ notes }),
-        }
+        { method: "POST", body: JSON.stringify({ notes }) }
       );
-
-      if (res.success) {
-        return true;
-      }
-
-      throw new Error("End session failed");
+      if (!res.success) throw new Error("End session failed");
+      get().fetchBookings("completed", true);
+      get().fetchBookings("active", true);
+      return true;
     } catch (err) {
       console.error("endSession failed:", err);
+      get().fetchBooking(bookingId);
       throw err;
     }
+  },
+
+  proposeReschedule: async (bookingId, proposedAt) => {
+    const proposedDateTime = new Date(proposedAt).toISOString();
+    set((s) => ({
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, bookingId, {
+        status: "reschedule-proposed", proposedAt: proposedDateTime,
+      }),
+      selectedBooking: s.selectedBooking?.id === bookingId
+        ? { ...s.selectedBooking, status: "reschedule-proposed", proposedAt: proposedDateTime }
+        : s.selectedBooking,
+    }));
+
+    try {
+      const { fetchWithAuth } = useTutorAuthStore.getState();
+      const res = await fetchWithAuth(
+        `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule`,
+        { method: "PATCH", body: JSON.stringify({ proposedAt: proposedDateTime }) }
+      );
+      if (!res.success) throw new Error(res.message || "Reschedule failed");
+      return res.data;
+    } catch (err) {
+      console.error("proposeReschedule failed:", err);
+      get().fetchBooking(bookingId);
+      throw err;
+    }
+  },
+
+  acceptReschedule: async (bookingId) => {
+    set((s) => ({
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, bookingId, { status: "confirmed" }),
+      selectedBooking: s.selectedBooking?.id === bookingId
+        ? { ...s.selectedBooking, status: "confirmed" } : s.selectedBooking,
+    }));
+
+    try {
+      const { fetchWithAuth } = useTutorAuthStore.getState();
+      const res = await fetchWithAuth(
+        `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/accept`, { method: "PATCH" }
+      );
+      if (!res.success) throw new Error("Accept reschedule failed");
+      return res.data;
+    } catch (err) {
+      console.error("acceptReschedule failed:", err);
+      get().fetchBooking(bookingId);
+      throw err;
+    }
+  },
+
+  rejectReschedule: async (bookingId, reason) => {
+    set((s) => ({
+      bookingsByFilter: applyToAllFilters(s.bookingsByFilter, bookingId, { status: "pending" }),
+      selectedBooking: s.selectedBooking?.id === bookingId
+        ? { ...s.selectedBooking, status: "pending" } : s.selectedBooking,
+    }));
+
+    try {
+      const { fetchWithAuth } = useTutorAuthStore.getState();
+      const res = await fetchWithAuth(
+        `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/reject`,
+        { method: "PATCH", body: JSON.stringify({ reason }) }
+      );
+      if (!res.success) throw new Error("Reject reschedule failed");
+      return res.data;
+    } catch (err) {
+      console.error("rejectReschedule failed:", err);
+      get().fetchBooking(bookingId);
+      throw err;
+    }
+  },
+
+  confirmMessage: async (messageId) => {
+    set((s) => ({
+      messages: s.messages.map((m) => m.id === messageId ? { ...m, status: "confirmed" } : m),
+    }));
+    try {
+      const { fetchWithAuth } = useTutorAuthStore.getState();
+      const res = await fetchWithAuth(
+        `${API_BASE}/api/tutor/bookings/messages/${messageId}/confirm`, { method: "PATCH" }
+      );
+      if (res.success && res.data) {
+        set((s) => ({ messages: s.messages.map((m) => m.id === messageId ? res.data : m) }));
+      }
+    } catch (err) {
+      console.error("confirmMessage failed:", err);
+      const bid = get().selectedBooking?.id;
+      if (bid) get().fetchMessages(bid);
+    }
+  },
+
+  rejectMessage: async (messageId) => {
+    set((s) => ({
+      messages: s.messages.map((m) => m.id === messageId ? { ...m, status: "rejected" } : m),
+    }));
+    try {
+      const { fetchWithAuth } = useTutorAuthStore.getState();
+      const res = await fetchWithAuth(
+        `${API_BASE}/api/tutor/bookings/messages/${messageId}/reject`, { method: "PATCH" }
+      );
+      if (res.success && res.data) {
+        set((s) => ({ messages: s.messages.map((m) => m.id === messageId ? res.data : m) }));
+      }
+    } catch (err) {
+      console.error("rejectMessage failed:", err);
+      const bid = get().selectedBooking?.id;
+      if (bid) get().fetchMessages(bid);
+    }
+  },
+
+  // ── Misc ───────────────────────────────────────────────────────
+
+  setActiveFilter: (filter) => set({ activeFilter: filter }),
+
+  getCurrentBookings: () => {
+    const { bookingsByFilter, activeFilter } = get();
+    return bookingsByFilter[activeFilter] || [];
   },
 
   reset: () => {
@@ -963,6 +2533,7 @@ setSelectedBooking: (booking) => {
       selectedBooking: null,
       messages: [],
       isLoading: false,
+      isLoadingMessages: false,
       isSending: false,
       socketConnected: false,
       isSomeoneTyping: false,
@@ -970,1638 +2541,4 @@ setSelectedBooking: (booking) => {
       isParticipantOnline: false,
     });
   },
-
-  setActiveFilter: (filter) => set({ activeFilter: filter }),
-
-  getCurrentBookings: () => {
-    const { bookingsByFilter, activeFilter } = get();
-    return bookingsByFilter[activeFilter] || [];
-  },
 }));
-
-
-
-
-
-
-
-
-
-
-
-// // src/store/tutorChatStore.js
-// import { create } from "zustand";
-// import useTutorAuthStore from "./tutorAuthStore";
-// import { connectSocket, getSocket } from "@/lib/tutor-socket";
-
-// const API_BASE = "https://fillops-server-5fuf.onrender.com";
-
-// const mapBookingToUI = (booking) => ({
-//   id: booking.id,
-//   studentId: booking.userId || booking.user?.id,
-//   participant_name: booking.user?.name || "Student",
-//   participant_role: "student",
-//   last_message: booking.lastMessage?.content || "",
-//   last_message_time: booking.lastMessage?.createdAt || null,
-//   status: (booking.status || "pending").toLowerCase(),
-//   scheduledAt: booking.scheduledAt || null,
-//   proposedAt: booking.proposedAt || null,
-//   duration: booking.duration || null,
-//   unread_count: booking.unreadCount || 0,
-//   purpose: booking.purpose || "",
-//   avatar: booking.user?.avatar || null,
-//   isBooking: true,
-// });
-
-// export const useTutorChatStore = create((set, get) => ({
-//   bookingsByFilter: {},
-//   loadedFilters: new Set(),
-//   activeFilter: "all",
-//   selectedBooking: null,
-//   messages: [],
-//   isLoading: false,
-//   isSending: false,
-//   socketConnected: false,
-//   isSomeoneTyping: false,
-//   typingUserName: null,
-//   isParticipantOnline: false,
-
-//   // ────────────────────────────────────────────────────────────────
-//   // Socket connection
-//   // ────────────────────────────────────────────────────────────────
-//   initializeSocket: () => {
-//     console.log("[TutorChatStore] initializeSocket called");
-    
-//     const token = useTutorAuthStore.getState().accessToken;
-//     if (!token) {
-//       console.warn("[TutorChatStore] No token → cannot initialize socket");
-//       return;
-//     }
-
-//     const socket = connectSocket(token);
-//     set({ socketConnected: socket?.connected || false });
-//   },
-
-//   disconnectSocket: () => {
-//     const socket = getSocket();
-//     if (socket?.connected) {
-//       socket.disconnect();
-//     }
-//     set({ socketConnected: false });
-//   },
-
-//   // ────────────────────────────────────────────────────────────────
-//   // Socket event handlers (called by global listeners in socket.js)
-//   // ────────────────────────────────────────────────────────────────
-//   handleNewMessage: (msg) => {
-//   console.log("📨 handleNewMessage called:", msg);
-  
-//   set((state) => {
-//     // Prevent duplicate by ID
-//     if (state.messages.some((m) => m.id === msg.id)) {
-//       console.log("⚠️ Duplicate message (by ID) skipped:", msg.id);
-//       return state;
-//     }
-
-//     const isCurrent = msg.bookingId === state.selectedBooking?.id;
-//     let updatedMessages = [...state.messages];
-
-//     // 1️⃣ Try to find optimistic message by tempId
-//     let optimisticIndex = -1;
-//     if (msg.tempId) {
-//       optimisticIndex = updatedMessages.findIndex((m) => m.tempId === msg.tempId);
-//       console.log("🔎 Searching for tempId:", msg.tempId, "→ Found at index:", optimisticIndex);
-//     }
-
-//     // 2️⃣ Fallback: match by content + sender + recent time (within 10 seconds)
-//     if (optimisticIndex === -1 && msg.sender?.id && msg.content) {
-//       const msgTime = new Date(msg.createdAt).getTime();
-//       optimisticIndex = updatedMessages.findIndex((m) => 
-//         m.isOptimistic === true &&
-//         m.content === msg.content &&
-//         m.sender?.id === msg.sender?.id &&
-//         Math.abs(new Date(m.createdAt).getTime() - msgTime) < 10000
-//       );
-//       console.log("🔎 Fallback search by content+sender:", optimisticIndex);
-//     }
-
-//     if (optimisticIndex !== -1) {
-//       console.log("✅ REPLACING optimistic message at index:", optimisticIndex);
-//       updatedMessages[optimisticIndex] = {
-//         ...msg,
-//         tempId: undefined,
-//         isOptimistic: false,
-//         status: "sent",
-//       };
-//     } else {
-//       console.log("➕ Adding new message (no optimistic found)");
-//       updatedMessages.push({ ...msg, status: "sent" });
-//     }
-
-//     updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-//     // Update sidebar unread count if not current chat
-//     if (!isCurrent && msg.senderRole !== "tutor") {
-//       const updatedFilters = { ...state.bookingsByFilter };
-//       Object.keys(updatedFilters).forEach((filter) => {
-//         updatedFilters[filter] = updatedFilters[filter]?.map((b) =>
-//           b.id === msg.bookingId
-//             ? { ...b, unread_count: (b.unread_count || 0) + 1, last_message: msg.content }
-//             : b
-//         );
-//       });
-//       return { messages: updatedMessages, bookingsByFilter: updatedFilters };
-//     }
-
-//     return { messages: updatedMessages };
-//   });
-// },
-
-//   handleMessagesReadByStudent: (timestamp) => {
-//     console.log("📖 Student read messages up to:", timestamp);
-//     set((state) => ({
-//       messages: state.messages.map((m) =>
-//         m.senderRole === "tutor" && new Date(m.createdAt) <= new Date(timestamp)
-//           ? { ...m, isRead: true }
-//           : m
-//       ),
-//     }));
-//   },
-
-//   handleSessionEnded: (data) => {
-//     console.log("🏁 Session ended:", data);
-//     const { bookingId } = data;
-//     set((state) => {
-//       if (state.selectedBooking?.id !== bookingId) return state;
-//       return {
-//         selectedBooking: { ...state.selectedBooking, status: "completed" },
-//       };
-//     });
-//   },
-
-//   handleSessionKick: (data) => {
-//     console.log("👢 Kicked from session:", data);
-//     const socket = getSocket();
-//     if (socket && data?.bookingId) {
-//       socket.emit("leave:booking", data.bookingId);
-//     }
-
-//     set((state) => ({
-//       selectedBooking: state.selectedBooking?.id === data?.bookingId ? null : state.selectedBooking,
-//       messages: state.selectedBooking?.id === data?.bookingId ? [] : state.messages,
-//     }));
-//   },
-
-//   handleSessionExpired: (data) => {
-//     console.log("⏰ Session expired:", data);
-//     const { bookingId } = data;
-//     set((state) => {
-//       if (state.selectedBooking?.id !== bookingId) return state;
-//       return {
-//         selectedBooking: { ...state.selectedBooking, status: "completed" },
-//       };
-//     });
-//   },
-
-//   handleOnlineUsers: (users) => {
-//     console.log("👥 Online users:", users);
-//     const studentId = get().selectedBooking?.studentId;
-//     const isOnline = users?.some((u) => u.id === studentId && u.userType === "user");
-//     set({ isParticipantOnline: !!isOnline });
-//   },
-
-//   handleNewBookingNotification: (data) => {
-//     console.log("🔔 New booking notification:", data);
-//     get().fetchBookings("pending", true);
-//     get().fetchBookings("all", true);
-//   },
-
-//   handleBookingCancelled: (data) => {
-//     console.log("❌ Booking cancelled:", data);
-//     get().fetchBookings("cancelled", true);
-//     get().fetchBookings("all", true);
-//   },
-
-//   handleBookingRescheduled: (data) => {
-//     console.log("📅 Booking rescheduled:", data);
-//     get().fetchBookings("rescheduled", true);
-//     get().fetchBookings("all", true);
-//   },
-
-//   // ────────────────────────────────────────────────────────────────
-//   // Core chat actions
-//   // ────────────────────────────────────────────────────────────────
-//   setSelectedBooking: (booking) => {
-//     const prevId = get().selectedBooking?.id;
-//     const socket = getSocket();
-
-//     // Leave previous room
-//     if (prevId && socket?.connected) {
-//       socket.emit("leave:booking", prevId);
-//     }
-
-//     set({
-//       selectedBooking: booking,
-//       messages: [],
-//       isLoading: true,
-//       isSomeoneTyping: false,
-//       typingUserName: null,
-//       isParticipantOnline: false,
-//     });
-
-//     if (!booking?.id) return;
-
-//     // Join new room
-//     if (socket?.connected) {
-//       socket.emit("join:booking", booking.id, (ack) => {
-//         if (ack?.success) {
-//           console.log("✅ Joined booking room:", booking.id);
-//           get().markMessagesAsRead(booking.id);
-//         } else {
-//           console.error("❌ Failed to join room:", ack);
-//         }
-//       });
-//     }
-
-//     get().fetchMessages(booking.id);
-//   },
-
-//   sendMessage: async (bookingId, content, messageType = "TEXT") => {
-//     if (!content?.trim() || !bookingId) return;
-
-//     const socket = getSocket();
-//     if (!socket?.connected) {
-//       console.warn("[sendMessage] Socket not connected");
-//       return;
-//     }
-
-//     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-//     const tutorId = useTutorAuthStore.getState().tutor?.id;
-
-//     const optimisticMsg = {
-//       tempId,
-//       content,
-//       messageType,
-//       bookingId,
-//       sender: { 
-//         id: tutorId,
-//         type: 'TUTOR',
-//         name: useTutorAuthStore.getState().tutor?.name || 'You'
-//       },
-//       senderRole: "tutor",
-//       createdAt: new Date().toISOString(),
-//       status: "sending",
-//       isOptimistic: true,
-//     };
-
-//     console.log("📤 Sending message with tempId:", tempId);
-
-//     set((s) => ({
-//       messages: [...s.messages, optimisticMsg],
-//       isSending: true,
-//     }));
-
-//     try {
-//       socket.emit("message:send", {
-//         bookingId,
-//         content: content.trim(),
-//         messageType,
-//         tempId,
-//       });
-      
-//       console.log("✅ Message emitted to socket");
-//     } catch (err) {
-//       console.error("[sendMessage] failed:", err);
-//       set((s) => ({
-//         messages: s.messages.filter((m) => m.tempId !== tempId),
-//       }));
-//     } finally {
-//       set({ isSending: false });
-//     }
-//   },
-
-//   sendTyping: (isTyping = true) => {
-//     const { selectedBooking, socketConnected } = get();
-//     if (!selectedBooking?.id || !socketConnected) return;
-
-//     const socket = getSocket();
-//     if (socket?.connected) {
-//       const event = isTyping ? "typing:start" : "typing:stop";
-//       socket.emit(event, selectedBooking.id);
-//     }
-//   },
-
-//   markMessagesAsRead: (bookingId) => {
-//     const socket = getSocket();
-//     if (socket?.connected) {
-//       socket.emit("messages:read", bookingId);
-//     }
-
-//     // Optimistic sidebar update
-//     set((s) => ({
-//       bookingsByFilter: {
-//         ...s.bookingsByFilter,
-//         [s.activeFilter]: s.bookingsByFilter[s.activeFilter]?.map((b) =>
-//           b.id === bookingId ? { ...b, unread_count: 0 } : b
-//         ),
-//       },
-//     }));
-//   },
-
-//   // ────────────────────────────────────────────────────────────────
-//   // REST API calls
-//   // ────────────────────────────────────────────────────────────────
-//   fetchMessages: async (bookingId) => {
-//     console.log("[FETCH] Messages for booking:", bookingId);
-//     set({ isLoading: true });
-
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-//       const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}/messages`);
-
-//       if (res.success && Array.isArray(res.data)) {
-//         const sorted = [...res.data].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-//         set({ messages: sorted });
-//         console.log(`[FETCH] Loaded ${sorted.length} messages`);
-//       } else {
-//         set({ messages: [] });
-//       }
-//     } catch (err) {
-//       console.error("[FETCH] Messages failed:", err);
-//       set({ messages: [] });
-//     } finally {
-//       set({ isLoading: false });
-//     }
-//   },
-
-//   fetchBookings: async (filter = "all", force = false) => {
-//     if (!force && get().loadedFilters.has(filter)) {
-//       console.log(`[fetchBookings] Using cached data for "${filter}"`);
-//       return;
-//     }
-
-//     console.log("[fetchBookings] START", { filter, forced: force });
-//     set({ isLoading: true });
-
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-//       const shouldPaginate = filter === "all" || filter === "completed";
-
-//       let allBookings = [];
-
-//       if (shouldPaginate) {
-//         let page = 1;
-//         let hasMore = true;
-
-//         while (hasMore) {
-//           let url = `${API_BASE}/api/tutor/bookings`;
-//           if (filter !== "all") {
-//             const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
-//             url += `?status=${backendStatus}&page=${page}`;
-//           } else {
-//             url += `?page=${page}`;
-//           }
-
-//           const res = await fetchWithAuth(url);
-
-//           if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-//             allBookings = [...allBookings, ...res.data];
-//             hasMore = res.data.length === 10;
-//             page++;
-//             if (page > 50) hasMore = false;
-//           } else {
-//             hasMore = false;
-//           }
-//         }
-
-//         allBookings.sort((a, b) => {
-//           const dateA = new Date(a.scheduledAt || a.createdAt || a.updatedAt || 0);
-//           const dateB = new Date(b.scheduledAt || b.createdAt || b.updatedAt || 0);
-//           return dateB - dateA;
-//         });
-//       } else {
-//         let url = `${API_BASE}/api/tutor/bookings`;
-//         if (filter !== "all") {
-//           const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
-//           url += `?status=${backendStatus}`;
-//         }
-//         url += (url.includes("?") ? "&" : "?") + "limit=100";
-
-//         const res = await fetchWithAuth(url);
-//         if (res.success && Array.isArray(res.data)) {
-//           allBookings = res.data;
-//         }
-//       }
-
-//       const mapped = allBookings.map(mapBookingToUI);
-
-//       set((state) => ({
-//         bookingsByFilter: {
-//           ...state.bookingsByFilter,
-//           [filter]: mapped,
-//         },
-//         loadedFilters: new Set([...state.loadedFilters, filter]),
-//       }));
-//     } catch (err) {
-//       console.error("[fetchBookings] FAILED:", err);
-//       set((state) => ({
-//         bookingsByFilter: { ...state.bookingsByFilter, [filter]: [] },
-//       }));
-//     } finally {
-//       set({ isLoading: false });
-//       console.log("[fetchBookings] END");
-//     }
-//   },
-
-//   fetchBooking: async (bookingId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-//       const url = `${API_BASE}/api/tutor/bookings/${bookingId}`;
-//       console.log("[fetchBooking] Fetching:", url);
-
-//       const res = await fetchWithAuth(url);
-
-//       if (res.success && res.data) {
-//         const booking = mapBookingToUI(res.data);
-//         console.log("[fetchBooking] Success:", booking.id);
-
-//         set({ selectedBooking: booking });
-
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? booking : b
-//             );
-//           });
-//           return { bookingsByFilter: updatedFilters };
-//         });
-
-//         return booking;
-//       } else {
-//         console.warn("[fetchBooking] No data for ID:", bookingId);
-//         return null;
-//       }
-//     } catch (err) {
-//       console.error("[fetchBooking] FAILED:", err.message || err);
-//       return null;
-//     }
-//   },
-
-//   confirmMessage: async (messageId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => ({
-//         messages: state.messages.map((m) =>
-//           m.id === messageId ? { ...m, status: "confirmed" } : m
-//         ),
-//       }));
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/messages/${messageId}/confirm`,
-//         { method: "PATCH" }
-//       );
-
-//       if (res.success && res.data) {
-//         set((state) => ({
-//           messages: state.messages.map((m) =>
-//             m.id === messageId ? res.data : m
-//           ),
-//         }));
-//         return res.data;
-//       }
-//       throw new Error("Confirm failed");
-//     } catch (err) {
-//       console.error("confirmMessage failed:", err);
-//       const bookingId = get().selectedBooking?.id;
-//       if (bookingId) await get().fetchMessages(bookingId);
-//       throw err;
-//     }
-//   },
-
-//   rejectMessage: async (messageId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => ({
-//         messages: state.messages.map((m) =>
-//           m.id === messageId ? { ...m, status: "rejected" } : m
-//         ),
-//       }));
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/messages/${messageId}/reject`,
-//         { method: "PATCH" }
-//       );
-
-//       if (res.success && res.data) {
-//         set((state) => ({
-//           messages: state.messages.map((m) =>
-//             m.id === messageId ? res.data : m
-//           ),
-//         }));
-//         return res.data;
-//       }
-//       throw new Error("Reject failed");
-//     } catch (err) {
-//       console.error("rejectMessage failed:", err);
-//       const bookingId = get().selectedBooking?.id;
-//       if (bookingId) await get().fetchMessages(bookingId);
-//       throw err;
-//     }
-//   },
-
-//   proposeReschedule: async (bookingId, proposedAt) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       const proposedDateTime = new Date(proposedAt).toISOString();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "reschedule-proposed", proposedAt: proposedDateTime } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "reschedule-proposed", proposedAt: proposedDateTime }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule`,
-//         {
-//           method: "PATCH",
-//           body: JSON.stringify({ proposedAt: proposedDateTime }),
-//         }
-//       );
-
-//       if (res.success && res.data) {
-//         const updatedBooking = mapBookingToUI(res.data);
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? updatedBooking : b
-//             );
-//           });
-//           return {
-//             bookingsByFilter: updatedFilters,
-//             selectedBooking:
-//               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-//           };
-//         });
-//         return res.data;
-//       }
-
-//       throw new Error(res.message || "Reschedule failed");
-//     } catch (err) {
-//       console.error("proposeReschedule failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   acceptReschedule: async (bookingId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "confirmed" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "confirmed" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/accept`,
-//         { method: "PATCH" }
-//       );
-
-//       if (res.success && res.data) {
-//         const updatedBooking = mapBookingToUI(res.data);
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? updatedBooking : b
-//             );
-//           });
-//           return {
-//             bookingsByFilter: updatedFilters,
-//             selectedBooking:
-//               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-//           };
-//         });
-//         return res.data;
-//       }
-
-//       throw new Error("Accept reschedule failed");
-//     } catch (err) {
-//       console.error("acceptReschedule failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   rejectReschedule: async (bookingId, reason) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "pending" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "pending" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/reject`,
-//         {
-//           method: "PATCH",
-//           body: JSON.stringify({ reason }),
-//         }
-//       );
-
-//       if (res.success && res.data) {
-//         const updatedBooking = mapBookingToUI(res.data);
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? updatedBooking : b
-//             );
-//           });
-//           return {
-//             bookingsByFilter: updatedFilters,
-//             selectedBooking:
-//               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-//           };
-//         });
-//         return res.data;
-//       }
-
-//       throw new Error("Reject reschedule failed");
-//     } catch (err) {
-//       console.error("rejectReschedule failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   confirmBooking: async (bookingId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "confirmed" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "confirmed" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/confirm`,
-//         { method: "PATCH" }
-//       );
-
-//       if (res.success && res.data) {
-//         const updatedBooking = mapBookingToUI(res.data);
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? updatedBooking : b
-//             );
-//           });
-//           return {
-//             bookingsByFilter: updatedFilters,
-//             selectedBooking:
-//               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-//           };
-//         });
-//         return res.data;
-//       }
-
-//       throw new Error("Confirm failed");
-//     } catch (err) {
-//       console.error("confirmBooking failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   cancelBooking: async (bookingId, reason) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       if (!reason || !reason.trim()) {
-//         throw new Error("Cancellation reason is required");
-//       }
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "cancelled" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "cancelled" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/cancel`,
-//         {
-//           method: "POST",
-//           body: JSON.stringify({ reason: reason.trim() }),
-//         }
-//       );
-
-//       if (res.success) {
-//         return true;
-//       }
-
-//       throw new Error(res.message || "Cancel failed");
-//     } catch (err) {
-//       console.error("cancelBooking failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   endSession: async (bookingId, notes = "") => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "completed" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "completed" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/end`,
-//         {
-//           method: "POST",
-//           body: JSON.stringify({ notes }),
-//         }
-//       );
-
-//       if (res.success) {
-//         return true;
-//       }
-
-//       throw new Error("End session failed");
-//     } catch (err) {
-//       console.error("endSession failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   reset: () => {
-//     get().disconnectSocket();
-//     set({
-//       bookingsByFilter: {},
-//       loadedFilters: new Set(),
-//       activeFilter: "all",
-//       selectedBooking: null,
-//       messages: [],
-//       isLoading: false,
-//       isSending: false,
-//       socketConnected: false,
-//       isSomeoneTyping: false,
-//       typingUserName: null,
-//       isParticipantOnline: false,
-//     });
-//   },
-
-//   setActiveFilter: (filter) => set({ activeFilter: filter }),
-
-//   getCurrentBookings: () => {
-//     const { bookingsByFilter, activeFilter } = get();
-//     return bookingsByFilter[activeFilter] || [];
-//   },
-// }));
-
-
-
-
-
-
-
-
-
-// // src/store/tutorChatStore.js
-// import { create } from "zustand";
-// import useTutorAuthStore from "./tutorAuthStore";
-// import { connectSocket, getSocket } from "@/lib/socket";
-
-// const API_BASE = "https://fillops-server-5fuf.onrender.com";
-
-// const mapBookingToUI = (booking) => ({
-//   id: booking.id,
-//   studentId: booking.userId || booking.user?.id,
-//   participant_name: booking.user?.name || "Student",
-//   participant_role: "student",
-//   last_message: booking.lastMessage?.content || "",
-//   last_message_time: booking.lastMessage?.createdAt || null,
-//   status: (booking.status || "pending").toLowerCase(),
-//   scheduledAt: booking.scheduledAt || null,
-//   proposedAt: booking.proposedAt || null,
-//   duration: booking.duration || null,
-//   unread_count: booking.unreadCount || 0,
-//   purpose: booking.purpose || "",
-//   avatar: booking.user?.avatar || null,
-//   isBooking: true,
-// });
-
-// export const useTutorChatStore = create((set, get) => ({
-//   bookingsByFilter: {},
-//   loadedFilters: new Set(),
-//   activeFilter: "all",
-//   selectedBooking: null,
-//   messages: [],
-//   isLoading: false,
-//   isSending: false,
-//   socketConnected: false,
-//   isSomeoneTyping: false,
-//   typingTimer: null,
-
-//   initializeSocket: () => {
-//     console.log("[TutorChatStore] initializeSocket called");
-
-//     const token = useTutorAuthStore.getState().accessToken;
-//     if (!token) {
-//       console.warn("[SOCKET] No token → cannot initialize");
-//       return;
-//     }
-
-//     let socket = getSocket();
-//     if (!socket) {
-//       console.log("[SOCKET] Creating new connection...");
-//       socket = connectSocket(token);
-//     }
-
-//     if (socket.connected) {
-//       console.log("[SOCKET] Already connected →", socket.id);
-//       set({ socketConnected: true });
-//       return;
-//     }
-
-//     socket.connect();
-
-//     socket.on("connect", () => {
-//       console.log("%c[SOCKET] CONNECTED", "background:#28a745;color:white;padding:4px 12px;");
-//       set({ socketConnected: true });
-
-//       const currentId = get().selectedBooking?.id;
-//       if (currentId) {
-//         console.log("[SOCKET] Re-joining room:", currentId);
-//         socket.emit("join:booking", currentId, (ack) => {
-//           if (ack?.success) {
-//             console.log("%c[CHAT] ✓ Joined room OK", "background:#4CAF50;color:white;padding:6px;");
-//             get().markMessagesAsRead(currentId);
-//           } else {
-//             console.error("[CHAT] Join failed:", ack);
-//           }
-//         });
-//       }
-//     });
-
-//     socket.on("connect_error", (err) => {
-//       console.error("[SOCKET] connect_error:", err.message);
-//       set({ socketConnected: false });
-//     });
-
-//     socket.on("disconnect", (reason) => {
-//       console.log("[SOCKET] disconnected:", reason);
-//       set({ socketConnected: false });
-//     });
-
-//     // ─── Receive new messages (backend uses "message:new") ─────────────────
-//     socket.on("message:new", (msg) => {
-//       console.log("%c[SOCKET] ← message:new", "background:#673ab7;color:white;padding:4px;", msg);
-
-//       const state = get();
-//       const isCurrent = msg.bookingId === state.selectedBooking?.id;
-
-//       if (!isCurrent) {
-//         if (msg.senderRole === "tutor") {
-//           set((s) => ({
-//             bookingsByFilter: {
-//               ...s.bookingsByFilter,
-//               [s.activeFilter]: s.bookingsByFilter[s.activeFilter]?.map(b =>
-//                 b.id === msg.bookingId
-//                   ? { ...b, unread_count: (b.unread_count || 0) + 1, last_message: msg.content }
-//                   : b
-//               ),
-//             },
-//           }));
-//         }
-//         return;
-//       }
-
-//       set((s) => {
-//         let updated = [...s.messages];
-
-//         // Replace optimistic message using tempId
-//         const optimisticIndex = updated.findIndex(m => m.tempId === msg.tempId);
-//         if (optimisticIndex !== -1) {
-//           updated[optimisticIndex] = {
-//             ...msg,
-//             tempId: undefined,
-//             isOptimistic: false,
-//             status: "sent",
-//           };
-//         } else if (!updated.some(m => m.id === msg.id)) {
-//           updated.push({ ...msg, status: "sent" });
-//         }
-
-//         updated.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-//         return { messages: updated };
-//       });
-//     });
-
-//     // ─── Typing (backend uses start/stop) ─────────────────
-//     socket.on("typing:start", () => {
-//       if (get().selectedBooking?.id) set({ isSomeoneTyping: true });
-//     });
-
-//     socket.on("typing:stop", () => {
-//       set({ isSomeoneTyping: false });
-//     });
-
-//     // Dev logging
-//     if (import.meta.env.DEV) {
-//       socket.onAny((event, ...args) => {
-//         if (/message|chat|msg|join|room|typing|session/i.test(event)) {
-//           console.log(`%c🔥 ${event}`, 'background:#d81e5b;color:white;padding:6px;border-radius:4px;', ...args);
-//         }
-//       });
-//     }
-//   },
-
-//   disconnectSocket: () => {
-//     const socket = getSocket();
-//     if (socket?.connected) socket.disconnect();
-//     set({ socketConnected: false });
-//   },
-
-//   setSelectedBooking: (booking) => {
-//     const prevId = get().selectedBooking?.id;
-//     const socket = getSocket();
-
-//     if (prevId && socket?.connected) {
-//       socket.emit("leaveBooking", prevId);   // or "leave:booking" if backend changed
-//     }
-
-//     set({
-//       selectedBooking: booking,
-//       messages: [],
-//       isLoading: true,
-//       isSomeoneTyping: false,
-//     });
-
-//     if (!booking?.id) return;
-
-//     get().fetchMessages(booking.id);
-//   },
-
-//   sendMessage: async (bookingId, content, messageType = "TEXT") => {
-//     if (!content?.trim() || !bookingId) return;
-
-//     const socket = getSocket();
-//     if (!socket?.connected) {
-//       console.warn("[sendMessage] Socket not connected");
-//       return;
-//     }
-
-//     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-
-//     const optimisticMsg = {
-//       tempId,
-//       content,
-//       messageType,
-//       sender: { id: useTutorAuthStore.getState().tutor?.id },
-//       senderRole: "tutor",
-//       createdAt: new Date().toISOString(),
-//       status: "sending",
-//       isOptimistic: true,
-//     };
-
-//     set((s) => ({
-//       messages: [...s.messages, optimisticMsg],
-//       isSending: true,
-//     }));
-
-//     try {
-//       socket.emit("message:send", {
-//         bookingId,
-//         content: content.trim(),
-//         messageType,
-//         tempId,
-//       });
-//     } catch (err) {
-//       console.error("[sendMessage] failed:", err);
-//       set((s) => ({
-//         messages: s.messages.filter(m => m.tempId !== tempId),
-//       }));
-//     } finally {
-//       set({ isSending: false });
-//     }
-//   },
-
-//   sendTyping: (isTyping = true) => {
-//     const { selectedBooking, socketConnected } = get();
-//     if (!selectedBooking?.id || !socketConnected) return;
-
-//     const socket = getSocket();
-//     if (socket?.connected) {
-//       const event = isTyping ? "typing:start" : "typing:stop";
-//       socket.emit(event, selectedBooking.id);
-//     }
-//   },
-
-//   markMessagesAsRead: async (bookingId) => {
-//     const socket = getSocket();
-//     if (socket?.connected) {
-//       socket.emit("messages:read", bookingId);
-//     }
-
-//     // Optimistic UI update
-//     set((s) => ({
-//       bookingsByFilter: {
-//         ...s.bookingsByFilter,
-//         [s.activeFilter]: s.bookingsByFilter[s.activeFilter]?.map(b =>
-//           b.id === bookingId ? { ...b, unread_count: 0 } : b
-//         ),
-//       },
-//     }));
-//   },
-  
-//   fetchMessages: async (bookingId) => {
-//     console.log("[FETCH] Messages for booking:", bookingId);
-//     set({ isLoading: true });
-
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-//       const res = await fetchWithAuth(`${API_BASE}/api/tutor/bookings/${bookingId}/messages`);
-
-//       if (res.success && Array.isArray(res.data)) {
-//         const sorted = [...res.data].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-//         set({ messages: sorted });
-//         console.log(`[FETCH] Loaded ${sorted.length} messages`);
-//       } else {
-//         set({ messages: [] });
-//       }
-//     } catch (err) {
-//       console.error("[FETCH] Messages failed:", err);
-//       set({ messages: [] });
-//     } finally {
-//       set({ isLoading: false });
-//     }
-//   },
-
-
-//   fetchBookings: async (filter = "all", force = false) => {
-//     if (!force && get().loadedFilters.has(filter)) {
-//       console.log(`[fetchBookings] Using already loaded data for "${filter}"`);
-//       return;
-//     }
-
-//     console.log("[fetchBookings] START", { filter, forced: force });
-//     set({ isLoading: true });
-
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-//       const shouldPaginate = filter === "all" || filter === "completed";
-
-//       let allBookings = [];
-
-//       if (shouldPaginate) {
-//         let page = 1;
-//         let hasMore = true;
-
-//         while (hasMore) {
-//           let url = `${API_BASE}/api/tutor/bookings`;
-//           if (filter !== "all") {
-//             const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
-//             url += `?status=${backendStatus}&page=${page}`;
-//           } else {
-//             url += `?page=${page}`;
-//           }
-
-//           const res = await fetchWithAuth(url);
-
-//           if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-//             allBookings = [...allBookings, ...res.data];
-//             hasMore = res.data.length === 10;
-//             page++;
-//             if (page > 50) hasMore = false;
-//           } else {
-//             hasMore = false;
-//           }
-//         }
-
-//         allBookings.sort((a, b) => {
-//           const dateA = new Date(a.scheduledAt || a.createdAt || a.updatedAt || 0);
-//           const dateB = new Date(b.scheduledAt || b.createdAt || b.updatedAt || 0);
-//           return dateB - dateA;
-//         });
-//       } else {
-//         let url = `${API_BASE}/api/tutor/bookings`;
-//         if (filter !== "all") {
-//           const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
-//           url += `?status=${backendStatus}`;
-//         }
-//         url += (url.includes("?") ? "&" : "?") + "limit=100";
-
-//         const res = await fetchWithAuth(url);
-//         if (res.success && Array.isArray(res.data)) {
-//           allBookings = res.data;
-//         }
-//       }
-
-//       const mapped = allBookings.map(mapBookingToUI);
-
-//       set((state) => ({
-//         bookingsByFilter: {
-//           ...state.bookingsByFilter,
-//           [filter]: mapped,
-//         },
-//         loadedFilters: new Set([...state.loadedFilters, filter]),
-//       }));
-//     } catch (err) {
-//       console.error("[fetchBookings] FAILED:", err);
-//       set((state) => ({
-//         bookingsByFilter: { ...state.bookingsByFilter, [filter]: [] },
-//       }));
-//     } finally {
-//       set({ isLoading: false });
-//       console.log("[fetchBookings] END");
-//     }
-//   },
-
-//   fetchBooking: async (bookingId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-//       const url = `${API_BASE}/api/tutor/bookings/${bookingId}`;
-//       console.log("[fetchBooking] Fetching:", url);
-
-//       const res = await fetchWithAuth(url);
-
-//       if (res.success && res.data) {
-//         const booking = mapBookingToUI(res.data);
-//         console.log("[fetchBooking] Success - setting selectedBooking:", booking.id);
-
-//         set({ selectedBooking: booking });
-
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? booking : b
-//             );
-//           });
-//           return { bookingsByFilter: updatedFilters };
-//         });
-
-//         return booking;
-//       } else {
-//         console.warn("[fetchBooking] No data or failed for ID:", bookingId);
-//         return null;
-//       }
-//     } catch (err) {
-//       console.error("[fetchBooking] FAILED:", err.message || err);
-//       return null;
-//     }
-//   },
-
-//   confirmMessage: async (messageId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => ({
-//         messages: state.messages.map((m) =>
-//           m.id === messageId ? { ...m, status: "confirmed" } : m
-//         ),
-//       }));
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/messages/${messageId}/confirm`,
-//         { method: "PATCH" }
-//       );
-
-//       if (res.success && res.data) {
-//         set((state) => ({
-//           messages: state.messages.map((m) =>
-//             m.id === messageId ? res.data : m
-//           ),
-//         }));
-//         return res.data;
-//       }
-//       throw new Error("Confirm failed");
-//     } catch (err) {
-//       console.error("confirmMessage failed:", err);
-//       const bookingId = get().selectedBooking?.id;
-//       if (bookingId) await get().fetchMessages(bookingId);
-//       throw err;
-//     }
-//   },
-
-//   rejectMessage: async (messageId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => ({
-//         messages: state.messages.map((m) =>
-//           m.id === messageId ? { ...m, status: "rejected" } : m
-//         ),
-//       }));
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/messages/${messageId}/reject`,
-//         { method: "PATCH" }
-//       );
-
-//       if (res.success && res.data) {
-//         set((state) => ({
-//           messages: state.messages.map((m) =>
-//             m.id === messageId ? res.data : m
-//           ),
-//         }));
-//         return res.data;
-//       }
-//       throw new Error("Reject failed");
-//     } catch (err) {
-//       console.error("rejectMessage failed:", err);
-//       const bookingId = get().selectedBooking?.id;
-//       if (bookingId) await get().fetchMessages(bookingId);
-//       throw err;
-//     }
-//   },
-
-//   proposeReschedule: async (bookingId, proposedAt) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       console.log("[proposeReschedule] Proposing:", { bookingId, proposedAt });
-
-//       const proposedDateTime = new Date(proposedAt).toISOString();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "reschedule-proposed", proposedAt: proposedDateTime } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "reschedule-proposed", proposedAt: proposedDateTime }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule`,
-//         {
-//           method: "PATCH",
-//           body: JSON.stringify({ proposedAt: proposedDateTime }),
-//         }
-//       );
-
-//       console.log("[proposeReschedule] Response:", res);
-
-//       if (res.success && res.data) {
-//         const updatedBooking = mapBookingToUI(res.data);
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? updatedBooking : b
-//             );
-//           });
-//           return {
-//             bookingsByFilter: updatedFilters,
-//             selectedBooking:
-//               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-//           };
-//         });
-//         return res.data;
-//       }
-
-//       throw new Error(res.message || "Reschedule failed");
-//     } catch (err) {
-//       console.error("proposeReschedule failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   acceptReschedule: async (bookingId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "confirmed" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "confirmed" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/accept`,
-//         { method: "PATCH" }
-//       );
-
-//       if (res.success && res.data) {
-//         const updatedBooking = mapBookingToUI(res.data);
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? updatedBooking : b
-//             );
-//           });
-//           return {
-//             bookingsByFilter: updatedFilters,
-//             selectedBooking:
-//               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-//           };
-//         });
-//         return res.data;
-//       }
-
-//       throw new Error("Accept reschedule failed");
-//     } catch (err) {
-//       console.error("acceptReschedule failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   rejectReschedule: async (bookingId, reason) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "pending" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "pending" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/reschedule/reject`,
-//         {
-//           method: "PATCH",
-//           body: JSON.stringify({ reason }),
-//         }
-//       );
-
-//       if (res.success && res.data) {
-//         const updatedBooking = mapBookingToUI(res.data);
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? updatedBooking : b
-//             );
-//           });
-//           return {
-//             bookingsByFilter: updatedFilters,
-//             selectedBooking:
-//               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-//           };
-//         });
-//         return res.data;
-//       }
-
-//       throw new Error("Reject reschedule failed");
-//     } catch (err) {
-//       console.error("rejectReschedule failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   confirmBooking: async (bookingId) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "confirmed" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "confirmed" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/confirm`,
-//         { method: "PATCH" }
-//       );
-
-//       if (res.success && res.data) {
-//         const updatedBooking = mapBookingToUI(res.data);
-//         set((state) => {
-//           const updatedFilters = { ...state.bookingsByFilter };
-//           Object.keys(updatedFilters).forEach((key) => {
-//             updatedFilters[key] = updatedFilters[key].map((b) =>
-//               b.id === bookingId ? updatedBooking : b
-//             );
-//           });
-//           return {
-//             bookingsByFilter: updatedFilters,
-//             selectedBooking:
-//               state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
-//           };
-//         });
-//         return res.data;
-//       }
-
-//       throw new Error("Confirm failed");
-//     } catch (err) {
-//       console.error("confirmBooking failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   cancelBooking: async (bookingId, reason) => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       console.log("[cancelBooking] Cancelling:", { bookingId, reason });
-
-//       if (!reason || !reason.trim()) {
-//         throw new Error("Cancellation reason is required");
-//       }
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "cancelled" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "cancelled" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/cancel`,
-//         {
-//           method: "PATCH",
-//           body: JSON.stringify({ reason: reason.trim() }),
-//         }
-//       );
-
-//       console.log("[cancelBooking] Response:", res);
-
-//       if (res.success) {
-//         return true;
-//       }
-
-//       throw new Error(res.message || "Cancel failed");
-//     } catch (err) {
-//       console.error("cancelBooking failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   endSession: async (bookingId, notes = "") => {
-//     try {
-//       const { fetchWithAuth } = useTutorAuthStore.getState();
-
-//       set((state) => {
-//         const updatedFilters = { ...state.bookingsByFilter };
-//         Object.keys(updatedFilters).forEach((key) => {
-//           updatedFilters[key] = updatedFilters[key].map((b) =>
-//             b.id === bookingId ? { ...b, status: "completed" } : b
-//           );
-//         });
-//         return {
-//           bookingsByFilter: updatedFilters,
-//           selectedBooking:
-//             state.selectedBooking?.id === bookingId
-//               ? { ...state.selectedBooking, status: "completed" }
-//               : state.selectedBooking,
-//         };
-//       });
-
-//       const res = await fetchWithAuth(
-//         `${API_BASE}/api/tutor/bookings/${bookingId}/end`,
-//         {
-//           method: "POST",
-//           body: JSON.stringify({ notes }),
-//         }
-//       );
-
-//       if (res.success) {
-//         return true;
-//       }
-
-//       throw new Error("End session failed");
-//     } catch (err) {
-//       console.error("endSession failed:", err);
-//       throw err;
-//     }
-//   },
-
-//   reset: () => {
-//     get().disconnectSocket();
-//     set({
-//       bookingsByFilter: {},
-//       loadedFilters: new Set(),
-//       activeFilter: "all",
-//       selectedBooking: null,
-//       messages: [],
-//       isLoading: false,
-//       isSending: false,
-//       socketConnected: false,
-//       isSomeoneTyping: false,
-//     });
-//   },
-
-//   setActiveFilter: (filter) => set({ activeFilter: filter }),
-
-//   getCurrentBookings: () => {
-//     const { bookingsByFilter, activeFilter } = get();
-//     return bookingsByFilter[activeFilter] || [];
-//   },
-// }));

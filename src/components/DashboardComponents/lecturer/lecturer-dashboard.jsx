@@ -31,7 +31,8 @@ import {
   X,
   Loader2,
   Search,
-  Plus
+  Plus,
+  Group,
 } from "lucide-react"
 
 import { ThemeToggle } from "../../DashboardComponents/theme-toggle"
@@ -41,6 +42,7 @@ import QuestionsPanel from "@/components/DashboardComponents/lecturer/questions-
 import SettingsPage from "@/pages/lecturer/SettingsPage"
 import DashboardOverview from "@/components/DashboardComponents/lecturer/DashboardOverview"
 import TutorChat from "@/pages/chat/TutorChatPage"
+import TutorCommunity from "@/pages/community/TutorCommunity.jsx"
 import useTutorAuthStore from "@/store/tutorAuthStore"
 import useTutorStore from "@/store/tutorStore"
 import { useTutorChatStore } from '@/store/tutorChatStore';
@@ -112,6 +114,7 @@ export default function LecturerDashboard() {
     // { id: "students", label: "Students", icon: Users },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "chat", label: "Chat", icon: Users },
+    { id: "community", label: "Community", icon: Group },
     { id: "settings", label: "Settings", icon: Settings },
   ]
 // In lecturer-dashboard.jsx or wherever the socket effect is
@@ -596,6 +599,7 @@ export default function LecturerDashboard() {
                 {activeTab === "settings" && <SettingsPage context={context} />}
                 {activeTab === "analytics" && <AnalyticsPanel />}
                 {activeTab === "chat" && <TutorChat />}
+                {activeTab === "community" && <TutorCommunity />}
               </div>
             </div>
           </div>

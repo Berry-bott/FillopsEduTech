@@ -261,6 +261,146 @@
 //         </div>
 //       )}
 //     </div>
+// //   );
+// // }
+
+
+
+
+
+// import { useState, useRef } from "react";
+// import { Button } from "@/components/ui/button";
+// import { Textarea } from "@/components/ui/textarea";
+// import { Send, Loader2, Ban } from "lucide-react";
+// import { getSocket } from "@/lib/tutorChatSocket";
+// import { useTutorChatStore } from "@/store/tutorChatStore";
+
+// export default function ChatInput({
+//   onSend,
+//   isSending,
+//   disabled,
+//   selectedBookingId,
+// }) {
+//   const [message, setMessage] = useState("");
+
+//   const socket = getSocket();
+//   const { socketConnected } = useTutorChatStore();
+
+//   // ⭐ Typing control refs
+//   const typingTimeoutRef = useRef(null);
+//   const isTypingRef = useRef(false);
+
+//   // ─────────────────────────────────────────────
+//   // ⭐ Typing Logic (START + STOP)
+//   // ─────────────────────────────────────────────
+//   const handleTyping = (value) => {
+//     setMessage(value);
+
+//     if (!socket?.connected || !selectedBookingId) return;
+
+//     // Start typing (only once)
+//     if (!isTypingRef.current && value.trim()) {
+//       socket.emit("typing:start", selectedBookingId);
+//       isTypingRef.current = true;
+//     }
+
+//     // Reset stop timer
+//     if (typingTimeoutRef.current) {
+//       clearTimeout(typingTimeoutRef.current);
+//     }
+
+//     // Stop typing after idle
+//     typingTimeoutRef.current = setTimeout(() => {
+//       if (socket?.connected && selectedBookingId) {
+//         socket.emit("typing:stop", selectedBookingId);
+//       }
+//       isTypingRef.current = false;
+//     }, 1200);
+//   };
+
+//   // ─────────────────────────────────────────────
+//   // ⭐ Send Message
+//   // ─────────────────────────────────────────────
+//   const handleSend = () => {
+//     if (!message.trim() || isSending || disabled) return;
+
+//     onSend(message.trim());
+
+//     // Stop typing when sending
+//     if (socket?.connected && selectedBookingId) {
+//       socket.emit("typing:stop", selectedBookingId);
+//     }
+
+//     isTypingRef.current = false;
+
+//     if (typingTimeoutRef.current) {
+//       clearTimeout(typingTimeoutRef.current);
+//     }
+
+//     setMessage("");
+//   };
+
+//   // ─────────────────────────────────────────────
+//   // ⭐ Enter Key Send
+//   // ─────────────────────────────────────────────
+//   const handleKeyDown = (e) => {
+//     if (e.key === "Enter" && !e.shiftKey) {
+//       e.preventDefault();
+//       handleSend();
+//     }
+//   };
+
+//   // ─────────────────────────────────────────────
+//   // ⭐ UI
+//   // ─────────────────────────────────────────────
+//   return (
+//     <div className="pt-1 border-t bg-background">
+//       {disabled ? (
+//         <div className="text-center px-4">
+//           <div className="inline-flex items-center gap-3 px-6 py-4 bg-muted/50 rounded-lg border">
+//             <Ban className="size-5 text-muted-foreground" />
+//             <p className="text-sm text-muted-foreground font-medium">
+//               Messaging is disabled for this booking
+//             </p>
+//           </div>
+//         </div>
+//       ) : (
+//         <div className="flex gap-3 items-end">
+//           <div className="flex-1">
+//             <Textarea
+//               value={message}
+//               onChange={(e) => handleTyping(e.target.value)}
+//               onKeyDown={handleKeyDown}
+//               placeholder={
+//                 socketConnected
+//                   ? "Type your message... (Shift + Enter for new line)"
+//                   : "Connecting to chat..."
+//               }
+//               className="min-h-[20px] max-h-[140px] resize-none text-[11.5px]"
+//               disabled={!socketConnected || isSending || disabled}
+//               rows={2}
+//             />
+//           </div>
+
+//           <Button
+//             onClick={handleSend}
+//             disabled={
+//               !message.trim() || isSending || disabled || !socketConnected
+//             }
+//             className="h-[38px] px-4 mb-1.5"
+//           >
+//             {isSending ? (
+//               <>
+//                 <Loader2 className="size-4 mr-2 animate-spin" />
+//                 Sending...
+//               </>
+//             ) : (
+//               <Send className="size-4" />
+//             )}
+//           </Button>
+//         </div>
+//       )}
+//     </div>
 //   );
 // }
 
@@ -268,81 +408,80 @@
 
 
 
+
+// src/components/tutor/ChatInput.jsx
+//
+// FIXES:
+//  1. Typing: emits correct event name with bookingId as server expects
+//  2. Disabled when socket not connected (shows "Connecting..." placeholder)
+//  3. Clears typing on send
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Ban } from "lucide-react";
+import { Send, Loader2, Ban, WifiOff } from "lucide-react";
 import { getSocket } from "@/lib/tutorChatSocket";
 import { useTutorChatStore } from "@/store/tutorChatStore";
 
 export default function ChatInput({
   onSend,
   isSending,
-  disabled,
+  disabled,          // true = booking status prevents chat
   selectedBookingId,
 }) {
   const [message, setMessage] = useState("");
-
-  const socket = getSocket();
   const { socketConnected } = useTutorChatStore();
 
-  // ⭐ Typing control refs
   const typingTimeoutRef = useRef(null);
-  const isTypingRef = useRef(false);
+  const isTypingRef      = useRef(false);
 
-  // ─────────────────────────────────────────────
-  // ⭐ Typing Logic (START + STOP)
-  // ─────────────────────────────────────────────
+  // ── Typing ─────────────────────────────────────────────────────
   const handleTyping = (value) => {
     setMessage(value);
 
+    const socket = getSocket();
     if (!socket?.connected || !selectedBookingId) return;
 
-    // Start typing (only once)
+    // Emit typing:start only once per typing session
     if (!isTypingRef.current && value.trim()) {
       socket.emit("typing:start", selectedBookingId);
       isTypingRef.current = true;
     }
 
-    // Reset stop timer
-    if (typingTimeoutRef.current) {
+    // If field is cleared, stop immediately
+    if (!value.trim() && isTypingRef.current) {
+      socket.emit("typing:stop", selectedBookingId);
+      isTypingRef.current = false;
       clearTimeout(typingTimeoutRef.current);
+      return;
     }
 
-    // Stop typing after idle
+    // Reset the idle timer — stop typing after 1.5 s of no keystrokes
+    clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       if (socket?.connected && selectedBookingId) {
         socket.emit("typing:stop", selectedBookingId);
       }
       isTypingRef.current = false;
-    }, 1200);
+    }, 1500);
   };
 
-  // ─────────────────────────────────────────────
-  // ⭐ Send Message
-  // ─────────────────────────────────────────────
+  // ── Send ────────────────────────────────────────────────────────
   const handleSend = () => {
-    if (!message.trim() || isSending || disabled) return;
+    if (!message.trim() || isSending || disabled || !socketConnected) return;
 
-    onSend(message.trim());
-
-    // Stop typing when sending
+    // Stop typing before sending
+    const socket = getSocket();
     if (socket?.connected && selectedBookingId) {
       socket.emit("typing:stop", selectedBookingId);
     }
-
     isTypingRef.current = false;
+    clearTimeout(typingTimeoutRef.current);
 
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
+    onSend(message.trim());
     setMessage("");
   };
 
-  // ─────────────────────────────────────────────
-  // ⭐ Enter Key Send
-  // ─────────────────────────────────────────────
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -350,56 +489,60 @@ export default function ChatInput({
     }
   };
 
-  // ─────────────────────────────────────────────
-  // ⭐ UI
-  // ─────────────────────────────────────────────
-  return (
-    <div className="pt-1 border-t bg-background">
-      {disabled ? (
-        <div className="text-center px-4">
-          <div className="inline-flex items-center gap-3 px-6 py-4 bg-muted/50 rounded-lg border">
-            <Ban className="size-5 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground font-medium">
-              Messaging is disabled for this booking
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <Textarea
-              value={message}
-              onChange={(e) => handleTyping(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                socketConnected
-                  ? "Type your message... (Shift + Enter for new line)"
-                  : "Connecting to chat..."
-              }
-              className="min-h-[20px] max-h-[140px] resize-none text-[11.5px]"
-              disabled={!socketConnected || isSending || disabled}
-              rows={2}
-            />
-          </div>
+  // ── States ──────────────────────────────────────────────────────
 
-          <Button
-            onClick={handleSend}
-            disabled={
-              !message.trim() || isSending || disabled || !socketConnected
-            }
-            className="h-[38px] px-4 mb-1.5"
-          >
-            {isSending ? (
-              <>
-                <Loader2 className="size-4 mr-2 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              <Send className="size-4" />
-            )}
-          </Button>
+  // Booking status doesn't allow chat
+  if (disabled) {
+    return (
+      <div className="flex items-center justify-center py-4 px-4">
+        <div className="inline-flex items-center gap-3 px-5 py-3 bg-muted/50 rounded-lg border text-muted-foreground text-sm">
+          <Ban className="size-4 flex-shrink-0" />
+          Messaging is disabled for this booking status
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // Socket not connected yet
+  if (!socketConnected) {
+    return (
+      <div className="flex items-center justify-center py-4 px-4">
+        <div className="inline-flex items-center gap-3 px-5 py-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+          <WifiOff className="size-4 flex-shrink-0 animate-pulse" />
+          Connecting to chat server…
+        </div>
+      </div>
+    );
+  }
+
+  // Normal active input
+  return (
+    <div className="flex gap-3 items-end">
+      <div className="flex-1">
+        <Textarea
+          value={message}
+          onChange={(e) => handleTyping(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message… (Shift+Enter for new line)"
+          className="min-h-[44px] max-h-[140px] resize-none text-sm"
+          rows={2}
+        />
+      </div>
+
+      <Button
+        onClick={handleSend}
+        disabled={!message.trim() || isSending}
+        className="h-[44px] px-4 mb-0.5"
+      >
+        {isSending ? (
+          <>
+            <Loader2 className="size-4 mr-2 animate-spin" />
+            Sending
+          </>
+        ) : (
+          <Send className="size-4" />
+        )}
+      </Button>
     </div>
   );
 }

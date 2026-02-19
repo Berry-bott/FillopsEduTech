@@ -576,44 +576,44 @@
 // //   },
 
 // //   // ---------------- RATE SESSION ----------------
-// //   rateSession: async (bookingId, rating, feedback) => {
-// //     console.log("[rateSession] START - ID:", bookingId, "Rating:", rating, "Feedback:", feedback);
-// //     set({ error: null });
+  // rateSession: async (bookingId, rating, feedback) => {
+  //   console.log("[rateSession] START - ID:", bookingId, "Rating:", rating, "Feedback:", feedback);
+  //   set({ error: null });
 
-// //     try {
-// //       const { fetchWithAuth } = useAuthStore.getState();
-// //       const url = `${API_BASE}/api/users/bookings/${bookingId}/rate`;
-// //       console.log("[rateSession] POST to:", url);
+  //   try {
+  //     const { fetchWithAuth } = useAuthStore.getState();
+  //     const url = `${API_BASE}/api/users/bookings/${bookingId}/rate`;
+  //     console.log("[rateSession] POST to:", url);
 
-// //       const res = await fetchWithAuth(url, {
-// //         method: "POST",
-// //         headers: { "Content-Type": "application/json" },
-// //         body: JSON.stringify({ rating, feedback }),
-// //       });
+  //     const res = await fetchWithAuth(url, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ rating, feedback }),
+  //     });
 
-// //       console.log("[rateSession] Response:", res);
+  //     console.log("[rateSession] Response:", res);
 
-// //       if (res.success) {
-// //         set((state) => ({
-// //           bookings: state.bookings.map((b) => 
-// //             b.id === bookingId 
-// //               ? { ...b, rating, feedback } 
-// //               : b
-// //           ),
-// //           selectedBooking: state.selectedBooking?.id === bookingId
-// //             ? { ...state.selectedBooking, rating, feedback }
-// //             : state.selectedBooking
-// //         }));
-// //         console.log("[rateSession] SUCCESS");
-// //         return true;
-// //       }
-// //       throw new Error(res.message || "Failed to rate session");
-// //     } catch (err) {
-// //       console.error("[rateSession] CRASH:", err.message, err.stack);
-// //       set({ error: err.message });
-// //       return false;
-// //     }
-// //   },
+  //     if (res.success) {
+  //       set((state) => ({
+  //         bookings: state.bookings.map((b) => 
+  //           b.id === bookingId 
+  //             ? { ...b, rating, feedback } 
+  //             : b
+  //         ),
+  //         selectedBooking: state.selectedBooking?.id === bookingId
+  //           ? { ...state.selectedBooking, rating, feedback }
+  //           : state.selectedBooking
+  //       }));
+  //       console.log("[rateSession] SUCCESS");
+  //       return true;
+  //     }
+  //     throw new Error(res.message || "Failed to rate session");
+  //   } catch (err) {
+  //     console.error("[rateSession] CRASH:", err.message, err.stack);
+  //     set({ error: err.message });
+  //     return false;
+  //   }
+  // },
 
 // //   // ---------------- CHAT HISTORY ----------------
 // //   fetchChatHistory: async (data) => {
@@ -2965,7 +2965,952 @@
 
 
 
+// // src/store/userChatStore.js
+// import { create } from "zustand";
+// import useAuthStore from "./authStore";
+// import { connectUserSocket, getUserSocket } from "@/lib/userChatSocket";
+
+// const API_BASE = "https://fillops-server-5fuf.onrender.com";
+
+// const mapBookingToUI = (booking) => ({
+//   id: booking.id,
+//   tutorId: booking.tutorId || booking.tutor?.id,
+//   participant_name: booking.tutor?.name || "Tutor",
+//   participant_role: "tutor",
+//   last_message: booking.lastMessage?.content || "",
+//   last_message_time: booking.lastMessage?.createdAt || null,
+//   status: (booking.status || "pending").toLowerCase(),
+//   scheduledAt: booking.scheduledAt || null,
+//   proposedAt: booking.proposedAt || null,
+//   duration: booking.duration || null,
+//   unread_count: booking.unreadCount || 0,
+//   purpose: booking.purpose || "",
+//   subject: booking.subject?.name || "",
+//   avatar: booking.tutor?.avatar || null,
+//   isBooking: true,
+// });
+
+// export const useUserChatStore = create((set, get) => ({
+//   // ✅ Separate buffers for each tab
+//   allBookings: [], // All bookings (no filter)
+//   pendingBookings: null, // Pending bookings buffer
+//   confirmedBookings: null, // Confirmed bookings buffer
+//   activeBookings: null, // Active bookings buffer
+//   completedBookings: null, // Completed bookings buffer
+  
+//   bookings: [], // Currently displayed bookings
+//   selectedBooking: null,
+//   messages: [],
+//   tutors: [],
+//   isLoading: false,
+//   isSending: false,
+//   socketConnected: false,
+//   isSomeoneTyping: false,
+//   typingUserName: null,
+//   isParticipantOnline: false,
+  
+//   // ✅ Track which tabs have been fetched
+//   hasFetchedAllBookings: false,
+//   hasFetchedPending: false,
+//   hasFetchedConfirmed: false,
+//   hasFetchedActive: false,
+//   hasFetchedCompleted: false,
+//   hasFetchedTutors: false,
+
+//   // ────────────────────────────────────────────────────────────────
+//   // Socket connection
+//   // ────────────────────────────────────────────────────────────────
+//   initializeSocket: () => {
+//     console.log("[UserChatStore] initializeSocket called");
+    
+//     const token = useAuthStore.getState().accessToken;
+//     if (!token) {
+//       console.warn("[UserChatStore] No token → cannot initialize socket");
+//       return;
+//     }
+
+//     const socket = connectUserSocket(token);
+//     set({ socketConnected: socket?.connected || false });
+//   },
+
+//   disconnectSocket: () => {
+//     const socket = getUserSocket();
+//     if (socket?.connected) {
+//       socket.disconnect();
+//     }
+//     set({ socketConnected: false });
+//   },
+
+//   // ────────────────────────────────────────────────────────────────
+//   // Socket event handlers
+//   // ────────────────────────────────────────────────────────────────
+//   handleNewMessage: (msg) => {
+//     console.log("📨 [USER] handleNewMessage called:", msg);
+    
+//     set((state) => {
+//       if (state.messages.some((m) => m.id === msg.id)) {
+//         console.log("⚠️ Duplicate message (by ID) skipped:", msg.id);
+//         return state;
+//       }
+
+//       const isCurrent = msg.bookingId === state.selectedBooking?.id;
+//       let updatedMessages = [...state.messages];
+
+//       let optimisticIndex = -1;
+//       if (msg.tempId) {
+//         optimisticIndex = updatedMessages.findIndex((m) => m.tempId === msg.tempId);
+//         console.log("🔎 Searching for tempId:", msg.tempId, "→ Found at index:", optimisticIndex);
+//       }
+
+//       if (optimisticIndex === -1 && msg.sender?.id && msg.content) {
+//         const msgTime = new Date(msg.createdAt).getTime();
+//         optimisticIndex = updatedMessages.findIndex((m) => 
+//           m.isOptimistic === true &&
+//           m.content === msg.content &&
+//           m.sender?.id === msg.sender?.id &&
+//           Math.abs(new Date(m.createdAt).getTime() - msgTime) < 10000
+//         );
+//         console.log("🔎 Fallback search by content+sender:", optimisticIndex);
+//       }
+
+//       if (optimisticIndex !== -1) {
+//         console.log("✅ REPLACING optimistic message at index:", optimisticIndex);
+//         updatedMessages[optimisticIndex] = {
+//           ...msg,
+//           tempId: undefined,
+//           isOptimistic: false,
+//           status: "sent",
+//         };
+//       } else {
+//         console.log("➕ Adding new message (no optimistic found)");
+//         updatedMessages.push({ ...msg, status: "sent" });
+//       }
+
+//       updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+//       // Update all buffers with new message data
+//       const updateBookingInBuffer = (buffer) => {
+//         if (!buffer) return buffer;
+//         return buffer.map((b) =>
+//           b.id === msg.bookingId
+//             ? { ...b, unread_count: isCurrent ? 0 : (b.unread_count || 0) + 1, last_message: msg.content }
+//             : b
+//         );
+//       };
+
+//       if (!isCurrent && msg.senderRole === "tutor") {
+//         return {
+//           messages: updatedMessages,
+//           bookings: state.bookings.map((b) =>
+//             b.id === msg.bookingId
+//               ? { ...b, unread_count: (b.unread_count || 0) + 1, last_message: msg.content }
+//               : b
+//           ),
+//           allBookings: updateBookingInBuffer(state.allBookings),
+//           pendingBookings: updateBookingInBuffer(state.pendingBookings),
+//           confirmedBookings: updateBookingInBuffer(state.confirmedBookings),
+//           activeBookings: updateBookingInBuffer(state.activeBookings),
+//           completedBookings: updateBookingInBuffer(state.completedBookings),
+//         };
+//       }
+
+//       return { messages: updatedMessages };
+//     });
+//   },
+
+//   handleMessagesReadByTutor: (timestamp) => {
+//     console.log("📖 Tutor read messages up to:", timestamp);
+//     set((state) => ({
+//       messages: state.messages.map((m) =>
+//         m.senderRole === "user" && new Date(m.createdAt) <= new Date(timestamp)
+//           ? { ...m, isRead: true }
+//           : m
+//       ),
+//     }));
+//   },
+
+//   handleSessionEnded: (data) => {
+//     console.log("🏁 Session ended:", data);
+//     const { bookingId } = data;
+//     set((state) => {
+//       if (state.selectedBooking?.id !== bookingId) return state;
+//       return {
+//         selectedBooking: { ...state.selectedBooking, status: "completed" },
+//       };
+//     });
+//   },
+
+//   handleSessionKick: (data) => {
+//     console.log("Kicked from session:", data);
+//     const socket = getUserSocket();
+//     if (socket && data?.bookingId) {
+//       socket.emit("leave:booking", data.bookingId);
+//     }
+
+//     set((state) => ({
+//       selectedBooking: state.selectedBooking?.id === data?.bookingId ? null : state.selectedBooking,
+//       messages: state.selectedBooking?.id === data?.bookingId ? [] : state.messages,
+//     }));
+//   },
+
+//   handleSessionExpired: (data) => {
+//     console.log("⏰ Session expired:", data);
+//     const { bookingId } = data;
+//     set((state) => {
+//       if (state.selectedBooking?.id !== bookingId) return state;
+//       return {
+//         selectedBooking: { ...state.selectedBooking, status: "completed" },
+//       };
+//     });
+//   },
+
+//   handleOnlineUsers: (users) => {
+//     console.log("👥 Online users:", users);
+//     const tutorId = get().selectedBooking?.tutorId;
+//     const isOnline = users?.some((u) => u.id === tutorId && u.userType === "tutor");
+//     set({ isParticipantOnline: !!isOnline });
+//   },
+
+//   handleBookingConfirmed: (data) => {
+//     console.log("✅ Booking confirmed:", data);
+//     const { bookingId } = data;
+    
+//     const updateStatus = (buffer) => {
+//       if (!buffer) return buffer;
+//       return buffer.map((b) => b.id === bookingId ? { ...b, status: "confirmed" } : b);
+//     };
+
+//     set((state) => ({
+//       bookings: updateStatus(state.bookings),
+//       allBookings: updateStatus(state.allBookings),
+//       pendingBookings: updateStatus(state.pendingBookings),
+//       confirmedBookings: updateStatus(state.confirmedBookings),
+//       activeBookings: updateStatus(state.activeBookings),
+//       completedBookings: updateStatus(state.completedBookings),
+//       selectedBooking:
+//         state.selectedBooking?.id === bookingId
+//           ? { ...state.selectedBooking, status: "confirmed" }
+//           : state.selectedBooking,
+//     }));
+//   },
+
+//   handleBookingCancelled: (data) => {
+//     console.log("❌ Booking cancelled:", data);
+//     const { bookingId } = data;
+    
+//     const updateStatus = (buffer) => {
+//       if (!buffer) return buffer;
+//       return buffer.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b);
+//     };
+
+//     set((state) => ({
+//       bookings: updateStatus(state.bookings),
+//       allBookings: updateStatus(state.allBookings),
+//       pendingBookings: updateStatus(state.pendingBookings),
+//       confirmedBookings: updateStatus(state.confirmedBookings),
+//       activeBookings: updateStatus(state.activeBookings),
+//       completedBookings: updateStatus(state.completedBookings),
+//       selectedBooking:
+//         state.selectedBooking?.id === bookingId
+//           ? { ...state.selectedBooking, status: "cancelled" }
+//           : state.selectedBooking,
+//     }));
+//   },
+
+//   handleBookingRescheduled: (data) => {
+//     console.log("📅 Booking rescheduled:", data);
+//     get().refreshAllBookings();
+//   },
+
+//   handleBookingUpdated: (data) => {
+//     console.log("🔄 Booking updated:", data);
+//     const { bookingId } = data;
+//     if (get().selectedBooking?.id === bookingId) {
+//       get().fetchBooking(bookingId);
+//     }
+//   },
+
+//   handleRescheduleProposed: (data) => {
+//     console.log("📅 Reschedule proposed by tutor:", data);
+//     const { bookingId, proposedAt } = data;
+    
+//     const updateStatus = (buffer) => {
+//       if (!buffer) return buffer;
+//       return buffer.map((b) =>
+//         b.id === bookingId ? { ...b, status: "reschedule-proposed", proposedAt } : b
+//       );
+//     };
+
+//     set((state) => ({
+//       bookings: updateStatus(state.bookings),
+//       allBookings: updateStatus(state.allBookings),
+//       pendingBookings: updateStatus(state.pendingBookings),
+//       confirmedBookings: updateStatus(state.confirmedBookings),
+//       activeBookings: updateStatus(state.activeBookings),
+//       completedBookings: updateStatus(state.completedBookings),
+//       selectedBooking:
+//         state.selectedBooking?.id === bookingId
+//           ? { ...state.selectedBooking, status: "reschedule-proposed", proposedAt }
+//           : state.selectedBooking,
+//     }));
+//   },
+
+//   // ────────────────────────────────────────────────────────────────
+//   // Core chat actions
+//   // ────────────────────────────────────────────────────────────────
+//   setSelectedBooking: (booking) => {
+//     const prevId = get().selectedBooking?.id;
+//     const socket = getUserSocket();
+
+//     if (prevId && socket?.connected) {
+//       socket.emit("leave:booking", prevId);
+//     }
+
+//     set({
+//       selectedBooking: booking,
+//       messages: [],
+//       isLoading: true,
+//       isSomeoneTyping: false,
+//       typingUserName: null,
+//       isParticipantOnline: false,
+//     });
+
+//     if (!booking?.id) return;
+
+//     if (socket?.connected) {
+//       socket.emit("join:booking", booking.id, (ack) => {
+//         if (ack?.success) {
+//           console.log("✅ User joined booking room:", booking.id);
+//           get().markMessagesAsRead(booking.id);
+//         } else {
+//           console.error("❌ Failed to join room:", ack);
+//         }
+//       });
+//     }
+
+//     get().fetchMessages(booking.id);
+//   },
+
+//   sendMessage: async (bookingId, content, messageType = "TEXT") => {
+//     if (!content?.trim() || !bookingId) {
+//       console.warn("[sendMessage] Invalid input");
+//       return;
+//     }
+
+//     const socket = getUserSocket();
+    
+//     if (!socket?.connected) {
+//       console.error("[sendMessage] Socket not connected - attempting reconnection");
+      
+//       get().initializeSocket();
+      
+//       await new Promise((resolve) => {
+//         const checkConnection = setInterval(() => {
+//           const newSocket = getUserSocket();
+//           if (newSocket?.connected) {
+//             clearInterval(checkConnection);
+//             resolve();
+//           }
+//         }, 100);
+        
+//         setTimeout(() => {
+//           clearInterval(checkConnection);
+//           resolve();
+//         }, 3000);
+//       });
+      
+//       const reconnectedSocket = getUserSocket();
+//       if (!reconnectedSocket?.connected) {
+//         console.error("[sendMessage] Failed to reconnect socket");
+//         throw new Error("Cannot connect to chat server. Please refresh the page.");
+//       }
+//     }
+
+//     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+//     const userId = useAuthStore.getState().user?.id;
+//     const userName = useAuthStore.getState().user?.name || 'You';
+
+//     const optimisticMsg = {
+//       tempId,
+//       content,
+//       messageType,
+//       bookingId,
+//       sender: { 
+//         id: userId,
+//         type: 'USER',
+//         name: userName
+//       },
+//       senderRole: "user",
+//       createdAt: new Date().toISOString(),
+//       status: "sending",
+//       isOptimistic: true,
+//     };
+
+//     console.log("📤 [USER] Sending message with tempId:", tempId);
+
+//     set((s) => ({
+//       messages: [...s.messages, optimisticMsg],
+//       isSending: true,
+//     }));
+
+//     try {
+//       const activeSocket = getUserSocket();
+      
+//       await new Promise((resolve, reject) => {
+//         const timeout = setTimeout(() => {
+//           reject(new Error("Message send timeout"));
+//         }, 10000);
+
+//         activeSocket.emit("message:send", {
+//           bookingId,
+//           content: content.trim(),
+//           messageType,
+//           tempId,
+//         }, (response) => {
+//           clearTimeout(timeout);
+          
+//           if (response?.success) {
+//             console.log("✅ Message sent successfully:", response);
+//             resolve(response);
+//           } else {
+//             console.error("❌ Server rejected message:", response);
+//             reject(new Error(response?.message || "Failed to send message"));
+//           }
+//         });
+//       });
+      
+//     } catch (err) {
+//       console.error("[sendMessage] failed:", err);
+      
+//       set((s) => ({
+//         messages: s.messages.filter((m) => m.tempId !== tempId),
+//         isSending: false,
+//       }));
+      
+//       throw err;
+//     } finally {
+//       set({ isSending: false });
+//     }
+//   },
+
+//   sendTyping: (isTyping = true) => {
+//     const { selectedBooking, socketConnected } = get();
+    
+//     if (!selectedBooking?.id || !socketConnected) {
+//       console.warn("[sendTyping] Cannot send - no booking or socket disconnected");
+//       return;
+//     }
+
+//     const socket = getUserSocket();
+//     if (!socket?.connected) {
+//       console.warn("[sendTyping] Socket not connected");
+//       return;
+//     }
+
+//     const event = isTyping ? "typing:start" : "typing:stop";
+    
+//     console.log(`📝 [USER] Emitting ${event} for booking:`, selectedBooking.id);
+    
+//     socket.emit(event, {
+//       bookingId: selectedBooking.id,
+//       userType: "user",
+//       userName: useAuthStore.getState().user?.name || "User"
+//     });
+//   },
+
+//   markMessagesAsRead: (bookingId) => {
+//     const socket = getUserSocket();
+//     if (socket?.connected) {
+//       socket.emit("messages:read", bookingId);
+//     }
+
+//     const updateUnreadInBuffer = (buffer) => {
+//       if (!buffer) return buffer;
+//       return buffer.map((b) => b.id === bookingId ? { ...b, unread_count: 0 } : b);
+//     };
+
+//     set((s) => ({
+//       bookings: updateUnreadInBuffer(s.bookings),
+//       allBookings: updateUnreadInBuffer(s.allBookings),
+//       pendingBookings: updateUnreadInBuffer(s.pendingBookings),
+//       confirmedBookings: updateUnreadInBuffer(s.confirmedBookings),
+//       activeBookings: updateUnreadInBuffer(s.activeBookings),
+//       completedBookings: updateUnreadInBuffer(s.completedBookings),
+//     }));
+//   },
+
+//   // ────────────────────────────────────────────────────────────────
+//   // ✅ TAB-SPECIFIC FETCH FUNCTIONS
+//   // ────────────────────────────────────────────────────────────────
+
+//   // Fetch bookings by status with caching per tab
+//   fetchBookingsByStatus: async (status = "") => {
+//     const statusLower = status.toLowerCase();
+//     const state = get();
+
+//     // Check if this specific tab has been fetched
+//     const bufferMap = {
+//       "": { buffer: state.allBookings, flag: state.hasFetchedAllBookings, flagName: "hasFetchedAllBookings", bufferName: "allBookings" },
+//       "pending": { buffer: state.pendingBookings, flag: state.hasFetchedPending, flagName: "hasFetchedPending", bufferName: "pendingBookings" },
+//       "confirmed": { buffer: state.confirmedBookings, flag: state.hasFetchedConfirmed, flagName: "hasFetchedConfirmed", bufferName: "confirmedBookings" },
+//       "active": { buffer: state.activeBookings, flag: state.hasFetchedActive, flagName: "hasFetchedActive", bufferName: "activeBookings" },
+//       "completed": { buffer: state.completedBookings, flag: state.hasFetchedCompleted, flagName: "hasFetchedCompleted", bufferName: "completedBookings" },
+//     };
+
+//     const tabInfo = bufferMap[statusLower] || bufferMap[""];
+
+//     // If already fetched for this tab, use cached data
+//     if (tabInfo.flag && tabInfo.buffer !== null) {
+//       console.log(`[fetchBookingsByStatus] Using cached ${statusLower || 'all'} bookings`);
+//       set({ bookings: tabInfo.buffer, isLoading: false });
+//       return;
+//     }
+
+//     // Fetch from API
+//     set({ isLoading: true, error: null });
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       let url = `${API_BASE}/api/users/bookings?limit=50`;
+//       if (statusLower) url += `&status=${statusLower.toUpperCase()}`;
+
+//       const res = await fetchWithAuth(url);
+
+//       if (!res?.success || !Array.isArray(res.data)) {
+//         console.warn("[fetchBookingsByStatus] Invalid response", res);
+//         set({ bookings: [], isLoading: false });
+//         return;
+//       }
+
+//       const bookings = res.data.map((b) => ({
+//         id: b.id,
+//         name: b.tutor?.name || "Unknown",
+//         tutorId: b.tutorId || b.tutor?.id,
+//         participant_name: b.tutor?.name || "Unknown",
+//         participant_role: "tutor",
+//         avatar: b.tutor?.avatar || null,
+//         bio: b.tutor?.bio || "",
+//         subjects: b.tutor?.subjects || [],
+//         completedSessions: b.tutor?.completedSessions || 0,
+//         rating: b.rating || null,
+//         status: b.status?.toLowerCase() || "pending",
+//         scheduledAt: b.scheduledAt || null,
+//         duration: b.duration || null,
+//         purpose: b.purpose || "",
+//         last_message: b.lastMessage?.content || "",
+//         last_message_time: b.lastMessage?.createdAt || null,
+//         unread_count: b.unreadCount || 0,
+//         isBooking: true,
+//       }));
+
+//       // Update the specific buffer and flag
+//       set({
+//         bookings,
+//         [tabInfo.bufferName]: bookings,
+//         [tabInfo.flagName]: true,
+//         isLoading: false,
+//       });
+
+//       console.log(`[fetchBookingsByStatus] Loaded ${bookings.length} ${statusLower || 'all'} bookings`);
+//     } catch (err) {
+//       console.error("[fetchBookingsByStatus] Error:", err);
+//       set({ bookings: [], isLoading: false, error: err.message });
+//     }
+//   },
+
+//   // ✅ Wrapper for backward compatibility
+//   fetchBookings: async (forceRefresh = false, { status = "", page = 1, limit = 50 } = {}) => {
+//     if (forceRefresh) {
+//       // Clear all caches and re-fetch
+//       set({
+//         hasFetchedAllBookings: false,
+//         hasFetchedPending: false,
+//         hasFetchedConfirmed: false,
+//         hasFetchedActive: false,
+//         hasFetchedCompleted: false,
+//         allBookings: [],
+//         pendingBookings: null,
+//         confirmedBookings: null,
+//         activeBookings: null,
+//         completedBookings: null,
+//       });
+//     }
+    
+//     return get().fetchBookingsByStatus(status);
+//   },
+
+//   // Force refresh all bookings (clears all caches)
+//   refreshAllBookings: async () => {
+//     set({
+//       hasFetchedAllBookings: false,
+//       hasFetchedPending: false,
+//       hasFetchedConfirmed: false,
+//       hasFetchedActive: false,
+//       hasFetchedCompleted: false,
+//       allBookings: [],
+//       pendingBookings: null,
+//       confirmedBookings: null,
+//       activeBookings: null,
+//       completedBookings: null,
+//     });
+//     return get().fetchBookingsByStatus("");
+//   },
+
+//   fetchTutors: async ({ search, category } = {}) => {
+//     const { hasFetchedTutors, tutors } = get();
+    
+//     // Skip if already fetched
+//     if (hasFetchedTutors && tutors.length > 0) {
+//       console.log("[fetchTutors] Already fetched, using cached data");
+//       return;
+//     }
+
+//     set({ isLoading: true, error: null });
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const url = `${API_BASE}/api/users/tutors`;
+
+//       const res = await fetchWithAuth(url);
+
+//       if (!res?.success || !Array.isArray(res.data)) {
+//         console.warn("[fetchTutors] Invalid response", res);
+//         set({ tutors: [], isLoading: false });
+//         return;
+//       }
+
+//       const tutors = res.data.map((t) => ({
+//         id: t.id || t._id,
+//         name: t.name || "Unknown Tutor",
+//         participant_name: t.name || "Unknown Tutor",
+//         participant_role: "tutor",
+//         avatar: t.avatar || null,
+//         bio: t.bio || "",
+//         subjects: t.subjects || [],
+//         completedSessions: t.completedSessions || 0,
+//         rating: t.rating || null,
+//         isTutor: true,
+//         last_message: "",
+//         last_message_time: null,
+//         status: "available",
+//         unread_count: 0,
+//       }));
+
+//       set({ 
+//         tutors, 
+//         hasFetchedTutors: true, 
+//         isLoading: false 
+//       });
+      
+//       console.log(`[fetchTutors] Loaded ${tutors.length} tutors`);
+//     } catch (err) {
+//       console.error("[fetchTutors] Error:", err);
+//       set({ tutors: [], isLoading: false, error: err.message });
+//     }
+//   },
+
+//   fetchMessages: async (bookingId) => {
+//     console.log("[fetchMessages] START - Booking:", bookingId);
+//     set({ error: null });
+
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const url = `${API_BASE}/api/users/bookings/${bookingId}/messages`;
+
+//       const res = await fetchWithAuth(url);
+
+//       if (res.success && Array.isArray(res.data)) {
+//         console.log("[fetchMessages] Messages loaded:", res.data.length);
+//         set({ messages: res.data });
+//         return res.data;
+//       } else {
+//         console.warn("[fetchMessages] No messages or invalid response", res);
+//         set({ messages: [] });
+//         return [];
+//       }
+//     } catch (err) {
+//       console.error("[fetchMessages] CRASH:", err.message, err.stack);
+//       set({ messages: [], error: err.message });
+//       return [];
+//     }
+//   },
+
+//   createBooking: async ({ tutorId, purpose, scheduledAt, duration }) => {
+//     set({ isLoading: true, error: null });
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings`, {
+//         method: "POST",
+//         body: JSON.stringify({ tutorId, purpose, scheduledAt, duration }),
+//       });
+
+//       if (res.success && res.data) {
+//         const newBooking = mapBookingToUI(res.data);
+
+//         set((state) => ({
+//           bookings: [newBooking, ...state.bookings],
+//           allBookings: [newBooking, ...state.allBookings],
+//           pendingBookings: state.pendingBookings ? [newBooking, ...state.pendingBookings] : null,
+//           tutors: state.tutors.filter((t) => t.id !== tutorId),
+//           selectedBooking: newBooking,
+//           isLoading: false,
+//         }));
+
+//         return newBooking;
+//       }
+//       throw new Error(res.message || "Failed to create booking");
+//     } catch (err) {
+//       set({ isLoading: false, error: err.message });
+//       throw err;
+//     }
+//   },
+
+//   fetchBooking: async (bookingId) => {
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+//       const url = `${API_BASE}/api/user/bookings/${bookingId}`;
+
+//       const res = await fetchWithAuth(url);
+
+//       if (res.success && res.data) {
+//         const booking = mapBookingToUI(res.data);
+
+//         const updateBookingInBuffer = (buffer) => {
+//           if (!buffer) return buffer;
+//           return buffer.map((b) => b.id === bookingId ? booking : b);
+//         };
+
+//         set((state) => ({
+//           selectedBooking: booking,
+//           bookings: updateBookingInBuffer(state.bookings),
+//           allBookings: updateBookingInBuffer(state.allBookings),
+//           pendingBookings: updateBookingInBuffer(state.pendingBookings),
+//           confirmedBookings: updateBookingInBuffer(state.confirmedBookings),
+//           activeBookings: updateBookingInBuffer(state.activeBookings),
+//           completedBookings: updateBookingInBuffer(state.completedBookings),
+//         }));
+
+//         return booking;
+//       } else {
+//         console.warn("[fetchBooking] No data for ID:", bookingId);
+//         return null;
+//       }
+//     } catch (err) {
+//       console.error("[fetchBooking] FAILED:", err.message || err);
+//       return null;
+//     }
+//   },
+
+//   acceptReschedule: async (bookingId) => {
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+
+//       const updateStatus = (buffer) => {
+//         if (!buffer) return buffer;
+//         return buffer.map((b) => b.id === bookingId ? { ...b, status: "confirmed" } : b);
+//       };
+
+//       set((state) => ({
+//         bookings: updateStatus(state.bookings),
+//         allBookings: updateStatus(state.allBookings),
+//         pendingBookings: updateStatus(state.pendingBookings),
+//         confirmedBookings: updateStatus(state.confirmedBookings),
+//         activeBookings: updateStatus(state.activeBookings),
+//         completedBookings: updateStatus(state.completedBookings),
+//         selectedBooking:
+//           state.selectedBooking?.id === bookingId
+//             ? { ...state.selectedBooking, status: "confirmed" }
+//             : state.selectedBooking,
+//       }));
+
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/user/bookings/${bookingId}/reschedule/accept`,
+//         { method: "PATCH" }
+//       );
+
+//       if (res.success && res.data) {
+//         const updatedBooking = mapBookingToUI(res.data);
+        
+//         const updateBooking = (buffer) => {
+//           if (!buffer) return buffer;
+//           return buffer.map((b) => b.id === bookingId ? updatedBooking : b);
+//         };
+
+//         set((state) => ({
+//           bookings: updateBooking(state.bookings),
+//           allBookings: updateBooking(state.allBookings),
+//           pendingBookings: updateBooking(state.pendingBookings),
+//           confirmedBookings: updateBooking(state.confirmedBookings),
+//           activeBookings: updateBooking(state.activeBookings),
+//           completedBookings: updateBooking(state.completedBookings),
+//           selectedBooking:
+//             state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+//         }));
+//         return res.data;
+//       }
+
+//       throw new Error("Accept reschedule failed");
+//     } catch (err) {
+//       console.error("acceptReschedule failed:", err);
+//       throw err;
+//     }
+//   },
+
+//   rejectReschedule: async (bookingId, reason) => {
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+
+//       const updateStatus = (buffer) => {
+//         if (!buffer) return buffer;
+//         return buffer.map((b) => b.id === bookingId ? { ...b, status: "pending" } : b);
+//       };
+
+//       set((state) => ({
+//         bookings: updateStatus(state.bookings),
+//         allBookings: updateStatus(state.allBookings),
+//         pendingBookings: updateStatus(state.pendingBookings),
+//         confirmedBookings: updateStatus(state.confirmedBookings),
+//         activeBookings: updateStatus(state.activeBookings),
+//         completedBookings: updateStatus(state.completedBookings),
+//         selectedBooking:
+//           state.selectedBooking?.id === bookingId
+//             ? { ...state.selectedBooking, status: "pending" }
+//             : state.selectedBooking,
+//       }));
+
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/user/bookings/${bookingId}/reschedule/reject`,
+//         {
+//           method: "PATCH",
+//           body: JSON.stringify({ reason }),
+//         }
+//       );
+
+//       if (res.success && res.data) {
+//         const updatedBooking = mapBookingToUI(res.data);
+        
+//         const updateBooking = (buffer) => {
+//           if (!buffer) return buffer;
+//           return buffer.map((b) => b.id === bookingId ? updatedBooking : b);
+//         };
+
+//         set((state) => ({
+//           bookings: updateBooking(state.bookings),
+//           allBookings: updateBooking(state.allBookings),
+//           pendingBookings: updateBooking(state.pendingBookings),
+//           confirmedBookings: updateBooking(state.confirmedBookings),
+//           activeBookings: updateBooking(state.activeBookings),
+//           completedBookings: updateBooking(state.completedBookings),
+//           selectedBooking:
+//             state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+//         }));
+//         return res.data;
+//       }
+
+//       throw new Error("Reject reschedule failed");
+//     } catch (err) {
+//       console.error("rejectReschedule failed:", err);
+//       throw err;
+//     }
+//   },
+
+//   cancelBooking: async (bookingId, reason) => {
+//     try {
+//       const { fetchWithAuth } = useAuthStore.getState();
+
+//       if (!reason || !reason.trim()) {
+//         throw new Error("Cancellation reason is required");
+//       }
+
+//       const updateStatus = (buffer) => {
+//         if (!buffer) return buffer;
+//         return buffer.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b);
+//       };
+
+//       set((state) => ({
+//         bookings: updateStatus(state.bookings),
+//         allBookings: updateStatus(state.allBookings),
+//         pendingBookings: updateStatus(state.pendingBookings),
+//         confirmedBookings: updateStatus(state.confirmedBookings),
+//         activeBookings: updateStatus(state.activeBookings),
+//         completedBookings: updateStatus(state.completedBookings),
+//         selectedBooking:
+//           state.selectedBooking?.id === bookingId
+//             ? { ...state.selectedBooking, status: "cancelled" }
+//             : state.selectedBooking,
+//       }));
+
+//       const res = await fetchWithAuth(
+//         `${API_BASE}/api/users/bookings/${bookingId}/cancel`,
+//         {
+//           method: "PATCH",
+//           body: JSON.stringify({ reason: reason.trim() }),
+//         }
+//       );
+
+//       if (res.success) {
+//         return true;
+//       }
+
+//       throw new Error(res.message || "Cancel failed");
+//     } catch (err) {
+//       console.error("cancelBooking failed:", err);
+//       throw err;
+//     }
+//   },
+
+//   // Force refresh methods
+//   refreshBookings: async (options) => {
+//     return get().fetchBookings(true, options);
+//   },
+
+//   refreshTutors: async (options) => {
+//     set({ hasFetchedTutors: false, tutors: [] });
+//     return get().fetchTutors(options);
+//   },
+
+//   reset: () => {
+//     get().disconnectSocket();
+//     set({
+//       bookings: [],
+//       allBookings: [],
+//       pendingBookings: null,
+//       confirmedBookings: null,
+//       activeBookings: null,
+//       completedBookings: null,
+//       selectedBooking: null,
+//       messages: [],
+//       tutors: [],
+//       isLoading: false,
+//       isSending: false,
+//       socketConnected: false,
+//       isSomeoneTyping: false,
+//       typingUserName: null,
+//       isParticipantOnline: false,
+//       hasFetchedAllBookings: false,
+//       hasFetchedPending: false,
+//       hasFetchedConfirmed: false,
+//       hasFetchedActive: false,
+//       hasFetchedCompleted: false,
+//       hasFetchedTutors: false,
+//     });
+//   },
+// }));
+
+
+
+
+
+
+
+
+
+
+
+
 // src/store/userChatStore.js
+
+
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 import { connectUserSocket, getUserSocket } from "@/lib/userChatSocket";
@@ -2990,403 +3935,410 @@ const mapBookingToUI = (booking) => ({
   isBooking: true,
 });
 
+const updateStatusInAllBuffers = (state, bookingId, patch) => {
+  const apply = (buffer) =>
+    buffer ? buffer.map((b) => b.id === bookingId ? { ...b, ...patch } : b) : buffer;
+  return {
+    bookings:          apply(state.bookings),
+    allBookings:       apply(state.allBookings),
+    pendingBookings:   apply(state.pendingBookings),
+    confirmedBookings: apply(state.confirmedBookings),
+    activeBookings:    apply(state.activeBookings),
+    completedBookings: apply(state.completedBookings),
+    selectedBooking:
+      state.selectedBooking?.id === bookingId
+        ? { ...state.selectedBooking, ...patch }
+        : state.selectedBooking,
+  };
+};
+
 export const useUserChatStore = create((set, get) => ({
-  // ✅ Separate buffers for each tab
-  allBookings: [], // All bookings (no filter)
-  pendingBookings: null, // Pending bookings buffer
-  confirmedBookings: null, // Confirmed bookings buffer
-  activeBookings: null, // Active bookings buffer
-  completedBookings: null, // Completed bookings buffer
-  
-  bookings: [], // Currently displayed bookings
-  selectedBooking: null,
-  messages: [],
-  tutors: [],
-  isLoading: false,
-  isSending: false,
-  socketConnected: false,
-  isSomeoneTyping: false,
-  typingUserName: null,
-  isParticipantOnline: false,
-  
-  // ✅ Track which tabs have been fetched
+  allBookings:       [],
+  pendingBookings:   null,
+  confirmedBookings: null,
+  activeBookings:    null,
+  completedBookings: null,
+  bookings:          [],
+  selectedBooking:   null,
+  messages:          [],
+  tutors:            [],
+  isLoading:         false,
+  isSending:         false,
+  socketConnected:      false,
+  isSomeoneTyping:      false,
+  typingUserName:       null,
+  isParticipantOnline:  false,
+  onlineTutors: {},
+  activeTab: "sessions",
   hasFetchedAllBookings: false,
-  hasFetchedPending: false,
-  hasFetchedConfirmed: false,
-  hasFetchedActive: false,
-  hasFetchedCompleted: false,
-  hasFetchedTutors: false,
+  hasFetchedPending:     false,
+  hasFetchedConfirmed:   false,
+  hasFetchedActive:      false,
+  hasFetchedCompleted:   false,
+  hasFetchedTutors:      false,
 
-  // ────────────────────────────────────────────────────────────────
-  // Socket connection
-  // ────────────────────────────────────────────────────────────────
+  setActiveTab: (tab) => set({ activeTab: tab }),
+
   initializeSocket: () => {
-    console.log("[UserChatStore] initializeSocket called");
-    
     const token = useAuthStore.getState().accessToken;
-    if (!token) {
-      console.warn("[UserChatStore] No token → cannot initialize socket");
-      return;
-    }
-
+    if (!token) { console.warn("[UserChatStore] No token"); return; }
     const socket = connectUserSocket(token);
     set({ socketConnected: socket?.connected || false });
   },
 
   disconnectSocket: () => {
     const socket = getUserSocket();
-    if (socket?.connected) {
-      socket.disconnect();
-    }
+    if (socket?.connected) socket.disconnect();
     set({ socketConnected: false });
   },
 
-  // ────────────────────────────────────────────────────────────────
-  // Socket event handlers
-  // ────────────────────────────────────────────────────────────────
-  handleNewMessage: (msg) => {
-    console.log("📨 [USER] handleNewMessage called:", msg);
-    
-    set((state) => {
-      if (state.messages.some((m) => m.id === msg.id)) {
-        console.log("⚠️ Duplicate message (by ID) skipped:", msg.id);
-        return state;
-      }
+  initializeListeners: () => {
+    const socket = getUserSocket();
+    if (!socket) return;
+    console.log("[UserChatStore] Attaching listeners");
 
-      const isCurrent = msg.bookingId === state.selectedBooking?.id;
-      let updatedMessages = [...state.messages];
+    const handlers = {
+      // ← FIX 3: emit getOnlineUsers on connect
+      "connect": () => {
+        set({ socketConnected: true });
+        socket.emit("getOnlineUsers"); // ← ADDED: was missing, so online dots never appeared on load
+        const { selectedBooking } = get();
+        if (selectedBooking?.id) {
+          socket.emit("join:booking", selectedBooking.id, (ack) => {
+            if (ack?.success) get().markMessagesAsRead(selectedBooking.id);
+          });
+        }
+      },
+      "disconnect": () => set({ socketConnected: false, isParticipantOnline: false }),
 
-      let optimisticIndex = -1;
-      if (msg.tempId) {
-        optimisticIndex = updatedMessages.findIndex((m) => m.tempId === msg.tempId);
-        console.log("🔎 Searching for tempId:", msg.tempId, "→ Found at index:", optimisticIndex);
-      }
+      "message:new": (msg) => get().handleNewMessage(msg),
 
-      if (optimisticIndex === -1 && msg.sender?.id && msg.content) {
-        const msgTime = new Date(msg.createdAt).getTime();
-        optimisticIndex = updatedMessages.findIndex((m) => 
-          m.isOptimistic === true &&
-          m.content === msg.content &&
-          m.sender?.id === msg.sender?.id &&
-          Math.abs(new Date(m.createdAt).getTime() - msgTime) < 10000
-        );
-        console.log("🔎 Fallback search by content+sender:", optimisticIndex);
-      }
+      "typing:start": (data) => {
+        const { selectedBooking } = get();
+        if (!data?.bookingId || data.bookingId !== selectedBooking?.id) return;
+        if (data.userType === "user") return;
+        set({ isSomeoneTyping: true, typingUserName: data.userName || "Tutor" });
+      },
+      "typing:stop": (data) => {
+        const { selectedBooking } = get();
+        if (!data?.bookingId || data.bookingId !== selectedBooking?.id) return;
+        set({ isSomeoneTyping: false, typingUserName: null });
+      },
 
-      if (optimisticIndex !== -1) {
-        console.log("✅ REPLACING optimistic message at index:", optimisticIndex);
-        updatedMessages[optimisticIndex] = {
-          ...msg,
-          tempId: undefined,
-          isOptimistic: false,
-          status: "sent",
-        };
-      } else {
-        console.log("➕ Adding new message (no optimistic found)");
-        updatedMessages.push({ ...msg, status: "sent" });
-      }
+      // ← FIX 4: handle both event names — some socket.io server versions send "onlineUsers"
+      "users:online": (users) => get().handleOnlineUsers(users),
+      "onlineUsers":  (users) => get().handleOnlineUsers(users), // ← ADDED
 
-      updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      "user:online": (data) => {
+        if (data?.userType !== "tutor") return;
+        set((s) => ({
+          onlineTutors: { ...s.onlineTutors, [data.userId]: true },
+          isParticipantOnline:
+            s.selectedBooking?.tutorId === data.userId ? true : s.isParticipantOnline,
+        }));
+      },
+      "user:offline": (data) => {
+        if (data?.userType !== "tutor") return;
+        set((s) => {
+          const onlineTutors = { ...s.onlineTutors };
+          delete onlineTutors[data.userId];
+          return {
+            onlineTutors,
+            isParticipantOnline:
+              s.selectedBooking?.tutorId === data.userId ? false : s.isParticipantOnline,
+          };
+        });
+      },
 
-      // Update all buffers with new message data
-      const updateBookingInBuffer = (buffer) => {
-        if (!buffer) return buffer;
-        return buffer.map((b) =>
-          b.id === msg.bookingId
-            ? { ...b, unread_count: isCurrent ? 0 : (b.unread_count || 0) + 1, last_message: msg.content }
-            : b
-        );
-      };
+      "messages:read": (timestamp) => get().handleMessagesReadByTutor(timestamp),
 
-      if (!isCurrent && msg.senderRole === "tutor") {
-        return {
-          messages: updatedMessages,
-          bookings: state.bookings.map((b) =>
-            b.id === msg.bookingId
-              ? { ...b, unread_count: (b.unread_count || 0) + 1, last_message: msg.content }
-              : b
-          ),
-          allBookings: updateBookingInBuffer(state.allBookings),
-          pendingBookings: updateBookingInBuffer(state.pendingBookings),
-          confirmedBookings: updateBookingInBuffer(state.confirmedBookings),
-          activeBookings: updateBookingInBuffer(state.activeBookings),
-          completedBookings: updateBookingInBuffer(state.completedBookings),
-        };
-      }
+      "session:ended":   (data) => get().handleSessionEnded(data),
+      "session:kick":    (data) => get().handleSessionKick(data),
+      "session:expired": (data) => get().handleSessionExpired(data),
 
-      return { messages: updatedMessages };
+      "booking:confirmed": (data) => {
+        set((s) => {
+          const next = updateStatusInAllBuffers(s, data.bookingId, { status: "confirmed" });
+          const shouldSwitch =
+            s.selectedBooking?.id === data.bookingId && s.activeTab === "pending";
+          return { ...next, ...(shouldSwitch ? { activeTab: "confirmed" } : {}) };
+        });
+      },
+
+      "booking:active": (data) => {
+        set((s) => {
+          const next = updateStatusInAllBuffers(s, data.bookingId, { status: "active" });
+          const shouldSwitch =
+            s.selectedBooking?.id === data.bookingId &&
+            (s.activeTab === "pending" || s.activeTab === "confirmed");
+          return { ...next, ...(shouldSwitch ? { activeTab: "active" } : {}) };
+        });
+      },
+
+      "booking:cancelled":           (data) => get().handleBookingCancelled(data),
+      "booking:rescheduled":         () => get().refreshAllBookings(),
+      "booking:updated":             (data) => get().handleBookingUpdated(data),
+      "booking:reschedule_proposed": (data) => get().handleRescheduleProposed(data),
+    };
+
+    Object.entries(handlers).forEach(([e, fn]) => socket.on(e, fn));
+
+    return () => {
+      console.log("[UserChatStore] Removing listeners");
+      Object.entries(handlers).forEach(([e, fn]) => socket.off(e, fn));
+    };
+  },
+
+  // Shared handler — called by both "users:online" and "onlineUsers"
+  handleOnlineUsers: (users) => {
+    if (!Array.isArray(users)) return;
+    const onlineTutors = {};
+    users.forEach((u) => {
+      if (u.userType === "tutor" || u.userType === "TUTOR") onlineTutors[u.id] = true;
+    });
+    const tutorId = get().selectedBooking?.tutorId;
+    set({
+      onlineTutors,
+      isParticipantOnline: tutorId ? !!onlineTutors[tutorId] : false,
     });
   },
 
-  handleMessagesReadByTutor: (timestamp) => {
-    console.log("📖 Tutor read messages up to:", timestamp);
+  handleNewMessage: (msg) => {
+    set((state) => {
+      if (state.messages.some((m) => m.id === msg.id)) return state;
+      const isCurrent = msg.bookingId === state.selectedBooking?.id;
+      let msgs = [...state.messages];
+
+      let idx = msg.tempId ? msgs.findIndex((m) => m.tempId === msg.tempId) : -1;
+      if (idx === -1 && msg.sender?.id && msg.content) {
+        const t = new Date(msg.createdAt).getTime();
+        idx = msgs.findIndex((m) =>
+          m.isOptimistic && m.content === msg.content &&
+          m.sender?.id === msg.sender?.id &&
+          Math.abs(new Date(m.createdAt).getTime() - t) < 10000
+        );
+      }
+      if (idx !== -1) {
+        msgs[idx] = { ...msg, tempId: undefined, isOptimistic: false, status: "sent" };
+      } else {
+        msgs.push({ ...msg, status: "sent" });
+      }
+      msgs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      const updateBuf = (buf) =>
+        buf ? buf.map((b) =>
+          b.id === msg.bookingId
+            ? { ...b, unread_count: isCurrent ? 0 : (b.unread_count || 0) + 1, last_message: msg.content }
+            : b
+        ) : buf;
+
+      if (!isCurrent && msg.senderRole === "tutor") {
+        return {
+          messages:          msgs,
+          bookings:          updateBuf(state.bookings),
+          allBookings:       updateBuf(state.allBookings),
+          pendingBookings:   updateBuf(state.pendingBookings),
+          confirmedBookings: updateBuf(state.confirmedBookings),
+          activeBookings:    updateBuf(state.activeBookings),
+          completedBookings: updateBuf(state.completedBookings),
+        };
+      }
+      return { messages: msgs };
+    });
+  },
+
+  rateSession: async (bookingId, rating, feedback) => {
+    console.log("[rateSession] START - ID:", bookingId, "Rating:", rating, "Feedback:", feedback);
+    set({ error: null });
+
+    try {
+      const { fetchWithAuth } = useAuthStore.getState();
+      const url = `${API_BASE}/api/users/bookings/${bookingId}/rate`;
+      console.log("[rateSession] POST to:", url);
+
+      const res = await fetchWithAuth(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, feedback }),
+      });
+
+      console.log("[rateSession] Response:", res);
+
+     if (res.success) {
     set((state) => ({
-      messages: state.messages.map((m) =>
+      bookings: state.bookings.map((b) => 
+        b.id === bookingId 
+          ? { ...b, rating, feedback } 
+          : b
+      ),
+      selectedBooking: state.selectedBooking?.id === bookingId
+        ? { ...state.selectedBooking, rating, feedback }
+        : state.selectedBooking
+    }));
+    console.log("[rateSession] SUCCESS");
+    return { success: true, message: res.message || "Thank you for your feedback!" };
+}
+      throw new Error(res.message || "Failed to rate session");
+    } catch (err) {
+      console.error("[rateSession] CRASH:", err.message, err.stack);
+      set({ error: err.message });
+      return false;
+    }
+  },
+  // rateSession: async (bookingId, rating, feedback) => {
+  //   console.log("[rateSession] START - ID:", bookingId, "Rating:", rating, "Feedback:", feedback);
+  //   set({ error: null });
+
+  //   try {
+  //     const { fetchWithAuth } = useAuthStore.getState();
+  //     const url = `${API_BASE}/api/users/bookings/${bookingId}/rate`;
+  //     console.log("[rateSession] POST to:", url);
+
+  //     const res = await fetchWithAuth(url, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ rating, feedback }),
+  //     });
+
+  //     console.log("[rateSession] Response:", res);
+
+  //     if (res.success) {
+  //       set((state) => ({
+  //         bookings: state.bookings.map((b) => 
+  //           b.id === bookingId 
+  //             ? { ...b, rating, feedback } 
+  //             : b
+  //         ),
+  //         selectedBooking: state.selectedBooking?.id === bookingId
+  //           ? { ...state.selectedBooking, rating, feedback }
+  //           : state.selectedBooking
+  //       }));
+  //       console.log("[rateSession] SUCCESS");
+  //       return true;
+  //     }
+  //     throw new Error(res.message || "Failed to rate session");
+  //   } catch (err) {
+  //     console.error("[rateSession] CRASH:", err.message, err.stack);
+  //     set({ error: err.message });
+  //     return false;
+  //   }
+  // },
+
+  handleMessagesReadByTutor: (timestamp) => {
+    set((s) => ({
+      messages: s.messages.map((m) =>
         m.senderRole === "user" && new Date(m.createdAt) <= new Date(timestamp)
-          ? { ...m, isRead: true }
-          : m
+          ? { ...m, isRead: true } : m
       ),
     }));
   },
 
+  // ← FIX 1: was `s.selectedBooking?.id !== data.bookingId ? s : { selectedBooking: ... }`
+  //   which only updated selectedBooking, leaving sidebar cards stale on "active"
   handleSessionEnded: (data) => {
-    console.log("🏁 Session ended:", data);
-    const { bookingId } = data;
-    set((state) => {
-      if (state.selectedBooking?.id !== bookingId) return state;
-      return {
-        selectedBooking: { ...state.selectedBooking, status: "completed" },
-      };
-    });
+    set((s) => updateStatusInAllBuffers(s, data.bookingId, { status: "completed" }));
   },
 
   handleSessionKick: (data) => {
-    console.log("Kicked from session:", data);
     const socket = getUserSocket();
-    if (socket && data?.bookingId) {
-      socket.emit("leave:booking", data.bookingId);
-    }
-
-    set((state) => ({
-      selectedBooking: state.selectedBooking?.id === data?.bookingId ? null : state.selectedBooking,
-      messages: state.selectedBooking?.id === data?.bookingId ? [] : state.messages,
+    if (socket && data?.bookingId) socket.emit("leave:booking", data.bookingId);
+    set((s) => ({
+      ...updateStatusInAllBuffers(s, data.bookingId, { status: "completed" }),
+      selectedBooking: s.selectedBooking?.id === data?.bookingId ? null : s.selectedBooking,
+      messages:        s.selectedBooking?.id === data?.bookingId ? [] : s.messages,
     }));
   },
 
+  // ← FIX 2: same bug as handleSessionEnded above
   handleSessionExpired: (data) => {
-    console.log("⏰ Session expired:", data);
-    const { bookingId } = data;
-    set((state) => {
-      if (state.selectedBooking?.id !== bookingId) return state;
-      return {
-        selectedBooking: { ...state.selectedBooking, status: "completed" },
-      };
-    });
-  },
-
-  handleOnlineUsers: (users) => {
-    console.log("👥 Online users:", users);
-    const tutorId = get().selectedBooking?.tutorId;
-    const isOnline = users?.some((u) => u.id === tutorId && u.userType === "tutor");
-    set({ isParticipantOnline: !!isOnline });
-  },
-
-  handleBookingConfirmed: (data) => {
-    console.log("✅ Booking confirmed:", data);
-    const { bookingId } = data;
-    
-    const updateStatus = (buffer) => {
-      if (!buffer) return buffer;
-      return buffer.map((b) => b.id === bookingId ? { ...b, status: "confirmed" } : b);
-    };
-
-    set((state) => ({
-      bookings: updateStatus(state.bookings),
-      allBookings: updateStatus(state.allBookings),
-      pendingBookings: updateStatus(state.pendingBookings),
-      confirmedBookings: updateStatus(state.confirmedBookings),
-      activeBookings: updateStatus(state.activeBookings),
-      completedBookings: updateStatus(state.completedBookings),
-      selectedBooking:
-        state.selectedBooking?.id === bookingId
-          ? { ...state.selectedBooking, status: "confirmed" }
-          : state.selectedBooking,
-    }));
+    set((s) => updateStatusInAllBuffers(s, data.bookingId, { status: "completed" }));
   },
 
   handleBookingCancelled: (data) => {
-    console.log("❌ Booking cancelled:", data);
-    const { bookingId } = data;
-    
-    const updateStatus = (buffer) => {
-      if (!buffer) return buffer;
-      return buffer.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b);
-    };
-
-    set((state) => ({
-      bookings: updateStatus(state.bookings),
-      allBookings: updateStatus(state.allBookings),
-      pendingBookings: updateStatus(state.pendingBookings),
-      confirmedBookings: updateStatus(state.confirmedBookings),
-      activeBookings: updateStatus(state.activeBookings),
-      completedBookings: updateStatus(state.completedBookings),
-      selectedBooking:
-        state.selectedBooking?.id === bookingId
-          ? { ...state.selectedBooking, status: "cancelled" }
-          : state.selectedBooking,
-    }));
-  },
-
-  handleBookingRescheduled: (data) => {
-    console.log("📅 Booking rescheduled:", data);
-    get().refreshAllBookings();
+    set((s) => updateStatusInAllBuffers(s, data.bookingId, { status: "cancelled" }));
   },
 
   handleBookingUpdated: (data) => {
-    console.log("🔄 Booking updated:", data);
-    const { bookingId } = data;
-    if (get().selectedBooking?.id === bookingId) {
-      get().fetchBooking(bookingId);
-    }
+    if (get().selectedBooking?.id === data.bookingId) get().fetchBooking(data.bookingId);
   },
 
   handleRescheduleProposed: (data) => {
-    console.log("📅 Reschedule proposed by tutor:", data);
-    const { bookingId, proposedAt } = data;
-    
-    const updateStatus = (buffer) => {
-      if (!buffer) return buffer;
-      return buffer.map((b) =>
-        b.id === bookingId ? { ...b, status: "reschedule-proposed", proposedAt } : b
-      );
-    };
-
-    set((state) => ({
-      bookings: updateStatus(state.bookings),
-      allBookings: updateStatus(state.allBookings),
-      pendingBookings: updateStatus(state.pendingBookings),
-      confirmedBookings: updateStatus(state.confirmedBookings),
-      activeBookings: updateStatus(state.activeBookings),
-      completedBookings: updateStatus(state.completedBookings),
-      selectedBooking:
-        state.selectedBooking?.id === bookingId
-          ? { ...state.selectedBooking, status: "reschedule-proposed", proposedAt }
-          : state.selectedBooking,
-    }));
+    set((s) =>
+      updateStatusInAllBuffers(s, data.bookingId, {
+        status: "reschedule-proposed", proposedAt: data.proposedAt,
+      })
+    );
   },
 
-  // ────────────────────────────────────────────────────────────────
-  // Core chat actions
-  // ────────────────────────────────────────────────────────────────
   setSelectedBooking: (booking) => {
     const prevId = get().selectedBooking?.id;
     const socket = getUserSocket();
-
-    if (prevId && socket?.connected) {
-      socket.emit("leave:booking", prevId);
-    }
+    if (prevId && socket?.connected) socket.emit("leave:booking", prevId);
 
     set({
-      selectedBooking: booking,
-      messages: [],
-      isLoading: true,
-      isSomeoneTyping: false,
-      typingUserName: null,
-      isParticipantOnline: false,
+      selectedBooking:     booking,
+      messages:            [],
+      isLoading:           true,
+      isSomeoneTyping:     false,
+      typingUserName:      null,
+      isParticipantOnline: booking?.tutorId ? !!get().onlineTutors[booking.tutorId] : false,
     });
 
     if (!booking?.id) return;
 
     if (socket?.connected) {
       socket.emit("join:booking", booking.id, (ack) => {
-        if (ack?.success) {
-          console.log("✅ User joined booking room:", booking.id);
-          get().markMessagesAsRead(booking.id);
-        } else {
-          console.error("❌ Failed to join room:", ack);
-        }
+        if (ack?.success) get().markMessagesAsRead(booking.id);
+        else console.error("❌ Failed to join room:", ack);
       });
     }
-
     get().fetchMessages(booking.id);
   },
 
   sendMessage: async (bookingId, content, messageType = "TEXT") => {
-    if (!content?.trim() || !bookingId) {
-      console.warn("[sendMessage] Invalid input");
-      return;
-    }
-
-    const socket = getUserSocket();
-    
+    if (!content?.trim() || !bookingId) return;
+    let socket = getUserSocket();
     if (!socket?.connected) {
-      console.error("[sendMessage] Socket not connected - attempting reconnection");
-      
       get().initializeSocket();
-      
       await new Promise((resolve) => {
-        const checkConnection = setInterval(() => {
-          const newSocket = getUserSocket();
-          if (newSocket?.connected) {
-            clearInterval(checkConnection);
-            resolve();
-          }
+        const check = setInterval(() => {
+          if (getUserSocket()?.connected) { clearInterval(check); resolve(); }
         }, 100);
-        
-        setTimeout(() => {
-          clearInterval(checkConnection);
-          resolve();
-        }, 3000);
+        setTimeout(() => { clearInterval(check); resolve(); }, 3000);
       });
-      
-      const reconnectedSocket = getUserSocket();
-      if (!reconnectedSocket?.connected) {
-        console.error("[sendMessage] Failed to reconnect socket");
+      socket = getUserSocket();
+      if (!socket?.connected)
         throw new Error("Cannot connect to chat server. Please refresh the page.");
-      }
     }
 
-    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-    const userId = useAuthStore.getState().user?.id;
-    const userName = useAuthStore.getState().user?.name || 'You';
-
-    const optimisticMsg = {
-      tempId,
-      content,
-      messageType,
-      bookingId,
-      sender: { 
-        id: userId,
-        type: 'USER',
-        name: userName
-      },
-      senderRole: "user",
-      createdAt: new Date().toISOString(),
-      status: "sending",
-      isOptimistic: true,
-    };
-
-    console.log("📤 [USER] Sending message with tempId:", tempId);
+    const tempId   = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const userId   = useAuthStore.getState().user?.id;
+    const userName = useAuthStore.getState().user?.name || "You";
 
     set((s) => ({
-      messages: [...s.messages, optimisticMsg],
+      messages: [...s.messages, {
+        tempId, content, messageType, bookingId,
+        sender: { id: userId, type: "USER", name: userName },
+        senderRole: "user", createdAt: new Date().toISOString(),
+        status: "sending", isOptimistic: true,
+      }],
       isSending: true,
     }));
 
     try {
-      const activeSocket = getUserSocket();
-      
       await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error("Message send timeout"));
-        }, 10000);
-
-        activeSocket.emit("message:send", {
-          bookingId,
-          content: content.trim(),
-          messageType,
-          tempId,
-        }, (response) => {
-          clearTimeout(timeout);
-          
-          if (response?.success) {
-            console.log("✅ Message sent successfully:", response);
-            resolve(response);
-          } else {
-            console.error("❌ Server rejected message:", response);
-            reject(new Error(response?.message || "Failed to send message"));
+        const timeout = setTimeout(() => reject(new Error("Message send timeout")), 10000);
+        socket.emit("message:send",
+          { bookingId, content: content.trim(), messageType, tempId },
+          (response) => {
+            clearTimeout(timeout);
+            response?.success ? resolve(response)
+              : reject(new Error(response?.message || "Failed to send"));
           }
-        });
+        );
       });
-      
     } catch (err) {
-      console.error("[sendMessage] failed:", err);
-      
-      set((s) => ({
-        messages: s.messages.filter((m) => m.tempId !== tempId),
-        isSending: false,
-      }));
-      
+      set((s) => ({ messages: s.messages.filter((m) => m.tempId !== tempId), isSending: false }));
       throw err;
     } finally {
       set({ isSending: false });
@@ -3394,273 +4346,153 @@ export const useUserChatStore = create((set, get) => ({
   },
 
   sendTyping: (isTyping = true) => {
-    const { selectedBooking, socketConnected } = get();
-    
-    if (!selectedBooking?.id || !socketConnected) {
-      console.warn("[sendTyping] Cannot send - no booking or socket disconnected");
-      return;
-    }
-
+    const { selectedBooking } = get();
+    if (!selectedBooking?.id) return;
     const socket = getUserSocket();
-    if (!socket?.connected) {
-      console.warn("[sendTyping] Socket not connected");
-      return;
-    }
-
-    const event = isTyping ? "typing:start" : "typing:stop";
-    
-    console.log(`📝 [USER] Emitting ${event} for booking:`, selectedBooking.id);
-    
-    socket.emit(event, {
+    if (!socket?.connected) return;
+    socket.emit(isTyping ? "typing:start" : "typing:stop", {
       bookingId: selectedBooking.id,
-      userType: "user",
-      userName: useAuthStore.getState().user?.name || "User"
+      userType:  "user",
+      userName:  useAuthStore.getState().user?.name || "User",
     });
   },
 
   markMessagesAsRead: (bookingId) => {
     const socket = getUserSocket();
-    if (socket?.connected) {
-      socket.emit("messages:read", bookingId);
-    }
-
-    const updateUnreadInBuffer = (buffer) => {
-      if (!buffer) return buffer;
-      return buffer.map((b) => b.id === bookingId ? { ...b, unread_count: 0 } : b);
-    };
-
+    if (socket?.connected) socket.emit("messages:read", bookingId);
+    const clr = (buf) => buf ? buf.map((b) => b.id === bookingId ? { ...b, unread_count: 0 } : b) : buf;
     set((s) => ({
-      bookings: updateUnreadInBuffer(s.bookings),
-      allBookings: updateUnreadInBuffer(s.allBookings),
-      pendingBookings: updateUnreadInBuffer(s.pendingBookings),
-      confirmedBookings: updateUnreadInBuffer(s.confirmedBookings),
-      activeBookings: updateUnreadInBuffer(s.activeBookings),
-      completedBookings: updateUnreadInBuffer(s.completedBookings),
+      bookings:          clr(s.bookings),
+      allBookings:       clr(s.allBookings),
+      pendingBookings:   clr(s.pendingBookings),
+      confirmedBookings: clr(s.confirmedBookings),
+      activeBookings:    clr(s.activeBookings),
+      completedBookings: clr(s.completedBookings),
     }));
   },
 
-  // ────────────────────────────────────────────────────────────────
-  // ✅ TAB-SPECIFIC FETCH FUNCTIONS
-  // ────────────────────────────────────────────────────────────────
-
-  // Fetch bookings by status with caching per tab
   fetchBookingsByStatus: async (status = "") => {
     const statusLower = status.toLowerCase();
     const state = get();
-
-    // Check if this specific tab has been fetched
     const bufferMap = {
-      "": { buffer: state.allBookings, flag: state.hasFetchedAllBookings, flagName: "hasFetchedAllBookings", bufferName: "allBookings" },
-      "pending": { buffer: state.pendingBookings, flag: state.hasFetchedPending, flagName: "hasFetchedPending", bufferName: "pendingBookings" },
-      "confirmed": { buffer: state.confirmedBookings, flag: state.hasFetchedConfirmed, flagName: "hasFetchedConfirmed", bufferName: "confirmedBookings" },
-      "active": { buffer: state.activeBookings, flag: state.hasFetchedActive, flagName: "hasFetchedActive", bufferName: "activeBookings" },
-      "completed": { buffer: state.completedBookings, flag: state.hasFetchedCompleted, flagName: "hasFetchedCompleted", bufferName: "completedBookings" },
+      "":          { buffer: state.allBookings,       flag: state.hasFetchedAllBookings, flagName: "hasFetchedAllBookings", bufferName: "allBookings" },
+      "pending":   { buffer: state.pendingBookings,   flag: state.hasFetchedPending,     flagName: "hasFetchedPending",     bufferName: "pendingBookings" },
+      "confirmed": { buffer: state.confirmedBookings, flag: state.hasFetchedConfirmed,   flagName: "hasFetchedConfirmed",   bufferName: "confirmedBookings" },
+      "active":    { buffer: state.activeBookings,    flag: state.hasFetchedActive,      flagName: "hasFetchedActive",      bufferName: "activeBookings" },
+      "completed": { buffer: state.completedBookings, flag: state.hasFetchedCompleted,   flagName: "hasFetchedCompleted",   bufferName: "completedBookings" },
     };
-
     const tabInfo = bufferMap[statusLower] || bufferMap[""];
-
-    // If already fetched for this tab, use cached data
     if (tabInfo.flag && tabInfo.buffer !== null) {
-      console.log(`[fetchBookingsByStatus] Using cached ${statusLower || 'all'} bookings`);
       set({ bookings: tabInfo.buffer, isLoading: false });
       return;
     }
-
-    // Fetch from API
-    set({ isLoading: true, error: null });
-
+    set({ isLoading: true });
     try {
       const { fetchWithAuth } = useAuthStore.getState();
       let url = `${API_BASE}/api/users/bookings?limit=50`;
       if (statusLower) url += `&status=${statusLower.toUpperCase()}`;
-
       const res = await fetchWithAuth(url);
-
-      if (!res?.success || !Array.isArray(res.data)) {
-        console.warn("[fetchBookingsByStatus] Invalid response", res);
-        set({ bookings: [], isLoading: false });
-        return;
-      }
-
+      if (!res?.success || !Array.isArray(res.data)) { set({ bookings: [], isLoading: false }); return; }
       const bookings = res.data.map((b) => ({
-        id: b.id,
-        name: b.tutor?.name || "Unknown",
-        tutorId: b.tutorId || b.tutor?.id,
-        participant_name: b.tutor?.name || "Unknown",
-        participant_role: "tutor",
-        avatar: b.tutor?.avatar || null,
-        bio: b.tutor?.bio || "",
-        subjects: b.tutor?.subjects || [],
-        completedSessions: b.tutor?.completedSessions || 0,
-        rating: b.rating || null,
-        status: b.status?.toLowerCase() || "pending",
-        scheduledAt: b.scheduledAt || null,
-        duration: b.duration || null,
-        purpose: b.purpose || "",
-        last_message: b.lastMessage?.content || "",
+        id: b.id, name: b.tutor?.name || "Unknown", tutorId: b.tutorId || b.tutor?.id,
+        participant_name: b.tutor?.name || "Unknown", participant_role: "tutor",
+        avatar: b.tutor?.avatar || null, bio: b.tutor?.bio || "",
+        subjects: b.tutor?.subjects || [], completedSessions: b.tutor?.completedSessions || 0,
+        rating: b.rating || null, status: b.status?.toLowerCase() || "pending",
+        scheduledAt: b.scheduledAt || null, duration: b.duration || null,
+        purpose: b.purpose || "", last_message: b.lastMessage?.content || "",
         last_message_time: b.lastMessage?.createdAt || null,
-        unread_count: b.unreadCount || 0,
-        isBooking: true,
+        unread_count: b.unreadCount || 0, isBooking: true,
       }));
-
-      // Update the specific buffer and flag
-      set({
-        bookings,
-        [tabInfo.bufferName]: bookings,
-        [tabInfo.flagName]: true,
-        isLoading: false,
-      });
-
-      console.log(`[fetchBookingsByStatus] Loaded ${bookings.length} ${statusLower || 'all'} bookings`);
+      set({ bookings, [tabInfo.bufferName]: bookings, [tabInfo.flagName]: true, isLoading: false });
     } catch (err) {
-      console.error("[fetchBookingsByStatus] Error:", err);
-      set({ bookings: [], isLoading: false, error: err.message });
+      console.error("[fetchBookingsByStatus]", err);
+      set({ bookings: [], isLoading: false });
     }
   },
 
-  // ✅ Wrapper for backward compatibility
-  fetchBookings: async (forceRefresh = false, { status = "", page = 1, limit = 50 } = {}) => {
+  fetchBookings: async (forceRefresh = false, { status = "" } = {}) => {
     if (forceRefresh) {
-      // Clear all caches and re-fetch
       set({
-        hasFetchedAllBookings: false,
-        hasFetchedPending: false,
-        hasFetchedConfirmed: false,
-        hasFetchedActive: false,
-        hasFetchedCompleted: false,
-        allBookings: [],
-        pendingBookings: null,
-        confirmedBookings: null,
-        activeBookings: null,
-        completedBookings: null,
+        hasFetchedAllBookings: false, hasFetchedPending: false,
+        hasFetchedConfirmed: false, hasFetchedActive: false, hasFetchedCompleted: false,
+        allBookings: [], pendingBookings: null, confirmedBookings: null,
+        activeBookings: null, completedBookings: null,
       });
     }
-    
     return get().fetchBookingsByStatus(status);
   },
 
-  // Force refresh all bookings (clears all caches)
   refreshAllBookings: async () => {
     set({
-      hasFetchedAllBookings: false,
-      hasFetchedPending: false,
-      hasFetchedConfirmed: false,
-      hasFetchedActive: false,
-      hasFetchedCompleted: false,
-      allBookings: [],
-      pendingBookings: null,
-      confirmedBookings: null,
-      activeBookings: null,
-      completedBookings: null,
+      hasFetchedAllBookings: false, hasFetchedPending: false,
+      hasFetchedConfirmed: false, hasFetchedActive: false, hasFetchedCompleted: false,
+      allBookings: [], pendingBookings: null, confirmedBookings: null,
+      activeBookings: null, completedBookings: null,
     });
     return get().fetchBookingsByStatus("");
   },
 
-  fetchTutors: async ({ search, category } = {}) => {
+  fetchTutors: async () => {
     const { hasFetchedTutors, tutors } = get();
-    
-    // Skip if already fetched
-    if (hasFetchedTutors && tutors.length > 0) {
-      console.log("[fetchTutors] Already fetched, using cached data");
-      return;
-    }
-
-    set({ isLoading: true, error: null });
-
+    if (hasFetchedTutors && tutors.length > 0) return;
+    set({ isLoading: true });
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const url = `${API_BASE}/api/users/tutors`;
-
-      const res = await fetchWithAuth(url);
-
-      if (!res?.success || !Array.isArray(res.data)) {
-        console.warn("[fetchTutors] Invalid response", res);
-        set({ tutors: [], isLoading: false });
-        return;
-      }
-
-      const tutors = res.data.map((t) => ({
-        id: t.id || t._id,
-        name: t.name || "Unknown Tutor",
-        participant_name: t.name || "Unknown Tutor",
-        participant_role: "tutor",
-        avatar: t.avatar || null,
-        bio: t.bio || "",
-        subjects: t.subjects || [],
-        completedSessions: t.completedSessions || 0,
-        rating: t.rating || null,
-        isTutor: true,
-        last_message: "",
-        last_message_time: null,
-        status: "available",
-        unread_count: 0,
+      const res = await fetchWithAuth(`${API_BASE}/api/users/tutors`);
+      if (!res?.success || !Array.isArray(res.data)) { set({ tutors: [], isLoading: false }); return; }
+      const mapped = res.data.map((t) => ({
+        id: t.id || t._id, name: t.name || "Unknown Tutor",
+        participant_name: t.name || "Unknown Tutor", participant_role: "tutor",
+        avatar: t.avatar || null, bio: t.bio || "", subjects: t.subjects || [],
+        completedSessions: t.completedSessions || 0, rating: t.rating || null,
+        isTutor: true, last_message: "", last_message_time: null,
+        status: "available", unread_count: 0,
       }));
-
-      set({ 
-        tutors, 
-        hasFetchedTutors: true, 
-        isLoading: false 
-      });
-      
-      console.log(`[fetchTutors] Loaded ${tutors.length} tutors`);
+      set({ tutors: mapped, hasFetchedTutors: true, isLoading: false });
     } catch (err) {
-      console.error("[fetchTutors] Error:", err);
-      set({ tutors: [], isLoading: false, error: err.message });
+      console.error("[fetchTutors]", err);
+      set({ tutors: [], isLoading: false });
     }
   },
 
   fetchMessages: async (bookingId) => {
-    console.log("[fetchMessages] START - Booking:", bookingId);
-    set({ error: null });
-
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const url = `${API_BASE}/api/users/bookings/${bookingId}/messages`;
-
-      const res = await fetchWithAuth(url);
-
+      const res = await fetchWithAuth(`${API_BASE}/api/users/bookings/${bookingId}/messages`);
       if (res.success && Array.isArray(res.data)) {
-        console.log("[fetchMessages] Messages loaded:", res.data.length);
-        set({ messages: res.data });
+        set({ messages: res.data, isLoading: false });
         return res.data;
-      } else {
-        console.warn("[fetchMessages] No messages or invalid response", res);
-        set({ messages: [] });
-        return [];
       }
+      set({ messages: [], isLoading: false });
+      return [];
     } catch (err) {
-      console.error("[fetchMessages] CRASH:", err.message, err.stack);
-      set({ messages: [], error: err.message });
+      console.error("[fetchMessages]", err);
+      set({ messages: [], isLoading: false });
       return [];
     }
   },
 
   createBooking: async ({ tutorId, purpose, scheduledAt, duration }) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true });
     try {
       const { fetchWithAuth } = useAuthStore.getState();
       const res = await fetchWithAuth(`${API_BASE}/api/users/bookings`, {
-        method: "POST",
-        body: JSON.stringify({ tutorId, purpose, scheduledAt, duration }),
+        method: "POST", body: JSON.stringify({ tutorId, purpose, scheduledAt, duration }),
       });
-
       if (res.success && res.data) {
         const newBooking = mapBookingToUI(res.data);
-
-        set((state) => ({
-          bookings: [newBooking, ...state.bookings],
-          allBookings: [newBooking, ...state.allBookings],
-          pendingBookings: state.pendingBookings ? [newBooking, ...state.pendingBookings] : null,
-          tutors: state.tutors.filter((t) => t.id !== tutorId),
-          selectedBooking: newBooking,
-          isLoading: false,
+        set((s) => ({
+          bookings: [newBooking, ...s.bookings], allBookings: [newBooking, ...s.allBookings],
+          pendingBookings: s.pendingBookings ? [newBooking, ...s.pendingBookings] : null,
+          tutors: s.tutors.filter((t) => t.id !== tutorId),
+          selectedBooking: newBooking, isLoading: false,
         }));
-
         return newBooking;
       }
       throw new Error(res.message || "Failed to create booking");
     } catch (err) {
-      set({ isLoading: false, error: err.message });
+      set({ isLoading: false });
       throw err;
     }
   },
@@ -3668,231 +4500,95 @@ export const useUserChatStore = create((set, get) => ({
   fetchBooking: async (bookingId) => {
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-      const url = `${API_BASE}/api/user/bookings/${bookingId}`;
-
-      const res = await fetchWithAuth(url);
-
+      const res = await fetchWithAuth(`${API_BASE}/api/user/bookings/${bookingId}`);
       if (res.success && res.data) {
         const booking = mapBookingToUI(res.data);
-
-        const updateBookingInBuffer = (buffer) => {
-          if (!buffer) return buffer;
-          return buffer.map((b) => b.id === bookingId ? booking : b);
-        };
-
-        set((state) => ({
-          selectedBooking: booking,
-          bookings: updateBookingInBuffer(state.bookings),
-          allBookings: updateBookingInBuffer(state.allBookings),
-          pendingBookings: updateBookingInBuffer(state.pendingBookings),
-          confirmedBookings: updateBookingInBuffer(state.confirmedBookings),
-          activeBookings: updateBookingInBuffer(state.activeBookings),
-          completedBookings: updateBookingInBuffer(state.completedBookings),
+        const upd = (buf) => buf ? buf.map((b) => b.id === bookingId ? booking : b) : buf;
+        set((s) => ({
+          selectedBooking: booking, bookings: upd(s.bookings), allBookings: upd(s.allBookings),
+          pendingBookings: upd(s.pendingBookings), confirmedBookings: upd(s.confirmedBookings),
+          activeBookings: upd(s.activeBookings), completedBookings: upd(s.completedBookings),
         }));
-
         return booking;
-      } else {
-        console.warn("[fetchBooking] No data for ID:", bookingId);
-        return null;
       }
-    } catch (err) {
-      console.error("[fetchBooking] FAILED:", err.message || err);
       return null;
-    }
+    } catch (err) { console.error("[fetchBooking]", err); return null; }
   },
 
   acceptReschedule: async (bookingId) => {
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-
-      const updateStatus = (buffer) => {
-        if (!buffer) return buffer;
-        return buffer.map((b) => b.id === bookingId ? { ...b, status: "confirmed" } : b);
-      };
-
-      set((state) => ({
-        bookings: updateStatus(state.bookings),
-        allBookings: updateStatus(state.allBookings),
-        pendingBookings: updateStatus(state.pendingBookings),
-        confirmedBookings: updateStatus(state.confirmedBookings),
-        activeBookings: updateStatus(state.activeBookings),
-        completedBookings: updateStatus(state.completedBookings),
-        selectedBooking:
-          state.selectedBooking?.id === bookingId
-            ? { ...state.selectedBooking, status: "confirmed" }
-            : state.selectedBooking,
-      }));
-
+      set((s) => updateStatusInAllBuffers(s, bookingId, { status: "confirmed" }));
       const res = await fetchWithAuth(
-        `${API_BASE}/api/user/bookings/${bookingId}/reschedule/accept`,
-        { method: "PATCH" }
+        `${API_BASE}/api/user/bookings/${bookingId}/reschedule/accept`, { method: "PATCH" }
       );
-
       if (res.success && res.data) {
         const updatedBooking = mapBookingToUI(res.data);
-        
-        const updateBooking = (buffer) => {
-          if (!buffer) return buffer;
-          return buffer.map((b) => b.id === bookingId ? updatedBooking : b);
-        };
-
-        set((state) => ({
-          bookings: updateBooking(state.bookings),
-          allBookings: updateBooking(state.allBookings),
-          pendingBookings: updateBooking(state.pendingBookings),
-          confirmedBookings: updateBooking(state.confirmedBookings),
-          activeBookings: updateBooking(state.activeBookings),
-          completedBookings: updateBooking(state.completedBookings),
-          selectedBooking:
-            state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+        const upd = (buf) => buf ? buf.map((b) => b.id === bookingId ? updatedBooking : b) : buf;
+        set((s) => ({
+          bookings: upd(s.bookings), allBookings: upd(s.allBookings),
+          pendingBookings: upd(s.pendingBookings), confirmedBookings: upd(s.confirmedBookings),
+          activeBookings: upd(s.activeBookings), completedBookings: upd(s.completedBookings),
+          selectedBooking: s.selectedBooking?.id === bookingId ? updatedBooking : s.selectedBooking,
         }));
         return res.data;
       }
-
       throw new Error("Accept reschedule failed");
-    } catch (err) {
-      console.error("acceptReschedule failed:", err);
-      throw err;
-    }
+    } catch (err) { console.error("acceptReschedule failed:", err); throw err; }
   },
 
   rejectReschedule: async (bookingId, reason) => {
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-
-      const updateStatus = (buffer) => {
-        if (!buffer) return buffer;
-        return buffer.map((b) => b.id === bookingId ? { ...b, status: "pending" } : b);
-      };
-
-      set((state) => ({
-        bookings: updateStatus(state.bookings),
-        allBookings: updateStatus(state.allBookings),
-        pendingBookings: updateStatus(state.pendingBookings),
-        confirmedBookings: updateStatus(state.confirmedBookings),
-        activeBookings: updateStatus(state.activeBookings),
-        completedBookings: updateStatus(state.completedBookings),
-        selectedBooking:
-          state.selectedBooking?.id === bookingId
-            ? { ...state.selectedBooking, status: "pending" }
-            : state.selectedBooking,
-      }));
-
+      set((s) => updateStatusInAllBuffers(s, bookingId, { status: "pending" }));
       const res = await fetchWithAuth(
         `${API_BASE}/api/user/bookings/${bookingId}/reschedule/reject`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ reason }),
-        }
+        { method: "PATCH", body: JSON.stringify({ reason }) }
       );
-
       if (res.success && res.data) {
         const updatedBooking = mapBookingToUI(res.data);
-        
-        const updateBooking = (buffer) => {
-          if (!buffer) return buffer;
-          return buffer.map((b) => b.id === bookingId ? updatedBooking : b);
-        };
-
-        set((state) => ({
-          bookings: updateBooking(state.bookings),
-          allBookings: updateBooking(state.allBookings),
-          pendingBookings: updateBooking(state.pendingBookings),
-          confirmedBookings: updateBooking(state.confirmedBookings),
-          activeBookings: updateBooking(state.activeBookings),
-          completedBookings: updateBooking(state.completedBookings),
-          selectedBooking:
-            state.selectedBooking?.id === bookingId ? updatedBooking : state.selectedBooking,
+        const upd = (buf) => buf ? buf.map((b) => b.id === bookingId ? updatedBooking : b) : buf;
+        set((s) => ({
+          bookings: upd(s.bookings), allBookings: upd(s.allBookings),
+          pendingBookings: upd(s.pendingBookings), confirmedBookings: upd(s.confirmedBookings),
+          activeBookings: upd(s.activeBookings), completedBookings: upd(s.completedBookings),
+          selectedBooking: s.selectedBooking?.id === bookingId ? updatedBooking : s.selectedBooking,
         }));
         return res.data;
       }
-
       throw new Error("Reject reschedule failed");
-    } catch (err) {
-      console.error("rejectReschedule failed:", err);
-      throw err;
-    }
+    } catch (err) { console.error("rejectReschedule failed:", err); throw err; }
   },
 
   cancelBooking: async (bookingId, reason) => {
+    if (!reason?.trim()) throw new Error("Cancellation reason is required");
     try {
       const { fetchWithAuth } = useAuthStore.getState();
-
-      if (!reason || !reason.trim()) {
-        throw new Error("Cancellation reason is required");
-      }
-
-      const updateStatus = (buffer) => {
-        if (!buffer) return buffer;
-        return buffer.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b);
-      };
-
-      set((state) => ({
-        bookings: updateStatus(state.bookings),
-        allBookings: updateStatus(state.allBookings),
-        pendingBookings: updateStatus(state.pendingBookings),
-        confirmedBookings: updateStatus(state.confirmedBookings),
-        activeBookings: updateStatus(state.activeBookings),
-        completedBookings: updateStatus(state.completedBookings),
-        selectedBooking:
-          state.selectedBooking?.id === bookingId
-            ? { ...state.selectedBooking, status: "cancelled" }
-            : state.selectedBooking,
-      }));
-
+      set((s) => updateStatusInAllBuffers(s, bookingId, { status: "cancelled" }));
       const res = await fetchWithAuth(
         `${API_BASE}/api/users/bookings/${bookingId}/cancel`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ reason: reason.trim() }),
-        }
+        { method: "PATCH", body: JSON.stringify({ reason: reason.trim() }) }
       );
-
-      if (res.success) {
-        return true;
-      }
-
+      if (res.success) return true;
       throw new Error(res.message || "Cancel failed");
-    } catch (err) {
-      console.error("cancelBooking failed:", err);
-      throw err;
-    }
+    } catch (err) { console.error("cancelBooking failed:", err); throw err; }
   },
 
-  // Force refresh methods
-  refreshBookings: async (options) => {
-    return get().fetchBookings(true, options);
-  },
+  
 
-  refreshTutors: async (options) => {
-    set({ hasFetchedTutors: false, tutors: [] });
-    return get().fetchTutors(options);
-  },
+  refreshBookings: async (options) => get().fetchBookings(true, options),
+  refreshTutors: async () => { set({ hasFetchedTutors: false, tutors: [] }); return get().fetchTutors(); },
 
   reset: () => {
     get().disconnectSocket();
     set({
-      bookings: [],
-      allBookings: [],
-      pendingBookings: null,
-      confirmedBookings: null,
-      activeBookings: null,
-      completedBookings: null,
-      selectedBooking: null,
-      messages: [],
-      tutors: [],
-      isLoading: false,
-      isSending: false,
-      socketConnected: false,
-      isSomeoneTyping: false,
-      typingUserName: null,
-      isParticipantOnline: false,
-      hasFetchedAllBookings: false,
-      hasFetchedPending: false,
-      hasFetchedConfirmed: false,
-      hasFetchedActive: false,
-      hasFetchedCompleted: false,
-      hasFetchedTutors: false,
+      bookings: [], allBookings: [], pendingBookings: null, confirmedBookings: null,
+      activeBookings: null, completedBookings: null, selectedBooking: null,
+      messages: [], tutors: [], isLoading: false, isSending: false,
+      socketConnected: false, isSomeoneTyping: false, typingUserName: null,
+      isParticipantOnline: false, onlineTutors: {}, activeTab: "sessions",
+      hasFetchedAllBookings: false, hasFetchedPending: false, hasFetchedConfirmed: false,
+      hasFetchedActive: false, hasFetchedCompleted: false, hasFetchedTutors: false,
     });
   },
 }));
