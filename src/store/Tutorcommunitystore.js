@@ -315,7 +315,7 @@ import {
   sendGroupMessage,
   startGroupTyping,
   stopGroupTyping,
-} from "@/lib/CommunitySocketService.js";
+} from "../lib/communitySocketService";
 
 const BASE_URL = "https://fillops-server-5fuf.onrender.com";
 const getToken = () => useTutorAuthStore.getState().accessToken || null;

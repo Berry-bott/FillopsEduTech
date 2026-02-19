@@ -1,6 +1,6 @@
 // src/components/tutor-community/TutorCommunityChat.jsx
 import { useEffect, useState } from "react";
-import useTutorCommunityStore from "@/store/tutorCommunityStore";
+import useTutorCommunityStore from "../../../store/Tutorcommunitystore";
 import useTutorSocket from "@/hooks/useSocket";
 import Sidebar from "../users-community/Sidebar";
 import ChatPanel from "../users-community/ChatPanel";
