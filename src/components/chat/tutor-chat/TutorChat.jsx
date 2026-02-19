@@ -586,10 +586,7 @@ export default function TutorChat() {
 
   // ── Sub-renders ───────────────────────────────────────────────
 
-  /**
-   * Single booking card.
-   * Shows a green dot when booking.isOnline === true (set by handleOnlineUsers).
-   */
+
   const renderBookingCard = (booking, onClick) => (
     <div
       key={booking.id}
