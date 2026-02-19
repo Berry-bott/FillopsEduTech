@@ -2228,68 +2228,149 @@ export const useTutorChatStore = create((set, get) => ({
   // },
 
   // Add to state
-bookingsPagesLoaded: {},          // e.g. { all: 1, pending: 2, confirmed: 1, ... }
-hasMoreBookings: {},              // e.g. { all: true, pending: false, ... }
-loadingOlderBookings: false,      // global loading flag for older (or per-filter if you want)
+    
+    bookingsPagesLoaded: {},         
+    hasMoreBookings: {},             
+    loadingOlderBookings: false,  
+    
+    fetchBookings: async (filter = "all", mode = "replace") => {
+    const currentPage = mode === "older"
+      ? (get().bookingsPagesLoaded?.[filter] || 0) + 1
+      : 1;
 
-// In fetchBookings – support append/prepend older
-fetchBookings: async (filter = "all", mode = "replace") => {  // mode: "replace" | "older"
-  const currentPage = (get().bookingsPagesLoaded?.[filter] || 0) + (mode === "older" ? 1 : 1);
+    set({
+      isLoading: mode !== "older",
+      loadingOlderBookings: mode === "older",
+    });
 
-  set({ isLoading: mode !== "older", loadingOlderBookings: mode === "older" });
+    try {
+      const { fetchWithAuth } = useTutorAuthStore.getState();
 
-  try {
-    const { fetchWithAuth } = useTutorAuthStore.getState();
-    let url = `${API_BASE}/api/tutor/bookings?limit=30&page=${currentPage}&sort=-updatedAt`;  // newest first on page 1
-
-    if (filter !== "all") {
-      const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
-      url += `&status=${backendStatus}`;
-    }
-
-    const res = await fetchWithAuth(url);
-
-    if (!res.success || !Array.isArray(res.data)) {
-      throw new Error("Invalid response");
-    }
-
-    const newBookings = res.data
-      .map(mapBookingToUI)
-      .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)); // ensure newest last
-
-    set((s) => {
-      const key = filter;
-      let currentList = s.bookingsByFilter[key] || [];
-
-      let updatedList;
-      if (mode === "older") {
-        updatedList = [...newBookings, ...currentList]; // prepend older
-      } else {
-        updatedList = newBookings; // replace (initial / refresh)
+      let url = `${API_BASE}/api/tutor/bookings?limit=30&page=${currentPage}&sort=-updatedAt`;
+      if (filter !== "all") {
+        url += `&status=${filter === "cancelled" ? "cancelled_by_user" : filter}`;
       }
 
-      return {
-        bookingsByFilter: { ...s.bookingsByFilter, [key]: updatedList },
-        bookingsPagesLoaded: { ...s.bookingsPagesLoaded, [key]: currentPage },
-        hasMoreBookings: { ...s.hasMoreBookings, [key]: newBookings.length === 30 },
-        loadedFilters: mode !== "older" ? new Set([...s.loadedFilters, filter]) : s.loadedFilters,
-        isLoading: false,
-        loadingOlderBookings: false,
-      };
-    });
-  } catch (err) {
-    console.error("[fetchBookings]", err);
-    set({ isLoading: false, loadingOlderBookings: false });
-  }
-},
+      const res = await fetchWithAuth(url);
+
+      // ── Normalise response into a plain array ──────────────────
+      // Log the raw shape once so you can confirm which branch fires
+      console.log("[fetchBookings] raw res keys:", Object.keys(res || {}), "| data type:", typeof res?.data, Array.isArray(res?.data) ? "(array)" : "");
+
+      let rawList = null;
+
+      if (Array.isArray(res?.data)) {
+        rawList = res.data;
+      } else if (Array.isArray(res?.data?.bookings)) {
+        rawList = res.data.bookings;
+      } else if (Array.isArray(res?.data?.data)) {
+        rawList = res.data.data;
+      } else if (Array.isArray(res?.data?.items)) {
+        rawList = res.data.items;
+      } else if (Array.isArray(res?.bookings)) {
+        rawList = res.bookings;
+      } else if (Array.isArray(res?.items)) {
+        rawList = res.items;
+      } else if (Array.isArray(res?.result)) {
+        rawList = res.result;
+      }
+
+      if (!rawList) {
+        // Log the full response so we can see exactly what the server returned
+        console.warn("[fetchBookings] could not find array in response. Full res:", JSON.stringify(res).slice(0, 800));
+        set({ isLoading: false, loadingOlderBookings: false });
+        return;
+      }
+
+      const newBookings = rawList
+        .map(mapBookingToUI)
+        .sort((a, b) =>
+          new Date(b.scheduledAt || b.updatedAt || b.createdAt || 0) -
+          new Date(a.scheduledAt || a.updatedAt || a.createdAt || 0)
+        );
+
+      set((s) => {
+        const existing = s.bookingsByFilter[filter] || [];
+        const updatedList = mode === "older"
+          ? [...newBookings, ...existing]
+          : newBookings;
+
+        return {
+          bookingsByFilter:   { ...s.bookingsByFilter, [filter]: updatedList },
+          bookingsPagesLoaded: { ...s.bookingsPagesLoaded, [filter]: currentPage },
+          hasMoreBookings:    { ...s.hasMoreBookings, [filter]: rawList.length === 30 },
+          loadedFilters: mode !== "older"
+            ? new Set([...s.loadedFilters, filter])
+            : s.loadedFilters,
+          isLoading: false,
+          loadingOlderBookings: false,
+        };
+      });
+
+    } catch (err) {
+      console.error("[fetchBookings] caught error:", err?.message || err);
+      set({ isLoading: false, loadingOlderBookings: false });
+    }
+  },
+
+  // fetchBookings: async (filter = "all", mode = "replace") => {
+  //   const currentPage = (get().bookingsPagesLoaded?.[filter] || 0) + (mode === "older" ? 1 : 1);
+
+  //   set({ isLoading: mode !== "older", loadingOlderBookings: mode === "older" });
+
+  //   try {
+  //     const { fetchWithAuth } = useTutorAuthStore.getState();
+  //     let url = `${API_BASE}/api/tutor/bookings?limit=30&page=${currentPage}&sort=-updatedAt`;  
+
+  //     if (filter !== "all") {
+  //       const backendStatus = filter === "cancelled" ? "cancelled_by_user" : filter;
+  //       url += `&status=${backendStatus}`;
+  //     }
+
+  //     const res = await fetchWithAuth(url);
+
+  //     if (!res.success || !Array.isArray(res.data)) {
+  //       throw new Error("Invalid response");
+  //     }
+
+  //     const newBookings = res.data
+  //       .map(mapBookingToUI)
+  //       .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)); // ensure newest last
+
+  //     set((s) => {
+  //       const key = filter;
+  //       let currentList = s.bookingsByFilter[key] || [];
+
+  //       let updatedList;
+  //       if (mode === "older") {
+  //         updatedList = [...newBookings, ...currentList]; // prepend older
+  //       } else {
+  //         updatedList = newBookings; // replace (initial / refresh)
+  //       }
+
+  //       return {
+  //         bookingsByFilter: { ...s.bookingsByFilter, [key]: updatedList },
+  //         bookingsPagesLoaded: { ...s.bookingsPagesLoaded, [key]: currentPage },
+  //         hasMoreBookings: { ...s.hasMoreBookings, [key]: newBookings.length === 30 },
+  //         loadedFilters: mode !== "older" ? new Set([...s.loadedFilters, filter]) : s.loadedFilters,
+  //         isLoading: false,
+  //         loadingOlderBookings: false,
+  //       };
+  //     });
+  //   } catch (err) {
+  //     console.error("[fetchBookings]", err);
+  //     set({ isLoading: false, loadingOlderBookings: false });
+  //   }
+  // },
 
 // New action
+ 
 loadOlderBookings: () => {
-  const { activeFilter, hasMoreBookings, loadingOlderBookings } = get();
-  if (loadingOlderBookings || !hasMoreBookings?.[activeFilter]) return;
+    const { activeFilter, hasMoreBookings, loadingOlderBookings } = get();
+    if (loadingOlderBookings || !hasMoreBookings?.[activeFilter]) return;
 
-  get().fetchBookings(activeFilter, "older");
-},
+    get().fetchBookings(activeFilter, "older");
+  },
   
   
   // Refresh ALL loaded filters at once (use sparingly — prefer socket events)
@@ -2316,12 +2397,7 @@ loadOlderBookings: () => {
       return null;
     }
   },
-
-  // ── Booking actions ────────────────────────────────────────────
-  // Pattern: optimistic update → API call → socket event drives final state
-  // The socket listener (booking:confirmed, booking:active, etc.) will
-  // do the real state update, so these just need to call the API.
-
+  
   confirmBooking: async (bookingId) => {
     // Optimistic
     set((s) => ({
