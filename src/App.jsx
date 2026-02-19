@@ -137,7 +137,7 @@ import TutorProtectedRoute from "./auth/TutorProtectedRoute";
 import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Stores
+// Stores 
 import { useTutorChatStore } from "@/store/tutorChatStore";
 import { useUserChatStore } from "@/store/userChatStore";
 import useTutorAuthStore from "@/store/tutorAuthStore";
@@ -183,11 +183,7 @@ import UseSocket from "./hooks/useSocket";
 import "./App.css";
 
 // ── Socket Initializer ─────────────────────────────────────────────────────────
-// Runs at app root level so sockets stay alive across all pages.
-// Tutor socket connects when tutor is authenticated.
-// User socket connects when user is authenticated.
-// This ensures all components receive live updates regardless of which page
-// the user is on — dashboard, chat, anywhere.
+
 function SocketInitializer() {
   const isTutorAuthenticated = useTutorAuthStore((s) => s.isAuthenticated);
   const isUserAuthenticated  = useAuthStore((s) => s.isAuthenticated);

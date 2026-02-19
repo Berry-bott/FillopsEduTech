@@ -1,6 +1,5 @@
-// src/components/tutor-community/TutorCommunityChat.jsx
 import { useEffect, useState } from "react";
-import useTutorCommunityStore from "../../../store/Tutorcommunitystore";
+import useTutorCommunityStore from "@/store/Tutorcommunitystore";
 import useTutorSocket from "@/hooks/useSocket";
 import Sidebar from "../users-community/Sidebar";
 import ChatPanel from "../users-community/ChatPanel";
@@ -17,10 +16,10 @@ export default function TutorCommunityChat() {
     typeof window !== "undefined" ? window.innerWidth < 768 : false
   );
 
-  // Connect socket + register listeners
+ 
   useTutorSocket();
 
-  // Apply Tailwind dark class to <html>
+
   useEffect(() => {
     const root = document.documentElement;
     isDark ? root.classList.add("dark") : root.classList.remove("dark");
