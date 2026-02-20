@@ -1,5 +1,6 @@
 
 import { useUserChatStore } from "@/store/userChatStore";
+import  useAuthStore  from "@/store/authStore";
 import { Badge } from "@/components/ui/badge";
 import { Check, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,8 +12,8 @@ const roleBadgeColors = {
 };
 
 export default function ChatMessage({ message }) {
-  const { user, selectedBooking } = useUserChatStore();
-
+ const { selectedBooking } = useUserChatStore();
+const user = useAuthStore((s) => s.user);
   // ────────────────────────────────────────────────
   // Message type detection
   // ────────────────────────────────────────────────

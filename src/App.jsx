@@ -150,6 +150,7 @@ import MessagesPage from "@/pages/admin/MessagesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import UsersPage from "@/pages/admin/UsersPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import { getUserSocket } from "@/lib/userChatSocket";
 
 // Chat pages
 import UserChatPage from "./pages/chat/UserChatPage";
@@ -184,45 +185,98 @@ import "./App.css";
 
 // ── Socket Initializer ─────────────────────────────────────────────────────────
 
+// function SocketInitializer() {
+//   const isTutorAuthenticated = useTutorAuthStore((s) => s.isAuthenticated);
+//   const isUserAuthenticated  = useAuthStore((s) => s.isAuthenticated);
+
+//   // ── Tutor socket ─────────────────────────────────────────────
+//   const tutorInitSocket    = useTutorChatStore((s) => s.initializeSocket);
+//   const tutorInitListeners = useTutorChatStore((s) => s.initializeListeners);
+//   const tutorDisconnect    = useTutorChatStore((s) => s.disconnectSocket);
+
+//   // ── User socket ──────────────────────────────────────────────
+//   const userInitSocket    = useUserChatStore((s) => s.initializeSocket);
+//   const userInitListeners = useUserChatStore((s) => s.initializeListeners);
+//   const userDisconnect    = useUserChatStore((s) => s.disconnectSocket);
+
+//   // Connect tutor socket when tutor logs in, disconnect on logout
+//   useEffect(() => {
+//     if (!isTutorAuthenticated) return;
+
+//     tutorInitSocket();
+//     const cleanup = tutorInitListeners();
+
+//     return () => {
+//       cleanup?.();
+//       tutorDisconnect();
+//     };
+//   }, [isTutorAuthenticated]);
+
+//   // Connect user socket when user logs in, disconnect on logout
+//   useEffect(() => {
+//     if (!isUserAuthenticated) return;
+
+//     userInitSocket();
+//     const cleanup = userInitListeners();
+
+//     return () => {
+//       cleanup?.();
+//       userDisconnect();
+//     };
+//   }, [isUserAuthenticated]);
+
+//   return null;
+// }
+
+// Replace the SocketInitializer function in your App.jsx with this
+
 function SocketInitializer() {
   const isTutorAuthenticated = useTutorAuthStore((s) => s.isAuthenticated);
   const isUserAuthenticated  = useAuthStore((s) => s.isAuthenticated);
+  const accessToken          = useAuthStore((s) => s.accessToken); // ← watch token
 
-  // ── Tutor socket ─────────────────────────────────────────────
   const tutorInitSocket    = useTutorChatStore((s) => s.initializeSocket);
   const tutorInitListeners = useTutorChatStore((s) => s.initializeListeners);
   const tutorDisconnect    = useTutorChatStore((s) => s.disconnectSocket);
 
-  // ── User socket ──────────────────────────────────────────────
   const userInitSocket    = useUserChatStore((s) => s.initializeSocket);
   const userInitListeners = useUserChatStore((s) => s.initializeListeners);
   const userDisconnect    = useUserChatStore((s) => s.disconnectSocket);
 
-  // Connect tutor socket when tutor logs in, disconnect on logout
+  // ── Tutor socket ──────────────────────────────────────────────────
   useEffect(() => {
     if (!isTutorAuthenticated) return;
-
+    console.log("🔌 [SocketInitializer] init TUTOR socket");
     tutorInitSocket();
     const cleanup = tutorInitListeners();
-
-    return () => {
-      cleanup?.();
-      tutorDisconnect();
-    };
+    return () => { cleanup?.(); tutorDisconnect(); };
   }, [isTutorAuthenticated]);
 
-  // Connect user socket when user logs in, disconnect on logout
+  // ── User socket — init on login ───────────────────────────────────
   useEffect(() => {
     if (!isUserAuthenticated) return;
-
+    console.log("🔌 [SocketInitializer] init USER socket (auth change)");
     userInitSocket();
     const cleanup = userInitListeners();
-
-    return () => {
-      cleanup?.();
-      userDisconnect();
-    };
+    return () => { cleanup?.(); userDisconnect(); };
   }, [isUserAuthenticated]);
+
+
+  useEffect(() => {
+    if (!isUserAuthenticated || !accessToken) return;
+
+    const socket = getUserSocket();
+    if (socket?.connected) {
+      // already connected — nothing to do
+      console.log("🔄 [SocketInitializer] token refreshed, socket still connected ✓");
+      return;
+    }
+
+    // Socket dropped during token refresh — silently reconnect
+    console.log("🔄 [SocketInitializer] token refreshed, socket disconnected — reconnecting...");
+    userInitSocket();
+    userInitListeners();
+  }, [accessToken]); // ← fires every time token silently refreshes
 
   return null;
 }
