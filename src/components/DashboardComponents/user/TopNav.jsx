@@ -23,6 +23,11 @@ export default function TopNav() {
   const { logout } = useAuthStore()
   const navigate = useNavigate()
 
+// Build URL with cache buster
+const avatarUrl = user?.passportPhotoUrl
+  ? `${user.passportPhotoUrl}?v=${user.updatedAt || user._updatedAt || Date.now()}`
+  : "/default-avatar.png";
+
   useEffect(() => {
     checkAuth()
   }, [])
@@ -120,18 +125,20 @@ export default function TopNav() {
         </Button>
 
         {/* Profile Dropdown */}
-        {/* <DropdownMenu>
+
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center space-x-2 p-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage
-                  src={user?.passport || "/placeholder.svg?height=32&width=32"}
-                  alt={user?.firstName || "User"}
-                />
-                <AvatarFallback>
-                  <User className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
+             <Avatar className="h-8 w-8">
+              <AvatarImage
+                key={user?.passportPhotoUrl || "no-avatar"}   
+                src={avatarUrl}
+                alt={`${user?.firstName || "User"} profile photo`}
+              />
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
               <div className="hidden lg:flex flex-col items-start">
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {user?.firstName
@@ -140,7 +147,7 @@ export default function TopNav() {
                     : "User"}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Student
+                  Students
                 </span>
               </div>
               <ChevronDown className="hidden lg:block h-4 w-4 text-gray-500" />
@@ -149,78 +156,30 @@ export default function TopNav() {
 
           <DropdownMenuContent
             align="end"
-            className="w-56 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-lg"
+            className="w-56 bg-white dark:bg-gray-800 shadow-md rounded-md"
           >
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => navigate("/profile")}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => navigate("/settings")}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={handleLogout}
+            >
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu> */}
-        {/* Profile Dropdown */}
-<DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button variant="ghost" className="flex items-center space-x-2 p-2">
-      <Avatar className="h-8 w-8">
-       <AvatarImage
-          src={user?.passportPhotoUrl || "/placeholder.svg?height=32&width=32"}
-          alt={`${user?.firstName || "User"} profile photo`}
-        />
-        <AvatarFallback>
-          <User className="h-4 w-4" />
-        </AvatarFallback>
-      </Avatar>
-      <div className="hidden lg:flex flex-col items-start">
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
-          {user?.firstName
-            ? user.firstName.charAt(0).toUpperCase() +
-              user.firstName.slice(1).toLowerCase()
-            : "User"}
-        </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          Students
-        </span>
-      </div>
-      <ChevronDown className="hidden lg:block h-4 w-4 text-gray-500" />
-    </Button>
-  </DropdownMenuTrigger>
-
-  <DropdownMenuContent
-    align="end"
-    className="w-56 bg-white dark:bg-gray-800 shadow-md rounded-md"
-  >
-    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-    <DropdownMenuSeparator />
-
-    <DropdownMenuItem onClick={() => navigate("/profile")}>
-      <User className="mr-2 h-4 w-4" />
-      Profile
-    </DropdownMenuItem>
-
-    <DropdownMenuItem onClick={() => navigate("/settings")}>
-      <Settings className="mr-2 h-4 w-4" />
-      Settings
-    </DropdownMenuItem>
-
-    <DropdownMenuSeparator />
-    <DropdownMenuItem
-      className="text-red-600"
-      onClick={handleLogout}
-    >
-      Sign out
-    </DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
+        </DropdownMenu>
 
       </div>
     </div>

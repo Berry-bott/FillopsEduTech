@@ -6,7 +6,6 @@ import FeaturesSection from '../../components/layouts/FeaturesSection'
 import AboutSection from '../../components/layouts/AboutSection'
 import Contact from '../../components/layouts/Contact'
 import Footer from '../../components/layouts/Footer'
-import BotChat from '../../chat-bot/BotChat'
 
 
 
@@ -18,7 +17,6 @@ const LandingPage = ()=>  {
         <Header/>
         <HeroSection/>
         <SubjectsDisplay/>
-        <BotChat/>
         <main>
         <FeaturesSection/>
         <AboutSection/>

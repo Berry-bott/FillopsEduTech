@@ -676,7 +676,7 @@ const Login = () => {
       const token = res.data?.accessToken || useAuthStore.getState().accessToken;
 
       console.log("Login successful, user data:", user);
-      console.log("Access token:", token);
+  
 
       // ✅ Check onboarding status from the user object first
       let onboardingCompleted = user?.onboardingCompleted || false;

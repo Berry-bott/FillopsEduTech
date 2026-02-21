@@ -23,23 +23,19 @@ const step1Schema = z.object({
 
 const step2Schema = z.object({
   schoolAttended: z.string().min(1, "School attended is required"),
+  department: z.string().optional(),                    // added because you render it
   degree: z.string().min(1, "Degree is required"),
   areaOfSpecialization: z.string().min(1, "Area of specialization is required"),
   otherCertifications: z.string().optional(),
   professionalCertificate: z.string().optional(),
   membershipOfProfessionalBodies: z.string().optional(),
-  socialLinks: z
-  .string()
-  .url("Must be a valid URL")
-  .optional()
-
 });
 
 const step3Schema = z.object({
   country: z.string().min(1, "Country is required"),
   state: z.string().min(1, "State is required"),
+  socialLinks: z.string().url("Must be a valid URL").optional(),
 });
-
 
 // ----------------------------------------
 // PROGRESS INDICATOR
@@ -104,7 +100,6 @@ const Register = () => {
   const [passportPreview, setPassportPreview] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
   const [pdfName, setPdfName] = useState("");
-
 
   const { register: registerUser, loading, error, success, clearMessages } = useAuthStore();
 
@@ -171,33 +166,33 @@ const Register = () => {
   };
 
   const handlePdfUpload = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    if (file.type !== "application/pdf") {
-      toast({
-        variant: "destructive",
-        title: "Invalid file type",
-        description: "Please upload a PDF file only",
-      });
-      return;
+    const file = e.target.files[0];
+    if (file) {
+      if (file.type !== "application/pdf") {
+        toast({
+          variant: "destructive",
+          title: "Invalid file type",
+          description: "Please upload a PDF file only",
+        });
+        return;
+      }
+      if (file.size > 10000000) { // 10MB limit
+        toast({
+          variant: "destructive",
+          title: "File too large",
+          description: "PDF must be less than 10MB",
+        });
+        return;
+      }
+      setPdfFile(file);
+      setPdfName(file.name);
     }
-    if (file.size > 10000000) { // 10MB limit
-      toast({
-        variant: "destructive",
-        title: "File too large",
-        description: "PDF must be less than 10MB",
-      });
-      return;
-    }
-    setPdfFile(file);
-    setPdfName(file.name);
-  }
   };
-  const removePdf = () => {
-  setPdfFile(null);
-  setPdfName("");
-};
 
+  const removePdf = () => {
+    setPdfFile(null);
+    setPdfName("");
+  };
 
   const removePassport = () => {
     setPassportFile(null);
@@ -244,12 +239,14 @@ const Register = () => {
     }
   }, [searchParams, clearMessages, toast, navigate, location]);
 
-  // Handle next step
+  // Handle next / submit
   const handleNext = async (data) => {
     setFormData({ ...formData, ...data });
     
-    if (currentStep === 2) {
-      // Final step - Location & Passport
+    if (currentStep < 2) {
+      setCurrentStep(currentStep + 1);
+    } else if (currentStep === 2) {
+      // Final step - validate passport
       if (!passportFile) {
         toast({
           variant: "destructive",
@@ -258,63 +255,46 @@ const Register = () => {
         });
         return;
       }
-      // Submit the form
-      await onFinalSubmit(data);
-    } else if (currentStep < 2) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
 
-  // Handle previous step
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
+      const finalData = { ...formData, ...data };
 
-  // Final submit
-  const onFinalSubmit = async (data) => {
-    clearMessages?.();
-    const finalData = { ...formData, ...data };
-    const { confirmPassword, ...payload } = finalData;
+      const formDataToSend = new FormData();
+      Object.keys(finalData).forEach(key => {
+        if (finalData[key]) formDataToSend.append(key, finalData[key]);
+      });
+      if (passportFile) formDataToSend.append('passport', passportFile);
+      if (pdfFile) formDataToSend.append('pdf', pdfFile);
 
-    // In real implementation, you would upload the passport file here
-    // For now, we'll just include it in the payload
-    const formDataToSend = new FormData();
-    Object.keys(payload).forEach(key => {
-      formDataToSend.append(key, payload[key]);
-    });
-    if (passportFile) {
-      formDataToSend.append('passport', passportFile);
-    }
-    if (pdfFile) {
-      formDataToSend.append('pdf', pdfFile);
-    }
+      try {
+        const result = await registerUser(finalData); 
 
-
-    try {
-      const result = await registerUser(payload); 
-
-      if (result?.success) {
-        setRegisteredEmail(payload.email);
-        setShowVerifyNotice(true);
-        toast({
-          title: "Registration Successful",
-          description: "Check your email to verify your account 🔐",
-        });
-      } else if (error) {
+        if (result?.success) {
+          setRegisteredEmail(finalData.email);
+          setShowVerifyNotice(true);
+          toast({
+            title: "Registration Successful",
+            description: "Check your email to verify your account 🔐",
+          });
+        } else if (error) {
+          toast({
+            variant: "destructive",
+            title: "Registration Failed",
+            description: error || "Please check your details and try again.",
+          });
+        }
+      } catch (err) {
         toast({
           variant: "destructive",
           title: "Registration Failed",
-          description: error || "Please check your details and try again.",
+          description: "An unexpected error occurred. Please try again.",
         });
       }
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Registration Failed",
-        description: "An unexpected error occurred. Please try again.",
-      });
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -322,7 +302,13 @@ const Register = () => {
   if (showVerifyNotice) {
     return (
       <section className="min-h-screen flex items-center justify-center bg-white dark:bg-background px-3 py-6 transition-colors duration-300">
-        <EmailVerificationNotice email={registeredEmail} />
+        <div className="text-center">
+          <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Check your email</h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            A verification link has been sent to <strong>{registeredEmail}</strong>
+          </p>
+        </div>
       </section>
     );
   }
@@ -335,48 +321,48 @@ const Register = () => {
         transition={{ duration: 0.8 }}
         className="relative w-full max-w-2xl bg-white dark:bg-background border border-gray-200 dark:border-gray-700 shadow-xl rounded-3xl p-6 overflow-hidden"
       >
-      <div className="absolute -top-11 -right-9 w-32 h-32">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1 }}
-          className="relative"
-        >
-          <div className="absolute inset-0 bg-gradient-to-tr from-purple-200 via-blue-200 to-transparent blur-2xl opacity-100 rounded-full"></div>
-          {[...Array(6)].map((_, i) => (
-            <motion.span
-              key={i}
-              className="absolute bg-white rounded-full opacity-80"
-              style={{
-                top: `${Math.random() * 80}%`,
-                left: `${Math.random() * 80}%`,
-                width: `${Math.random() * 4 + 2}px`,
-                height: `${Math.random() * 4 + 2}px`,
-                filter: "blur(1px)",
-              }}
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{
-                duration: Math.random() * 3 + 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-          <div
-            className="relative w-32 h-32"
-            style={{
-              clipPath:
-                "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-            }}
+        <div className="absolute -top-11 -right-9 w-32 h-32">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            className="relative"
           >
-            <img
-              src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1920&h=1080&fit=crop"
-              alt="Decorative"
-              className="w-full h-full object-cover shadow-lg border border-white"
-            />
-          </div>
-        </motion.div>
-      </div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-purple-200 via-blue-200 to-transparent blur-2xl opacity-100 rounded-full"></div>
+            {[...Array(6)].map((_, i) => (
+              <motion.span
+                key={i}
+                className="absolute bg-white rounded-full opacity-80"
+                style={{
+                  top: `${Math.random() * 80}%`,
+                  left: `${Math.random() * 80}%`,
+                  width: `${Math.random() * 4 + 2}px`,
+                  height: `${Math.random() * 4 + 2}px`,
+                  filter: "blur(1px)",
+                }}
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{
+                  duration: Math.random() * 3 + 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+            <div
+              className="relative w-32 h-32"
+              style={{
+                clipPath:
+                  "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+              }}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1920&h=1080&fit=crop"
+                alt="Decorative"
+                className="w-full h-full object-cover shadow-lg border border-white"
+              />
+            </div>
+          </motion.div>
+        </div>
 
         {/* Logo */}
         <div className="flex justify-center mb-3">
@@ -533,8 +519,9 @@ const Register = () => {
             >
               <form onSubmit={handleSubmit(handleNext)} className="space-y-3">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-1 mb-3">
-                  Location
+                  Education
                 </h3>
+
                 {/* School Attended */}
                 <div className="relative">
                   <input
@@ -554,13 +541,10 @@ const Register = () => {
                   <input
                     {...register("department")}
                     type="text"
-                    placeholder="department"
+                    placeholder="Department"
                     defaultValue={formData.department}
                     className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
                   />
-                  {errors.schoolAttended && (
-                    <p className="text-red-500 text-xs mt-1">{errors.department.message}</p>
-                  )}
                 </div>
 
                 {/* Degree */}
@@ -651,11 +635,12 @@ const Register = () => {
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="space-y-4">
+              <form onSubmit={handleSubmit(handleNext)} className="space-y-4">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-1">
-                  Upload Passport Photograph
+                  More Details
                 </h3>
-                  {/* Country */}
+
+                {/* Country */}
                 <div className="relative">
                   <input
                     {...register("country")}
@@ -668,7 +653,7 @@ const Register = () => {
                     <p className="text-red-500 text-xs mt-1">{errors.country.message}</p>
                   )}
                 </div>
-        
+
                 {/* State */}
                 <div className="relative">
                   <input
@@ -682,47 +667,48 @@ const Register = () => {
                     <p className="text-red-500 text-xs mt-1">{errors.state.message}</p>
                   )}
                 </div>
-                {/* socail links */}
-                  <div className="relative">
+
+                {/* Social Links */}
+                <div className="relative">
                   <input
                     {...register("socialLinks")}
                     type="url"
-                    placeholder="any social links"
+                    placeholder="Any social links"
                     defaultValue={formData.socialLinks}
                     className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
                   />
-                  {errors.country && (
+                  {errors.socialLinks && (
                     <p className="text-red-500 text-xs mt-1">{errors.socialLinks.message}</p>
                   )}
                 </div>
 
-              {/* CV / PDF Upload */}
-              <div className="flex flex-col gap-1">
-                <label className="text-gray-700 dark:text-gray-300">
-                  Upload CV / Certificate (PDF)
-                </label>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handlePdfUpload}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                />
-                
-                {pdfName && (
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm text-gray-500">{pdfName}</p>
-                    <button
-                      type="button"
-                      onClick={removePdf}
-                      className="text-red-500 text-xs hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </div>
+                {/* CV / PDF Upload */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-gray-700 dark:text-gray-300">
+                    Upload CV / Certificate (PDF)
+                  </label>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handlePdfUpload}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
+                  />
+                  
+                  {pdfName && (
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-sm text-gray-500">{pdfName}</p>
+                      <button
+                        type="button"
+                        onClick={removePdf}
+                        className="text-red-500 text-xs hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-
+                {/* Passport Photograph */}
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
                   {!passportPreview ? (
                     <div>
@@ -775,8 +761,7 @@ const Register = () => {
                     <ArrowLeft className="w-4 h-4" /> Previous
                   </button>
                   <button
-                    type="button"
-                    onClick={() => handleNext({})}
+                    type="submit"
                     disabled={loading}
                     className={`flex-1 flex items-center justify-center gap-2 ${
                       loading
@@ -793,7 +778,7 @@ const Register = () => {
                     )}
                   </button>
                 </div>
-              </div>
+              </form>
             </motion.div>
           )}
         </AnimatePresence>

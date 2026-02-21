@@ -275,7 +275,7 @@ export default function Profile() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
-
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -310,42 +310,84 @@ export default function Profile() {
     }
   }, [error]);
 
+  useEffect(() => {
+  console.log("5. User in Profile changed:", user?.passportPhotoUrl);
+}, [user?.passportPhotoUrl]);
+
   // ── Avatar handlers ──────────────────────────────────────────
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+//   const handleFileChange = async (e) => {
+//     const file = e.target.files?.[0];
+//     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast({ title: 'Invalid file', description: 'Please select an image file.', variant: 'destructive' });
-      return;
+//     if (!file.type.startsWith('image/')) {
+//       toast({ title: 'Invalid file', description: 'Please select an image file.', variant: 'destructive' });
+//       return;
+//     }
+//     if (file.size > 5 * 1024 * 1024) {
+//       toast({ title: 'File too large', description: 'Image must be smaller than 5MB.', variant: 'destructive' });
+//       return;
+//     }
+
+//     const objectUrl = URL.createObjectURL(file);
+//     setPreviewUrl(objectUrl);
+
+//     const fd = new FormData();
+//     fd.append('passport', file);
+
+//     setUploading(true);
+//     clearMessages();
+
+//     try {
+//       const result = await uploadAvatar(fd);
+//       if (!result?.success) setPreviewUrl(null);
+//     } catch (err) {
+//       console.error('Upload error:', err);
+//       toast({ title: 'Upload failed', description: 'Please try again.', variant: 'destructive' });
+//       setPreviewUrl(null);
+//     } finally {
+//       setUploading(false);
+//       if (objectUrl) URL.revokeObjectURL(objectUrl);
+//     }
+//   };
+const handleFileChange = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    toast({ title: 'Invalid file', description: 'Please select an image file.', variant: 'destructive' });
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    toast({ title: 'File too large', description: 'Image must be smaller than 5MB.', variant: 'destructive' });
+    return;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  setPreviewUrl(objectUrl); // show preview while uploading
+
+  const fd = new FormData();
+  fd.append('passport', file);
+
+  setUploading(true);
+  clearMessages();
+
+  try {
+    const result = await uploadAvatar(fd);
+    if (result?.success) {
+      setPreviewUrl(null); // ✅ clear preview — store now has the real URL
+    } else {
+      setPreviewUrl(null); // clear broken preview on failure too
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: 'File too large', description: 'Image must be smaller than 5MB.', variant: 'destructive' });
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
-
-    const fd = new FormData();
-    fd.append('passport', file);
-
-    setUploading(true);
-    clearMessages();
-
-    try {
-      const result = await uploadAvatar(fd);
-      if (!result?.success) setPreviewUrl(null);
-    } catch (err) {
-      console.error('Upload error:', err);
-      toast({ title: 'Upload failed', description: 'Please try again.', variant: 'destructive' });
-      setPreviewUrl(null);
-    } finally {
-      setUploading(false);
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    }
-  };
+  } catch (err) {
+    console.error('Upload error:', err);
+    toast({ title: 'Upload failed', description: 'Please try again.', variant: 'destructive' });
+    setPreviewUrl(null);
+  } finally {
+    setUploading(false);
+    URL.revokeObjectURL(objectUrl); // safe to revoke now since previewUrl is cleared
+  }
+};
 
   const handleDeleteAvatar = () => {
     toast({
