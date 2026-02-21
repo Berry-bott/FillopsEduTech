@@ -882,7 +882,18 @@ const Login = () => {
               Create Account
             </p>
           </div>
+          
         </form>
+        <p className="text-xs text-gray-500 text-center mt-4">
+          By signing in, you agree to our{" "}
+        <a 
+        href="/terms#using-filloptech"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-indigo-600 hover:underline"
+        >Terms of Use</a>
+        </p>
+        
 
         {/* ===== Social Login ===== */}
         <div className="mt-6">

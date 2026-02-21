@@ -96,9 +96,11 @@ export default function FinancialReport() {
   // ── Loading ───────────────────────────────────────────────────
   if (loading && !summary) {
     return (
-      <div className="max-w-5xl mx-auto py-20 px-4 text-center">
-        <Loader2 className="animate-spin mx-auto mb-4 text-blue-600" size={48} />
-        <p className="text-gray-500">Loading financial report...</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading financial report...</p>
+        </div>
       </div>
     );
   }

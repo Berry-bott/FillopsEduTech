@@ -182,6 +182,7 @@ import SocketInitializer from "./hooks/SocketInitializer";
 
 import "./App.css";
 
+import TermsOfUse from "@/pages/index/TermsOfUse"; 
 
 
 function App() {
@@ -207,6 +208,8 @@ function App() {
             {/* ========== TUTOR AUTH ROUTES (PUBLIC) ========== */}
             <Route path="/tutor/login" element={<TutorLogin />} />
             <Route path="/tutor/register" element={<TutorRegister />} />
+            <Route path="/terms" element={<TermsOfUse />} />
+
 
             {/* ========== ADMIN ROUTES ========== */}
             <Route path="/manage-users" element={<UsersPage />} />
