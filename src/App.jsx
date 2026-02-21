@@ -145,7 +145,7 @@ import MessagesPage from "@/pages/admin/MessagesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import UsersPage from "@/pages/admin/UsersPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
-import { getUserSocket } from "@/lib/userChatSocket";
+// import { getUserSocket } from "@/lib/userChatSocket";
 
 // Chat pages
 import UserChatPage from "./pages/chat/UserChatPage";
@@ -156,6 +156,7 @@ import Register from "@/pages/index/Register";
 import QuizPage from "@/pages/user/QuizPage";
 import Profile from "@/pages/user/Profile";
 import FinancialReport from "@/pages/user/FinancialReport";
+import Analyticspage  from "@/pages/user/Analyticspage";
 import QuizReport from "@/pages/user/QuizReport";
 import QuizHistoryPage from "@/pages/user/QuizHistoryPage ";
 import PaymentHistory from "@/pages/user/PaymentHistory";
@@ -221,6 +222,7 @@ function App() {
               <Route path="/onboarding" element={<PreferencePage />} />
               <Route path="/study" element={<StudyPage />} />
               <Route path="/reports/financial" element={<FinancialReport />} />
+              <Route path="/dashboard/analytics" element={<Analyticspage  />} />
               <Route path="/quiz" element={<QuizPage />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/quiz/results" element={<QuizReport />} />
