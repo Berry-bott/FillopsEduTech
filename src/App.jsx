@@ -137,11 +137,6 @@ import TutorProtectedRoute from "./auth/TutorProtectedRoute";
 import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Stores 
-import { useTutorChatStore } from "@/store/tutorChatStore";
-import { useUserChatStore } from "@/store/userChatStore";
-import useTutorAuthStore from "@/store/tutorAuthStore";
-import useAuthStore from "@/store/authStore";
 
 // Supa Admin pages
 import ActivityPage from "@/pages/admin/ActivityPage";
@@ -159,6 +154,8 @@ import UserChatPage from "./pages/chat/UserChatPage";
 import Login from "@/pages/index/Login";
 import Register from "@/pages/index/Register";
 import QuizPage from "@/pages/user/QuizPage";
+import Profile from "@/pages/user/Profile";
+import FinancialReport from "@/pages/user/FinancialReport";
 import QuizReport from "@/pages/user/QuizReport";
 import QuizHistoryPage from "@/pages/user/QuizHistoryPage ";
 import PaymentHistory from "@/pages/user/PaymentHistory";
@@ -180,108 +177,12 @@ import ExamSelector from "./components/DashboardComponents/user/ExamSelector";
 // Community
 import UserCommunity from "./pages/community/UserCommunity";
 import UseSocket from "./hooks/useSocket";
+import SocketInitializer from "./hooks/SocketInitializer";
 
 import "./App.css";
 
-// ── Socket Initializer ─────────────────────────────────────────────────────────
-
-// function SocketInitializer() {
-//   const isTutorAuthenticated = useTutorAuthStore((s) => s.isAuthenticated);
-//   const isUserAuthenticated  = useAuthStore((s) => s.isAuthenticated);
-
-//   // ── Tutor socket ─────────────────────────────────────────────
-//   const tutorInitSocket    = useTutorChatStore((s) => s.initializeSocket);
-//   const tutorInitListeners = useTutorChatStore((s) => s.initializeListeners);
-//   const tutorDisconnect    = useTutorChatStore((s) => s.disconnectSocket);
-
-//   // ── User socket ──────────────────────────────────────────────
-//   const userInitSocket    = useUserChatStore((s) => s.initializeSocket);
-//   const userInitListeners = useUserChatStore((s) => s.initializeListeners);
-//   const userDisconnect    = useUserChatStore((s) => s.disconnectSocket);
-
-//   // Connect tutor socket when tutor logs in, disconnect on logout
-//   useEffect(() => {
-//     if (!isTutorAuthenticated) return;
-
-//     tutorInitSocket();
-//     const cleanup = tutorInitListeners();
-
-//     return () => {
-//       cleanup?.();
-//       tutorDisconnect();
-//     };
-//   }, [isTutorAuthenticated]);
-
-//   // Connect user socket when user logs in, disconnect on logout
-//   useEffect(() => {
-//     if (!isUserAuthenticated) return;
-
-//     userInitSocket();
-//     const cleanup = userInitListeners();
-
-//     return () => {
-//       cleanup?.();
-//       userDisconnect();
-//     };
-//   }, [isUserAuthenticated]);
-
-//   return null;
-// }
-
-// Replace the SocketInitializer function in your App.jsx with this
-
-function SocketInitializer() {
-  const isTutorAuthenticated = useTutorAuthStore((s) => s.isAuthenticated);
-  const isUserAuthenticated  = useAuthStore((s) => s.isAuthenticated);
-  const accessToken          = useAuthStore((s) => s.accessToken); // ← watch token
-
-  const tutorInitSocket    = useTutorChatStore((s) => s.initializeSocket);
-  const tutorInitListeners = useTutorChatStore((s) => s.initializeListeners);
-  const tutorDisconnect    = useTutorChatStore((s) => s.disconnectSocket);
-
-  const userInitSocket    = useUserChatStore((s) => s.initializeSocket);
-  const userInitListeners = useUserChatStore((s) => s.initializeListeners);
-  const userDisconnect    = useUserChatStore((s) => s.disconnectSocket);
-
-  // ── Tutor socket ──────────────────────────────────────────────────
-  useEffect(() => {
-    if (!isTutorAuthenticated) return;
-    console.log("🔌 [SocketInitializer] init TUTOR socket");
-    tutorInitSocket();
-    const cleanup = tutorInitListeners();
-    return () => { cleanup?.(); tutorDisconnect(); };
-  }, [isTutorAuthenticated]);
-
-  // ── User socket — init on login ───────────────────────────────────
-  useEffect(() => {
-    if (!isUserAuthenticated) return;
-    console.log("🔌 [SocketInitializer] init USER socket (auth change)");
-    userInitSocket();
-    const cleanup = userInitListeners();
-    return () => { cleanup?.(); userDisconnect(); };
-  }, [isUserAuthenticated]);
 
 
-  useEffect(() => {
-    if (!isUserAuthenticated || !accessToken) return;
-
-    const socket = getUserSocket();
-    if (socket?.connected) {
-      // already connected — nothing to do
-      console.log("🔄 [SocketInitializer] token refreshed, socket still connected ✓");
-      return;
-    }
-
-    // Socket dropped during token refresh — silently reconnect
-    console.log("🔄 [SocketInitializer] token refreshed, socket disconnected — reconnecting...");
-    userInitSocket();
-    userInitListeners();
-  }, [accessToken]); // ← fires every time token silently refreshes
-
-  return null;
-}
-
-// ── App ────────────────────────────────────────────────────────────────────────
 function App() {
   return (
     <BrowserRouter>
@@ -319,7 +220,9 @@ function App() {
               <Route path="/user/dashboard" element={<UserDashboard />} />
               <Route path="/onboarding" element={<PreferencePage />} />
               <Route path="/study" element={<StudyPage />} />
+              <Route path="/reports/financial" element={<FinancialReport />} />
               <Route path="/quiz" element={<QuizPage />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/quiz/results" element={<QuizReport />} />
               <Route path="/quiz/history" element={<QuizHistoryPage />} />
               <Route path="/exam" element={<ExamsPage />} />

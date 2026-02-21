@@ -16,7 +16,7 @@ export default function InitializePayment() {
     <Card className="flex flex-col h-[91vh] border-2 border-border shadow-2xl">
       
       {/* HEADER */}
-      <div className="p-5 border-b bg-gradient-to-br from-primary/5 to-accent/5">
+      <div className="p-2 border-b bg-gradient-to-br from-primary/5 to-accent/5">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Crown className="size-8 text-education-orange" />
           <h1 className="text-2xl font-bold text-primary">Go Premium</h1>
@@ -35,7 +35,7 @@ export default function InitializePayment() {
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
 
         {/* Benefits */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           <h2 className="text-lg font-semibold flex items-center gap-2 text-primary-hover">
             <Sparkles className="size-5 text-education-orange" />
             Premium Benefits
@@ -47,7 +47,6 @@ export default function InitializePayment() {
               "Premium exclusive content",
               "Ad-free learning experience",
               "Verified certificates",
-              "Offline downloads",
               "Priority 24h support",
             ].map((feature, i) => (
               <div key={i} className="flex items-start gap-2">

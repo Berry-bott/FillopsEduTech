@@ -3466,6 +3466,827 @@
 
 
 
+// import { useState, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
+// import { useStudyStore } from "../../../../store/studyStore";
+// import InitializePayment from "../../../../payment/initializePayment";
+// import StudySummary from "./StudySummary";
+// import { useToast } from "@/components/ui/use-toast";
+// import { ExternalLink, Youtube, Lock, Unlock } from "lucide-react";
+
+// export default function QuestionCard() {
+//   const navigate = useNavigate();
+//   const { toast } = useToast();
+
+//   const {
+//     currentIndex,
+//     selectedOptions,
+//     setSelectedOption,
+//     next,
+//     prev,
+//     loading,
+//     paymentLocked,
+//     getQuestions,
+//     submitAnswer,
+//     sessionActive,
+//     endStudySession,
+//     initialized,
+//     showSummary,
+//     setShowSummary,
+//     generateStudyResults,
+//     studyResults,
+//     getOrderedIds,
+//     activeId,
+//     units,
+//     changeActive,
+//     lockedQuestions = {}, // Track which questions are locked via Study button
+//     setQuestionLocked,
+//   } = useStudyStore();
+
+//   const questions = getQuestions();
+//   const q = questions?.[currentIndex] ?? null;
+
+//   const [visible, setVisible] = useState(false);
+//   const [showStudyPanel, setShowStudyPanel] = useState(false);
+
+//   // Check if current question is locked (Study button was clicked)
+//   const isQuestionLocked = q ? (lockedQuestions[q.id] || false) : false;
+  
+//   // Get the saved selection for this question
+//   const savedSelection = q ? selectedOptions[q.id] : null;
+  
+//   // For display purposes
+//   const displayedChoice = savedSelection;
+//   const isCorrect = q && savedSelection === q.correctAnswer;
+
+//   const canRenderQuestion = !!q && !paymentLocked && initialized;
+//   const isFullyLoaded = initialized && !loading;
+
+//   // Check if all units are exhausted
+//   const areAllUnitsExhausted = () => {
+//     const orderedIds = getOrderedIds();
+//     if (orderedIds.length === 0) return false;
+    
+//     return orderedIds.every(id => {
+//       const unit = units[id];
+//       return unit?.exhausted === true;
+//     });
+//   };
+
+//   // Check if current unit is last and at last question
+//   const isAtLastQuestion = () => {
+//     const orderedIds = getOrderedIds();
+//     const currentUnitIndex = orderedIds.indexOf(activeId);
+//     const isLastUnit = currentUnitIndex === orderedIds.length - 1;
+//     const unit = units[activeId];
+//     const isLastQuestionInUnit = currentIndex === (unit?.items?.length || 0) - 1;
+    
+//     return isLastUnit && isLastQuestionInUnit && unit?.exhausted;
+//   };
+
+//   // Fade-in effect for question
+//   useEffect(() => {
+//     if (!canRenderQuestion) {
+//       setVisible(false);
+//       setShowStudyPanel(false);
+//       return;
+//     }
+
+//     setVisible(false);
+//     const t = setTimeout(() => setVisible(true), 100);
+//     return () => clearTimeout(t);
+//   }, [currentIndex, canRenderQuestion]);
+
+//   // Reset study panel when question changes
+//   useEffect(() => {
+//     setShowStudyPanel(false);
+//   }, [currentIndex, q?.id]);
+
+//   // Handle Next button - locks selection and submits
+//   const handleNext = async () => {
+//     if (paymentLocked) return;
+
+//     // If no selection made, warn user
+//     if (!savedSelection) {
+//       toast({
+//         title: "No Answer Selected",
+//         description: "Please select an answer before proceeding.",
+//         variant: "destructive",
+//       });
+//       return;
+//     }
+
+//     // Check if this is the last question and all units are done BEFORE submission
+//     const isLastQuestion = isAtLastQuestion() && areAllUnitsExhausted();
+
+//     // Submit the answer in background (non-blocking) if session is active and not already locked
+//     if (sessionActive && !isQuestionLocked) {
+//       // Fire and forget - don't await
+//       submitAnswer(q.id, savedSelection).then(success => {
+//         if (success) {
+//           console.log("✅ Answer submitted successfully");
+//         } else {
+//           console.warn("⚠️ Answer submission failed");
+//         }
+//       });
+//     }
+
+//     // If last question, handle completion
+//     if (isLastQuestion) {
+//       console.log("🎓 Study session complete!");
+      
+//       const results = generateStudyResults();
+      
+//       if (!results) {
+//         toast({
+//           title: "Error",
+//           description: "Failed to generate study results",
+//           variant: "destructive",
+//         });
+//         return;
+//       }
+      
+//       // End session in background
+//       endStudySession();
+//       setShowSummary(true);
+      
+//       toast({
+//         title: "Study Session Complete! 🎉",
+//         description: "Great work! Review your performance below.",
+//       });
+      
+//       return;
+//     }
+
+//     // Otherwise, proceed to next question immediately
+//     next();
+//   };
+
+//   // Handle Study button click - PERMANENTLY locks answer and shows explanation
+//   const handleStudy = async () => {
+//     if (!savedSelection) {
+//       toast({
+//         title: "No Answer Selected",
+//         description: "Please select an answer to study.",
+//         variant: "destructive",
+//       });
+//       return;
+//     }
+
+//     // PERMANENTLY lock this question
+//     if (!isQuestionLocked) {
+//       // Update the store to mark this question as locked
+//       if (typeof setQuestionLocked === 'function') {
+//         setQuestionLocked(q.id, true);
+//       }
+
+//       // Submit the answer if session is active
+//       if (sessionActive) {
+//         console.log("📤 Submitting and locking answer via Study button...");
+//         const success = await submitAnswer(q.id, savedSelection);
+//         if (success) {
+//           console.log("✅ Answer submitted and locked");
+//           toast({
+//             title: "Answer Locked 🔒",
+//             description: "Your answer has been saved and locked. You can no longer change it.",
+//           });
+//         } else {
+//           console.warn("⚠️ Answer submission failed");
+//         }
+//       }
+//     }
+
+//     // Toggle study panel
+//     setShowStudyPanel(!showStudyPanel);
+//   };
+
+//   // Handle End Session - shows summary
+//   const handleEndSession = async () => {
+//     try {
+//       toast({
+//         title: "Ending session...",
+//         description: "Generating your study report...",
+//       });
+
+//       // Generate results before ending
+//       const results = generateStudyResults();
+      
+//       if (!results) {
+//         toast({
+//           title: "Error",
+//           description: "Failed to generate study results",
+//           variant: "destructive",
+//         });
+//         return;
+//       }
+
+//       await endStudySession();
+//       setShowSummary(true);
+      
+//       toast({
+//         title: "Session Ended",
+//         description: "Review your performance below.",
+//       });
+//     } catch (error) {
+//       toast({
+//         title: "Error",
+//         description: "Failed to end session. Please try again.",
+//         variant: "destructive",
+//       });
+//     }
+//   };
+
+//   // Summary Handlers
+//   const handleReturnToDashboard = async () => {
+//     try {
+//       setShowSummary(false);
+//       navigate("/user/dashboard");
+//     } catch (error) {
+//       toast({
+//         title: "Error",
+//         description: "Failed to return to dashboard",
+//         variant: "destructive",
+//       });
+//     }
+//   };
+
+
+//   const handleStartNewSession = () => {
+//     navigate("/study");
+//     console.log("this is to eand");
+    
+//   };
+
+//   // Handle option selection - can change until question is locked
+//   const handleOptionSelect = (option) => {
+//     if (isQuestionLocked) {
+//       toast({
+//         title: "Answer Locked 🔒",
+//         description: "You clicked the Study button, so this answer is permanently locked.",
+//         variant: "destructive",
+//       });
+//       return;
+//     }
+    
+//     // Save the selection (can be changed until Study button is clicked)
+//     setSelectedOption(q.id, option);
+//     setShowStudyPanel(false);
+//   };
+
+//   // SHOW SUMMARY IF FLAG IS SET
+//   // if (showSummary && studyResults) {
+//   //   return (
+//   //     <StudySummary
+//   //       studyResults={studyResults}
+//   //       onReturnToDashboard={handleReturnToDashboard}
+//   //       onStartNewSession={handleStartNewSession}
+//   //     />
+//   //   );
+//   // }
+
+
+// //   if (paymentLocked) {
+// //   return (
+// //     <section className="py-0">
+// //       <div className="flex flex-col items-center justify-center h-[400px] gap-4">
+// //         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+// //           🔒 Subscription Required
+// //         </h2>
+// //         <p className="text-gray-500 dark:text-gray-400 mb-4">
+// //           You've reached the free limit. Subscribe to continue studying.
+// //         </p>
+// //         <InitializePayment />
+// //       </div>
+// //     </section>
+// //   );
+// // }
+
+// //   // Loading Skeleton
+// //   if (!isFullyLoaded || !canRenderQuestion) {
+// //     return (
+// //       <section className="py-0">
+// //         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+// //           <main>
+// //             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 space-y-4 animate-pulse">
+// //               <div className="h-6 w-48 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+// //               <div className="h-16 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+// //               <div className="space-y-3">
+// //                 {Array.from({ length: 4 }).map((_, i) => (
+// //                   <div key={i} className="h-12 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+// //                 ))}
+// //               </div>
+// //               <div className="flex justify-between mt-6 pt-4 border-t border-gray-300 dark:border-gray-700">
+// //                 <div className="h-10 w-24 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+// //                 <div className="h-10 w-24 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+// //               </div>
+// //             </div>
+// //           </main>
+// //           <aside>
+// //             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 space-y-4 animate-pulse">
+// //               <div className="h-6 w-32 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+// //               <div className="h-32 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+// //             </div>
+// //           </aside>
+// //         </div>
+// //       </section>
+// //     );
+// //   }
+
+// //   return (
+// //     <section className="py-0">
+// //       <div className="grid grid-cols-1 lg:grid-cols-[1fr_650px] md:grid-cols-[1fr_250px] gap-8">
+// //         {/* LEFT: QUESTION */}
+// //         <main>
+// //           <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6">
+// //             <div
+// //               className={`transition-opacity duration-300 ${
+// //                 visible ? "opacity-100" : "opacity-0"
+// //               }`}
+// //             >
+// //               {/* Question Header */}
+// //               <div className="flex justify-between items-center mb-6">
+// //                 <h2 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
+// //                   Question {currentIndex + 1} of {questions.length}
+// //                 </h2>
+                
+// //                 {sessionActive && (
+// //                   <div className="flex items-center gap-2">
+// //                     <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+// //                       <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+// //                       Session Active
+// //                     </span>
+// //                     <button
+// //                       onClick={handleEndSession}
+// //                       className="text-xs bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 transition"
+// //                     >
+// //                       End Session
+// //                     </button>
+// //                   </div>
+// //                 )}
+// //               </div>
+
+// //               {/* Answer Lock Indicator */}
+// //               {isQuestionLocked && (
+// //                 <div className=" p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+// //                   <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+// //                     <Lock className="w-4 h-4" />
+// //                     <span>Answer permanently locked via Study button - You cannot change your selection</span>
+// //                   </p>
+// //                 </div>
+// //               )}
+
+// //               {/* Unlocked Indicator */}
+// //               {!isQuestionLocked && savedSelection && (
+// //                 <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+// //                   <p className="text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
+// //                     <Unlock className="w-4 h-4" />
+// //                     <span>You can still change your answer until you click the Study button</span>
+// //                   </p>
+// //                 </div>
+// //               )}
+
+// //               {/* Question Text */}
+// //               <p className="mb-6 text-gray-800 dark:text-gray-200 text-lg leading-relaxed">
+// //                 {q.text}
+// //               </p>
+
+// //               {/* Options */}
+// //               <div className="space-y-2">
+// //                 {Array.isArray(q.options) &&
+// //                   q.options.map((opt, i) => {
+// //                     const letter = String.fromCharCode(65 + i);
+
+// //                     let borderColor = "border-gray-300 dark:border-gray-600";
+// //                     let bgColor = "bg-white dark:bg-gray-800";
+                    
+// //                     // Show correct/incorrect colors only when question is locked and study panel is shown
+// //                     if (isQuestionLocked && showStudyPanel && savedSelection) {
+// //                       if (opt === q.correctAnswer) {
+// //                         borderColor = "border-green-600";
+// //                         bgColor = "bg-green-50 dark:bg-green-900/20";
+// //                       } else if (opt === savedSelection) {
+// //                         borderColor = "border-red-600";
+// //                         bgColor = "bg-red-50 dark:bg-red-900/20";
+// //                       }
+// //                     }
+
+// //                     const isSelected = opt === displayedChoice;
+
+// //                     return (
+// //                       <label
+// //                         key={i}
+// //                         className={`flex items-center gap-3 p-2 border-2 rounded-lg transition-all ${borderColor} ${bgColor} ${
+// //                           !isQuestionLocked ? "hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400 cursor-pointer" : "cursor-not-allowed"
+// //                         }`}
+// //                       >
+// //                         <input
+// //                           type="radio"
+// //                           name={q.id}
+// //                           checked={isSelected}
+// //                           onChange={() => handleOptionSelect(opt)}
+// //                           disabled={isQuestionLocked}
+// //                           className="w-4 h-4" 
+// //                         />
+// //                         <span className="text-gray-800 dark:text-gray-200">
+// //                           <strong>{letter}.</strong> {opt}
+// //                         </span>
+// //                       </label>
+// //                     );
+// //                   })}
+// //               </div>
+
+// //               {/* Question Meta Info */}
+// //               {(q.year || q.difficulty || q.category) && (
+// //                 <div className="mt-6 flex gap-2 flex-wrap text-xs">
+// //                   {q.year && (
+// //                     <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+// //                       Year: {q.year}
+// //                     </span>
+// //                   )}
+// //                   {q.difficulty && (
+// //                     <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+// //                       {q.difficulty}
+// //                     </span>
+// //                   )}
+// //                   {q.category && (
+// //                     <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+// //                       {q.category}
+// //                     </span>
+// //                   )}
+// //                 </div>
+// //               )}
+// //             </div>
+
+// //             {/* Navigation */}
+// //             <div className="mt-6 flex justify-between items-center border-t border-gray-300 dark:border-gray-700 pt-4">
+// //               <button
+// //                 disabled={currentIndex === 0}
+// //                 onClick={prev}
+// //                 className={`px-6 py-2.5 rounded-lg transition font-medium ${
+// //                   currentIndex === 0
+// //                     ? "bg-gray-400 text-white cursor-not-allowed"
+// //                     : "bg-red-500 text-white hover:bg-red-600"
+// //                 }`}
+// //               >
+// //                 Previous
+// //               </button>
+
+// //               <button
+// //                 onClick={handleNext}
+// //                 disabled={paymentLocked || !savedSelection}
+// //                 className={`px-6 py-2.5 rounded-lg transition font-medium ${
+// //                   paymentLocked || !savedSelection
+// //                     ? "bg-gray-400 cursor-not-allowed text-white"
+// //                     : isAtLastQuestion() && areAllUnitsExhausted()
+// //                     ? "bg-green-600 text-white hover:bg-green-700"
+// //                     : "bg-blue-600 text-white hover:bg-blue-700"
+// //                 }`}
+// //               >
+// //                 {isAtLastQuestion() && areAllUnitsExhausted() ? "Finish Study" : "Next"}
+// //               </button>
+// //             </div>
+// //           </div>
+// //         </main>
+
+// //         {/* RIGHT: SIDEBAR */}
+// //         <aside className="space-y-4">
+// //           {/* Payment Panel */}
+// //           {paymentLocked && (
+// //             <div>
+// //               <InitializePayment />
+// //             </div>
+// //           )}
+
+// //           {/* Study Button - Shows when user has selection */}
+// //           {!paymentLocked && savedSelection && (
+// //             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+// //               <button
+// //                 onClick={handleStudy}
+// //                 className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
+// //                   showStudyPanel
+// //                     ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+// //                     : isQuestionLocked
+// //                     ? "bg-purple-600 text-white hover:bg-purple-700"
+// //                     : "bg-blue-600 text-white hover:bg-blue-700"
+// //                 }`}
+// //               >
+// //                 {showStudyPanel ? "Hide Study Panel" : isQuestionLocked ? "📚 View Explanation" : "📚 Study & Lock Answer"}
+// //               </button>
+
+// //               {/* Help text */}
+// //               {!isQuestionLocked && (
+// //                 <p className="mt-2 text-xs text-center text-amber-600 dark:text-amber-400">
+// //                   ⚠️ Clicking Study will PERMANENTLY lock your answer
+// //                 </p>
+// //               )}
+
+// //               {/* Study Panel - Shows when Study button is clicked */}
+// //               {showStudyPanel && isQuestionLocked && (
+// //                 <div className="mt-4 space-y-4 animate-fadeIn">
+// //                   {/* Correct Answer */}
+// //                   <div className={`p-4 rounded-lg ${
+// //                     isCorrect 
+// //                       ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700" 
+// //                       : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+// //                   }`}>
+// //                     <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">
+// //                       {isCorrect ? '✅ Correct!' : '❌ Incorrect'}
+// //                     </h4>
+// //                     <p className={`text-sm font-medium ${
+// //                       isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+// //                     }`}>
+// //                       Correct Answer: <strong>{q.correctAnswer}</strong>
+// //                     </p>
+// //                   </div>
+
+// //                   {/* Explanation */}
+// //                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+// //                     <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">
+// //                       💡 Explanation
+// //                     </h4>
+// //                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+// //                       {q.explanation || "No explanation available for this question."}
+// //                     </p>
+// //                   </div>
+
+// //                   {/* Additional Resources Section */}
+// //                   {(q.videoLink || q.articleLink || q.additionalNotes) && (
+// //                     <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
+// //                       <h4 className="font-semibold mb-3 text-purple-900 dark:text-purple-100">
+// //                         📚 Additional Resources
+// //                       </h4>
+                      
+// //                       {/* YouTube Video Link */}
+// //                       {q.videoLink && (
+// //                         <a
+// //                           href={q.videoLink}
+// //                           target="_blank"
+// //                           rel="noopener noreferrer"
+// //                           className="flex items-center gap-2 mb-2 text-sm text-red-600 dark:text-red-400 hover:underline"
+// //                         >
+// //                           <Youtube className="w-4 h-4" />
+// //                           Watch Video Tutorial
+// //                           <ExternalLink className="w-3 h-3" />
+// //                         </a>
+// //                       )}
+
+// //                       {/* Article/Reference Link */}
+// //                       {q.articleLink && (
+// //                         <a
+// //                           href={q.articleLink}
+// //                           target="_blank"
+// //                           rel="noopener noreferrer"
+// //                           className="flex items-center gap-2 mb-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+// //                         >
+// //                           <ExternalLink className="w-4 h-4" />
+// //                           Read More
+// //                         </a>
+// //                       )}
+
+// //                       {/* Additional Notes */}
+// //                       {q.additionalNotes && (
+// //                         <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-700">
+// //                           <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+// //                             {q.additionalNotes}
+// //                           </p>
+// //                         </div>
+// //                       )}
+// //                     </div>
+// //                   )}
+// //                 </div>
+// //               )}
+
+// //               {/* Message when study panel not yet opened */}
+// //               {!showStudyPanel && (
+// //                 <p className="mt-3 text-xs text-center text-gray-500 dark:text-gray-400">
+// //                   {isQuestionLocked 
+// //                     ? "Click to view explanation and resources" 
+// //                     : "Click to lock your answer and view explanation"}
+// //                 </p>
+// //               )}
+// //             </div>
+// //           )}
+
+// //           {/* Placeholder when no option selected */}
+// //           {!paymentLocked && !savedSelection && (
+// //             <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50">
+// //               <p className="text-gray-500 dark:text-gray-400 text-sm">
+// //                 Select an answer to unlock the study panel
+// //               </p>
+// //             </div>
+// //           )}
+// //         </aside>
+// //       </div>
+// //     </section>
+// //   );
+
+//   if (showSummary && studyResults) {
+//     return (
+//       <StudySummary
+//         studyResults={studyResults}
+//         onReturnToDashboard={handleReturnToDashboard}
+//         onStartNewSession={handleStartNewSession}
+//       />
+//     );
+//   }
+
+//   // ← ADD THIS BEFORE THE SKELETON
+//   if (paymentLocked) {
+//     return (
+//       <section className="py-0">
+//         <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] md:grid-cols-[1fr_370px] gap-8">
+//           {/* LEFT: Locked message */}
+//             <main>
+//           <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center min-h-[400px] text-center gap-4">
+//             <Lock className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+//             <h2 className="text-xl font-bold text-gray-700 dark:text-gray-200">
+//               Questions Locked
+//             </h2>
+//             <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">
+//               You've used your free questions. Subscribe to unlock unlimited access.
+//             </p>
+//           </div>
+//         </main>
+//           {/* RIGHT: Payment */}
+//           <aside className="space-y-4">
+//             <InitializePayment />
+
+//               {/* Study Button - Shows when user has selection */}
+//           {!paymentLocked && savedSelection && (
+//             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+//               <button
+//                 onClick={handleStudy}
+//                 className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
+//                   showStudyPanel
+//                     ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+//                     : isQuestionLocked
+//                     ? "bg-purple-600 text-white hover:bg-purple-700"
+//                     : "bg-blue-600 text-white hover:bg-blue-700"
+//                 }`}
+//               >
+//                 {showStudyPanel ? "Hide Study Panel" : isQuestionLocked ? "📚 View Explanation" : "📚 Study & Lock Answer"}
+//               </button>
+
+//               {/* Help text */}
+//               {!isQuestionLocked && (
+//                 <p className="mt-2 text-xs text-center text-amber-600 dark:text-amber-400">
+//                   ⚠️ Clicking Study will PERMANENTLY lock your answer
+//                 </p>
+//               )}
+
+//               {/* Study Panel - Shows when Study button is clicked */}
+//               {showStudyPanel && isQuestionLocked && (
+//                 <div className="mt-4 space-y-4 animate-fadeIn">
+//                   {/* Correct Answer */}
+//                   <div className={`p-4 rounded-lg ${
+//                     isCorrect 
+//                       ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700" 
+//                       : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+//                   }`}>
+//                     <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">
+//                       {isCorrect ? '✅ Correct!' : '❌ Incorrect'}
+//                     </h4>
+//                     <p className={`text-sm font-medium ${
+//                       isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+//                     }`}>
+//                       Correct Answer: <strong>{q.correctAnswer}</strong>
+//                     </p>
+//                   </div>
+
+//                   {/* Explanation */}
+//                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+//                     <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">
+//                       💡 Explanation
+//                     </h4>
+//                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+//                       {q.explanation || "No explanation available for this question."}
+//                     </p>
+//                   </div>
+
+//                   {/* Additional Resources Section */}
+//                   {(q.videoLink || q.articleLink || q.additionalNotes) && (
+//                     <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
+//                       <h4 className="font-semibold mb-3 text-purple-900 dark:text-purple-100">
+//                         📚 Additional Resources
+//                       </h4>
+                      
+//                       {/* YouTube Video Link */}
+//                       {q.videoLink && (
+//                         <a
+//                           href={q.videoLink}
+//                           target="_blank"
+//                           rel="noopener noreferrer"
+//                           className="flex items-center gap-2 mb-2 text-sm text-red-600 dark:text-red-400 hover:underline"
+//                         >
+//                           <Youtube className="w-4 h-4" />
+//                           Watch Video Tutorial
+//                           <ExternalLink className="w-3 h-3" />
+//                         </a>
+//                       )}
+
+//                       {/* Article/Reference Link */}
+//                       {q.articleLink && (
+//                         <a
+//                           href={q.articleLink}
+//                           target="_blank"
+//                           rel="noopener noreferrer"
+//                           className="flex items-center gap-2 mb-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+//                         >
+//                           <ExternalLink className="w-4 h-4" />
+//                           Read More
+//                         </a>
+//                       )}
+
+//                       {/* Additional Notes */}
+//                       {q.additionalNotes && (
+//                         <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-700">
+//                           <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+//                             {q.additionalNotes}
+//                           </p>
+//                         </div>
+//                       )}
+//                     </div>
+//                   )}
+//                 </div>
+//               )}
+
+//               {/* Message when study panel not yet opened */}
+//               {!showStudyPanel && (
+//                 <p className="mt-3 text-xs text-center text-gray-500 dark:text-gray-400">
+//                   {isQuestionLocked 
+//                     ? "Click to view explanation and resources" 
+//                     : "Click to lock your answer and view explanation"}
+//                 </p>
+//               )}
+//             </div>
+//           )}
+
+//           {/* Placeholder when no option selected */}
+//           {!paymentLocked && !savedSelection && (
+//             <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50">
+//               <p className="text-gray-500 dark:text-gray-400 text-sm">
+//                 Select an answer to unlock the study panel
+//               </p>
+//             </div>
+//           )}
+//           </aside>
+//         </div>
+//       </section>
+//     );
+//   }
+
+//   // Loading Skeleton
+//   if (!isFullyLoaded || !canRenderQuestion) {
+//         return (
+//       <section className="py-0">
+//         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+//           <main>
+//             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 space-y-4 animate-pulse">
+//               <div className="h-6 w-48 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//               <div className="h-16 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//               <div className="space-y-3">
+//                 {Array.from({ length: 4 }).map((_, i) => (
+//                   <div key={i} className="h-12 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//                 ))}
+//               </div>
+//               <div className="flex justify-between mt-6 pt-4 border-t border-gray-300 dark:border-gray-700">
+//                 <div className="h-10 w-24 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//                 <div className="h-10 w-24 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//               </div>
+//             </div>
+//           </main>
+//           <aside>
+//             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 space-y-4 animate-pulse">
+//               <div className="h-6 w-32 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//               <div className="h-32 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+//             </div>
+//           </aside>
+//         </div>
+//       </section>
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+// // SHOW SUMMARY IF FLAG IS SET
+
+
+
+
+
+
+
+
+
+
+
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudyStore } from "../../../../store/studyStore";
@@ -3499,7 +4320,7 @@ export default function QuestionCard() {
     activeId,
     units,
     changeActive,
-    lockedQuestions = {}, // Track which questions are locked via Study button
+    lockedQuestions = {},
     setQuestionLocked,
   } = useStudyStore();
 
@@ -3509,231 +4330,121 @@ export default function QuestionCard() {
   const [visible, setVisible] = useState(false);
   const [showStudyPanel, setShowStudyPanel] = useState(false);
 
-  // Check if current question is locked (Study button was clicked)
   const isQuestionLocked = q ? (lockedQuestions[q.id] || false) : false;
-  
-  // Get the saved selection for this question
   const savedSelection = q ? selectedOptions[q.id] : null;
-  
-  // For display purposes
   const displayedChoice = savedSelection;
   const isCorrect = q && savedSelection === q.correctAnswer;
-
   const canRenderQuestion = !!q && !paymentLocked && initialized;
   const isFullyLoaded = initialized && !loading;
 
-  // Check if all units are exhausted
   const areAllUnitsExhausted = () => {
     const orderedIds = getOrderedIds();
     if (orderedIds.length === 0) return false;
-    
-    return orderedIds.every(id => {
-      const unit = units[id];
-      return unit?.exhausted === true;
-    });
+    return orderedIds.every(id => units[id]?.exhausted === true);
   };
 
-  // Check if current unit is last and at last question
   const isAtLastQuestion = () => {
     const orderedIds = getOrderedIds();
     const currentUnitIndex = orderedIds.indexOf(activeId);
     const isLastUnit = currentUnitIndex === orderedIds.length - 1;
     const unit = units[activeId];
     const isLastQuestionInUnit = currentIndex === (unit?.items?.length || 0) - 1;
-    
     return isLastUnit && isLastQuestionInUnit && unit?.exhausted;
   };
 
-  // Fade-in effect for question
   useEffect(() => {
     if (!canRenderQuestion) {
       setVisible(false);
       setShowStudyPanel(false);
       return;
     }
-
     setVisible(false);
     const t = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(t);
   }, [currentIndex, canRenderQuestion]);
 
-  // Reset study panel when question changes
   useEffect(() => {
     setShowStudyPanel(false);
   }, [currentIndex, q?.id]);
 
-  // Handle Next button - locks selection and submits
   const handleNext = async () => {
     if (paymentLocked) return;
-
-    // If no selection made, warn user
     if (!savedSelection) {
-      toast({
-        title: "No Answer Selected",
-        description: "Please select an answer before proceeding.",
-        variant: "destructive",
-      });
+      toast({ title: "No Answer Selected", description: "Please select an answer before proceeding.", variant: "destructive" });
       return;
     }
-
-    // Check if this is the last question and all units are done BEFORE submission
     const isLastQuestion = isAtLastQuestion() && areAllUnitsExhausted();
-
-    // Submit the answer in background (non-blocking) if session is active and not already locked
     if (sessionActive && !isQuestionLocked) {
-      // Fire and forget - don't await
       submitAnswer(q.id, savedSelection).then(success => {
-        if (success) {
-          console.log("✅ Answer submitted successfully");
-        } else {
-          console.warn("⚠️ Answer submission failed");
-        }
+        if (success) console.log("✅ Answer submitted successfully");
+        else console.warn("⚠️ Answer submission failed");
       });
     }
-
-    // If last question, handle completion
     if (isLastQuestion) {
-      console.log("🎓 Study session complete!");
-      
       const results = generateStudyResults();
-      
       if (!results) {
-        toast({
-          title: "Error",
-          description: "Failed to generate study results",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: "Failed to generate study results", variant: "destructive" });
         return;
       }
-      
-      // End session in background
       endStudySession();
       setShowSummary(true);
-      
-      toast({
-        title: "Study Session Complete! 🎉",
-        description: "Great work! Review your performance below.",
-      });
-      
+      toast({ title: "Study Session Complete! 🎉", description: "Great work! Review your performance below." });
       return;
     }
-
-    // Otherwise, proceed to next question immediately
     next();
   };
 
-  // Handle Study button click - PERMANENTLY locks answer and shows explanation
   const handleStudy = async () => {
     if (!savedSelection) {
-      toast({
-        title: "No Answer Selected",
-        description: "Please select an answer to study.",
-        variant: "destructive",
-      });
+      toast({ title: "No Answer Selected", description: "Please select an answer to study.", variant: "destructive" });
       return;
     }
-
-    // PERMANENTLY lock this question
     if (!isQuestionLocked) {
-      // Update the store to mark this question as locked
-      if (typeof setQuestionLocked === 'function') {
-        setQuestionLocked(q.id, true);
-      }
-
-      // Submit the answer if session is active
+      if (typeof setQuestionLocked === 'function') setQuestionLocked(q.id, true);
       if (sessionActive) {
-        console.log("📤 Submitting and locking answer via Study button...");
         const success = await submitAnswer(q.id, savedSelection);
         if (success) {
-          console.log("✅ Answer submitted and locked");
-          toast({
-            title: "Answer Locked 🔒",
-            description: "Your answer has been saved and locked. You can no longer change it.",
-          });
-        } else {
-          console.warn("⚠️ Answer submission failed");
+          toast({ title: "Answer Locked 🔒", description: "Your answer has been saved and locked." });
         }
       }
     }
-
-    // Toggle study panel
     setShowStudyPanel(!showStudyPanel);
   };
 
-  // Handle End Session - shows summary
   const handleEndSession = async () => {
     try {
-      toast({
-        title: "Ending session...",
-        description: "Generating your study report...",
-      });
-
-      // Generate results before ending
       const results = generateStudyResults();
-      
       if (!results) {
-        toast({
-          title: "Error",
-          description: "Failed to generate study results",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: "Failed to generate study results", variant: "destructive" });
         return;
       }
-
       await endStudySession();
       setShowSummary(true);
-      
-      toast({
-        title: "Session Ended",
-        description: "Review your performance below.",
-      });
+      toast({ title: "Session Ended", description: "Review your performance below." });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to end session. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to end session.", variant: "destructive" });
     }
   };
 
-  // Summary Handlers
-  const handleReturnToDashboard = async () => {
-    try {
-      setShowSummary(false);
-      navigate("/user/dashboard");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to return to dashboard",
-        variant: "destructive",
-      });
-    }
+  const handleReturnToDashboard = () => {
+    setShowSummary(false);
+    navigate("/user/dashboard");
   };
-
 
   const handleStartNewSession = () => {
     navigate("/study");
-    console.log("this is to eand");
-    
   };
 
-  // Handle option selection - can change until question is locked
   const handleOptionSelect = (option) => {
     if (isQuestionLocked) {
-      toast({
-        title: "Answer Locked 🔒",
-        description: "You clicked the Study button, so this answer is permanently locked.",
-        variant: "destructive",
-      });
+      toast({ title: "Answer Locked 🔒", description: "This answer is permanently locked.", variant: "destructive" });
       return;
     }
-    
-    // Save the selection (can be changed until Study button is clicked)
     setSelectedOption(q.id, option);
     setShowStudyPanel(false);
   };
 
-  // SHOW SUMMARY IF FLAG IS SET
+  // ─── SUMMARY ───────────────────────────────────────────────────────────────
   if (showSummary && studyResults) {
     return (
       <StudySummary
@@ -3744,11 +4455,38 @@ export default function QuestionCard() {
     );
   }
 
-  // Loading Skeleton
+  // ─── PAYMENT WALL ──────────────────────────────────────────────────────────
+  if (paymentLocked) {
+    return (
+      <section className="py-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-8">
+          {/* LEFT: locked placeholder — no q access here */}
+          <main>
+            <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center min-h-[400px] text-center gap-4">
+              <Lock className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+              <h2 className="text-xl font-bold text-gray-700 dark:text-gray-200">
+                Questions Locked
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">
+                You've used your free questions. Subscribe to unlock unlimited access.
+              </p>
+            </div>
+          </main>
+
+          {/* RIGHT: payment */}
+          <aside>
+            <InitializePayment />
+          </aside>
+        </div>
+      </section>
+    );
+  }
+
+  // ─── LOADING SKELETON ──────────────────────────────────────────────────────
   if (!isFullyLoaded || !canRenderQuestion) {
     return (
       <section className="py-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-8">
           <main>
             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 space-y-4 animate-pulse">
               <div className="h-6 w-48 bg-gray-300 dark:bg-gray-700 rounded-lg" />
@@ -3775,290 +4513,165 @@ export default function QuestionCard() {
     );
   }
 
+  // ─── MAIN QUESTION VIEW ────────────────────────────────────────────────────
   return (
     <section className="py-0">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_650px] md:grid-cols-[1fr_250px] gap-8">
-        {/* LEFT: QUESTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-8">
+
+        {/* LEFT: Question */}
         <main>
           <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6">
-            <div
-              className={`transition-opacity duration-300 ${
-                visible ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {/* Question Header */}
+            <div className={`transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}>
+
+              {/* Header */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
                   Question {currentIndex + 1} of {questions.length}
                 </h2>
-                
                 {sessionActive && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                      <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+                      <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
                       Session Active
                     </span>
-                    <button
-                      onClick={handleEndSession}
-                      className="text-xs bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 transition"
-                    >
+                    <button onClick={handleEndSession} className="text-xs bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 transition">
                       End Session
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Answer Lock Indicator */}
+              {/* Lock indicators */}
               {isQuestionLocked && (
-                <div className=" p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
                   <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
                     <Lock className="w-4 h-4" />
-                    <span>Answer permanently locked via Study button - You cannot change your selection</span>
+                    Answer permanently locked — you cannot change your selection
                   </p>
                 </div>
               )}
-
-              {/* Unlocked Indicator */}
               {!isQuestionLocked && savedSelection && (
                 <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
                   <p className="text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
                     <Unlock className="w-4 h-4" />
-                    <span>You can still change your answer until you click the Study button</span>
+                    You can still change your answer until you click Study
                   </p>
                 </div>
               )}
 
-              {/* Question Text */}
-              <p className="mb-6 text-gray-800 dark:text-gray-200 text-lg leading-relaxed">
-                {q.text}
-              </p>
+              {/* Question text */}
+              <p className="mb-6 text-gray-800 dark:text-gray-200 text-lg leading-relaxed">{q.text}</p>
 
               {/* Options */}
               <div className="space-y-2">
-                {Array.isArray(q.options) &&
-                  q.options.map((opt, i) => {
-                    const letter = String.fromCharCode(65 + i);
-
-                    let borderColor = "border-gray-300 dark:border-gray-600";
-                    let bgColor = "bg-white dark:bg-gray-800";
-                    
-                    // Show correct/incorrect colors only when question is locked and study panel is shown
-                    if (isQuestionLocked && showStudyPanel && savedSelection) {
-                      if (opt === q.correctAnswer) {
-                        borderColor = "border-green-600";
-                        bgColor = "bg-green-50 dark:bg-green-900/20";
-                      } else if (opt === savedSelection) {
-                        borderColor = "border-red-600";
-                        bgColor = "bg-red-50 dark:bg-red-900/20";
-                      }
-                    }
-
-                    const isSelected = opt === displayedChoice;
-
-                    return (
-                      <label
-                        key={i}
-                        className={`flex items-center gap-3 p-2 border-2 rounded-lg transition-all ${borderColor} ${bgColor} ${
-                          !isQuestionLocked ? "hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400 cursor-pointer" : "cursor-not-allowed"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={q.id}
-                          checked={isSelected}
-                          onChange={() => handleOptionSelect(opt)}
-                          disabled={isQuestionLocked}
-                          className="w-4 h-4" 
-                        />
-                        <span className="text-gray-800 dark:text-gray-200">
-                          <strong>{letter}.</strong> {opt}
-                        </span>
-                      </label>
-                    );
-                  })}
+                {Array.isArray(q.options) && q.options.map((opt, i) => {
+                  const letter = String.fromCharCode(65 + i);
+                  let borderColor = "border-gray-300 dark:border-gray-600";
+                  let bgColor = "bg-white dark:bg-gray-800";
+                  if (isQuestionLocked && showStudyPanel && savedSelection) {
+                    if (opt === q.correctAnswer) { borderColor = "border-green-600"; bgColor = "bg-green-50 dark:bg-green-900/20"; }
+                    else if (opt === savedSelection) { borderColor = "border-red-600"; bgColor = "bg-red-50 dark:bg-red-900/20"; }
+                  }
+                  return (
+                    <label key={i} className={`flex items-center gap-3 p-2 border-2 rounded-lg transition-all ${borderColor} ${bgColor} ${!isQuestionLocked ? "hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400 cursor-pointer" : "cursor-not-allowed"}`}>
+                      <input type="radio" name={q.id} checked={displayedChoice === opt} onChange={() => handleOptionSelect(opt)} disabled={isQuestionLocked} className="w-4 h-4" />
+                      <span className="text-gray-800 dark:text-gray-200"><strong>{letter}.</strong> {opt}</span>
+                    </label>
+                  );
+                })}
               </div>
 
-              {/* Question Meta Info */}
+              {/* Meta */}
               {(q.year || q.difficulty || q.category) && (
                 <div className="mt-6 flex gap-2 flex-wrap text-xs">
-                  {q.year && (
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
-                      Year: {q.year}
-                    </span>
-                  )}
-                  {q.difficulty && (
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
-                      {q.difficulty}
-                    </span>
-                  )}
-                  {q.category && (
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
-                      {q.category}
-                    </span>
-                  )}
+                  {q.year && <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">Year: {q.year}</span>}
+                  {q.difficulty && <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">{q.difficulty}</span>}
+                  {q.category && <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">{q.category}</span>}
                 </div>
               )}
             </div>
 
             {/* Navigation */}
             <div className="mt-6 flex justify-between items-center border-t border-gray-300 dark:border-gray-700 pt-4">
-              <button
-                disabled={currentIndex === 0}
-                onClick={prev}
-                className={`px-6 py-2.5 rounded-lg transition font-medium ${
-                  currentIndex === 0
-                    ? "bg-gray-400 text-white cursor-not-allowed"
-                    : "bg-red-500 text-white hover:bg-red-600"
-                }`}
-              >
+              <button disabled={currentIndex === 0} onClick={prev} className={`px-6 py-2.5 rounded-lg transition font-medium ${currentIndex === 0 ? "bg-gray-400 text-white cursor-not-allowed" : "bg-red-500 text-white hover:bg-red-600"}`}>
                 Previous
               </button>
-
-              <button
-                onClick={handleNext}
-                disabled={paymentLocked || !savedSelection}
-                className={`px-6 py-2.5 rounded-lg transition font-medium ${
-                  paymentLocked || !savedSelection
-                    ? "bg-gray-400 cursor-not-allowed text-white"
-                    : isAtLastQuestion() && areAllUnitsExhausted()
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-              >
+              <button onClick={handleNext} disabled={!savedSelection} className={`px-6 py-2.5 rounded-lg transition font-medium ${!savedSelection ? "bg-gray-400 cursor-not-allowed text-white" : isAtLastQuestion() && areAllUnitsExhausted() ? "bg-green-600 text-white hover:bg-green-700" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
                 {isAtLastQuestion() && areAllUnitsExhausted() ? "Finish Study" : "Next"}
               </button>
             </div>
           </div>
         </main>
 
-        {/* RIGHT: SIDEBAR */}
+        {/* RIGHT: Sidebar */}
         <aside className="space-y-4">
-          {/* Payment Panel */}
-          {paymentLocked && (
-            <div>
-              <InitializePayment />
-            </div>
-          )}
-
-          {/* Study Button - Shows when user has selection */}
-          {!paymentLocked && savedSelection && (
+          {savedSelection ? (
             <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
-              <button
-                onClick={handleStudy}
-                className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
-                  showStudyPanel
-                    ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                    : isQuestionLocked
-                    ? "bg-purple-600 text-white hover:bg-purple-700"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-              >
+              <button onClick={handleStudy} className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${showStudyPanel ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200" : isQuestionLocked ? "bg-purple-600 text-white hover:bg-purple-700" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
                 {showStudyPanel ? "Hide Study Panel" : isQuestionLocked ? "📚 View Explanation" : "📚 Study & Lock Answer"}
               </button>
 
-              {/* Help text */}
               {!isQuestionLocked && (
                 <p className="mt-2 text-xs text-center text-amber-600 dark:text-amber-400">
                   ⚠️ Clicking Study will PERMANENTLY lock your answer
                 </p>
               )}
 
-              {/* Study Panel - Shows when Study button is clicked */}
               {showStudyPanel && isQuestionLocked && (
-                <div className="mt-4 space-y-4 animate-fadeIn">
-                  {/* Correct Answer */}
-                  <div className={`p-4 rounded-lg ${
-                    isCorrect 
-                      ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700" 
-                      : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
-                  }`}>
-                    <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">
-                      {isCorrect ? '✅ Correct!' : '❌ Incorrect'}
-                    </h4>
-                    <p className={`text-sm font-medium ${
-                      isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
-                    }`}>
+                <div className="mt-4 space-y-4">
+                  {/* Result */}
+                  <div className={`p-4 rounded-lg ${isCorrect ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700" : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"}`}>
+                    <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">{isCorrect ? "✅ Correct!" : "❌ Incorrect"}</h4>
+                    <p className={`text-sm font-medium ${isCorrect ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"}`}>
                       Correct Answer: <strong>{q.correctAnswer}</strong>
                     </p>
                   </div>
 
                   {/* Explanation */}
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">
-                      💡 Explanation
-                    </h4>
+                    <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">💡 Explanation</h4>
                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                       {q.explanation || "No explanation available for this question."}
                     </p>
                   </div>
 
-                  {/* Additional Resources Section */}
+                  {/* Additional Resources */}
                   {(q.videoLink || q.articleLink || q.additionalNotes) && (
                     <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
-                      <h4 className="font-semibold mb-3 text-purple-900 dark:text-purple-100">
-                        📚 Additional Resources
-                      </h4>
-                      
-                      {/* YouTube Video Link */}
+                      <h4 className="font-semibold mb-3 text-purple-900 dark:text-purple-100">📚 Additional Resources</h4>
                       {q.videoLink && (
-                        <a
-                          href={q.videoLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 mb-2 text-sm text-red-600 dark:text-red-400 hover:underline"
-                        >
-                          <Youtube className="w-4 h-4" />
-                          Watch Video Tutorial
-                          <ExternalLink className="w-3 h-3" />
+                        <a href={q.videoLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 mb-2 text-sm text-red-600 dark:text-red-400 hover:underline">
+                          <Youtube className="w-4 h-4" /> Watch Video Tutorial <ExternalLink className="w-3 h-3" />
                         </a>
                       )}
-
-                      {/* Article/Reference Link */}
                       {q.articleLink && (
-                        <a
-                          href={q.articleLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 mb-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Read More
+                        <a href={q.articleLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 mb-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                          <ExternalLink className="w-4 h-4" /> Read More
                         </a>
                       )}
-
-                      {/* Additional Notes */}
                       {q.additionalNotes && (
-                        <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-700">
-                          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {q.additionalNotes}
-                          </p>
-                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-3 pt-3 border-t border-purple-200 dark:border-purple-700">
+                          {q.additionalNotes}
+                        </p>
                       )}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Message when study panel not yet opened */}
               {!showStudyPanel && (
                 <p className="mt-3 text-xs text-center text-gray-500 dark:text-gray-400">
-                  {isQuestionLocked 
-                    ? "Click to view explanation and resources" 
-                    : "Click to lock your answer and view explanation"}
+                  {isQuestionLocked ? "Click to view explanation and resources" : "Click to lock your answer and view explanation"}
                 </p>
               )}
             </div>
-          )}
-
-          {/* Placeholder when no option selected */}
-          {!paymentLocked && !savedSelection && (
+          ) : (
             <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                Select an answer to unlock the study panel
-              </p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Select an answer to unlock the study panel</p>
             </div>
           )}
         </aside>
+
       </div>
     </section>
   );

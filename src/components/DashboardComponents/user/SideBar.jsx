@@ -74,14 +74,9 @@ const menuData = [
         label: "Dashboard",
         href: "/dashboard",
         icon: Home,
-        badge: "3",
+        badge: "1",
         children: [
-          {
-            id: "analytics",
-            label: "Analytics",
-            href: "/dashboard/analytics",
-            icon: BarChart2,
-          },
+
           {
             id: "reports",
             label: "Reports",
@@ -97,7 +92,7 @@ const menuData = [
               {
                 id: "financial-reports",
                 label: "Financial Reports",
-                href: "/dashboard/reports/financial",
+                href: "/reports/financial",
                 icon: DollarSign,
               },
               {
@@ -125,7 +120,7 @@ const menuData = [
         label: "My Library",
         href: "/orders",
         icon: ShoppingCart,
-        badge: "5",
+        badge: "3",
         children: [
           {
             id: "library",
@@ -139,12 +134,6 @@ const menuData = [
             href: "/orders/processing",
             icon: Timer,
           },
-          // {
-          //   id: "paid-orders",
-          //   label: "paid Orders",
-          //   href: "/orders/all",
-          //   icon: ShoppingCart,
-          // },
          
           {
             id: "processing",
@@ -152,49 +141,17 @@ const menuData = [
             href: "/orders/processing",
             icon: Timer,
           },
-        
-        
-         
+ 
         ],
       },
       {
         id: "Reviews",
         label: "Reviews",
         href: "/reviews",
+        badge: "1",
         icon: Star,
         children: [
-          // {
-          //   id: "all-Users",
-          //   label: "All Users",
-          //   href: "/Reviews/Users",
-          //   icon: Users2,
-          // },
-          // {
-          //   id: "segments",
-          //   label: "Segments",
-          //   href: "/customers/segments",
-          //   icon: Filter,
-          //   children: [
-          //     {
-          //       id: "vip",
-          //       label: "VIP Users",
-          //       href: "/customers/segments/vip",
-          //       icon: Star,
-          //     },
-          //     {
-          //       id: "new",
-          //       label: "New Users",
-          //       href: "/customers/segments/new",
-          //       icon: UserPlus,
-          //     },
-          //     {
-          //       id: "inactive",
-          //       label: "Inactive",
-          //       href: "/customers/segments/inactive",
-          //       icon: UserX,
-          //     },
-          //   ],
-          // },
+         
           {
             id: "reviews",
             label: "Users Reviews",
@@ -213,15 +170,16 @@ const menuData = [
       {
         id: "payments",
         label: "Payments",
+        badge: "3",
         href: "/payments",
         icon: CreditCard,
         children: [
-          {
-            id: "paymentMethods",
-            label: "Payment Methods",
-            href: "/payments/methods",
-            icon: CreditCard,
-          },
+          // {
+          //   id: "paymentMethods",
+          //   label: "Payment Methods",
+          //   href: "/payments/methods",
+          //   icon: CreditCard,
+          // },
           {
             id: "payment-history",
             label: "Payment History",
@@ -234,22 +192,9 @@ const menuData = [
             href: "/payments/refunds",
             icon: Minus,
           },
-          // {
-          //   id: "pending",
-          //   label: "Pending",
-          //   href: "/orders/pending",
-          //   icon: Clock,
-          //   badge: "3",
-          // },
+   
         ],
       },
-      // {
-      //   id: "invoices",
-      //   label: "Invoices",
-      //   href: "/invoices",
-      //   icon: Receipt,
-      //   badge: "2",
-      // },
     
     ],
   },
@@ -258,23 +203,18 @@ const menuData = [
     id: "team",
     label: "Team & Communication",
     items: [
-      // {
-      //   id: "members",
-      //   label: "Members",
-      //   href: "/members",
-      //   icon: Users2,
-      // },
+
       {
         id: "chat",
         label: "Chat",
         href: "/chat",
         icon: MessagesSquare,
-        badge: "12",
+        badge: "4",
         children: [
           {
-            id: "chat-admin",
-            label: "Chat Admin",
-            href: "/chat/dm",
+            id: "support",
+            label: "Support",
+            href: "/support",
             icon: Mail,
           },
           {
@@ -297,139 +237,10 @@ const menuData = [
           },
         ],
       },
-      // {
-      //   id: "meetings",
-      //   label: "Meetings",
-      //   href: "/meetings",
-      //   icon: Video,
-      //   children: [
-      //     {
-      //       id: "scheduled",
-      //       label: "Scheduled",
-      //       href: "/meetings/scheduled",
-      //       icon: Calendar,
-      //     },
-      //     {
-      //       id: "recordings",
-      //       label: "Recordings",
-      //       href: "/meetings/recordings",
-      //       icon: Camera,
-      //     },
-      //     {
-      //       id: "rooms",
-      //       label: "Meeting Rooms",
-      //       href: "/meetings/rooms",
-      //       icon: Monitor,
-      //     },
-      //   ],
-      // },
+  
     ],
   },
-  // {
-  //   id: "tools",
-  //   label: "Tools & Utilities",
-  //   items: [
-  //     {
-  //       id: "plugins",
-  //       label: "Plugins",
-  //       href: "/plugins",
-  //       icon: Puzzle,
-  //       badge: "8",
-  //       children: [
-  //         {
-  //           id: "installed",
-  //           label: "Plugins đã cài",
-  //           href: "/plugins",
-  //           icon: Package,
-  //         },
-  //         {
-  //           id: "add-new",
-  //           label: "Thêm mới",
-  //           href: "/plugins",
-  //           icon: Plus,
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "api",
-  //       label: "API",
-  //       href: "/api",
-  //       icon: Code,
-  //       children: [
-  //         {
-  //           id: "documentation",
-  //           label: "Documentation",
-  //           href: "/api/docs",
-  //           icon: FileText,
-  //         },
-  //         {
-  //           id: "keys",
-  //           label: "API Keys",
-  //           href: "/api/keys",
-  //           icon: Key,
-  //         },
-  //         {
-  //           id: "webhooks",
-  //           label: "Webhooks",
-  //           href: "/api/webhooks",
-  //           icon: Zap,
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "integrations",
-  //       label: "Integrations",
-  //       href: "/integrations",
-  //       icon: Layers,
-  //       children: [
-  //         {
-  //           id: "third-party",
-  //           label: "Third Party",
-  //           href: "/integrations/third-party",
-  //           icon: Globe,
-  //         },
-  //         {
-  //           id: "plugins",
-  //           label: "Plugins",
-  //           href: "/integrations/plugins",
-  //           icon: Plus,
-  //         },
-  //         {
-  //           id: "extensions",
-  //           label: "Extensions",
-  //           href: "/integrations/extensions",
-  //           icon: Zap,
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "backup",
-  //       label: "Backup & Restore",
-  //       href: "/backup",
-  //       icon: Database,
-  //       children: [
-  //         {
-  //           id: "create-backup",
-  //           label: "Create Backup",
-  //           href: "/backup/create",
-  //           icon: Download,
-  //         },
-  //         {
-  //           id: "restore",
-  //           label: "Restore",
-  //           href: "/backup/restore",
-  //           icon: Upload,
-  //         },
-  //         {
-  //           id: "schedule",
-  //           label: "Schedule",
-  //           href: "/backup/schedule",
-  //           icon: Clock,
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
+ 
 ]
 
 
