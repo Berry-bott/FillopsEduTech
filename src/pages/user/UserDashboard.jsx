@@ -10,6 +10,7 @@ import ExamSelector from "../../components/DashboardComponents/user/ExamSelector
 import UserActivity from "../../components/DashboardComponents/user/user-activities"
 import { useEffect } from "react";
 import useAuthStore from "../../store/authStore";
+// import BotLoader from "../../chat-bot/BotChat"
 
 
 
@@ -26,7 +27,7 @@ export default function UserDashboard() {
 
   return (
     <DashboardLayout currentPage="dashboard">
-
+         {/* <BotLoader /> */}
       <div className="space-y-4 sm:space-y-6 w-full min-w-0">
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

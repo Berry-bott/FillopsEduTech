@@ -138,7 +138,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
-
 // Supa Admin pages
 import ActivityPage from "@/pages/admin/ActivityPage";
 import AdminsPage from "@/pages/admin/AdminsPage";
@@ -175,7 +174,6 @@ import CheckoutPage from "./payment/Checkout";
 import PaymentVerification from "./payment/PaymentVerification";
 import LecturerDashboard from "@/pages/lecturer/LecturerDashboard";
 import ExamSelector from "./components/DashboardComponents/user/ExamSelector";
-import BotChat from "./chat-bot/BotChat";
 
 // Community
 import UserCommunity from "./pages/community/UserCommunity";
@@ -187,12 +185,10 @@ import "./App.css";
 import TermsOfUse from "@/pages/index/TermsOfUse"; 
 
 
-
 function App() {
   return (
     <BrowserRouter>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <BotChat/>
         <AuthProvider>
           {/* Global socket initializer — must be inside AuthProvider so
               auth state is available, but outside Routes so it persists

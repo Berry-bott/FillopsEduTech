@@ -181,6 +181,9 @@ import { useNavigate } from "react-router-dom";
 import StudyActions from "./StudyActions";
 import StudyDialog from "./StudyDialog";
 import { useToast } from "@/components/ui/use-toast";
+import BotChat from "../../../chat-bot/BotChat"
+
+
 
 export default function ExamSelector() {
   const navigate = useNavigate();
@@ -276,6 +279,7 @@ export default function ExamSelector() {
 
   return (
     <div className="flex flex-col space-y-4 py-6">
+              <BotChat/>
       <StudyActions
         examDropdownOpen={examDropdownOpen}
         setExamDropdownOpen={setExamDropdownOpen}

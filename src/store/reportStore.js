@@ -1,14 +1,14 @@
-// src/store/financialReportStore.js
+// src/store/reportStore.js
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 
-const useReportStore = create((set, get) => ({
+const useReportStore = create((set) => ({
   // ── State ────────────────────────────────────────────────────
-  summary: null,          // { totalSpent, totalFailed, activeSubscriptions }
-  subscriptions: [],      // [{ subject, plan, startDate, expiryDate, status }]
-  paymentHistory: [],     // [{ date, amount, currency, status, reference, method, items }]
+  summary: null,
+  subscriptionsByCategory: {},  // { JAMB: [...], WAEC: [...], ... }
+  paymentHistory: [],
   loading: false,
   error: "",
 
@@ -25,8 +25,12 @@ const useReportStore = create((set, get) => ({
       );
 
       if (result.success) {
-        const { summary, subscriptions, paymentHistory } = result.data;
-        set({ summary, subscriptions, paymentHistory });
+        const { summary, subscriptionsByCategory, paymentHistory } = result.data;
+        set({
+          summary,
+          subscriptionsByCategory: subscriptionsByCategory ?? {},
+          paymentHistory: paymentHistory ?? [],
+        });
       } else {
         set({ error: result.message || "Failed to load financial report" });
       }

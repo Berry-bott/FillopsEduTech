@@ -335,20 +335,36 @@ export const usePaymentStore = create((set, get) => ({
   },
 
   // ---------------- HISTORY ----------------
-  fetchHistory: async () => {
-    try {
-      logDebug('FETCH HISTORY', 'Loading...');
+  // fetchHistory: async () => {
+  //   try {
+  //     logDebug('FETCH HISTORY', 'Loading...');
       
-      const { fetchWithAuth } = useAuthStore.getState();
-      const res = await fetchWithAuth(`${API_BASE}/payments/history`);
+  //     const { fetchWithAuth } = useAuthStore.getState();
+  //     const res = await fetchWithAuth(`${API_BASE}/payments/history`);
 
-      logSuccess(`Loaded ${res?.data?.length || 0} payment records`);
+  //     logSuccess(`Loaded ${res?.data?.length || 0} payment records`);
       
-      set({ history: res?.data || [] });
-    } catch (err) {
-      logError('Failed to fetch history', err);
-    }
-  },
+  //     set({ history: res?.data || [] });
+  //   } catch (err) {
+  //     logError('Failed to fetch history', err);
+  //   }
+  // },
+  fetchHistory: async () => {
+  try {
+    set({ loading: true });
+
+    const { fetchWithAuth } = useAuthStore.getState();
+    const res = await fetchWithAuth(`${API_BASE}/payments/history`);
+
+    // API returns { success: true, data: [...] }
+    set({ history: res?.data || [] });
+  } catch (err) {
+    console.error('Failed to fetch history', err);
+    set({ history: [] });
+  } finally {
+    set({ loading: false });
+  }
+},
 
   // ---------------- MANUAL REFRESH ----------------
   refreshSubscriptions: async () => {

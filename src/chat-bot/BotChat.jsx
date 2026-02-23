@@ -53,127 +53,280 @@
 
 
 
-import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+// import { useEffect, useRef } from 'react';
+// import { useLocation } from 'react-router-dom';
 
-const BotChat = () => {
-  const location = useLocation();
-  const isMounted = useRef(false);
-  const botInitialized = useRef(false);
+// const BotChat = () => {
+//   const location = useLocation();
+//   const isMounted = useRef(false);
+//   const botInitialized = useRef(false);
+//   const previousPathWasAllowed = useRef(false);
 
-  // Where the bot should appear (exact paths)
-  const allowedPaths = [
-    // '/',
-    '/user/dashboard',
-    '/tutor/dashboard',
-  ];
+//   // Where the bot should appear (exact paths)
+//   const allowedPaths = [
+//     // '/',
+//     '/user/dashboard',
+//     '/tutor/dashboard',
+//   ];
 
-  const shouldShowBot = allowedPaths.includes(location.pathname);
+//   const shouldShowBot = allowedPaths.includes(location.pathname);
 
-  // Thorough cleanup
-  const cleanupBot = () => {
-    // 1. Official destroy
-    if (window.botpress?.webchat?.destroy) {
-      try {
-        window.botpress.webchat.destroy();
-      } catch {}
-    }
+//   // Thorough cleanup
+//   const cleanupBot = () => {
+//     // 1. Official destroy
+//     if (window.botpress?.webchat?.destroy) {
+//       try {
+//         window.botpress.webchat.destroy();
+//       } catch {}
+//     }
 
-    // 2. Remove Botpress DOM elements
-    [
-      '#bp-web-widget-container',
-      '#bp-web-widget',
-      '.bpw-widget-bubble',
-      '.bpw-web-widget',
-      '[data-bp-widget]',
-      'iframe[src*="botpress.cloud"]',
-    ].forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => el.remove());
-    });
+//     // 2. Remove Botpress DOM elements
+//     [
+//       '#bp-web-widget-container',
+//       '#bp-web-widget',
+//       '.bpw-widget-bubble',
+//       '.bpw-web-widget',
+//       '[data-bp-widget]',
+//       'iframe[src*="botpress.cloud"]',
+//     ].forEach(sel => {
+//       document.querySelectorAll(sel).forEach(el => el.remove());
+//     });
 
-    // 3. Remove scripts
-    [
-      'script[src*="cdn.botpress.cloud/webchat/v3.5/inject.js"]',
-      'script[src*="files.bpcontent.cloud/2026/01/10/16/20260110165057-S4B9YF14.js"]',
-    ].forEach(sel => {
-      document.querySelectorAll(sel).forEach(s => s.remove());
-    });
+//     // 3. Remove scripts
+//     [
+//       'script[src*="cdn.botpress.cloud/webchat/v3.5/inject.js"]',
+//       'script[src*="files.bpcontent.cloud/2026/01/10/16/20260110165057-S4B9YF14.js"]',
+//     ].forEach(sel => {
+//       document.querySelectorAll(sel).forEach(s => s.remove());
+//     });
 
-    // 4. Clear globals
-    ['botpress', 'botpressWebChat', '__BOTPRESS_WEBCHAT_LOADED', 'bp'].forEach(k => {
-      if (window[k]) delete window[k];
-    });
+//     // 4. Clear globals
+//     ['botpress', 'botpressWebChat', '__BOTPRESS_WEBCHAT_LOADED', 'bp'].forEach(k => {
+//       if (window[k]) delete window[k];
+//     });
 
-    botInitialized.current = false;
-  };
+//     botInitialized.current = false;
+//   };
+//   useEffect(() => {
+//   if (!shouldShowBot && previousPathWasAllowed.current) {
+//     window.location.reload(); // brutal but 100% cleans everything
+//   }
+//   previousPathWasAllowed.current = shouldShowBot;
+// }, [shouldShowBot]);
 
+//   useEffect(() => {
+//     if (!isMounted.current) {
+//       isMounted.current = true;
+//       cleanupBot(); // initial cleanup
+//     }
+
+//     if (!shouldShowBot) {
+//       cleanupBot();
+//       return;
+//     }
+
+//     if (botInitialized.current) return;
+
+//     botInitialized.current = true;
+
+//     const loadScripts = async () => {
+//       // 1. Load main inject.js first
+//       await new Promise((resolve, reject) => {
+//         if (document.querySelector('script[src*="cdn.botpress.cloud/webchat/v3.5/inject.js"]')) {
+//           resolve();
+//           return;
+//         }
+
+//         const script1 = document.createElement('script');
+//         script1.src = 'https://cdn.botpress.cloud/webchat/v3.5/inject.js';
+//         script1.async = true;
+//         script1.onload = resolve;
+//         script1.onerror = () => {
+//           console.error('[BotChat] Failed to load inject.js');
+//           reject();
+//         };
+//         document.body.appendChild(script1);
+//       });
+
+//       // 2. Only then load your config script
+//       if (!document.querySelector('script[src*="files.bpcontent.cloud/2026/01/10/16/20260110165057-S4B9YF14.js"]')) {
+//         const script2 = document.createElement('script');
+//         script2.src = 'https://files.bpcontent.cloud/2026/01/10/16/20260110165057-S4B9YF14.js';
+//         script2.defer = true;
+//         document.body.appendChild(script2);
+//       }
+
+//       // 3. Wait a bit and try to force visibility / open
+//       setTimeout(() => {
+//         const bubble = document.querySelector('.bpw-widget-bubble');
+//         if (bubble) {
+//           bubble.style.display = 'block';
+//           bubble.style.visibility = 'visible';
+//           bubble.style.opacity = '1';
+//         }
+
+//         // Optional: auto-open only on dashboards (uncomment if wanted)
+//         // if (window.botpress?.webchat?.open && location.pathname !== '/') {
+//         //   window.botpress.webchat.open();
+//         // }
+//       }, 1500);
+//     };
+
+//     loadScripts().catch(err => {
+//       console.error('[BotChat] Script loading failed:', err);
+//       botInitialized.current = false;
+//     });
+
+//     return cleanupBot;
+//   }, [shouldShowBot, location.pathname]);
+
+//   return null;
+// };
+
+// export default BotChat;
+
+
+
+
+
+// src/components/DashboardBotLoader.jsx
+// (or .js — whichever you prefer)
+
+// import { useEffect } from 'react';
+
+// export default function DashboardBotLoader() {
+//   useEffect(() => {
+//     console.log('[DashboardBotLoader] Botpress starting (only on this page)');
+
+//     const injectScript = (src, async = false, defer = false) => {
+//       const script = document.createElement('script');
+//       script.src = src;
+//       script.async = async;
+//       script.defer = defer;
+//       document.body.appendChild(script);
+//       return script;
+//     };
+
+//     const s1 = injectScript('https://cdn.botpress.cloud/webchat/v3.5/inject.js', true);
+//     const s2 = injectScript('https://files.bpcontent.cloud/2026/01/10/16/20260110165057-S4B9YF14.js', false, true);
+
+//     // Optional: auto-open chat after ~2.2 seconds
+//     const timer = setTimeout(() => {
+//       if (window.botpress?.webchat?.open) {
+//         window.botpress.webchat.open();
+//       }
+//     }, 2200);
+
+//     // Cleanup when component unmounts (when user leaves this page)
+//     return () => {
+//       console.log('[DashboardBotLoader] Botpress cleanup (page left)');
+
+//       clearTimeout(timer);
+
+//       // Remove scripts
+//       [s1, s2].forEach((s) => {
+//         if (s && s.parentNode) s.parentNode.removeChild(s);
+//       });
+
+//       // Remove all possible Botpress DOM elements
+//       document.querySelectorAll(
+//         '#bp-web-widget-container, #bp-web-widget, .bpw-widget-bubble, .bpw-web-widget, [data-bp-widget], iframe[src*="botpress"], div[class*="bpw-"]'
+//       ).forEach((el) => el.remove());
+
+//       // Try to call destroy method
+//       if (window.botpress?.webchat?.destroy) {
+//         try {
+//           window.botpress.webchat.destroy();
+//         } catch (err) {
+//           console.warn('Botpress destroy failed:', err);
+//         }
+//       }
+
+//       // Clear globals
+//       delete window.botpress;
+//       delete window.botpressWebChat;
+//       delete window.__BOTPRESS_WEBCHAT_LOADED;
+//     };
+//   }, []);
+
+//   return null;
+// }
+
+
+
+
+
+
+
+
+
+
+
+import { useEffect } from 'react';
+
+export default function BotLoader() {
   useEffect(() => {
-    if (!isMounted.current) {
-      isMounted.current = true;
-      cleanupBot(); // initial cleanup
-    }
-
-    if (!shouldShowBot) {
-      cleanupBot();
-      return;
-    }
-
-    if (botInitialized.current) return;
-
-    botInitialized.current = true;
-
-    const loadScripts = async () => {
-      // 1. Load main inject.js first
-      await new Promise((resolve, reject) => {
-        if (document.querySelector('script[src*="cdn.botpress.cloud/webchat/v3.5/inject.js"]')) {
-          resolve();
-          return;
-        }
-
-        const script1 = document.createElement('script');
-        script1.src = 'https://cdn.botpress.cloud/webchat/v3.5/inject.js';
-        script1.async = true;
-        script1.onload = resolve;
-        script1.onerror = () => {
-          console.error('[BotChat] Failed to load inject.js');
-          reject();
-        };
-        document.body.appendChild(script1);
-      });
-
-      // 2. Only then load your config script
-      if (!document.querySelector('script[src*="files.bpcontent.cloud/2026/01/10/16/20260110165057-S4B9YF14.js"]')) {
-        const script2 = document.createElement('script');
-        script2.src = 'https://files.bpcontent.cloud/2026/01/10/16/20260110165057-S4B9YF14.js';
-        script2.defer = true;
-        document.body.appendChild(script2);
-      }
-
-      // 3. Wait a bit and try to force visibility / open
-      setTimeout(() => {
-        const bubble = document.querySelector('.bpw-widget-bubble');
-        if (bubble) {
-          bubble.style.display = 'block';
-          bubble.style.visibility = 'visible';
-          bubble.style.opacity = '1';
-        }
-
-        // Optional: auto-open only on dashboards (uncomment if wanted)
-        // if (window.botpress?.webchat?.open && location.pathname !== '/') {
-        //   window.botpress.webchat.open();
-        // }
-      }, 1500);
+    const injectScript = (src, async = false, defer = false) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = async;
+      script.defer = defer;
+      document.body.appendChild(script);
+      return script;
     };
 
-    loadScripts().catch(err => {
-      console.error('[BotChat] Script loading failed:', err);
-      botInitialized.current = false;
-    });
+    const s1 = injectScript('https://cdn.botpress.cloud/webchat/v3.5/inject.js', true);
+    const s2 = injectScript('https://files.bpcontent.cloud/2026/01/10/16/20260110165057-S4B9YF14.js', false, true);
 
-    return cleanupBot;
-  }, [shouldShowBot, location.pathname]);
+    const timer = setTimeout(() => {
+      if (window.botpress?.webchat?.open) {
+        window.botpress.webchat.open();
+      }
+    }, 2200);
+
+    return () => {
+      clearTimeout(timer);
+
+      // Remove scripts
+      [s1, s2].forEach((s) => {
+        if (s && s.parentNode) s.parentNode.removeChild(s);
+      });
+
+      // Destroy via API first
+      if (window.botpress?.webchat?.destroy) {
+        try { window.botpress.webchat.destroy(); } catch (err) {}
+      }
+
+      // ✅ Aggressively remove ALL botpress DOM elements
+      const removeAll = () => {
+        document.querySelectorAll(`
+          #bp-web-widget-container,
+          #bp-web-widget,
+          #botpress-webchat,
+          [id^="bp-"],
+          [id*="botpress"],
+          [class*="bpw-"],
+          [class*="bp-"],
+          [class*="botpress"],
+          iframe[src*="botpress"],
+          iframe[src*="bpcontent"],
+          div[data-bp],
+          div[data-botpress]
+        `).forEach((el) => el.remove());
+      };
+
+      removeAll();
+
+      // ✅ Run again after a short delay in case Botpress re-renders after destroy
+      setTimeout(removeAll, 300);
+
+      // Clear all globals
+      delete window.botpress;
+      delete window.botpressWebChat;
+      delete window.__BOTPRESS_WEBCHAT_LOADED;
+      delete window.__bp_webchat;
+    };
+  }, []);
 
   return null;
-};
-
-export default BotChat;
+}
