@@ -191,7 +191,10 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Phone</h3>
-                  <p className="text-indigo-100">+234 123-4567</p>
+                  {/* <p className="text-indigo-100">+234 123-4567</p> */}
+                  <a href="https://wa.me/qr/MCB5PYD3ZG3XD1" target="_blank" rel="noopener noreferrer">
+                    +1 (217) 216-0029
+                  </a>
                 </div>
               </div>
 
@@ -201,7 +204,7 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
-                  <p className="text-indigo-100">hello@example.com</p>
+                  <a href="https://maps.app.goo.gl/uK4e6o7gsaV6B21k6" className="text-indigo-100">hello@example.com</a>
                 </div>
               </div>
 
@@ -271,7 +274,7 @@ const ContactForm = () => {
                            text-gray-900 dark:text-gray-100 
                            focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                            outline-none transition-all duration-300"
-                placeholder="+1 (555) 000-0000"
+                placeholder="+234 (025) 2700 250"
               />
             </div>
 

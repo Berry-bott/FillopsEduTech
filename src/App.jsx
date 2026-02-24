@@ -153,6 +153,7 @@ import UserChatPage from "./pages/chat/UserChatPage";
 // User pages
 import Login from "@/pages/index/Login";
 import Register from "@/pages/index/Register";
+import TermsOfUse from "@/pages/index/TermsOfUse";
 import QuizPage from "@/pages/user/QuizPage";
 import Profile from "@/pages/user/Profile";
 import FinancialReport from "@/pages/user/FinancialReport";
@@ -182,7 +183,7 @@ import SocketInitializer from "./hooks/SocketInitializer";
 
 import "./App.css";
 
-import TermsOfUse from "@/pages/index/TermsOfUse"; 
+import RefundPolicyPage from "@/pages/user/RefundPolicyPage.jsx"; 
 
 
 function App() {
@@ -204,11 +205,12 @@ function App() {
             {/* ========== STUDENT/USER AUTH ROUTES ========== */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/payments/refunds" element={<RefundPolicyPage />} />
+            <Route path="/terms" element={<TermsOfUse />} />
 
             {/* ========== TUTOR AUTH ROUTES (PUBLIC) ========== */}
             <Route path="/tutor/login" element={<TutorLogin />} />
             <Route path="/tutor/register" element={<TutorRegister />} />
-            <Route path="/terms" element={<TermsOfUse />} />
 
 
             {/* ========== ADMIN ROUTES ========== */}

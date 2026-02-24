@@ -1,12 +1,14 @@
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Target, Users, Award, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AboutSection = () => {
+  const navigate = useNavigate();
   return (
     <section
       id="about"
-      className="py-20 bg-background transition-colors duration-300">
+      className="py-20 bg-background transition-colors duration-300 border">
       <div className="container mx-auto px-6 md:px-10 lg:px-16">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -150,6 +152,7 @@ const AboutSection = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
+            onClick={() => navigate('/login')}
               size="lg"
               className="bg-primary hover:bg-primary-hover dark:text-white text-primary-foreground px-10 py-4 group rounded-lg shadow-lg text-base font-semibold"
             >

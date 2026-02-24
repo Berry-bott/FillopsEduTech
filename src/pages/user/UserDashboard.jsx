@@ -67,7 +67,7 @@ export default function UserDashboard() {
         <ExamSelector />
         <OverviewStats />
         <ContentChart />
-            <ContentCategories />
+            {/* <ContentCategories /> */}
 
         <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
           {/* <SystemHistory /> */}

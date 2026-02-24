@@ -203,8 +203,10 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { ArrowRight, BookOpen, Users, Award, CheckCircle, Sparkles } from "lucide-react";
 import hangoverImage from "../../assets/images/hero-education.jpg";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+   const navigate = useNavigate();
   return (
     <section className="relative min-h-screen overflow-hidden transition-colors duration-500">
 
@@ -241,9 +243,10 @@ const HeroSection = () => {
               </h1>
 
               <p className="text-lg md:text-[19px] my-6 text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
-                Our platform is designed to help students and teachers alike by
-                providing  comprehensive tools and resources to support their
-                learning journey.
+              Our platform is designed to empower both students and educators by
+              providing comprehensive tools, structured learning resources, 
+              and interactive features that support effective teaching and meaningful
+                learning experiences.
               </p>
             </div>
 
@@ -273,10 +276,13 @@ const HeroSection = () => {
               text-lg font-semibold shadow-elegant flex items-center justify-center transition-colors"
             >
               <div className="relative h-6 overflow-hidden">
-                <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
+                <span
+                onClick={() => navigate('/login')}
+                 className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
                   Get Started
                 </span>
                 <span
+                onClick={() => navigate('/login')}
                   className="absolute left-0 top-full w-full text-center transition-transform duration-300 
                     ease-in-out group-hover:-translate-y-full text-white"
                 >

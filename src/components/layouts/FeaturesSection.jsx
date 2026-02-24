@@ -152,11 +152,11 @@ export default function FeaturesSection() {
               className="text-md text-muted-foreground leading-relaxed "
             >
              <ExpandableText
-                  text={`This is our Gateway to WAEC/NECO and JAMB/UTME Success. We've
-                  designed this platform to be your ultimate study partner,
-                  providing comprehensive and personalized learning experience. The
-                  mission is to empower every student with the tools, knowledge, and
-                  confidence they need to excel in their WAEC and NECO examinations.`}
+                  text={`At Fillop, we’re dedicated to delivering high-quality,
+                     up-to-date, and relevant past questions and practice exams 
+                     to help you prepare with confidence. 
+                    Remember, your success in any official exam ultimately 
+                    hinges on your own effort and understanding.`}
                 />
             </motion.div>
           </motion.div>
