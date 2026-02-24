@@ -210,7 +210,7 @@ const HeroSection = () => {
   return (
     <section className="relative min-h-screen overflow-hidden transition-colors duration-500">
 
-      <div className="relative container mx-auto px-4 lg:px-8 py-20 lg:pt-32">
+      <div className="relative container mx-auto px-4 lg:px-8 py-20 md:pt-32 pt-30">
         <div className="grid lg:grid-cols-[55%_45%] gap-4 ">
           
           {/* Left Content */}
@@ -219,9 +219,9 @@ const HeroSection = () => {
 
             {/* Main Heading */}
             <div className="">
-              <h1 className="text-5xl md:text-4xl font-merriweather lg:text-5xl font-bold text-slate-900 dark:text-white leading-tight">
+              <h1 className="max-sm:text-[1.8rem] sm:text-3xl md:text-4xl text-center md:text-left font-merriweather lg:text-5xl font-bold text-slate-900 dark:text-white leading-tight max-lg:pb-6">
                 Empowering the Future{" "}
-                <span className="block mt-2">
+                <span className="lg:block mt-2">
                  of{" "}
                   <span className="bg-primary bg-clip-text text-transparent">
                     <TypeAnimation
@@ -242,7 +242,7 @@ const HeroSection = () => {
                 </span>
               </h1>
 
-              <p className="text-lg md:text-[19px] my-6 text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
+              <p className="text-lg md:text-[19px] max-md:text-center my-6 text-slate-600 dark:text-slate-300 leading-relaxed mt-2">
               Our platform is designed to empower both students and educators by
               providing comprehensive tools, structured learning resources, 
               and interactive features that support effective teaching and meaningful

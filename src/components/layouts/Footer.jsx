@@ -6,10 +6,10 @@ const Footer = () => {
   const whatsappNumber = "2172160029";
 
   return (
-    <footer className="relative overflow-hidden py-6 px-6 transition-colors duration-300 bg-white dark:bg-backgroundNext text-gray-700 dark:text-gray-300">
+    <footer className="relative overflow-hidden py-6 px-4 border-2 transition-colors duration-300 bg-white dark:bg-backgroundNext text-gray-700 dark:text-gray-300">
       {/* Decorative gradient overlay */}
 
-      <div className="relative max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <div className="relative mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
         {/* Logo Section */}
         <div className="flex flex-col items-center md:items-start gap-2">
           <img
