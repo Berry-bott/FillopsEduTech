@@ -409,7 +409,7 @@ const Register = () => {
             </p>
           </div>
                   <p className="text-xs text-gray-500 text-center mt-4">
-          By registering, you agree to our{" "}
+          By creating account, you agree to our{" "}
         <a 
         href="/terms#using-filloptech"
           target="_blank"

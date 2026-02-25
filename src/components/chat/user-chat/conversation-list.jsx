@@ -6,12 +6,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Search, MessageCircle, Users, RefreshCw, Loader2, Calendar, Clock,
+  Search, MessageCircle, Users, RefreshCw, Loader2, Calendar, Clock,ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
+
 
 export default function EnhancedConversationList({ searchQuery, setSearchQuery, onSelect }) {
-  // Destructure store values at top level
+
   const {
     allBookings = [],
     bookings = [],
@@ -21,10 +23,11 @@ export default function EnhancedConversationList({ searchQuery, setSearchQuery, 
     activeTab,
     onlineTutors = {},
     setActiveTab,
-    setSelectedBooking,      // ← this is what was missing in scope
+    setSelectedBooking,      
     fetchBookings,
     fetchTutors,
   } = useUserChatStore();
+    const navigate = useNavigate();
 
   const TAB_STATUS = {
     sessions:   "",
@@ -105,14 +108,26 @@ export default function EnhancedConversationList({ searchQuery, setSearchQuery, 
   ];
 
   return (
-    <Card className="h-full border-0 rounded-none bg-white shadow-2xl flex flex-col">
+    <Card className="h-full border-4 rounded-none bg-white shadow-2xl flex flex-col">
       {/* Header */}
       <div className="px-4 py-4 border-b border-slate-200/60 bg-gradient-to-br from-slate-50 to-white">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
-          <Button size="icon" variant="ghost" onClick={handleRefresh} disabled={isLoading}>
+          <span className="flex gap-1">
+            <Button size="icon" variant="ghost" onClick={handleRefresh} disabled={isLoading}>
             <RefreshCw className={cn("h-5 w-5", isLoading && "animate-spin")} />
           </Button>
+           <button
+              onClick={() => navigate('/user/dashboard')}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-0 bg-white border
+               border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-sm sm:text-base 
+               font-medium"
+            >
+              <ArrowLeft size={18} />
+              
+            </button>
+
+          </span>
         </div>
 
         {/* Tabs */}
@@ -163,7 +178,7 @@ export default function EnhancedConversationList({ searchQuery, setSearchQuery, 
       <ScrollArea className="flex-1">
         {isLoading && sourceBookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mb-4" />
+            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
             <p className="text-slate-600">Loading conversations…</p>
           </div>
         ) : displayItems.length === 0 ? (

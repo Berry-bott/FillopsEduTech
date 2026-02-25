@@ -2,7 +2,8 @@ import { useEffect, useState } from "react"
 import Sidebar from "../DashboardComponents/user/SideBar"
 import TopNav from "../DashboardComponents/user/TopNav"
 import { useTheme } from "next-themes"
-import ThemeCustomizer from "../DashboardComponents/theme-customizer"
+
+
 
 export default function Layout({ children }) {
   const { theme } = useTheme()
@@ -67,8 +68,6 @@ export default function Layout({ children }) {
         </main>
       </div>
 
-      {/* Theme Customizer */}
-      <ThemeCustomizer />
     </div>
   )
 }

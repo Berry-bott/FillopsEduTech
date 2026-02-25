@@ -1362,9 +1362,9 @@ export default function ChatInterface() {
   if (isLoading && !selectedBooking) {
     return (
       <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-slate-600 font-medium">Loading conversations…</p>
+           <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-sm text-gray-400">Loading conversations…</p>
         </div>
       </div>
     );
@@ -1426,7 +1426,7 @@ export default function ChatInterface() {
                   {isTutorProfile ? (
                     // Tutor profile
                     <div className="flex flex-col items-center justify-center h-full py-20 animate-fade-in">
-                      <div className="w-28 h-28 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl shadow-xl mb-6">
+                      <div className="w-28 h-28 rounded-full bg-primary flex items-center justify-center text-white font-bold text-4xl shadow-xl mb-6">
                         {selectedBooking.participant_name?.charAt(0)?.toUpperCase() || "T"}
                       </div>
                       <h3 className="text-2xl font-bold text-slate-900 mb-2">
@@ -1437,7 +1437,7 @@ export default function ChatInterface() {
                       </Badge>
                       <Button
                         onClick={() => handleBookSession(selectedBooking)}
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 text-white shadow-lg px-8 py-6 text-lg"
+                        className="bg-primary-hover hover:primary text-white shadow-lg px-8 py-6 text-lg"
                       >
                         <Calendar className="h-5 w-5 mr-2" />
                         Book Session

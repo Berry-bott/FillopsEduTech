@@ -204,7 +204,7 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
-                  <a href="https://maps.app.goo.gl/uK4e6o7gsaV6B21k6" className="text-indigo-100">hello@example.com</a>
+                  <a href="https://maps.app.goo.gl/uK4e6o7gsaV6B21k6" className="text-indigo-100">info@filloptech.com</a>
                 </div>
               </div>
 
@@ -214,7 +214,7 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Address</h3>
-                  <p className="text-indigo-100">123 Business St, Suite 100<br/>City, State 12345</p>
+                    <a href="https://maps.app.goo.gl/uK4e6o7gsaV6B21k6" target="_blank">Google Map</a>
                 </div>
               </div>
             </div>

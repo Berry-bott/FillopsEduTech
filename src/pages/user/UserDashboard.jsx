@@ -49,9 +49,9 @@ export default function UserDashboard() {
           </div>
 
           <div className="flex gap-2">
-            <button className="px-4 py-2 bg-primary text-primary-foreground dark:text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+            {/* <button className="px-4 py-2 bg-primary text-primary-foreground dark:text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
               Community
-            </button>
+            </button> */}
             <button className="px-2 py-2 border border-border text-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium">
             <a href="https://cbt.filloptech.com" className="no-underline"> 
                 <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">

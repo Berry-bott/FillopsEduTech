@@ -144,109 +144,167 @@ const useAuthStore = create(
         return false;
       },
 
-            // 🔹 UPLOAD AVATAR
-    uploadAvatar: async (formData) => {
-      const token = get().accessToken; 
-      
-      if (!token) {
-        return { success: false, message: "Not authenticated" };
-      }
+        // 🔹 UPDATE PROFILE (text fields)
+      updateProfile: async (profileData) => {
+        const token = get().accessToken;
 
-      set({ loading: true, error: "" });
-
-      try {
-        const response = await fetch(`${API_BASE}/users/profile/passport`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-          body: formData,
-        });
-
-        const result = await response.json();
-
-        console.log("📥 Avatar upload response:", result);
-
-       if (result.success) {
-          const currentUser = get().user; // get the current user from state
-          if (currentUser) {
-            set({
-              user: {
-                ...currentUser,
-                passport: result.data.passport || result.data.url, // store passport
-              },
-            });
-          }
-
-          set({ success: "Passport uploaded successfully" });
-        } else {
-          set({ error: result.message || "Failed to upload passport" });
+        if (!token) {
+          set({ error: "Not authenticated" });
+          return { success: false, message: "Not authenticated" };
         }
 
+        set({ loading: true, error: "", success: "" });
 
-        return result;
-      } catch (error) {
-        console.error("❌ Error uploading avatar:", error);
-        const errorMessage = error.message || "Network error. Please check your connection.";
-        set({ error: errorMessage });
-        return { success: false, message: errorMessage };
-      } finally {
-        set({ loading: false });
-      }
-    },
+        try {
+          const response = await fetch(`${API_BASE}/users/profile`, {
+            method: "PUT",                     // or PATCH — match your backend
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: "include",
+            body: JSON.stringify(profileData),
+          });
 
-    // 🔹 DELETE AVATAR
-    deleteAvatar: async () => {
-      const token = get().accessToken; 
-      
-      if (!token) {
-        return { success: false, message: "Not authenticated" };
-      }
+          const result = await response.json();
 
-      set({ loading: true, error: "" });
+          console.log("📥 Profile update response:", result);
 
-      try {
-        const response = await fetch(`${API_BASE}/users/profile/passport`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
+          if (result.success) {
+            // Merge updated fields into existing user object
+            const currentUser = get().user;
+            if (currentUser) {
+              set({
+                user: {
+                  ...currentUser,
+                  ...result.data,   // backend should return updated user or changed fields
+                },
+                success: result.message || "Profile updated successfully",
+              });
+            } else {
+              // Rare case: user was null → set fully
+              set({ user: result.data });
+            }
 
-        const result = await response.json();
+            return result;
+          } else {
+            const errMsg = result.message || "Failed to update profile";
+            set({ error: errMsg });
+            return { success: false, message: errMsg };
+          }
+        } catch (err) {
+          console.error("❌ Profile update error:", err);
+          const errorMessage = err.message || "Network error. Please try again.";
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage };
+        } finally {
+          set({ loading: false });
+        }
+      },
 
-        console.log("📥 Avatar delete response:", result);
+            // 🔹 UPLOAD AVATAR
+      uploadAvatar: async (formData) => {
+        const token = get().accessToken; 
+        
+        if (!token) {
+          return { success: false, message: "Not authenticated" };
+        }
+
+        set({ loading: true, error: "" });
+
+        try {
+          const response = await fetch(`${API_BASE}/users/profile/passport`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: "include",
+            body: formData,
+          });
+
+          const result = await response.json();
+
+          console.log("📥 Avatar upload response:", result);
 
         if (result.success) {
-          const currentUser = get().user; 
-          if (currentUser) {
-            set({
-              user: {
-                ...currentUser,
-                passport: null, 
-              },
-            });
+            const currentUser = get().user; // get the current user from state
+            if (currentUser) {
+              set({
+                user: {
+                  ...currentUser,
+                  passport: result.data.passport || result.data.url, // store passport
+                },
+              });
+            }
+
+            set({ success: "Passport uploaded successfully" });
+          } else {
+            set({ error: result.message || "Failed to upload passport" });
           }
 
-          set({ success: "Passport deleted successfully" });
-        } else {
-          set({ error: result.message || "Failed to delete passport" });
+
+          return result;
+        } catch (error) {
+          console.error("❌ Error uploading avatar:", error);
+          const errorMessage = error.message || "Network error. Please check your connection.";
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage };
+        } finally {
+          set({ loading: false });
+        }
+      },
+
+      // 🔹 DELETE AVATAR
+      deleteAvatar: async () => { 
+        const token = get().accessToken; 
+        
+        if (!token) {
+          return { success: false, message: "Not authenticated" };
         }
 
+        set({ loading: true, error: "" });
 
-        return result;
-      } catch (error) {
-        console.error("❌ Error deleting avatar:", error);
-        const errorMessage = error.message || "Network error. Please check your connection.";
-        set({ error: errorMessage });
-        return { success: false, message: errorMessage };
-      } finally {
-        set({ loading: false });
-      }
-    },
+        try {
+          const response = await fetch(`${API_BASE}/users/profile/passport`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+
+          const result = await response.json();
+
+          console.log("📥 Avatar delete response:", result);
+
+          if (result.success) {
+            const currentUser = get().user; 
+            if (currentUser) {
+              set({
+                user: {
+                  ...currentUser,
+                  passport: null, 
+                },
+              });
+            }
+
+            set({ success: "Passport deleted successfully" });
+          } else {
+            set({ error: result.message || "Failed to delete passport" });
+          }
+
+
+          return result;
+        } catch (error) {
+          console.error("❌ Error deleting avatar:", error);
+          const errorMessage = error.message || "Network error. Please check your connection.";
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage };
+        } finally {
+          set({ loading: false });
+        }
+      },
 
       // 🔹 LOGOUT
       logout: async () => {

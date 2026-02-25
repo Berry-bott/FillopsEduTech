@@ -23,11 +23,12 @@ export default function InitializePayment() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          Unlock unlimited learning potential
+          Subscribe to gain full access to all learning materials
         </p>
 
         <p className="text-primary-hover text-sm text-center mt-2">
-          You have exhausted your <span className="text-2xl font-bold text-destructive">50</span> free questions. Please subscribe to continue.
+          You have exhausted your <span className="text-2xl font-bold text-destructive">50</span>
+           free questions. Please subscribe to continue.
         </p>
       </div>
 
@@ -43,15 +44,15 @@ export default function InitializePayment() {
 
           <div className="space-y-2 text-muted-foreground">
             {[
-              "Unlimited access to 10,000+ courses",
+              "Unlimited access to 10,000+ passed and sample Questions ",
               "Premium exclusive content",
               "Ad-free learning experience",
               "Verified certificates",
               "Priority 24h support",
             ].map((feature, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <Check className="size-4 mt-1" />
-                <span className="text-sm">{feature}</span>
+              <div key={i} className="flex items-start  gap-2">
+                <Check className="size-4 " />
+                <span className="text-xs">{feature}</span>
               </div>
             ))}
           </div>
@@ -67,7 +68,7 @@ export default function InitializePayment() {
             <div>
               <p className="text-sm text-muted-foreground">Premium Plan</p>
               <div className="flex justify-center items-baseline gap-1">
-                <span className="text-4xl font-bold text-primary">₦500</span>
+                <span className="text-4xl font-bold text-primary">₦500</span><span> <del>₦700</del></span>
                 <span className="text-muted-foreground">/month</span>
               </div>
             </div>

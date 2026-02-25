@@ -32,8 +32,18 @@ export default function StudyActions({
 
   return (
     <div className="flex flex-wrap gap-2 md:gap-6">
+         {/* Quiz button */}
+      <Button
+        onClick={() => navigate ("/quiz")}
+        className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2 px-3"
+      >
+        <PenTool className="w-4 h-4" />
+        <span>Daily Quiz</span>
+      </Button>
       {/* Study button */}
       <div className="relative inline-block" ref={dropdownRef}>
+      
+
         <Button
           onClick={() => setExamDropdownOpen((s) => !s)}
           className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-1 px-3"
@@ -56,6 +66,8 @@ export default function StudyActions({
             }
           `}
         >
+          
+
         {exams.map((ex, index) => (
           <button
             key={ex}
@@ -69,15 +81,6 @@ export default function StudyActions({
         ))}
         </div>
       </div>
-
-      {/* Quiz button */}
-      <Button
-        onClick={() => navigate ("/quiz")}
-        className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2 px-3"
-      >
-        <PenTool className="w-4 h-4" />
-        <span>Daily Quiz</span>
-      </Button>
 
       {/* Exam button */}
       <Button

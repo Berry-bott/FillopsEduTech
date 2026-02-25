@@ -304,7 +304,7 @@ export default function ExamSelector() {
         topicYears={topicYears}
         selectedTopics={selectedTopics}
         clearAllTopics={clearAllTopics}
-        onClearTopicSelections={clearAllTopicSelections} // ✅ Pass the callback
+        onClearTopicSelections={clearAllTopicSelections} 
         toggleSubject={(id) => {
           if (selectedSubjects.includes(id)) {
             setSelectedSubjects(prev => prev.filter(x => x !== id));

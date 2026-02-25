@@ -790,7 +790,17 @@ const Register = () => {
             className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm cursor-pointer"
           >
             Already have an account? Sign in
+            
           </p>
+          <p className="text-xs">By signing in or registering, you agree to our{" "}
+            <a 
+        href="/terms#your-content"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-indigo-600 hover:underline"
+        >Terms of Use</a>
+          </p>
+          
         </div>
       </motion.div>
     </section>

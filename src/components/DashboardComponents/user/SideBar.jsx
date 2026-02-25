@@ -250,7 +250,7 @@ const menuData = [
 
 
 export default function SideBar() {
-  const navigate = useNavigate(); // ✅ React Router navigation hook
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [menuState, setMenuState] = useState("full");
   const [isHovered, setIsHovered] = useState(false);
@@ -326,7 +326,7 @@ export default function SideBar() {
   };
 
   const handleNavigation = (href) => {
-    navigate(href); // ✅ navigate without reloading
+    navigate(href); 
     if (isMobile) setIsMobileMenuOpen(false);
   };
 
@@ -386,7 +386,7 @@ export default function SideBar() {
     return (
       <div>
         {item.href && !hasChildren ? (
-          <Link to={item.href}>{content}</Link> // ✅ use React Router Link
+          <Link to={item.href}>{content}</Link> 
         ) : (
           content
         )}
@@ -447,10 +447,10 @@ export default function SideBar() {
                     className="flex-shrink-0"
                   />
                   <div>
-                    <span className="text-lg font-semibold text-primary  transition-opacity duration-200">
+                    <span className="text-3xl font-semibold text-primary  transition-opacity duration-200">
                     Fillop Tech
                     </span>
-                    <p className="text-[10px] text-destructive">Simplifying your tech experience...</p>
+                    <p className="text-[9px] text-destructive">Building skills, powering solutions...</p>
                   </div>
                 </Link>
               </div>
@@ -529,10 +529,10 @@ export default function SideBar() {
                   />
                   <div>
 
-                  <span className="text-lg font-semibold text-primary  transition-opacity duration-200">
+                  <span className="text-3xl font-semibold text-primary  transition-opacity duration-200">
                   Fillop Tech
                   </span>
-                  <p className="text-[10px] text-destructive/100">Simplifying your tech experience...</p>
+                  <p className="text-[9px] text-destructive/100">Building skills, powering solutions...</p>
                   </div>
 
                 </Link>

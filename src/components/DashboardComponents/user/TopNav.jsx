@@ -120,7 +120,8 @@ const avatarUrl = user?.passportPhotoUrl
         </Button>
 
         {/* Settings */}
-        <Button variant="ghost" size="sm" className="p-2">
+        <Button variant="ghost" size="sm" className="p-2"
+          onClick={() => navigate("/users-settings")}>
           <Settings className="h-4 w-4" />
         </Button>
 
@@ -161,12 +162,12 @@ const avatarUrl = user?.passportPhotoUrl
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onClick={() => navigate("/profile")}>
+            <DropdownMenuItem onClick={() => navigate("/myprofile")}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={() => navigate("/settings")}>
+            <DropdownMenuItem onClick={() => navigate("/users-settings")}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>

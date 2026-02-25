@@ -154,8 +154,9 @@ import UserChatPage from "./pages/chat/UserChatPage";
 import Login from "@/pages/index/Login";
 import Register from "@/pages/index/Register";
 import TermsOfUse from "@/pages/index/TermsOfUse";
+import MyProfile from "@/pages/user/MyProfile";
+import UserSettings from "@/pages/user/UserSetting";
 import QuizPage from "@/pages/user/QuizPage";
-import Profile from "@/pages/user/Profile";
 import FinancialReport from "@/pages/user/FinancialReport";
 import Analyticspage  from "@/pages/user/Analyticspage";
 import QuizReport from "@/pages/user/QuizReport";
@@ -229,7 +230,8 @@ function App() {
               <Route path="/reports/financial" element={<FinancialReport />} />
               <Route path="/dashboard/analytics" element={<Analyticspage  />} />
               <Route path="/quiz" element={<QuizPage />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/myprofile" element={<MyProfile />} />
+              <Route path="users-settings" element={<UserSettings />} />
               <Route path="/quiz/results" element={<QuizReport />} />
               <Route path="/quiz/history" element={<QuizHistoryPage />} />
               <Route path="/exam" element={<ExamsPage />} />
