@@ -52,7 +52,6 @@ export default function EnhancedConversationList({ searchQuery, setSearchQuery, 
   // Use allBookings as primary source for instant filtering
   const sourceBookings = allBookings.length > 0 ? allBookings : bookings;
 
-  // Counts from full list
   const counts = {
     sessions:   sourceBookings.length,
     pending:    sourceBookings.filter(b => b.status === "pending").length,
