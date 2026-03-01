@@ -147,7 +147,7 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import TutorAuthProvider from "./auth/TutorAuthProvider";
 import TutorProtectedRoute from "./auth/TutorProtectedRoute";
 import AdminAuthProvider from "./auth/AdminAuthProvider";
-import AdminProtectedRoute from "./auth/AdminProtectedRoute";
+import AdminProtectedRoute from "./auth/Adminprotectedroute";
 
 // Socket
 import UseSocket from "./hooks/useSocket";
