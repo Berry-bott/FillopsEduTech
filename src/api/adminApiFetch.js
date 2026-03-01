@@ -1,3 +1,15 @@
-import useTutorAuthStore from "../store/tutorAuthStore";
+import useAdminAuthStore from "../store/adminAuthStore";
 
-const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+export const apiFetch = (url, options = {}) => {
+  const token = useAdminAuthStore.getState().accessToken;
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+    credentials: "include",
+  });
+};
