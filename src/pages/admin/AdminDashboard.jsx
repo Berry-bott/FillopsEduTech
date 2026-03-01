@@ -307,7 +307,6 @@ export default function DashboardPage() {
                       key={subject.id}
                       className={cn(
                         "rounded-xl border p-5 shadow-sm hover:shadow-md transition-shadow",
-                        subject.color ? subject.color : "bg-gradient-to-br from-gray-50 to-gray-100"
                       )}
                     >
                       <div className="flex items-center gap-3 mb-3">
@@ -348,7 +347,7 @@ export default function DashboardPage() {
                   <UserCog className="mr-2 h-4 w-4" />
                   Manage Tutors
                 </Button>
-                <Button variant="outline" onClick={() => navigate("/subjects")}>
+                <Button variant="outline" onClick={() => navigate("/activity")}>
                   <BookOpen className="mr-2 h-4 w-4" />
                   Manage Subjects
                 </Button>

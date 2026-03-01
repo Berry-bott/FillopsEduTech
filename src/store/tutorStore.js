@@ -268,12 +268,8 @@
         },
 
         // 🔹 GET STUDENTS ENROLLED IN SUBJECT
-// 🔹 GET STUDENTS ENROLLED IN SUBJECT
         getSubjectEnrolledStudents: async (subjectId) => {
-          console.log("🔍 getSubjectEnrolledStudents called with ID:", subjectId);
-          
           if (!subjectId) {
-            console.error("❌ No subject ID provided");
             return { success: false, message: "Subject ID is required" };
           }
 
@@ -281,26 +277,21 @@
             const result = await get().fetchWithAuth(
               `${API_BASE}/tutor/subjects/${subjectId}/users`
             );
-            
-            console.log("📥 API Response for subject", subjectId, ":", result);
-            
+
             if (!result?.success) {
-              console.warn("⚠️ API returned error:", result?.message);
-              return { success: false, message: result?.message || "Failed to load students" };
+              return { success: false, message: result?.message || "Failed to load enrolled students" };
             }
 
-            console.log("✅ Successfully fetched students:", result.data);
-            
+            // Return the full structured response
             return {
               success: true,
-              data: result.data || [],
+              data: result.data || { students: [], pagination: null, subject: null },
             };
           } catch (error) {
-            console.error("❌ Error fetching enrolled students:", error);
-            return { success: false, message: "Network error" };
+            console.error("Error fetching enrolled students:", error);
+            return { success: false, message: "Network or server error" };
           }
         },
-
         // ========== TOPICS ==========
         // Get all topics (with caching)
         getTopics: async () => {
