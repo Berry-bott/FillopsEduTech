@@ -190,6 +190,7 @@ import ExamResultPage from "@/pages/user/ExamResultPage";
 import ExamSelector from "./components/DashboardComponents/user/ExamSelector";
 import PaymentHistory from "@/pages/user/PaymentHistory";
 import PaymentPending from "@/pages/user/PaymentPending";
+import TicketPage from "@/pages/user/TicketPage";
 import CheckoutPage from "./payment/Checkout";
 import PaymentVerification from "./payment/PaymentVerification";
 import UserCommunity from "./pages/community/UserCommunity";
@@ -250,6 +251,7 @@ function App() {
             <Route path="/payment/verify" element={<PaymentVerification />} />
             <Route path="/payments/history" element={<PaymentHistory />} />
             <Route path="/orders/pending" element={<PaymentPending />} />
+            <Route path="/support" element={<TicketPage />} />
           </Route>
 
           {/* ========== PROTECTED TUTOR ROUTES ========== */}

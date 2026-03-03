@@ -39,7 +39,7 @@ export default function DashboardOverview({ context, setActiveTab }) {
   const [subjectsWithEnrollment, setSubjectsWithEnrollment] = useState([]);
   const [loadingEnrollment, setLoadingEnrollment] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-
+  
   // ─── Load core dashboard & content data ────────────────────────────────
   useEffect(() => {
     let ignore = false;
