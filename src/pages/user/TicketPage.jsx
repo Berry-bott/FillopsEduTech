@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import useTicketStore from "@/store/ticketStore";
+import useTicketStore from "@/store/userTicketStore";
 
 const CATEGORIES = ["TECHNICAL", "BILLING", "GENERAL", "ACADEMIC", "OTHER"];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];

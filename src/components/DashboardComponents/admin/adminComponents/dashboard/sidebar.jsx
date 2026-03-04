@@ -11,6 +11,7 @@ const navItems = [
   { to: "/activity", label: "Activity Logs", icon: Activity },
   { to: "/pricing", label: "Pricing", icon: UserCheck },
   { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/supports", label: "Ticket", icon: UserCog },
 ];
 
 export default function Sidebar() {

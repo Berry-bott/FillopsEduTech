@@ -161,6 +161,7 @@ import MessagesPage from "@/pages/admin/MessagesPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import Pricing from "@/pages/admin/Pricing";
 import UsersPage from "@/pages/admin/UsersPage";
+import AdminTicketPage from "@/pages/admin/TicketPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 
 // ========== TUTOR PAGES ==========
@@ -280,6 +281,8 @@ function App() {
             <Route path="/activity" element={<ActivityPage />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/supports" element={<AdminTicketPage />} />
+
           </Route>
 
         </Routes>
