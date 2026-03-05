@@ -6,7 +6,7 @@ const Footer = () => {
   const whatsappNumber = "2172160029";
 
   return (
-    <footer className="relative overflow-hidden py-6 px-4 border-2 transition-colors duration-300 bg-white dark:bg-backgroundNext text-gray-700 dark:text-gray-300">
+    <footer className="relative overflow-hidden bg-white py-6 px-4 border-t shadow-lg transition-colors duration-300  dark:bg-backgroundNext text-gray-700 dark:text-gray-300">
       {/* Decorative gradient overlay */}
 
       <div className="relative mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
@@ -23,8 +23,8 @@ const Footer = () => {
         </div>
 
         {/* Navigation Links */}
-        <ul className="flex flex-wrap justify-center gap-6 font-medium text-gray-600 dark:text-gray-300">
-          {["Home", "About", "Services", "Contact"].map((item) => (
+        <ul className="flex flex-wrap justify-center gap-6 font-medium text-white dark:text-gray-300">
+          {["Home", "About", "Services", ].map((item) => (
             <li
               key={item}
               className="relative cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 group"
@@ -67,9 +67,9 @@ const Footer = () => {
       <div className="border-t border-gray-200 dark:border-gray-700 mt-10"></div>
 
       {/* Bottom text */}
-      <div className="text-center text-gray-500 dark:text-gray-400 mt-6 text-sm">
+      <div className="text-center text-blue-300 dark:text-gray-400 mt-6 text-sm">
         © {new Date().getFullYear()}{" "}
-        <span className="font-semibold text-blue-600 dark:text-blue-400">
+        <span className="font-semibold text-blue-300 dark:text-blue-400">
           Fillops Tech
         </span>
         . All rights reserved.

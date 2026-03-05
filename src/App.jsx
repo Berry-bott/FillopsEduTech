@@ -175,6 +175,7 @@ import Login from "@/pages/index/Login";
 import Register from "@/pages/index/Register";
 import TermsOfUse from "@/pages/index/TermsOfUse";
 import Unauthorized from "@/pages/index/Unauthorized";
+import Fillopwelcome from "@/pages/index/Fillopwelcome";
 import RefundPolicyPage from "@/pages/user/RefundPolicyPage.jsx";
 import UserDashboard from "@/pages/user/UserDashboard";
 import PreferencePage from "@/pages/user/PreferencePage";
@@ -209,6 +210,7 @@ function App() {
           {/* ========== PUBLIC ROUTES ========== */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/tutor/welcomeTutor" element={<Fillopwelcome />} />
           <Route path="/terms" element={<TermsOfUse />} />
           <Route path="/payments/refunds" element={<RefundPolicyPage />} />
 

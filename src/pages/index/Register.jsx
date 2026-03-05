@@ -408,10 +408,13 @@ const Register = () => {
               Already have an account? Sign in
             </p>
           </div>
-                  <p className="text-xs text-gray-500 text-center mt-4">
-          By creating account, you agree to our{" "}
-        <a 
-        href="/terms#using-filloptech"
+          {/* <p className="text-xs text-gray-500 text-center mt-4">Candidate data is processed and used only for learning and performance
+             improvement. User activity is tracked according to our <span> Terms of Use & Privacy Policy.</span></p> */}
+            <p className="text-xs text-gray-500 text-center mt-4">
+            {" "} Candidate data is processed and used only for learning and performance
+            improvemen. <br /> By creating account, you agree to our{" "}
+          <a 
+          href="/terms#using-filloptech"
           target="_blank"
           rel="noopener noreferrer"
           className="text-indigo-600 hover:underline"

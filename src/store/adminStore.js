@@ -240,7 +240,6 @@ const useAdminStore = create((set, get) => ({
     }
   },
 
-
   // ========== PRICING ==========
   fetchPricing: async () => {
     console.log("[fetchPricing] Fetching current pricing...");
