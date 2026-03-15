@@ -163,6 +163,7 @@ import Pricing from "@/pages/admin/Pricing";
 import UsersPage from "@/pages/admin/UsersPage";
 import AdminTicketPage from "@/pages/admin/TicketPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminNotificationPage from "@/pages/admin/notification";
 
 // ========== TUTOR PAGES ==========
 import TutorLogin from "@/pages/index/TutorLogin";
@@ -286,6 +287,8 @@ function App() {
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/supports" element={<AdminTicketPage />} />
+            <Route path="/admin/notifications" element={<AdminNotificationPage />} />
+
 
           </Route>
 

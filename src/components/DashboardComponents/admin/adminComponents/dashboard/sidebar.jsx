@@ -12,6 +12,7 @@ const navItems = [
   { to: "/pricing", label: "Pricing", icon: UserCheck },
   { to: "/settings", label: "Settings", icon: Settings },
   { to: "/supports", label: "Ticket", icon: UserCog },
+  { to: "/admin/notifications", label: "Notification", icon: Activity },
 ];
 
 export default function Sidebar() {
