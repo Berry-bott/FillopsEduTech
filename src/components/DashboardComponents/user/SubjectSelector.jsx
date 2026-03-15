@@ -381,7 +381,7 @@ export default function SubjectSelector({
                           </span>
 
                           {isPremium ? (
-                            <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                            <span className="text-xs bg-green-600 text-white px-0.5 py-0.5 rounded-full font-bold flex items-center gap-1">
                               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                 <path
                                   fillRule="evenodd"
@@ -389,7 +389,7 @@ export default function SubjectSelector({
                                   clipRule="evenodd"
                                 />
                               </svg>
-                              Premium
+                              {/* Premium */}
                             </span>
                           ) : (
                             <span className="text-[8px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold">

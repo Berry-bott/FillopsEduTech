@@ -23,7 +23,7 @@ const step1Schema = z.object({
 
 const step2Schema = z.object({
   schoolAttended: z.string().min(1, "School attended is required"),
-  department: z.string().optional(),                    // added because you render it
+  department: z.string().optional(),                    
   degree: z.string().min(1, "Degree is required"),
   areaOfSpecialization: z.string().min(1, "Area of specialization is required"),
   otherCertifications: z.string().optional(),

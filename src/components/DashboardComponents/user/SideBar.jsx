@@ -237,7 +237,7 @@ const menuData = [
           {
             id: "notifications",
             label: "Notifications",
-            href: "/chat/notifications",
+            href: "/notifications",
             icon: Bell,
           },
         ],

@@ -213,7 +213,8 @@ export default function EnhancedConversationList({ searchQuery, setSearchQuery, 
                 >
                   <div className="flex items-start gap-3">
                     <div className="relative flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-base shadow-md overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold 
+                      text-base shadow-md overflow-hidden">
                         {item.avatar ? (
                           <img src={item.avatar} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
@@ -223,13 +224,13 @@ export default function EnhancedConversationList({ searchQuery, setSearchQuery, 
                       <div
                         className={cn(
                           "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white transition-colors",
-                          isOnline ? "bg-green-500 animate-pulse" :
+                          isOnline ? "bg-green-900 animate-pulse" :
                           status === "pending" ? "bg-amber-500" :
                           status === "confirmed" ? "bg-blue-500" :
                           status === "active" ? "bg-emerald-500" :
                           status === "reschedule-proposed" ? "bg-purple-500" :
                           status === "completed" ? "bg-slate-400" :
-                          status.includes("cancelled") ? "bg-red-500" : "bg-slate-300"
+                          status.includes("cancelled") ? "bg-red-500" : "bg-green-500"
                         )}
                       />
                     </div>

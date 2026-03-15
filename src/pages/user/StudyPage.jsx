@@ -1203,68 +1203,156 @@
 
 
 
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
+// import Header from '../../components/DashboardComponents/user/study-component/Header';
+// import QuestionCard from '../../components/DashboardComponents/user/study-component/QuestionCard';
+// import { useStudyStore } from '../../store/studyStore';
+
+// export default function StudyPage() {
+//   const init = useStudyStore((s) => s.syncSaved);
+//   const reset = useStudyStore((s) => s.reset);
+//   const loading = useStudyStore((s) => s.loading);
+//   const startStudySession = useStudyStore((s) => s.startStudySession);
+//   const endStudySession = useStudyStore((s) => s.endStudySession);
+//   const sessionActive = useStudyStore((s) => s.sessionActive);
+
+//   useEffect(() => {
+//     console.log('📘 StudyPage mounted → sync store');
+    
+//     const initAndStartSession = async () => {
+//       // FIRST: Initialize and load saved data
+//       const savedData = await init();
+      
+//       console.log('📦 Saved data returned:', savedData);
+      
+//       // THEN: Start study session by passing the saved data directly
+//       if (savedData && !sessionActive) {
+//         console.log('🚀 Starting study session with data...');
+//         const sessionId = await startStudySession(savedData); // Pass savedData here
+//         if (sessionId) {
+//           console.log('✅ Session started with ID:', sessionId);
+//         } else {
+//           console.warn('⚠️ Failed to start session');
+//         }
+//       } else if (!savedData) {
+//         console.warn('⚠️ No saved data, cannot start session');
+//       }
+//     };
+
+//     initAndStartSession();
+
+//     return () => {
+//       console.log('🧹 StudyPage unmounted → end session and reset store');
+      
+//       // End session when leaving page
+//       if (sessionActive) {
+//         endStudySession();
+//       }
+//       reset();
+//     };
+//   }, []);
+
+//   return (
+//     <div className="p-4">
+//       <Header />
+
+//       {loading ? (
+//         <div className="h-[400px] flex items-center justify-center">
+//           <div className="text-center">
+//             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+//           </div>
+//         </div>
+//       ) : (
+//         <QuestionCard />
+//       )}
+//     </div>
+//   );
+// }
+
+
+
+
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../components/DashboardComponents/user/study-component/Header';
 import QuestionCard from '../../components/DashboardComponents/user/study-component/QuestionCard';
 import { useStudyStore } from '../../store/studyStore';
 
 export default function StudyPage() {
-  const init = useStudyStore((s) => s.syncSaved);
-  const reset = useStudyStore((s) => s.reset);
-  const loading = useStudyStore((s) => s.loading);
+  const navigate          = useNavigate();
+  const init              = useStudyStore((s) => s.syncSaved);
+  const loading           = useStudyStore((s) => s.loading);
+  const showSummary       = useStudyStore((s) => s.showSummary);
   const startStudySession = useStudyStore((s) => s.startStudySession);
-  const endStudySession = useStudyStore((s) => s.endStudySession);
-  const sessionActive = useStudyStore((s) => s.sessionActive);
+  const endStudySession   = useStudyStore((s) => s.endStudySession);
+  const sessionActive     = useStudyStore((s) => s.sessionActive);
+
+  // ── sessionKey: bump this to re-run the init effect without navigating ──────
+  // StudySummary calls useStudyStore.getState().triggerRestart() which
+  // increments this, causing the effect below to re-fire cleanly.
+  const sessionKey = useStudyStore((s) => s.sessionKey);
+
+  const sessionActiveRef = useRef(sessionActive);
+  useEffect(() => {
+    sessionActiveRef.current = sessionActive;
+  }, [sessionActive]);
 
   useEffect(() => {
-    console.log('📘 StudyPage mounted → sync store');
-    
-    const initAndStartSession = async () => {
-      // FIRST: Initialize and load saved data
+    console.log('📘 StudyPage init — sessionKey:', sessionKey);
+
+    const raw = localStorage.getItem('studySelections');
+    if (!raw) {
+      console.warn('⚠️ No studySelections → dashboard');
+      useStudyStore.setState({ loading: false, initialized: false });
+      navigate('/user/dashboard', { replace: true });
+      return;
+    }
+
+    const run = async () => {
       const savedData = await init();
-      
-      console.log('📦 Saved data returned:', savedData);
-      
-      // THEN: Start study session by passing the saved data directly
-      if (savedData && !sessionActive) {
-        console.log('🚀 Starting study session with data...');
-        const sessionId = await startStudySession(savedData); // Pass savedData here
-        if (sessionId) {
-          console.log('✅ Session started with ID:', sessionId);
-        } else {
-          console.warn('⚠️ Failed to start session');
-        }
-      } else if (!savedData) {
-        console.warn('⚠️ No saved data, cannot start session');
+      console.log('📦 syncSaved:', savedData);
+
+      if (!savedData) {
+        console.warn('⚠️ syncSaved null → dashboard');
+        useStudyStore.setState({ loading: false, initialized: false });
+        navigate('/user/dashboard', { replace: true });
+        return;
+      }
+
+      if (!sessionActiveRef.current) {
+        const sessionId = await startStudySession(savedData);
+        console.log(sessionId ? `✅ Session: ${sessionId}` : '⚠️ Session failed');
       }
     };
 
-    initAndStartSession();
+    run();
 
     return () => {
-      console.log('🧹 StudyPage unmounted → end session and reset store');
-      
-      // End session when leaving page
-      if (sessionActive) {
-        endStudySession();
+      if (sessionActiveRef.current) {
+        endStudySession().catch(() => {});
       }
-      reset();
     };
-  }, []);
+  }, [sessionKey]); // ← re-runs whenever sessionKey changes (i.e. "New Session")
+
+  if (loading) {
+    return (
+      <div className="p-4">
+        <div className="h-[400px] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+              Loading questions...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
       <Header />
-
-      {loading ? (
-        <div className="h-[400px] flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          </div>
-        </div>
-      ) : (
-        <QuestionCard />
-      )}
+      <QuestionCard />
     </div>
   );
 }

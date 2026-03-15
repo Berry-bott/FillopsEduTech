@@ -197,6 +197,7 @@ import CheckoutPage from "./payment/Checkout";
 import PaymentVerification from "./payment/PaymentVerification";
 import UserCommunity from "./pages/community/UserCommunity";
 import UserChatPage from "./pages/chat/UserChatPage";
+import NotificationsPage from "./pages/user/NotificationsPage";
 
 import "./App.css";
 
@@ -237,7 +238,7 @@ function App() {
           >
             <Route path="/user/dashboard" element={<UserDashboard />} />
             <Route path="/onboarding" element={<PreferencePage />} />
-            <Route path="/study" element={<StudyPage />} />
+           <Route path="/study" element={<StudyPage key={location.key} />} />
             <Route path="/reports/financial" element={<FinancialReport />} />
             <Route path="/dashboard/analytics" element={<Analyticspage />} />
             <Route path="/quiz" element={<QuizPage />} />
@@ -255,6 +256,7 @@ function App() {
             <Route path="/payments/history" element={<PaymentHistory />} />
             <Route path="/orders/pending" element={<PaymentPending />} />
             <Route path="/support" element={<TicketPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
           </Route>
 
           {/* ========== PROTECTED TUTOR ROUTES ========== */}

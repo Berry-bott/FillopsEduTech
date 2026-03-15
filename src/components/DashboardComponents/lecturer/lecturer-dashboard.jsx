@@ -46,6 +46,7 @@ import TutorCommunity from "@/pages/community/TutorCommunity.jsx"
 import useTutorAuthStore from "@/store/tutorAuthStore"
 import useTutorStore from "@/store/tutorStore"
 import { useTutorChatStore } from '@/store/tutorChatStore';
+import TutorNotification from "../../../pages/lecturer/Notificationspage"
 // import { useTutorStore } from "@/store/tutorStore";
 // import useTutorAuthStore from '@/store/tutorAuthStore';
 
@@ -116,6 +117,7 @@ export default function LecturerDashboard() {
     { id: "chat", label: "Chat", icon: Users },
     { id: "community", label: "Community", icon: Group },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "notification", label: "notification", icon: Bell },
   ]
 // In lecturer-dashboard.jsx or wherever the socket effect is
 
@@ -502,54 +504,44 @@ export default function LecturerDashboard() {
           </div>
         </header>
           {/* PAGE CONTENT */}
-          <div className="flex-1 overflow-auto bg-secondary/20 p-4 sm:p-6 lg:p-8">
+          <div className="flex-1 overflow-auto bg-secondary/20 p-4 sm:px-6 sm:py-2 border">
             <div className="mx-auto max-w-7xl space-y-6">
               <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center">
-                <div>
-             <h2 className="text-2xl md:text-3xl text-primary font-bold mb-2">
-                  {tutor?.firstName 
-                    ? `Welcome back, ${tutor.firstName}!` 
-                    : dashboardData?.welcome?.message || 'Welcome back!'}
-                </h2>
-
-                  <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-                    {activeTab !== "settings" ? (
-                      <>Manage {navItems.find((item) => item.id === activeTab)?.label.toLowerCase()} for 
-                      <span className="font-semibold text-red-300">
-                        {" "}{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}
-                      </span>
-                      {activeTab !== "subjects" && activeTab !== "topics" && (
-                        <> • <span className="font-semibold">{selectedYear} Academic Session</span></>
-                      )}
-                      </>
-                    ) : "Configure your profile and preferences"}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {activeTab !== "settings" && (
-                    <div className="flex items-center gap-2 text-white 
-                     p-2 rounded-xl shadow-lg">
-                      <Badge variant="secondary">{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</Badge>
-                      {activeTab !== "subjects" && activeTab !== "topics" && <Badge variant="secondary">{selectedYear}</Badge>}
-                      {selectedColor !== "all" && (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <div className={`h-3 w-3 rounded-full ${selectedColor}`} />
-                          {COLOR_OPTIONS.find(c => c.value === selectedColor)?.label}
-                        </Badge>
-                      )}
+                  {activeTab === "overview" && (
+                    <div>
+                      <h2 className="text-2xl md:text-3xl text-primary font-bold mb-2">
+                        {tutor?.firstName 
+                          ? `Welcome back, ${tutor.firstName}!` 
+                          : dashboardData?.welcome?.message || 'Welcome back!'}
+                      </h2>
+                      <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+                        Manage your content for{" "}
+                        <span className="font-semibold text-red-300">
+                          {EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}
+                        </span>
+                      </p>
                     </div>
                   )}
-                  
-                  {/* CREATE BUTTON - Only show on overview */}
+
+                <div className="flex items-center gap-2">
                   {activeTab === "overview" && (
-                    <Button 
-                      onClick={handleCreateClick}
-                      className="gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Create
-                    </Button>
+                    <>
+                      <div className="flex items-center gap-2 text-white p-2 rounded-xl shadow-lg">
+                        <Badge variant="secondary">{EXAM_BODIES.find((b) => b.id === selectedExamBody)?.label}</Badge>
+                        <Badge variant="secondary">{selectedYear}</Badge>
+                        {selectedColor !== "all" && (
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <div className={`h-3 w-3 rounded-full ${selectedColor}`} />
+                            {COLOR_OPTIONS.find(c => c.value === selectedColor)?.label}
+                          </Badge>
+                        )}
+                      </div>
+
+                      <Button onClick={handleCreateClick} className="gap-2">
+                        <Plus className="w-4 h-4" />
+                        Create
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -600,6 +592,7 @@ export default function LecturerDashboard() {
                 {activeTab === "analytics" && <AnalyticsPanel />}
                 {activeTab === "chat" && <TutorChat />}
                 {activeTab === "community" && <TutorCommunity />}
+                {activeTab === "notification" && <TutorNotification />}
               </div>
             </div>
           </div>

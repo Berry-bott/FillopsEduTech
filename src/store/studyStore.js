@@ -2649,6 +2649,12 @@ export const useStudyStore = create((set, get) => ({
   showSummary: false,
   studyResults: null,
   sessionStartTime: null,
+   sessionKey: 0,
+
+
+ triggerRestart: () => {   // ← ADD THIS ACTION
+    set((s) => ({ sessionKey: s.sessionKey + 1 }));
+  },
 
   // ---------------- RESET ----------------
   reset: () => {
@@ -2671,6 +2677,7 @@ export const useStudyStore = create((set, get) => ({
       showSummary: false,
       studyResults: null,
       sessionStartTime: null,
+      sessionKey: 0,
     });
   },
 
@@ -3380,15 +3387,42 @@ export const useStudyStore = create((set, get) => ({
     });
 
     // Prepare questions for summary
+    // const questionsForSummary = allQuestions.map((q, idx) => ({
+    //   id: q.id,
+    //   questionNumber: idx + 1,
+    //   subject: q.unitName || "Unknown",
+    //   text: q.text,
+    //   userAnswer: selectedOptions[q.id] || null,
+    //   isCorrect: selectedOptions[q.id] 
+    //     ? selectedOptions[q.id] === q.correctAnswer 
+    //     : null,
+    //   difficulty: q.difficulty,
+    //   category: q.category,
+    //   year: q.year,
+    // }));
+
     const questionsForSummary = allQuestions.map((q, idx) => ({
       id: q.id,
       questionNumber: idx + 1,
       subject: q.unitName || "Unknown",
       text: q.text,
+
+      // ✅ Carry through correct answer using every possible field name
+      correctAnswer:
+        q.correctAnswer ??
+        q.correct_answer ??
+        q.answer ??
+        q.answerKey ??
+        q.correctOption ??
+        null,
+
       userAnswer: selectedOptions[q.id] || null,
-      isCorrect: selectedOptions[q.id] 
-        ? selectedOptions[q.id] === q.correctAnswer 
+
+      isCorrect: selectedOptions[q.id]
+        ? selectedOptions[q.id] ===
+          (q.correctAnswer ?? q.correct_answer ?? q.answer ?? q.answerKey ?? q.correctOption)
         : null,
+
       difficulty: q.difficulty,
       category: q.category,
       year: q.year,

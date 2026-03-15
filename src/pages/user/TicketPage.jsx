@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import useTicketStore from "@/store/userTicketStore";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+} from "lucide-react";
+
+
+
 
 const CATEGORIES = ["TECHNICAL", "BILLING", "GENERAL", "ACADEMIC", "OTHER"];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
@@ -353,18 +360,31 @@ export default function TicketsPage() {
   const { error, successMessage, clearMessages } = useTicketStore();
   const [showCreate, setShowCreate] = useState(false);
   const [activeTicket, setActiveTicket] = useState(null); // { id, isClosed }
-
+   const navigate = useNavigate();
   const handleSelectTicket = useCallback((id, isClosed = false) => setActiveTicket({ id, isClosed }), []);
   const handleTicketCreated = useCallback((id) => { setShowCreate(false); setActiveTicket({ id, isClosed: false }); }, []);
   const handleBack = useCallback(() => setActiveTicket(null), []);
 
   return (
+    <>
+    <div className="absolute top-0 right-0 mt-8 mr-8">
+         <button
+          onClick={() => navigate('/user/dashboard')}
+          className="group flex items-center justify-end gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-blue-100 hover:border-blue-300"
+        >
+          <ArrowLeft className="w-5 h-5 text-blue-600 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-medium text-gray-700">Back to Dashboard</span>
+        </button>
+    </div>
+    
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <style>{`.line-clamp-1{overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}`}</style>
 
       {error && <Toast message={error} type="error" onClose={clearMessages} />}
       {successMessage && <Toast message={successMessage} type="success" onClose={clearMessages} />}
       {showCreate && <CreateTicketModal onClose={() => setShowCreate(false)} onCreated={handleTicketCreated} />}
+
+
 
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm w-full max-w-md mx-4 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -388,5 +408,7 @@ export default function TicketsPage() {
         </div>
       </div>
     </div>
+    </>
+
   );
 }

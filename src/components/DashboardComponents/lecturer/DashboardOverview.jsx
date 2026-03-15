@@ -133,36 +133,53 @@ export default function DashboardOverview({ context, setActiveTab }) {
   const safeTopics = Array.isArray(topics) ? topics : [];
 
   // ─── Group questions into content packages ─────────────────────────────
-  const completeContent = useMemo(() => {
-    const map = new Map();
+const completeContent = useMemo(() => {
+  const map = new Map();
 
-    safeQuestions.forEach((q) => {
-      if (
-        q?.category?.toLowerCase() === context?.examBody?.toLowerCase() &&
-        String(q?.year) === String(context?.year)
-      ) {
-        const key = `${q.category || "unknown"}-${q.year || "unknown"}-${q.subject || "unknown"}-${q.topic || "unknown"}`;
-
-        if (!map.has(key)) {
-          map.set(key, {
-            id: key,
-            category: q.category,
-            year: q.year,
-            subject: q.subject,
-            topic: q.topic,
-            questions: [],
-            questionCount: 0,
-          });
-        }
-
-        const group = map.get(key);
-        group.questions.push(q);
-        group.questionCount++;
+  // Normalize object or primitive to a plain string
+  const toString = (val, ...keys) => {
+    if (!val) return null;
+    if (typeof val === "object") {
+      for (const key of keys) {
+        if (val[key]) return String(val[key]);
       }
-    });
+      return val.name || val.id || JSON.stringify(val);
+    }
+    return String(val);
+  };
 
-    return Array.from(map.values());
-  }, [safeQuestions, context?.examBody, context?.year]);
+  safeQuestions.forEach((q) => {
+    const categoryStr = toString(q?.category, "name");
+    const subjectStr  = toString(q?.subject,  "subjectName", "name");
+    const topicStr    = toString(q?.topic,    "topicName",   "name");
+    const yearStr     = String(q?.year || "");
+
+    if (
+      categoryStr?.toLowerCase() === context?.examBody?.toLowerCase() &&
+      yearStr === String(context?.year)
+    ) {
+      const key = `${categoryStr}-${yearStr}-${subjectStr}-${topicStr}`;
+
+      if (!map.has(key)) {
+        map.set(key, {
+          id:            key,
+          category:      categoryStr,
+          year:          yearStr,
+          subject:       subjectStr  || "Unnamed Subject",
+          topic:         topicStr    || "Unnamed Topic",
+          questions:     [],
+          questionCount: 0,
+        });
+      }
+
+      const group = map.get(key);
+      group.questions.push(q);
+      group.questionCount++;
+    }
+  });
+
+  return Array.from(map.values());
+}, [safeQuestions, context?.examBody, context?.year]);
 
   const stats = useMemo(
     () => [
@@ -227,6 +244,7 @@ export default function DashboardOverview({ context, setActiveTab }) {
   // ─── Main UI ───────────────────────────────────────────────────────────
   return (
     <div className="space-y-8">
+      
       {/* Global stats from dashboard endpoint */}
       {dashboardData?.overview && (
         <div className="grid gap-4 md:grid-cols-3">
@@ -346,8 +364,10 @@ export default function DashboardOverview({ context, setActiveTab }) {
                 <Card key={subject._id || subject.id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-lg leading-tight">
-                        {subject.name || subject.subjectName || "Unnamed Subject"}
+                    <CardTitle className="text-lg leading-tight">
+                        {typeof subject.name === "object" 
+                          ? subject.name?.subjectName || subject.name?.id || "Unnamed Subject"
+                          : subject.name || subject.subjectName || "Unnamed Subject"}
                       </CardTitle>
                       <Badge
                         variant={subject.enrollmentCount > 0 ? "default" : "secondary"}
