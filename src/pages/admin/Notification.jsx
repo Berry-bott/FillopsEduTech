@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import useAdminNotificationStore from "../../store/AdminNotificationStore"
+import useAdminNotificationStore from "@/store/AdminNotificationStore"
 import {
   AdminBellIcon,
   AdminBackIcon,
@@ -18,6 +18,8 @@ function NotificationItem({ notification, index, onOpen, onRequestDelete, isPend
   const isRead = notification.read || notification.isRead;
   const cfg    = getAdminConfig(notification.type);
 
+
+
   return (
     <div
       role="button"
@@ -28,20 +30,20 @@ function NotificationItem({ notification, index, onOpen, onRequestDelete, isPend
         "flex items-start gap-3 px-4 py-3.5 rounded-2xl  border-l-4 cursor-pointer",
         "bg-white shadow-sm transition-all duration-150",
         "hover:shadow-md hover:-translate-y-px",
-        "outline-none focus-visible:ring-2 focus-visible:ring-indigo-400",
+        "outline-none focus-visible:ring-2  focus-visible:ring-indigo-400",
         isRead ? "border-l-transparent" : cfg.border,
         isPending ? "opacity-40 pointer-events-none" : "",
       ].join(" ")}
       style={{ animation: `fadeUp 0.3s ease ${index * 40}ms both` }}
     >
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${cfg.bg} ${cfg.icon}`}>
+      <div className={`w-9 h-9 rounded-xl flex items-center  justify-center shrink-0 mt-0.5 ${cfg.bg} ${cfg.icon}`}>
         {getAdminTypeIcon(notification.type)}
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <span className={`text-sm text-slate-800 leading-snug ${isRead ? "font-medium" : "font-bold"}`}>
-            {notification.title || notification.subject || "Notification"}
+            {notification.title || notification.subject ||  "Notification"}
           </span>
           <span className="text-[10px] text-slate-400 shrink-0 mt-0.5">
             {adminTimeAgo(notification.createdAt || notification.created_at || notification.date)}
