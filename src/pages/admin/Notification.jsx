@@ -25,7 +25,7 @@ function NotificationItem({ notification, index, onOpen, onRequestDelete, isPend
       onClick={() => onOpen(notification)}
       onKeyDown={(e) => e.key === "Enter" && onOpen(notification)}
       className={[
-        "flex items-start gap-3 px-4 py-3.5 rounded-2xl border-l-4 cursor-pointer",
+        "flex items-start gap-3 px-4 py-3.5 rounded-2xl  border-l-4 cursor-pointer",
         "bg-white shadow-sm transition-all duration-150",
         "hover:shadow-md hover:-translate-y-px",
         "outline-none focus-visible:ring-2 focus-visible:ring-indigo-400",
