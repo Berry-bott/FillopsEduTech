@@ -336,7 +336,7 @@ import Pricing from "@/pages/admin/Pricing";
 import UsersPage from "@/pages/admin/UsersPage";
 import AdminTicketPage from "@/pages/admin/TicketPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
-import AdminNotificationPage from "@/pages/admin/notification";
+import AdminNotificationPage from "@/pages/admin/Notification"
 
 // ========== TUTOR PAGES ==========
 import TutorLogin from "@/pages/index/TutorLogin";
