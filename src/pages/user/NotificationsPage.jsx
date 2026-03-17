@@ -497,9 +497,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useNotificationStore from "../../store/userNotificationStore";
-import { BellIcon, BackIcon, CloseIcon, getConfig, getTypeIcon, timeAgo } from "../../components/DashboardComponents/user/notification/NotificationUtils";
+import { BellIcon, BackIcon, CloseIcon, getConfig, getTypeIcon, timeAgo } from "../../components/DashboardComponents/user/notification/Notificationutils";
 import NotificationDetail  from "../../components/DashboardComponents/user/notification/NotificationDetail";
-import DeleteConfirmModal  from "../../components/DashboardComponents/user/notification/DeleteConfirmModalfixin";
+import DeleteConfirmModal  from "../../components/DashboardComponents/user/notification/DeleteConfirmModal";
 
 // ─── NotificationItem ─────────────────────────────────────────────────────────
 function NotificationItem({ notification, index, onOpen, onRequestDelete, isPending }) {
