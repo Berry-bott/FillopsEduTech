@@ -30,7 +30,7 @@ const useAdminAuthStore = create(
 
           const { accessToken, user } = data.data;
 
-          sessionStorage.setItem("adminAccessToken", accessToken);
+        
 
           set({
             admin: user,

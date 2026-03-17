@@ -14,7 +14,7 @@ const STATUS_FILTERS = [
   { label: "All", value: "" },
   { label: "Open", value: "open" },
   { label: "In Progress", value: "in_progress" },
-  { label: "Closed", value: "closed" },
+  { label: "Resolved", value: "resolved" },
 ];
 
 const STATUS_STYLES = {
