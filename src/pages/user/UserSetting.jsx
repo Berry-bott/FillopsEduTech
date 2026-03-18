@@ -63,7 +63,7 @@ export default function Settings() {
   });
 
   // Sync form with current user data
-  useEffect(() => {
+  useEffxect(() => {
     if (user) {
       setFormData({
         firstName: user.firstName || '',
