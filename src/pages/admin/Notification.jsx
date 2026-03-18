@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import useAdminNotificationStore from "../../store/AdminNotificationStore"
+import useAdminNotificationStore from "../../store/adminNotificationStore"
 import {
   AdminBellIcon,
   AdminBackIcon,
