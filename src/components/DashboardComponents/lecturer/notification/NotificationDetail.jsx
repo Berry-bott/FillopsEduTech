@@ -1,4 +1,4 @@
-import { BackIcon, CheckIcon, TrashIcon, getConfig, getTypeIcon, formatFullDate } from "./notificationUtils";
+import { BackIcon, CheckIcon, TrashIcon, getConfig, getTypeIcon, formatFullDate } from "./NotificationUtils";
 
 export default function NotificationDetail({ notification, onBack, onMarkRead, onRequestDelete }) {
   const id     = notification.id || notification._id;
