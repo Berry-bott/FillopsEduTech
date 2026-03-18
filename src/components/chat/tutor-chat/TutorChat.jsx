@@ -38,6 +38,7 @@ const CHAT_ENABLED_STATUSES = [
 
 const FILTERS = ["all", "active", "pending", "rescheduled", "completed", "cancelled"];
 
+
 export default function TutorChat() {
   const {
     bookingsByFilter,
