@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useNotificationStore from "../../store/tutorNotificationStore";
-import { BellIcon, BackIcon, CloseIcon, getConfig, getTypeIcon, timeAgo } from "../../components/DashboardComponents/lecturer/notification/notificationUtils";
+import { BellIcon, BackIcon, CloseIcon, getConfig, getTypeIcon, timeAgo } from "../../components/DashboardComponents/lecturer/notification/NotificationUtils";
 import NotificationDetail  from "../../components/DashboardComponents/lecturer/notification/Notificationdetail";
 import DeleteConfirmModal  from "../../components/DashboardComponents/lecturer/notification/DeleteConfirmModal";
 
