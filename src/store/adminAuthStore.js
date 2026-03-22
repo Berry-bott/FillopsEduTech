@@ -109,10 +109,16 @@ const useAdminAuthStore = create(
 
         let res = await request();
 
-        if (res.status === 401) {
+        // if (res.status === 401) {
+        //   const refreshed = await get().refreshAccessToken();
+        //   if (!refreshed) throw new Error("Session expired");
+
+        //   token = get().accessToken;
+        //   res = await request();
+        // }
+        if (res.status === 401 || res.status === 403) {
           const refreshed = await get().refreshAccessToken();
           if (!refreshed) throw new Error("Session expired");
-
           token = get().accessToken;
           res = await request();
         }
