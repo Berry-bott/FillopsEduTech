@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import fillopLogo from "../../../assets/images/fillopsLogo.png"
 import useNotificationStore from "@/store/tutorNotificationStore"
-import { NAV_ITEMS } from "./DashboardContent"
+import { NAV_ITEMS } from "./DashboardConstants"
 
 
 
