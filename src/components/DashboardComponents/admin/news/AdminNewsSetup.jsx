@@ -7,7 +7,7 @@ import Logo from "@/assets/images/fillopsLogo.png";
 import {
   AUDIENCE_OPTIONS, AUDIENCE_LABEL,
   EMPTY_FORM, stripHtml, wc, rt, cleanContent,
-} from "./newsUtils";
+} from "./NewsUtils";
 
 
 
