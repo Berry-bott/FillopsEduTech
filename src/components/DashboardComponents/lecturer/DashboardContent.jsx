@@ -11,7 +11,7 @@ import SettingsPage from "@/pages/lecturer/SettingsPage"
 import TutorChat from "@/pages/chat/TutorChatPage"
 import TutorCommunity from "@/pages/community/TutorCommunity.jsx"
 import TutorNotification from "@/pages/lecturer/Notificationspage"
-import { EXAM_BODIES, COLOR_OPTIONS } from "./dashboardConstants"
+import { EXAM_BODIES, COLOR_OPTIONS } from "./DashboardConstants"
 
 export default function DashboardContent({
   activeTab,
