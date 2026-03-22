@@ -374,9 +374,14 @@ import UserChatPage from "./pages/chat/UserChatPage";
 import NotificationsPage from "./pages/user/NotificationsPage";
 
 // ========== NEWS PAGES ==========
-import NewsPage from "./pages/news/NewsPage";
-import NewsDetailPage from "./pages/news/NewsDetailPage";
-import AdminNewsPage from "./components/DashboardComponents/admin/news/AdminNewsPage";
+import NewsPage from "./pages/news/admin/NewsPage";
+import NewsDetailPage from "./pages/news/admin/NewsDetailPage";
+import AdminNewsPage from "./components/DashboardComponents/admin/news/AdminNewsSetup";
+
+// ========== BLOG PAGES ==========
+import AdminBlogPage from "./pages/blog/admin/AdminBlogPage";
+
+
 
 import "./App.css";
 
@@ -406,9 +411,6 @@ function App() {
           <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* ========== NEWS — PUBLIC routes (anyone can read) ========== */}
-          {/* /news          → magazine feed (published articles only)     */}
-          {/* /news/:id      → full article reader                         */}
-          {/* NOTE: admin is declared first so "admin" isn't read as an id */}
    
           <Route path="/news/:id"   element={<NewsDetailPage />} />
           <Route path="/news"       element={<NewsPage />} />
@@ -444,6 +446,9 @@ function App() {
             <Route path="/orders/pending" element={<PaymentPending />} />
             <Route path="/support" element={<TicketPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+
+            {/* <Route path="/news/:id"   element={<UserNewsDetailPage />} /> */}
+          {/* <Route path="/news"       element={<UserNewsPage />} /> */}
           </Route>
 
           {/* ========== PROTECTED TUTOR ROUTES ========== */}
@@ -461,7 +466,7 @@ function App() {
           <Route
             element={
               <AdminAuthProvider>
-                <AdminProtectedRoute />
+                <AdminProtectedRoute /> 
               </AdminAuthProvider>
             }
           >

@@ -1,9 +1,35 @@
+import { useEffect, useRef } from "react";
 import { BackIcon, CheckIcon, TrashIcon, getConfig, getTypeIcon, formatFullDate } from "./NotificationUtils";
+
+function decodeHtml(html) {
+  if (!html) return "";
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  return txt.value;
+}
 
 export default function NotificationDetail({ notification, onBack, onMarkRead, onRequestDelete }) {
   const id     = notification.id || notification._id;
   const isRead = notification.isRead || notification.read;
   const cfg    = getConfig(notification.type);
+  const scrollRef = useRef(null);
+  const notifId = notification.id || notification._id;
+
+  // Snap browser window to top whenever the detail panel opens
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
+  // Reset inner card scroll when navigating between notifications
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [notifId]);
+
+  const message = decodeHtml(
+    notification.message || notification.body || notification.description || "No message content."
+  );
 
   return (
     <div
@@ -22,7 +48,7 @@ export default function NotificationDetail({ notification, onBack, onMarkRead, o
       </div>
 
       {/* Card */}
-      <div className="flex-1 overflow-y-auto px-4 pb-10">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-10">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 
           {/* Coloured header */}
@@ -55,36 +81,40 @@ export default function NotificationDetail({ notification, onBack, onMarkRead, o
           {/* Message */}
           <div className="px-5 py-5">
             <p className="text-sm text-slate-700 leading-relaxed">
-              {notification.message || notification.body || notification.description || "No message content."}
+              {message}
             </p>
 
-            {/* Extra data key/value table */}
-            {notification.data && Object.keys(notification.data).length > 0 && (
-              <div className="mt-5 rounded-xl bg-slate-50 border border-slate-100 divide-y divide-slate-100">
-                {Object.entries(notification.data).map(([key, val]) => (
-                  <div key={key} className="flex items-start justify-between gap-3 px-4 py-3">
-                    <span className="text-xs text-slate-400 capitalize shrink-0">
-                      {key.replace(/([A-Z])/g, " $1").trim()}
-                    </span>
-                    <span className="text-xs text-slate-600 font-mono text-right break-all">
-                      {String(val)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Extra data key/value table — internal/technical fields hidden */}
+            {(() => {
+              const HIDDEN_KEYS = new Set([
+                "id", "_id", "newsId", "postId", "articleId", "itemId",
+                "slug", "url", "coverImage", "image", "thumbnail",
+              ]);
+              const HIDDEN_SUFFIX = /[Ii][Dd]$/; // catches anything ending in Id/ID/id
+              const visible = notification.data
+                ? Object.entries(notification.data).filter(
+                    ([key]) => !HIDDEN_KEYS.has(key) && !HIDDEN_SUFFIX.test(key)
+                  )
+                : [];
+              return visible.length > 0 ? (
+                <div className="mt-5 rounded-xl bg-slate-50 border border-slate-100 divide-y divide-slate-100">
+                  {visible.map(([key, val]) => (
+                    <div key={key} className="flex items-start justify-between gap-3 px-4 py-3">
+                      <span className="text-xs text-slate-400 capitalize shrink-0">
+                        {key.replace(/([A-Z])/g, " $1").trim()}
+                      </span>
+                      <span className="text-xs text-slate-600 font-mono text-right break-all">
+                        {String(val)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : null;
+            })()}
           </div>
 
           {/* Actions */}
           <div className="px-5 pb-5 flex gap-3">
-            {!isRead && (
-              <button
-                onClick={() => onMarkRead(id, false)}
-                className="flex items-center gap-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-4 py-2.5 rounded-xl transition-colors"
-              >
-                <CheckIcon /> Mark as read
-              </button>
-            )}
             <button
               onClick={() => onRequestDelete(id)}
               className="flex items-center gap-2 text-xs font-semibold text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl transition-colors ml-auto"

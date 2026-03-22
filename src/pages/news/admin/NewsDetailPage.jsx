@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import useNewsStore from "@/store/newsStore";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import useNewsStore from "@/store/adminNewsStore";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const AUDIENCE_LABEL = { ALL: "General", USERS_ONLY: "Students", TUTORS_ONLY: "Tutors" };
@@ -10,7 +10,18 @@ const AUDIENCE_COLOR = {
   TUTORS_ONLY: "bg-amber-100 text-amber-700",
 };
 
-function stripHtml(html) { return html?.replace(/<[^>]*>/g, "") || ""; }
+function stripHtml(html) {
+  return (html || "")
+    .replace(/&amp;nbsp;/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 function fmtDate(d) {
   if (!d) return "";
   return new Date(d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -61,13 +72,17 @@ function Footer() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function NewsDetailPage() {
-  const { id } = useParams();                        // ← dynamic route param
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { selectedNews, newsList, isLoading, error, fetchNewsById, clearError } = useNewsStore();
+  const location = useLocation();
+  const { selectedNews, isLoading, error, fetchNewsById, clearError } = useNewsStore();
+
+  // Where to go when the user clicks "back" — admin preview sets state.from
+  const backPath  = location.state?.from ?? "/news/admin";
+  const backLabel = "Back to stories";
 
   useEffect(() => {
     clearError();
-    // fetchNewsById is smart: checks the cached list first, avoids 403
     fetchNewsById(id);
     window.scrollTo(0, 0);
   }, [id]);
@@ -92,9 +107,9 @@ export default function NewsDetailPage() {
         <span className="text-5xl">⚠️</span>
         <h3 className="text-lg font-semibold text-slate-700" style={{ fontFamily: "Georgia, serif" }}>Story not found</h3>
         <p className="text-sm text-red-400 text-center max-w-xs">{error}</p>
-        <button onClick={() => navigate("/news")}
+        <button onClick={() => navigate(backPath)}
           className="mt-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
-          ← Back to stories
+          ← {backLabel}
         </button>
       </div>
       <Footer />
@@ -119,13 +134,13 @@ export default function NewsDetailPage() {
       <main className="max-w-3xl mx-auto px-6 py-10">
 
         {/* Back link */}
-        <Link to="/news"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 no-underline mb-8 transition-colors group">
+        <button onClick={() => navigate(backPath)}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-8 transition-colors group bg-transparent border-0 cursor-pointer p-0">
           <svg style={{ width: 14, height: 14 }} className="group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Back to stories
-        </Link>
+          {backLabel}
+        </button>
 
         {/* Audience pill */}
         <div className="mb-4">
@@ -140,15 +155,8 @@ export default function NewsDetailPage() {
           {selectedNews.title}
         </h1>
 
-        {/* Subtitle / excerpt */}
-        {excerpt && (
-          <p className="text-xl text-slate-500 leading-relaxed mb-6" style={{ fontFamily: "Georgia, serif" }}>
-            {excerpt}
-          </p>
-        )}
-
-        {/* Author row — matches Image 2 exactly */}
-        <div className="flex items-center justify-between py-4 border-y border-slate-150 mb-8" style={{ borderColor: "#e8eaed" }}>
+        {/* Author row */}
+        <div className="flex items-center justify-between py-4 border-y mb-8" style={{ borderColor: "#e8eaed" }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm">
               {authorInit}
@@ -167,8 +175,6 @@ export default function NewsDetailPage() {
               </div>
             </div>
           </div>
-
-          {/* Share */}
           <button
             onClick={() => navigator.share?.({ title: selectedNews.title, url: window.location.href }).catch(() => {})}
             className="p-2 rounded-full border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors">
@@ -206,19 +212,19 @@ export default function NewsDetailPage() {
               [&_blockquote]:border-l-4 [&_blockquote]:border-indigo-400 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-slate-500 [&_blockquote]:my-6
               [&_hr]:border-slate-200 [&_hr]:my-8
             "
-            dangerouslySetInnerHTML={{ __html: selectedNews.content }}
+            dangerouslySetInnerHTML={{ __html: (selectedNews.content || "")
+              .replace(/(&amp;)+nbsp;/g, " ")
+              .replace(/&nbsp;/g, " ")
+            }}
           />
         ) : (
-          // Plain text — split on newlines, drop cap on first para
           <div className="space-y-5">
             {(selectedNews.content || "").split("\n").filter(p => p.trim()).map((para, i) => (
-              <p key={i}
-                className="text-slate-700 leading-[1.9]"
+              <p key={i} className="text-slate-700 leading-[1.9]"
                 style={{ fontSize: "1.05rem", fontFamily: "Georgia, serif" }}>
                 {i === 0 && para.length > 0 ? (
                   <>
-                    <span
-                      className="float-left font-bold text-slate-900 leading-none mr-2"
+                    <span className="float-left font-bold text-slate-900 leading-none mr-2"
                       style={{ fontFamily: "Georgia, serif", fontSize: "4rem", lineHeight: 0.85, marginTop: "0.1em" }}>
                       {para[0]}
                     </span>
@@ -232,12 +238,12 @@ export default function NewsDetailPage() {
 
         {/* Bottom back */}
         <div className="mt-14 pt-8 border-t border-slate-100">
-          <button onClick={() => navigate("/news")}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+          <button onClick={() => navigate(backPath)}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors bg-transparent border-0 cursor-pointer p-0">
             <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to all stories
+            {backLabel}
           </button>
         </div>
       </main>

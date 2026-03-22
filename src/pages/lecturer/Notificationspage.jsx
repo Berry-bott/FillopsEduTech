@@ -1,15 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useNotificationStore from "../../store/tutorNotificationStore";
 import { BellIcon, BackIcon, CloseIcon, getConfig, getTypeIcon, timeAgo } from "../../components/DashboardComponents/lecturer/notification/NotificationUtils";
 import NotificationDetail  from "../../components/DashboardComponents/lecturer/notification/NotificationDetail";
 import DeleteConfirmModal  from "../../components/DashboardComponents/lecturer/notification/DeleteConfirmModal";
 
+// Strips HTML tags and decodes entities (e.g. &nbsp; → space) for plain-text previews
+function stripHtml(html) {
+  if (!html) return "";
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return txt.value;
+}
+
 // ─── NotificationItem ─────────────────────────────────────────────────────────
 function NotificationItem({ notification, index, onOpen, onRequestDelete, isPending }) {
   const id     = notification._id || notification.id;
   const isRead = notification.read || notification.isRead;
   const cfg    = getConfig(notification.type);
+  const preview = stripHtml(notification.message || notification.body || notification.description);
 
   return (
     <div
@@ -40,10 +49,8 @@ function NotificationItem({ notification, index, onOpen, onRequestDelete, isPend
             {timeAgo(notification.createdAt || notification.created_at || notification.date)}
           </span>
         </div>
-        {(notification.message || notification.body || notification.description) && (
-          <p className="text-xs text-slate-500 mt-1 leading-relaxed truncate">
-            {notification.message || notification.body || notification.description}
-          </p>
+        {preview && (
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed truncate">{preview}</p>
         )}
         <p className="text-[10px] text-slate-300 mt-1.5 font-medium">Tap to read →</p>
       </div>
@@ -79,6 +86,9 @@ export default function NotificationsPage() {
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [isDeleting,      setIsDeleting]      = useState(false);
 
+  // Guard so the highlight effect only fires once, not on every Load More
+  const highlightHandled = useRef(false);
+
   const load = useCallback((f = filter) => {
     fetchNotifications({ page: 1, limit: 10, unreadOnly: f === "unread" });
     fetchUnreadCount();
@@ -87,10 +97,14 @@ export default function NotificationsPage() {
   useEffect(() => { load(filter); }, [filter]);
 
   useEffect(() => {
+    if (highlightHandled.current) return;
     const highlightId = location.state?.highlightId;
     if (highlightId && notifications.length > 0) {
       const found = notifications.find((n) => (n.id || n._id) === highlightId);
-      if (found) setSelected(found);
+      if (found) {
+        setSelected(found);
+        highlightHandled.current = true;
+      }
     }
   }, [location.state, notifications]);
 
@@ -129,7 +143,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
+    <div className=" relative overflow-hidden">
       {/* Grid background */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
@@ -141,7 +155,7 @@ export default function NotificationsPage() {
       />
 
       <div className="relative z-10 max-w-xl mx-auto" style={{ minHeight: "100vh" }}>
-        <div className="px-4 py-10 pb-20">
+        <div className="px-4 py-1 pb-20">
 
           {/* ── Header ── */}
           <div className="flex items-center justify-between mb-7">
