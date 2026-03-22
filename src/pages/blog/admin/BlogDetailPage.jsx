@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import useBlogStore from "@/store/adminBlogStore";
 import { CATEGORY_BADGE, CATEGORY_DOT } from "../../../components/DashboardComponents/admin/blog/admin/BlogUtils";
+import Logo from "@/assets/images/fillopsLogo.png";
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function stripHtml(html) {
@@ -34,11 +36,7 @@ function Navbar() {
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link to="/blog" className="flex items-center gap-2.5 no-underline">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-sm">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
+            <img src={Logo} alt="FillOps Logo" className="w-8 h-8 object-contain" />
           <span className="text-[15px] font-bold text-slate-900 tracking-tight">FillOps Blog</span>
         </Link>
         <div className="hidden md:flex items-center gap-4 text-[13px] text-slate-500">

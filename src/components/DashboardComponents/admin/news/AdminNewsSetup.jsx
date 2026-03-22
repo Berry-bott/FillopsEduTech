@@ -3,6 +3,7 @@ import useNewsStore from "@/store/adminNewsStore";
 import RichEditor from "@/components/ui/richeditor";
 import ArticleTableRow from "./ArticleTableRow";
 import PreviewFeed from "./PreviewFeed";
+import Logo from "@/assets/images/fillopsLogo.png";
 import {
   AUDIENCE_OPTIONS, AUDIENCE_LABEL,
   EMPTY_FORM, stripHtml, wc, rt, cleanContent,
@@ -169,10 +170,8 @@ export default function AdminNewsPage() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
           <div className="flex items-center gap-3 mr-auto">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm shadow-blue-200">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-              </svg>
+            <div>
+              <img src={Logo} alt="FillOps Logo" className="w-8 h-8 object-contain" />
             </div>
             <div>
               <p className="text-[15px] font-bold text-slate-900 leading-none">FillOps News</p>

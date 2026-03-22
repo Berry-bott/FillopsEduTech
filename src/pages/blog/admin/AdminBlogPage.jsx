@@ -4,6 +4,7 @@ import { EMPTY_BLOG_FORM, stripHtml, cleanContent } from "@/components/Dashboard
 import BlogWriteTab   from "@/components/DashboardComponents/admin/blog/admin/BlogWriteTab";
 import BlogManageTab  from "@/components/DashboardComponents/admin/blog/admin/BlogManageTab";
 import BlogPreviewTab from "@/components/DashboardComponents/admin/blog/admin/BlogPreviewTab";
+import Logo from "@/assets/images/fillopsLogo.png";
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ toast }) {
   if (!toast) return null;
@@ -157,7 +158,9 @@ export default function AdminBlogPage() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
           <div className="flex items-center gap-3 mr-auto">
-          
+          <div>
+            <img src={Logo} alt="FillOps Logo" className="w-10 h-10 object-contain" />
+          </div>
             <div>
               <p className="text-[15px] font-bold text-slate-900 leading-none">FillOps Blog</p>
               <p className="text-[10px] text-slate-400 mt-0.5">Editorial Dashboard</p>

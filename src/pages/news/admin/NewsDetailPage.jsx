@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import useNewsStore from "@/store/adminNewsStore";
+import Logo from "@/assets/images/fillopsLogo.png";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const AUDIENCE_LABEL = { ALL: "General", USERS_ONLY: "Students", TUTORS_ONLY: "Tutors" };
@@ -36,11 +37,9 @@ function Navbar() {
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link to="/news" className="flex items-center gap-2.5 no-underline">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-            </svg>
-          </div>
+         <div>
+          <img src={Logo} alt="FillOps Logo" className="w-8 h-8 object-contain" />
+         </div>
           <span className="text-[15px] font-bold text-slate-900 tracking-tight">FillOps News</span>
         </Link>
         <div className="hidden md:flex items-center gap-4 text-[13px] text-slate-500">
