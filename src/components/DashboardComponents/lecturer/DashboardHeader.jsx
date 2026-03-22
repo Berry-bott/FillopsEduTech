@@ -204,7 +204,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ThemeToggle } from "../../DashboardComponents/theme-toggle"
 import NotificationBellDropdown from "./NotificationBell"
-import { EXAM_BODIES, COLOR_OPTIONS } from "./dashboardConstants"
+import { EXAM_BODIES, COLOR_OPTIONS } from "./DashboardConstants"
 
 export default function DashboardHeader({
   activeTab,

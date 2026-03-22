@@ -5,9 +5,13 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import fillopLogo from "../../../assets/images/fillopsLogo.png"
 import useNotificationStore from "@/store/tutorNotificationStore"
-import { NAV_ITEMS } from "./dashboardConstants"
+import { NAV_ITEMS } from "./DashboardContent"
+
+
+
 
 export default function DashboardSidebar({
+   
   tutor,
   activeTab,
   setActiveTab,
@@ -20,7 +24,7 @@ export default function DashboardSidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-[999] w-64 bg-card flex flex-col border-r shadow-xl",
+        "fixed inset-y-0 left-0 z-[989] w-64 bg-card flex flex-col border-r shadow-xl",
         "transform transition-transform duration-300 lg:translate-x-0",
         mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}
