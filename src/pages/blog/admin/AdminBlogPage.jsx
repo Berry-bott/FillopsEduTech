@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import useBlogStore from "@/store/adminBlogStore";
-import { EMPTY_BLOG_FORM, stripHtml, cleanContent } from "@/components/DashboardComponents/admin/blog/admin/blogUtils";
+import { EMPTY_BLOG_FORM, stripHtml, cleanContent } from "@/components/DashboardComponents/admin/blog/admin/BlogUtils";
 import BlogWriteTab   from "@/components/DashboardComponents/admin/blog/admin/BlogWriteTab";
 import BlogManageTab  from "@/components/DashboardComponents/admin/blog/admin/BlogManageTab";
 import BlogPreviewTab from "@/components/DashboardComponents/admin/blog/admin/BlogPreviewTab";

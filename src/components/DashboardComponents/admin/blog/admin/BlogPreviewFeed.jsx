@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { stripHtml, rt, CATEGORY_BADGE, CATEGORY_DOT } from "./blogUtils";
+import { stripHtml, rt, CATEGORY_BADGE, CATEGORY_DOT } from "./BlogUtils";
 
 export default function BlogPreviewFeed({ blogs }) {
   const hero     = blogs[0];

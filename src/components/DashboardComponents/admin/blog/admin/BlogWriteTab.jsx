@@ -1,6 +1,6 @@
 import { useState } from "react";
 import RichEditor from "@/components/ui/richeditor";
-import { CATEGORY_BADGE, CATEGORY_DOT, wc, rt } from "./blogUtils";
+import { CATEGORY_BADGE, CATEGORY_DOT, wc, rt } from "./BlogUtils";
 
 // ─── SEO Panel ────────────────────────────────────────────────────────────────
 function SeoPanel({ form, field }) {

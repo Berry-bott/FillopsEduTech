@@ -1,4 +1,4 @@
-import { CATEGORY_BADGE, CATEGORY_DOT, fmt, stripHtml, rt } from "./blogUtils";
+import { CATEGORY_BADGE, CATEGORY_DOT, fmt, stripHtml, rt } from "./BlogUtils";
 
 export default function BlogTableRow({ blog, onEdit, onDelete, onTogglePublish, isSubmitting, index }) {
   const categoryKey = blog.category ?? "";
