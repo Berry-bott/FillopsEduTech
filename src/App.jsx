@@ -380,6 +380,7 @@ import AdminNewsPage from "./components/DashboardComponents/admin/news/AdminNews
 
 // ========== BLOG PAGES ==========
 import AdminBlogPage from "./pages/blog/admin/AdminBlogPage";
+import BlogDetailPage from "./pages/blog/admin/BlogDetailPage";
 
 
 
@@ -481,6 +482,10 @@ function App() {
             <Route path="/admin/notifications"  element={<AdminNotificationPage />} />
                 {/* ✅ Admin-only news management — protected */}
             <Route path="/news/admin" element={<AdminNewsPage />} />
+
+
+            <Route path="/blog/admin" element={<AdminBlogPage />} />
+            <Route path="/blog/:slug" element={<BlogDetailPage />} />
             
           </Route>
 

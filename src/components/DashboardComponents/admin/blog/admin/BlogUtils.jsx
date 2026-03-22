@@ -1,11 +1,11 @@
-// ─── Category Options (admin types manually, these are suggestions/defaults) ──
+// ─── Category Options ─────────────────────────────────────────────────────────
 export const CATEGORY_OPTIONS = [
-  { value: "WAEC",      label: "WAEC",       icon: "📝", desc: "WAEC exam content"      },
-  { value: "JAMB",      label: "JAMB",       icon: "🎯", desc: "JAMB exam content"      },
-  { value: "NECO",      label: "NECO",       icon: "📚", desc: "NECO exam content"      },
-  { value: "GCE",       label: "GCE",        icon: "🎓", desc: "GCE exam content"       },
-  { value: "Study Tips","label": "Study Tips",icon: "💡", desc: "General study advice"  },
-  { value: "News",      label: "News",        icon: "📰", desc: "Platform news"          },
+  { value: "WAEC",        label: "WAEC",        icon: "📝", desc: "WAEC exam content"    },
+  { value: "JAMB",        label: "JAMB",        icon: "🎯", desc: "JAMB exam content"    },
+  { value: "NECO",        label: "NECO",        icon: "📚", desc: "NECO exam content"    },
+  { value: "GCE",         label: "GCE",         icon: "🎓", desc: "GCE exam content"     },
+  { value: "Study Tips",  label: "Study Tips",  icon: "💡", desc: "General study advice" },
+  { value: "News",        label: "News",        icon: "📰", desc: "Platform news"         },
 ];
 
 export const CATEGORY_BADGE = {
@@ -24,6 +24,17 @@ export const CATEGORY_DOT = {
   GCE:           "bg-amber-500",
   "Study Tips":  "bg-rose-500",
   News:          "bg-slate-400",
+};
+
+// Convenient display label — mirrors the value but kept separate
+// so callers never hardcode strings or fall through to undefined
+export const CATEGORY_LABEL = {
+  WAEC:          "WAEC",
+  JAMB:          "JAMB",
+  NECO:          "NECO",
+  GCE:           "GCE",
+  "Study Tips":  "Study Tips",
+  News:          "News",
 };
 
 export const EMPTY_BLOG_FORM = {

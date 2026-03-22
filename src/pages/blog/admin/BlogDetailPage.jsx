@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import useBlogStore from "@/store/adminBlogStore";
-import { CATEGORY_BADGE, CATEGORY_DOT } from "./blogUtils";
+import { CATEGORY_BADGE, CATEGORY_DOT } from "../../../components/DashboardComponents/admin/blog/admin/BlogUtils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function stripHtml(html) {

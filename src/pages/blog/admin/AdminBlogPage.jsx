@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import useBlogStore from "@/store/adminBlogStore";
-import { EMPTY_BLOG_FORM, stripHtml, cleanContent } from "../../../../components/DashboardComponents/admin/blog/admin/BlogUtils";
-import BlogWriteTab   from "../../../components/DashboardComponents/admin/blog/admin/BlogWriteTab";
-import BlogManageTab  from "../../../components/DashboardComponents/admin/blog/admin/BlogManageTab";
-import BlogPreviewTab from "../../../components/DashboardComponents/admin/blog/admin/BlogPreviewTab";
-
+import { EMPTY_BLOG_FORM, stripHtml, cleanContent } from "@/components/DashboardComponents/admin/blog/admin/blogUtils";
+import BlogWriteTab   from "@/components/DashboardComponents/admin/blog/admin/BlogWriteTab";
+import BlogManageTab  from "@/components/DashboardComponents/admin/blog/admin/BlogManageTab";
+import BlogPreviewTab from "@/components/DashboardComponents/admin/blog/admin/BlogPreviewTab";
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ toast }) {
   if (!toast) return null;
@@ -158,11 +157,7 @@ export default function AdminBlogPage() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
           <div className="flex items-center gap-3 mr-auto">
-            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-sm shadow-violet-200">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
+          
             <div>
               <p className="text-[15px] font-bold text-slate-900 leading-none">FillOps Blog</p>
               <p className="text-[10px] text-slate-400 mt-0.5">Editorial Dashboard</p>

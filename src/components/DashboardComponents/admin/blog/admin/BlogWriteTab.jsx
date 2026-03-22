@@ -1,5 +1,5 @@
 import { useState } from "react";
-import RichEditor from "../news/RichEditor";
+import RichEditor from "@/components/ui/richeditor";
 import { CATEGORY_BADGE, CATEGORY_DOT, wc, rt } from "./blogUtils";
 
 // ─── SEO Panel ────────────────────────────────────────────────────────────────
