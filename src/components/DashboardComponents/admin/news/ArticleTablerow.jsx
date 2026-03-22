@@ -1,4 +1,4 @@
-import { AUDIENCE_BADGE, AUDIENCE_DOT, AUDIENCE_LABEL, fmt, stripHtml, rt } from "./newsUtils";
+import { AUDIENCE_BADGE, AUDIENCE_DOT, AUDIENCE_LABEL, fmt, stripHtml, rt } from "./NewsUtils";
 
 export default function ArticleTableRow({ news, onEdit, onDelete, onTogglePublish, isSubmitting, index }) {
   const badge = AUDIENCE_BADGE[news.targetAudience] ?? AUDIENCE_BADGE.ALL;

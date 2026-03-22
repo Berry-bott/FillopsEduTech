@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { stripHtml, rt } from "./newsUtils";
+import { stripHtml, rt } from "./NewsUtils";
 
 export default function PreviewFeed({ articles }) {
   const hero     = articles[0];
