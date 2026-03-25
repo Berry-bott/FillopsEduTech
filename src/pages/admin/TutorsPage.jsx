@@ -343,7 +343,8 @@ import { UserPlus, Search } from "lucide-react";
 // ─── SKELETON COMPONENTS ──────────────────────────────────────────────────────
 
 function StatsCardSkeleton() {
-  
+
+
   return (
     <Card>
       <CardContent className="p-4">
@@ -351,6 +352,7 @@ function StatsCardSkeleton() {
           <div className="h-4 w-28 rounded bg-gray-200 animate-pulse" />
           <div className="h-8 w-16 rounded bg-gray-200 animate-pulse" />
         </div>
+
       </CardContent>
     </Card>
   );
@@ -358,7 +360,7 @@ function StatsCardSkeleton() {
 
 function FilterBarSkeleton() {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between ">
       <div className="h-6 w-32 rounded bg-gray-200 animate-pulse" />
       <div className="flex items-center gap-4">
         <div className="h-10 w-64 rounded bg-gray-200 animate-pulse" />
@@ -515,7 +517,7 @@ export default function TutorsPage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center text-red-600">
+        <div className="text-center text-red-500">
           <p className="text-xl font-bold">Error loading tutors</p>
           <p>{error}</p>
           <Button className="mt-4" onClick={() => fetchTutors({ page: 1, limit: 50 })}>
