@@ -343,6 +343,7 @@ import { UserPlus, Search } from "lucide-react";
 // ─── SKELETON COMPONENTS ──────────────────────────────────────────────────────
 
 function StatsCardSkeleton() {
+  
   return (
     <Card>
       <CardContent className="p-4">
