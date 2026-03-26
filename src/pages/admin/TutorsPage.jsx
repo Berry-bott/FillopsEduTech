@@ -521,7 +521,7 @@ export default function TutorsPage() {
           <p className="text-xl font-bold">Error loading tutors</p>
           <p>{error}</p>
           <Button className="mt-4" onClick={() => fetchTutors({ page: 1, limit: 50 })}>
-            Retry
+            Retry again
           </Button>
         </div>
       </div>
