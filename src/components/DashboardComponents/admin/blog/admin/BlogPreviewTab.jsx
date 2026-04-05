@@ -69,7 +69,7 @@ export default function BlogPreviewTab({ blogList, isLoading, allCategories, onR
       <div className="max-w-6xl mx-auto px-6 py-10">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 gap-3 text-slate-400">
-            <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-violet-500 animate-spin" />
+            <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-primary-hover animate-spin" />
             <p className="text-sm">Loading…</p>
           </div>
         ) : (

@@ -63,7 +63,7 @@ export default function Layout({ children }) {
           <TopNav />
         </header>
 
-        <main className="flex-1 overflow-auto p-3 sm:p-6 bg-white dark:bg-background min-w-0">
+        <main className="flex-1 overflow-auto px-3  sm:px-6 bg-white dark:bg-background min-w-0">
           {children}
         </main>
       </div>

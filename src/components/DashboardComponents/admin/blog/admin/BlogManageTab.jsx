@@ -58,7 +58,7 @@ export default function BlogManageTab({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search posts…"
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-sm transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm transition-all"
           />
           {search && (
             <button
@@ -77,7 +77,7 @@ export default function BlogManageTab({
               key={opt.val}
               onClick={() => setStatusFilter(opt.val)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                statusFilter === opt.val ? "bg-violet-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+                statusFilter === opt.val ? "bg-primary text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
               }`}
             >
               {opt.label}
@@ -91,7 +91,7 @@ export default function BlogManageTab({
             <button
               onClick={() => setCategoryFilter("all")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                categoryFilter === "all" ? "bg-violet-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+                categoryFilter === "all" ? "bg-primary text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
               }`}
             >
               All
@@ -101,7 +101,7 @@ export default function BlogManageTab({
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  categoryFilter === cat ? "bg-violet-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+                  categoryFilter === cat ? "bg-primary text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
                 }`}
               >
                 {cat}
@@ -126,7 +126,7 @@ export default function BlogManageTab({
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 gap-3 text-slate-400">
-            <div className="w-6 h-6 rounded-full border-2 border-slate-200 border-t-violet-500 animate-spin" />
+            <div className="w-6 h-6 rounded-full border-2 border-slate-200 border-t-primary animate-spin" />
             <span className="text-sm">Loading posts…</span>
           </div>
         ) : filtered.length === 0 ? (
@@ -137,7 +137,7 @@ export default function BlogManageTab({
             <p className="text-sm font-medium">No posts found</p>
             <button
               onClick={clearFilters}
-              className="text-xs text-violet-600 hover:text-violet-700 font-semibold underline underline-offset-2"
+              className="text-xs text-primary hover:text-primary font-semibold underline underline-offset-2"
             >
               Clear filters
             </button>

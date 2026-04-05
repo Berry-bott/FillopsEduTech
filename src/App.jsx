@@ -384,6 +384,9 @@ import AdminBlogPage from "./pages/blog/admin/AdminBlogPage";
 import BlogDetailPage from "./pages/blog/admin/BlogDetailPage";
 
 
+// ========== PUBLIC BLOG PAGES ==========
+import BlogPage from "./pages/index/BlogPage";
+
 
 import "./App.css";
 
@@ -416,6 +419,10 @@ function App() {
    
           <Route path="/news/:id"   element={<NewsDetailPage />} />
           <Route path="/news"       element={<NewsPage />} />
+
+          {/* ========== BLOG — PUBLIC routes (anyone can read) ========== */}
+          <Route path="/blog"       element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogDetailPage />} />
 
           {/* ========== PROTECTED USER ROUTES ========== */}
           <Route
@@ -487,7 +494,7 @@ function App() {
 
 
             <Route path="/blog/admin" element={<AdminBlogPage />} />
-            <Route path="/blog/:slug" element={<BlogDetailPage />} />
+            {/* <Route path="/blog/:slug" element={<BlogDetailPage />} /> */}
             
           </Route>
 

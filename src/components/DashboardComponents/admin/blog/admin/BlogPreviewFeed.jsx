@@ -44,11 +44,11 @@ export default function BlogPreviewFeed({ blogs }) {
           className="block no-underline group"
         >
           {hero.coverImage ? (
-            <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200" style={{ height: 420 }}>
+            <div className="relative w-full  rounded-3xl overflow-hidden shadow-2xl shadow-slate-200" style={{ height: 420 }}>
               <img
                 src={hero.coverImage}
                 alt={hero.title}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+               className="absolute inset-0 w-full h-full object-cover  object-top transition-transform duration-700 group-hover:scale-[1.03]"
                 onError={e => e.target.style.display = "none"}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />

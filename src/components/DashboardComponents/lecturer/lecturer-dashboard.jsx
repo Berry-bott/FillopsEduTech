@@ -622,6 +622,8 @@ import { useTutorChatStore } from "@/store/tutorChatStore"
 import DashboardSidebar from "./DashboardSidebar"
 import DashboardHeader from "./DashboardHeader"
 import DashboardContent from "./DashboardContent"
+import LatestBlogBanner from "../../layouts/Latestblogbanner"
+
 
 // Delays updating a value until the user stops typing for `delay` ms
 function useDebounce(value, delay = 400) {
@@ -796,6 +798,7 @@ export default function LecturerDashboard() {
           globalSearch={globalSearch}
           setGlobalSearch={setGlobalSearch}
         />
+        <LatestBlogBanner/>
 
         <DashboardContent
           activeTab={activeTab}

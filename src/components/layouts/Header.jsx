@@ -250,6 +250,17 @@ const Header = () => {
           {/* ===== Desktop Nav ===== */}
           <nav className="hidden md:flex items-center space-x-6">
 
+            {/* Blog */}
+            <div className="relative group">
+              <button
+                onClick={() => navigate("/blog")}
+                className="relative overflow-hidden text-sm text-Graphite dark:text-gray-100 font-medium h-6"
+              >
+                <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">Blog</span>
+                <span className="absolute left-0 top-full transition-transform duration-300 ease-in-out group-hover:-translate-y-full">Blog</span>
+              </button>
+            </div>
+
             {/* Exams Dropdown */}
             <div
               className="relative group"
@@ -351,6 +362,16 @@ const Header = () => {
 
             <div className="mt-3">
               <SearchBar />
+            </div>
+            {/* Blog */}
+            <div className="relative group">
+              <button
+                onClick={() => navigate("/blog")}
+                className="relative overflow-hidden text-sm text-Graphite dark:text-gray-100 font-medium h-6"
+              >
+                <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">Blog</span>
+                <span className="absolute left-0 top-full transition-transform duration-300 ease-in-out group-hover:-translate-y-full">Blog</span>
+              </button>
             </div>
 
             {/* Exams */}
