@@ -700,57 +700,57 @@ const Login = () => {
             Terms of Use
           </a>
         </p>
-{/* ===== Social Login ===== */}
-<div className="mt-6">
-  <div className="flex items-center justify-center mb-4">
-    <span className="h-[1px] w-1/4 bg-gray-300 dark:bg-gray-700"></span>
-    <span className="px-2 text-gray-400 dark:text-gray-500 text-xs">
-      or sign in with
-    </span>
-    <span className="h-[1px] w-1/4 bg-gray-300 dark:bg-gray-700"></span>
-  </div>
+        {/* ===== Social Login ===== */}
+        <div className="mt-6">
+          <div className="flex items-center justify-center mb-4">
+            <span className="h-[1px] w-1/4 bg-gray-300 dark:bg-gray-700"></span>
+            <span className="px-2 text-gray-400 dark:text-gray-500 text-xs">
+              or sign in with
+            </span>
+            <span className="h-[1px] w-1/4 bg-gray-300 dark:bg-gray-700"></span>
+          </div>
 
-  <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3">
 
-    {/* Google */}
-    <div className="group relative w-10 h-10 flex items-center justify-center">
-      <button
-        type="button"
-        className="absolute inset-0 w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 group-hover:border-red-400 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition transform group-hover:scale-110"
-      >
-        <Icon icon="flat-color-icons:google" className="h-4 w-4" />
-      </button>
-      <div className="opacity-0 absolute inset-0 z-10 overflow-hidden rounded-full">
-        <GoogleLogin
-          onSuccess={onGoogleSuccess}
-          onError={() => setError("Google sign-in was cancelled or failed.")}
-          width="40"
-        />
-      </div>
-    </div>
+            {/* Google */}
+            <div className="group relative w-10 h-10 flex items-center justify-center">
+              <button
+                type="button"
+                className="absolute inset-0 w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 group-hover:border-red-400 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition transform group-hover:scale-110"
+              >
+                <Icon icon="flat-color-icons:google" className="h-4 w-4" />
+              </button>
+              <div className="opacity-0 absolute inset-0 z-10 overflow-hidden rounded-full">
+                <GoogleLogin
+                  onSuccess={onGoogleSuccess}
+                  onError={() => setError("Google sign-in was cancelled or failed.")}
+                  width="40"
+                />
+              </div>
+            </div>
 
-    {/* Apple */}
-    <a
-      href="https://www.apple.com/"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:border-black dark:hover:border-white hover:bg-gray-100 dark:hover:bg-gray-800 transition transform hover:scale-110"
-    >
-      <Icon icon="mdi:apple" className="h-4 w-4 text-black dark:text-white" />
-    </a>
+            {/* Apple */}
+            <a
+              href="https://www.apple.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:border-black dark:hover:border-white hover:bg-gray-100 dark:hover:bg-gray-800 transition transform hover:scale-110"
+            >
+              <Icon icon="mdi:apple" className="h-4 w-4 text-black dark:text-white" />
+            </a>
 
-    {/* Facebook */}
-    <a
-      href="https://www.facebook.com/"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition transform hover:scale-110"
-    >
-      <Icon icon="logos:facebook" className="h-4 w-4" />
-    </a>
+            {/* Facebook */}
+            <a
+              href="https://www.facebook.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition transform hover:scale-110"
+            >
+              <Icon icon="logos:facebook" className="h-4 w-4" />
+            </a>
 
-  </div>
-</div>
+          </div>
+        </div>
 
         {/* ===== Footer ===== */}
         <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-6">

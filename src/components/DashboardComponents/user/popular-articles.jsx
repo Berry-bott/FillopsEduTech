@@ -622,7 +622,7 @@ export default function PopularArticles() {
             const readTime = article.readTime || estimateReadTime(article.preview || article.content || article.body);
 
             return (
-              <button
+              <div
                 key={article.id || article._id || index}
                 onClick={() => handleBlogClick(article)}
                 className="w-full flex items-center space-x-3 p-3 hover:bg-accent/50 rounded-lg transition-colors text-left group"
@@ -684,7 +684,7 @@ export default function PopularArticles() {
                     </div>
                   </div>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
