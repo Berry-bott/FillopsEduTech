@@ -296,15 +296,14 @@ export default function BlogPage() {
   const rest = displayed.slice(1);
 
   return (
-    <div className="min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-slate-50">
       <Navbar />
 
       {/* ── Page header ── */}
       <div className="bg-white border-b border-slate-100">
-        <div className="flex justify-between items-center max-w-7xl mx-auto px-6 pt-2 pb-8 pl-8">
+        <div className="flex md:justify-between max-md:flex-col-reverse items-center max-w-7xl mx-auto px-6 md:pt-2 pb-8 pl-8">
             <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 mt-5"
-            style={{ fontFamily: "Georgia, serif" }}
+          <h1 className="text-[1.7rem] md:text-4xl font-bold text-slate-900 mb-2 mt-5 max-md:w-full "
           >
             Blog & Study Resources
           </h1>
@@ -314,7 +313,7 @@ export default function BlogPage() {
             </div>
 
           {/* Search */}
-          <div className="mt-6 relative max-w-md self-start">
+          <div className="mt-6 relative max-md:w-full self-start inlineblock">
             <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>

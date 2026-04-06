@@ -1,132 +1,196 @@
-// const API_BASE = "https://fillops-server.onrender.com/api";
+// // const API_BASE = "https://fillops-server.onrender.com/api";
 
-// // Helper for common request setup
-// const headers = (token) => ({
-//   "Content-Type": "application/json",
-//   ...(token ? { Authorization: `Bearer ${token}` } : {}),
-// });
+// // // Helper for common request setup
+// // const headers = (token) => ({
+// //   "Content-Type": "application/json",
+// //   ...(token ? { Authorization: `Bearer ${token}` } : {}),
+// // });
 
-// // 🟢 Register
-// export const registerUser = async (formData) => {
-//   const res = await fetch(`${API_BASE}/auth/register`, {
-//     method: "POST",
-//     headers: headers(),
-//     body: JSON.stringify(formData),
-//     credentials: "include",
-//   });
-//   return res.json();
-// };
+// // // 🟢 Register
+// // export const registerUser = async (formData) => {
+// //   const res = await fetch(`${API_BASE}/auth/register`, {
+// //     method: "POST",
+// //     headers: headers(),
+// //     body: JSON.stringify(formData),
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
 
-// // 🟢 Login
-// export const loginUser = async (formData) => {
-//   const res = await fetch(`${API_BASE}/auth/login`, {
-//     method: "POST",
-//     headers: headers(),
-//     body: JSON.stringify(formData),
-//     credentials: "include",
-//   });
-//   return res.json();
-// };
+// // // 🟢 Login
+// // export const loginUser = async (formData) => {
+// //   const res = await fetch(`${API_BASE}/auth/login`, {
+// //     method: "POST",
+// //     headers: headers(),
+// //     body: JSON.stringify(formData),
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
 
-// // 🟢 Get user profile
-// export const getProfile = async (token) => {
-//   const res = await fetch(`${API_BASE}/users/dashboard`, {
-//     headers: headers(token),
-//     credentials: "include",
-//   });
-//   return res;
-// };
+// // // 🟢 Get user profile
+// // export const getProfile = async (token) => {
+// //   const res = await fetch(`${API_BASE}/users/dashboard`, {
+// //     headers: headers(token),
+// //     credentials: "include",
+// //   });
+// //   return res;
+// // };
 
-// // 🟢 Refresh access token
-// export const refreshAccessToken = async () => {
-//   const res = await fetch(`${API_BASE}/auth/refresh`, {
-//     method: "POST",
-//     credentials: "include",
-//   });
-//   return res.json();
-// };
+// // // 🟢 Refresh access token
+// // export const refreshAccessToken = async () => {
+// //   const res = await fetch(`${API_BASE}/auth/refresh`, {
+// //     method: "POST",
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
 
-// // 🟢 Logout
-// export const logoutUser = async () => {
-//   const res = await fetch(`${API_BASE}/auth/logout`, {
-//     method: "POST",
-//     credentials: "include",
-//   });
-//   return res.json();
-// };
-
-
+// // // 🟢 Logout
+// // export const logoutUser = async () => {
+// //   const res = await fetch(`${API_BASE}/auth/logout`, {
+// //     method: "POST",
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
 
 
 
-// const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 
-// // 🧩 Helper to build headers
-// const headers = (token) => ({
-//   "Content-Type": "application/json",
-//   ...(token ? { Authorization: `Bearer ${token}` } : {}),
-// });
 
-// // 🟢 Register
-// export const registerUser = async (formData) => {
-//   const res = await fetch(`${API_BASE}/auth/register`, {
-//     method: "POST",
-//     headers: headers(),
-//     body: JSON.stringify(formData),
-//     credentials: "include", // sends cookie
-//   });
-//   return res.json();
-// };
+// // const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 
-// // 🟢 Login
-// export const loginUser = async (formData) => {
-//   const res = await fetch(`${API_BASE}/auth/login`, {
-//     method: "POST",
-//     headers: headers(),
-//     body: JSON.stringify(formData),
-//     credentials: "include", // backend sets refresh cookie
-//   });
-//   return res.json();
-// };
+// // // 🧩 Helper to build headers
+// // const headers = (token) => ({
+// //   "Content-Type": "application/json",
+// //   ...(token ? { Authorization: `Bearer ${token}` } : {}),
+// // });
 
-// // 🟢 Get user profile (backend can silently refresh)
-// export const getProfile = async (token) => {
-//   const res = await fetch(`${API_BASE}/users/profile`, {
-//     method: "GET",
-//     headers: headers(token),
-//     credentials: "include",
-//     // allows backend to send new access token if refreshed
-//   });
+// // // 🟢 Register
+// // export const registerUser = async (formData) => {
+// //   const res = await fetch(`${API_BASE}/auth/register`, {
+// //     method: "POST",
+// //     headers: headers(),
+// //     body: JSON.stringify(formData),
+// //     credentials: "include", // sends cookie
+// //   });
+// //   return res.json();
+// // };
 
-//   const data = await res.json();
+// // // 🟢 Login
+// // export const loginUser = async (formData) => {
+// //   const res = await fetch(`${API_BASE}/auth/login`, {
+// //     method: "POST",
+// //     headers: headers(),
+// //     body: JSON.stringify(formData),
+// //     credentials: "include", // backend sets refresh cookie
+// //   });
+// //   return res.json();
+// // };
 
-//   // If backend returns a new token, save it
-//   if (data?.data?.accessToken) {
-//     sessionStorage.setItem("accessToken", data.data.accessToken);
-//   }
+// // // 🟢 Get user profile (backend can silently refresh)
+// // export const getProfile = async (token) => {
+// //   const res = await fetch(`${API_BASE}/users/profile`, {
+// //     method: "GET",
+// //     headers: headers(token),
+// //     credentials: "include",
+// //     // allows backend to send new access token if refreshed
+// //   });
 
-//   // console.log("this is =" data);
-//   return data;
-// };
+// //   const data = await res.json();
 
-// // 🟢 Logout
-// export const logoutUser = async () => {
-//   const res = await fetch(`${API_BASE}/auth/logout`, {
-//     method: "POST",
-//     credentials: "include",
-//   });
-//   return res.json();
-// };
+// //   // If backend returns a new token, save it
+// //   if (data?.data?.accessToken) {
+// //     sessionStorage.setItem("accessToken", data.data.accessToken);
+// //   }
 
-// // 🟢 Refresh token
-// export const refreshToken = async (token) => {
-//   const res = await fetch(`${API_BASE}/auth/refresh`, {
-//     method: "POST",
-//     headers: headers(token),
-//     credentials: "include", // backend sends new access token
-//   });
-//   return res.json();
-// };
+// //   // console.log("this is =" data);
+// //   return data;
+// // };
+
+// // // 🟢 Logout
+// // export const logoutUser = async () => {
+// //   const res = await fetch(`${API_BASE}/auth/logout`, {
+// //     method: "POST",
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
+
+// // // 🟢 Refresh token
+// // export const refreshToken = async (token) => {
+// //   const res = await fetch(`${API_BASE}/auth/refresh`, {
+// //     method: "POST",
+// //     headers: headers(token),
+// //     credentials: "include", // backend sends new access token
+// //   });
+// //   return res.json();
+// // };
+
+
+
+
+
+// // const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+
+// // // Helper
+// // const headers = (token) => ({
+// //   "Content-Type": "application/json",
+// //   ...(token ? { Authorization: `Bearer ${token}` } : {}),
+// // });
+
+// // // 🔹 Register
+// // export const registerUser = async (formData) => {
+// //   const res = await fetch(`${API_BASE}/auth/register`, {
+// //     method: "POST",
+// //     headers: headers(),
+// //     body: JSON.stringify(formData),
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
+
+// // // 🔹 Login (sets refresh cookie)
+// // export const loginUser = async (formData) => {
+// //   const res = await fetch(`${API_BASE}/auth/login`, {
+// //     method: "POST",
+// //     headers: headers(),
+// //     body: JSON.stringify(formData),
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
+
+// // // 🔹 Profile
+// // export const getProfile = async (token) => {
+// //   const res = await fetch(`${API_BASE}/users/profile`, {
+// //     method: "GET",
+// //     headers: headers(token),
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
+
+// // // 🔹 Refresh access token (uses refresh cookie)
+// // export const refreshAccessToken = async () => {
+// //   const res = await fetch(`${API_BASE}/auth/refresh`, {
+// //     method: "POST",
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
+
+// // // 🔹 Logout
+// // export const logoutUser = async () => {
+// //   const res = await fetch(`${API_BASE}/auth/logout`, {
+// //     method: "POST",
+// //     credentials: "include",
+// //   });
+// //   return res.json();
+// // };
+
+
 
 
 
@@ -190,11 +254,37 @@
 //   return res.json();
 // };
 
+// // 🔹 Update Profile
+// export const updateProfile = async (token, profileData) => {
+//   const res = await fetch(`${API_BASE}/users/profile`, {
+//     method: "PUT",
+//     headers: headers(token),
+//     credentials: "include",
+//     body: JSON.stringify(profileData),
+//   });
+//   return res.json();
+// };
 
+// // 🔹 Upload Avatar
+// export const uploadAvatar = async (token, formData) => {
+//   const res = await fetch(`${API_BASE}/users/profile/passport`, {
+//     method: "POST",
+//     headers: { Authorization: `Bearer ${token}` }, 
+//     credentials: "include",
+//     body: formData,
+//   });
+//   return res.json();
+// };
 
-
-
-
+// // 🔹 Delete Avatar
+// export const deleteAvatar = async (token) => {
+//   const res = await fetch(`${API_BASE}/users/profile/passport`, {
+//     method: "DELETE",
+//     headers: headers(token),
+//     credentials: "include",
+//   });
+//   return res.json();
+// };
 
 const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
 
@@ -221,6 +311,17 @@ export const loginUser = async (formData) => {
     method: "POST",
     headers: headers(),
     body: JSON.stringify(formData),
+    credentials: "include",
+  });
+  return res.json();
+};
+
+// 🔹 Google Login (sends ID token from Google to backend)
+export const googleLogin = async (idToken) => {
+  const res = await fetch(`${API_BASE}/auth/google`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ token: idToken }),
     credentials: "include",
   });
   return res.json();
@@ -269,7 +370,7 @@ export const updateProfile = async (token, profileData) => {
 export const uploadAvatar = async (token, formData) => {
   const res = await fetch(`${API_BASE}/users/profile/passport`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` }, 
+    headers: { Authorization: `Bearer ${token}` },
     credentials: "include",
     body: formData,
   });

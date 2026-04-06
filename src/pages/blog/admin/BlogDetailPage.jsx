@@ -30,7 +30,6 @@ function readTime(html) {
   return Math.max(1, Math.ceil(stripHtml(html).trim().split(/\s+/).filter(Boolean).length / 200));
 }
 
-// Converts bare image URLs in HTML text into <figure><img></figure> blocks
 function convertBareImageUrls(html) {
   if (!html) return html;
   const IMAGE_URL_RE =
@@ -39,15 +38,11 @@ function convertBareImageUrls(html) {
   return html.replace(IMAGE_URL_RE, (url) => {
     return (
       `<figure style="margin:2rem 0;">` +
-      `<img src="${url}" alt="" style="max-width:70%;height:350px;border-radius:12px;display:block;" />` +
+      `<img src="${url}" alt="" class="content-img" style="max-width:70%;border-radius:12px;display:block;" />` +
       `</figure>`
     );
   });
 }
-
-
-  
-
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
@@ -59,7 +54,7 @@ function Footer() {
           <span className="text-[15px] font-bold text-slate-900 tracking-tight">FillOps Blog</span>
         </Link>
         <div className="hidden md:flex items-center gap-4 text-[13px] text-slate-500">
-        <p className="text-xs text-slate-400">© {new Date().getFullYear()} FillOps. All rights reserved.</p>
+          <p className="text-xs text-slate-400">© {new Date().getFullYear()} FillOps. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -86,8 +81,26 @@ export default function BlogDetailPage() {
   const navigate  = useNavigate();
   const backLabel = location.state?.from?.includes("admin") ? "Back to dashboard" : "Back to blog";
 
+  // ✅ useEffect correctly inside the component
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.id = "content-img-style";
+    style.innerHTML = `
+      .content-img { height: 350px; }
+      @media (max-width: 768px) {
+        .content-img { height: 150px; }
+      }
+    `;
+    if (!document.getElementById("content-img-style")) {
+      document.head.appendChild(style);
+    }
 
-  
+    return () => {
+      const el = document.getElementById("content-img-style");
+      if (el) document.head.removeChild(el);
+    };
+  }, []);
+
 // ─── Navbar ───────────────────────────────────────────────────────────────────
   function Navbar() {
     return (
@@ -98,12 +111,9 @@ export default function BlogDetailPage() {
         <span className="text-[15px] font-bold text-slate-900 tracking-tight">FillOps Blog</span>
       </Link>
       <div className="flex items-center gap-8 text-[13px] text-slate-500">
-        <Link to="/blog" className="hover:text-slate-900 no-underline transition-colors font-medium">
-          All Posts
-        </Link>
         <button
           onClick={() => navigate(backPath)}
-          className="flex items-center gap-1.5 bg-gray-200 border text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors   cursor-pointer p-4"
+          className="flex items-center gap-1.5 bg-gray-200 border text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer p-2"
         >
           {backLabel}
         </button>
@@ -112,8 +122,6 @@ export default function BlogDetailPage() {
   </nav>
     );
   }
-
-
 
   const {
     selectedBlog, isLoading, error,
@@ -180,7 +188,7 @@ export default function BlogDetailPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-white" >
       {(() => {
         document.title = selectedBlog.metaTitle || selectedBlog.title || "FillOps Blog";
         const desc = document.querySelector('meta[name="description"]');
@@ -190,19 +198,17 @@ export default function BlogDetailPage() {
 
       <Navbar />
 
-  {selectedBlog.coverImage && (
-  <div className="max-w-7xl mx-auto px-6 mt-8">
-    <img
-      src={selectedBlog.coverImage}
-      alt={selectedBlog.title}
-      className="w-full h-[400px] object-top object-cover rounded-2xl block"
-      onError={e => { e.target.parentElement.style.display = "none"; }}
-    />
-  </div>
-)}
+        {selectedBlog.coverImage && (
+        <div className="max-w-7xl mx-auto px-6 mt-8">
+          <img
+            src={selectedBlog.coverImage}
+            alt={selectedBlog.title}
+            className="w-full h-[400px] object-top object-cover rounded-2xl block"
+            onError={e => { e.target.parentElement.style.display = "none"; }}
+          />
+        </div>
+      )}
       <main className="max-w-6xl mx-auto px-6 py-10">
-
-
 
         {/* Category */}
         {selectedBlog.category && (
@@ -227,46 +233,67 @@ export default function BlogDetailPage() {
         )}
 
         {/* Author row */}
-        <div className="flex items-center justify-between py-4 border-y mb-8" style={{ borderColor: "#e8eaed" }}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary-hover flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm">
-              {authorInit}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-800 leading-none mb-1">{authorName}</p>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span>{date}</span>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {rt} min read
-                </span>
-                {selectedBlog.category && (
-                  <>
-                    <span>·</span>
-                    <span className="text-primary font-medium">{selectedBlog.category}</span>
-                  </>
-                )}
-              </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-4 border-y mb-8 border-slate-200">
+  
+        {/* LEFT SIDE */}
+        <div className="flex items-start sm:items-center gap-3">
+          
+          {/* Avatar */}
+          <div className="w-10 h-10 rounded-full bg-primary-hover flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm">
+            {authorInit}
+          </div>
+
+          {/* Author Info */}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-800 leading-tight truncate">
+              {authorName}
+            </p>
+
+            {/* Meta */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 mt-1">
+              
+              <span>{date}</span>
+
+              <span>·</span>
+
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {rt} min read
+              </span>
+
+              {selectedBlog.category && (
+                <>
+                  <span>·</span>
+                  <span className="text-primary font-medium whitespace-nowrap">
+                    {selectedBlog.category}
+                  </span>
+                </>
+              )}
             </div>
           </div>
-          <button
-            onClick={() =>
-              navigator.share?.({
-                title: selectedBlog.title,
-                text:  selectedBlog.metaDescription || "",
-                url:   window.location.href,
-              }).catch(() => {})
-            }
-            className="p-2 rounded-full border border-slate-200 text-slate-400 hover:text-primary-hover hover:border-primary transition-colors"
-          >
-            <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-          </button>
         </div>
+
+      {/* RIGHT SIDE (SHARE BUTTON) */}
+      <div className="flex justify-end sm:justify-center">
+        <button
+          onClick={() =>
+            navigator.share?.({
+              title: selectedBlog.title,
+              text: selectedBlog.metaDescription || "",
+              url: window.location.href,
+            }).catch(() => {})
+          }
+          className="p-2 rounded-full border border-slate-200 text-slate-400 hover:text-primary-hover hover:border-primary transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+        </button>
+      </div>
+
+       </div>
 
         {/* ── Body ── */}
         {isHtml ? (
