@@ -1376,7 +1376,7 @@ export default function Checkout() {
                       </p>
                     </div>
                     <div className="p-4 sm:p-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 ">
                         {plansList.map((plan) => (
                           <button
                             key={plan.id}
@@ -1391,7 +1391,7 @@ export default function Checkout() {
                               </div>
                             )}
                             <h3 className="text-lg sm:text-2xl font-bold mb-1.5">{plan.name}</h3>
-                            <div className="flex justify-between items-center mb-1">
+                            <div className="grid grid-cols-1 justify-between items-center mb-1">
                               <div className="flex items-baseline">
                                 <span className="text-2xl sm:text-3xl font-black">{plan.pricePerSubjectFormatted}</span>
                                 <span className="text-xs text-muted-foreground">/subject</span>
@@ -1469,7 +1469,7 @@ export default function Checkout() {
               {/* ── Order Summary ── */}
               <div className="lg:sticky lg:top-24 h-fit">
                 <Card className="overflow-hidden border border-gray-200 shadow-lg">
-                  <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 p-4 text-white">
+                  <div className="bg-primary p-4 text-white">
                     <div className="flex items-center justify-between mb-0.5">
                       <h3 className="text-base sm:text-lg font-bold">Order Summary</h3>
                       <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
@@ -1581,7 +1581,7 @@ export default function Checkout() {
                     <Button
                       onClick={handlePayment}
                       disabled={!selectedExam || !selectedPlan || selectedSubjects.length === 0 || paymentLoading}
-                      className="w-full h-10 sm:h-12 text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50"
+                      className="w-full h-10 sm:h-12 text-sm font-bold bg-primary hover:bg-primary/90 transition-all shadow-lg disabled:opacity-50"
                     >
                       {paymentLoading ? (
                         <span className="flex items-center gap-2">
