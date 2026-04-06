@@ -38,7 +38,7 @@ function convertBareImageUrls(html) {
   return html.replace(IMAGE_URL_RE, (url) => {
     return (
       `<figure style="margin:2rem 0;">` +
-      `<img src="${url}" alt="" class="content-img" style="max-width:70%;border-radius:12px;display:block;" />` +
+      `<img src="${url}" alt="" class="content-img" style="border-radius:12px;display:block;" />` +
       `</figure>`
     );
   });
@@ -86,9 +86,9 @@ export default function BlogDetailPage() {
     const style = document.createElement("style");
     style.id = "content-img-style";
     style.innerHTML = `
-      .content-img { height: 350px; }
+      .content-img { height: 50px; width: 50%; }
       @media (max-width: 768px) {
-        .content-img { height: 150px; }
+        .content-img { height: 150px; width: 100%; }
       }
     `;
     if (!document.getElementById("content-img-style")) {
