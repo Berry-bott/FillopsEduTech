@@ -3,17 +3,15 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Ban, WifiOff } from "lucide-react";
-import { getSocket } from "@/lib/tutorChatSocket";
 import { useTutorChatStore } from "@/store/tutorChatStore";
 
 export default function ChatInput({
   onSend,
   isSending,
-  disabled,          
-  selectedBookingId,
+  disabled,
 }) {
   const [message, setMessage] = useState("");
-  const { socketConnected } = useTutorChatStore();
+  const { socketConnected, sendTyping } = useTutorChatStore();
 
   const typingTimeoutRef = useRef(null);
   const isTypingRef      = useRef(false);
@@ -22,18 +20,15 @@ export default function ChatInput({
   const handleTyping = (value) => {
     setMessage(value);
 
-    const socket = getSocket();
-    if (!socket?.connected || !selectedBookingId) return;
-
     // Emit typing:start only once per typing session
     if (!isTypingRef.current && value.trim()) {
-      socket.emit("typing:start", selectedBookingId);
+      sendTyping(true);
       isTypingRef.current = true;
     }
 
     // If field is cleared, stop immediately
     if (!value.trim() && isTypingRef.current) {
-      socket.emit("typing:stop", selectedBookingId);
+      sendTyping(false);
       isTypingRef.current = false;
       clearTimeout(typingTimeoutRef.current);
       return;
@@ -42,9 +37,7 @@ export default function ChatInput({
     // Reset the idle timer — stop typing after 1.5 s of no keystrokes
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      if (socket?.connected && selectedBookingId) {
-        socket.emit("typing:stop", selectedBookingId);
-      }
+      sendTyping(false);
       isTypingRef.current = false;
     }, 1500);
   };
@@ -54,10 +47,7 @@ export default function ChatInput({
     if (!message.trim() || isSending || disabled || !socketConnected) return;
 
     // Stop typing before sending
-    const socket = getSocket();
-    if (socket?.connected && selectedBookingId) {
-      socket.emit("typing:stop", selectedBookingId);
-    }
+    sendTyping(false);
     isTypingRef.current = false;
     clearTimeout(typingTimeoutRef.current);
 
@@ -90,9 +80,9 @@ export default function ChatInput({
   if (!socketConnected) {
     return (
       <div className="flex items-center justify-center py-4 px-4">
-        <div className="inline-flex items-center gap-3 px-5 py-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
-          <WifiOff className="size-4 flex-shrink-0 animate-pulse" />
-          Connecting to chat server…
+      <div className="inline-flex items-center gap-3 px-5 py-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+        <WifiOff className="size-4 flex-shrink-0 animate-pulse" />
+        Connecting to chat server…
         </div>
       </div>
     );
@@ -106,6 +96,11 @@ export default function ChatInput({
           value={message}
           onChange={(e) => handleTyping(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={() => {
+            sendTyping(false);
+            isTypingRef.current = false;
+            clearTimeout(typingTimeoutRef.current);
+          }}
           placeholder="Type a message… (Shift+Enter for new line)"
           className="min-h-[44px] max-h-[140px] resize-none text-sm"
           rows={2}

@@ -2,7 +2,7 @@
 import { useUserChatStore } from "@/store/userChatStore";
 import  useAuthStore  from "@/store/authStore";
 import { Badge } from "@/components/ui/badge";
-import { Check, CheckCheck } from "lucide-react";
+import { Check, CheckCheck, Clock3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const roleBadgeColors = {
@@ -164,7 +164,15 @@ const user = useAuthStore((s) => s.user);
         >
           <span>{formatTime(message.createdAt)}</span>
           {isOwnMessage && !isSystemMessage && (
-            <CheckCheck className="h-4 w-4 text-indigo-300" />
+            <>
+              {message.status === "sending" || message.isOptimistic ? (
+                <Clock3 className="h-4 w-4 text-indigo-200" />
+              ) : message.isRead ? (
+                <CheckCheck className="h-4 w-4 text-sky-300" />
+              ) : (
+                <Check className="h-4 w-4 text-indigo-300" />
+              )}
+            </>
           )}
         </div>
       </div>

@@ -24,15 +24,6 @@ const mapBookingToUI = (booking) => ({
   isOnline: false,
 });
 
-const isOlderThanMonth = (booking) => {
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  const bookingDate = new Date(
-    booking.scheduledAt || booking.updatedAt || booking.createdAt || 0
-  );
-  return bookingDate < oneMonthAgo;
-};
-
 // Apply a booking update across ALL filter buffers at once
 const applyToAllFilters = (bookingsByFilter, bookingId, patch) => {
   const updated = {};
@@ -169,8 +160,19 @@ export const useTutorChatStore = create((set, get) => ({
       "user:offline": (data) => {
         if (data?.userType !== "user" && data?.userType !== "student") return;
         set((s) => ({
+          bookingsByFilter: applyToAllFilters(
+            s.bookingsByFilter,
+            Object.values(s.bookingsByFilter)
+              .flat()
+              .find((b) => b.studentId === data.userId)?.id,
+            { isOnline: false }
+          ),
           isParticipantOnline:
             s.selectedBooking?.studentId === data.userId ? false : s.isParticipantOnline,
+          selectedBooking:
+            s.selectedBooking?.studentId === data.userId
+              ? { ...s.selectedBooking, isOnline: false }
+              : s.selectedBooking,
         }));
       },
 
@@ -484,10 +486,25 @@ export const useTutorChatStore = create((set, get) => ({
   sendMessage: async (bookingId, content, messageType = "TEXT") => {
     if (!content?.trim() || !bookingId) return;
 
-    const socket = getSocket();
+    let socket = getSocket();
     if (!socket?.connected) {
-      console.warn("[sendMessage] Socket not connected");
-      return;
+      get().initializeSocket();
+      await new Promise((resolve) => {
+        const iv = setInterval(() => {
+          if (getSocket()?.connected) {
+            clearInterval(iv);
+            resolve();
+          }
+        }, 100);
+        setTimeout(() => {
+          clearInterval(iv);
+          resolve();
+        }, 3000);
+      });
+      socket = getSocket();
+      if (!socket?.connected) {
+        throw new Error("Cannot connect to chat server. Please refresh.");
+      }
     }
 
     const tempId  = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -506,10 +523,24 @@ export const useTutorChatStore = create((set, get) => ({
     }));
 
     try {
-      socket.emit("message:send", { bookingId, content: content.trim(), messageType, tempId });
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("Send timeout")), 10000);
+        socket.emit(
+          "message:send",
+          { bookingId, content: content.trim(), messageType, tempId },
+          (res) => {
+            clearTimeout(timeout);
+            res?.success ? resolve(res) : reject(new Error(res?.message || "Send failed"));
+          }
+        );
+      });
     } catch (err) {
       console.error("[sendMessage] failed:", err);
-      set((s) => ({ messages: s.messages.filter((m) => m.tempId !== tempId) }));
+      set((s) => ({
+        messages: s.messages.filter((m) => m.tempId !== tempId),
+        isSending: false,
+      }));
+      throw err;
     } finally {
       set({ isSending: false });
     }
@@ -520,7 +551,11 @@ export const useTutorChatStore = create((set, get) => ({
     if (!selectedBooking?.id || !socketConnected) return;
     const socket = getSocket();
     if (socket?.connected) {
-      socket.emit(isTyping ? "typing:start" : "typing:stop", selectedBooking.id);
+      socket.emit(isTyping ? "typing:start" : "typing:stop", {
+        bookingId: selectedBooking.id,
+        userType: "tutor",
+        userName: useTutorAuthStore.getState().tutor?.name || "Tutor",
+      });
     }
   },
 
@@ -558,11 +593,7 @@ export const useTutorChatStore = create((set, get) => ({
     }
   },
 
-    bookingsPagesLoaded: {},         
-    hasMoreBookings: {},             
-    loadingOlderBookings: false,  
-    
-    fetchBookings: async (filter = "all", mode = "replace") => {
+  fetchBookings: async (filter = "all", mode = "replace") => {
     const currentPage = mode === "older"
       ? (get().bookingsPagesLoaded?.[filter] || 0) + 1
       : 1;

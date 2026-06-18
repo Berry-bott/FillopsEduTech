@@ -18,7 +18,7 @@ import {
   Briefcase,
 } from "lucide-react";
 
-const SubjectsGrid = () => {
+  const SubjectsGrid = () => {
   const [hoveredId, setHoveredId] = useState(null);
 
   const subjects = [

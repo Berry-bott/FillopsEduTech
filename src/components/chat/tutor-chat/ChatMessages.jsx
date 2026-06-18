@@ -1366,6 +1366,8 @@ import {
   Loader2,
   User,
   CheckCircle,
+  Check,
+  CheckCheck,
   XCircle,
   MessageSquare,
   Clock,
@@ -1449,7 +1451,7 @@ export default function ChatMessages({
     if (messages.length > 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
     }
-  }, [messages.length > 0]);
+  }, [messages.length]);
 
   const openActionDialog = (message, type) => {
     setSelectedMessage(message);
@@ -1637,11 +1639,13 @@ export default function ChatMessages({
                     {format(parseISO(message.createdAt), "HH:mm")}
                     <span>•</span>
                     <span className="font-medium">You</span>
-                    {message.isOptimistic && (
-                      <>
-                        <span>•</span>
-                        <Loader2 className="size-3 animate-spin" />
-                      </>
+                    <span>•</span>
+                    {message.isOptimistic || message.status === "sending" ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : message.isRead ? (
+                      <CheckCheck className="size-3.5 text-sky-500" />
+                    ) : (
+                      <Check className="size-3.5" />
                     )}
                   </div>
                 </div>

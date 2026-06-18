@@ -803,7 +803,11 @@ export const useUserChatStore = create((set, get) => ({
     const socket = getUserSocket();
     if (!socket) return () => {};
 
-    const on = (event, fn) => socket.on(event, fn);
+    const handlers = {};
+    const on = (event, fn) => {
+      handlers[event] = fn;
+      socket.on(event, fn);
+    };
 
     // ── connect / disconnect ─────────────────────────────────────────────────
     on("connect", () => {
@@ -973,16 +977,7 @@ export const useUserChatStore = create((set, get) => ({
 
     // return cleanup
     return () => {
-      [
-        "connect","disconnect",
-        "message:new","messages:read",
-        "typing:start","typing:stop",
-        "users:online","onlineUsers","user:online","user:offline",
-        "booking:confirmed","booking:active","booking:cancelled",
-        "booking:completed","booking:rescheduled","booking:reschedule_proposed",
-        "booking:new","booking:updated",
-        "session:ended","session:expired","session:kick",
-      ].forEach((e) => socket.removeAllListeners(e));
+      Object.entries(handlers).forEach(([event, fn]) => socket.off(event, fn));
     };
   },
 
