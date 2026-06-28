@@ -1,13 +1,10 @@
 name: Deploy Frontend
-
 on:
   push:
     branches: [ "master" ]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -21,6 +18,6 @@ jobs:
             git pull origin master
             npm install
             npm run build
-            sudo rm -rf /var/www/fillops/*
-            sudo cp -r dist/* /var/www/fillops/
+            rm -rf /var/www/fillops/*
+            cp -r dist/* /var/www/fillops/
             sudo systemctl restart nginx
