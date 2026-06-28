@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 
-const BASE_URL = "https://fillops-server-5fuf.onrender.com/api/users";
+const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/api/users`;
 
 const getAuthHeaders = () => {
   const state = useAuthStore.getState();

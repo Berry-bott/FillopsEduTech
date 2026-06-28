@@ -2,7 +2,7 @@
   import { persist } from "zustand/middleware";
   import useTutorAuthStore from "./tutorAuthStore"; 
 
-  const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+  const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
   const useTutorStore = create(
     persist(
       (set, get) => ({

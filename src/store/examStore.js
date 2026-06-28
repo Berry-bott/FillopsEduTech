@@ -2,7 +2,7 @@ import { create } from "zustand";
 import useAuthStore from "./authStore";
 import { usePaymentStore } from "./paymentStore";
 
-const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 const REQUEST_LIMIT = 40;
 const FREE_QUESTIONS_LIMIT = 5; // Free trial limit for exams
 let navigationCallback = null;

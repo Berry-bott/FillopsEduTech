@@ -4,7 +4,7 @@ import { BookOpen, FileQuestion, GraduationCap, TrendingUp, TrendingDown, Minus 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import useAuthStore from "@/store/authStore"
 
-const API_BASE = "https://fillops-server-5fuf.onrender.com/api"
+const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
 const getPerformanceStatus = (accuracy) => {
   if (accuracy >= 75) return { 

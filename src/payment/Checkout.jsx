@@ -898,7 +898,7 @@ export default function Checkout() {
   const [pendingCart, setPendingCart] = useState({});
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+  const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
   const plansList = Array.isArray(apiPlans?.plans) ? apiPlans.plans :
                     Array.isArray(apiPlans) ? apiPlans : [];

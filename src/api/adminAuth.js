@@ -1,4 +1,4 @@
-const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
 // Helper
 const headers = (token) => ({

@@ -1,7 +1,7 @@
 
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "https://fillops-server-5fuf.onrender.com";
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL;
 
 let socket = null;
 

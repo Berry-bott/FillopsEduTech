@@ -7,7 +7,7 @@ import {
   sendGroupMessage, startGroupTyping, stopGroupTyping,
 } from "@/lib/communitySocketService";
 
-const BASE_URL = "https://fillops-server-5fuf.onrender.com";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 const getToken = () => useAuthStore.getState().accessToken || null;
 
 const useCommunityStore = create(

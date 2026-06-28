@@ -21,7 +21,7 @@ import BookingDetailsModal     from "./booking-details-modal";
 import RescheduleModal         from "./reschedule-modal";
 import { useUserChatStore }    from "@/store/userChatStore";
 
-const API_BASE = "https://fillops-server-5fuf.onrender.com";
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 // Poll intervals (ms)
 const POLL_BASE = 10000;       // 10s when stable + socket connected

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import useAdminAuthStore from "@/store/adminAuthStore";
 
-const ADMIN_BASE  = "https://fillops-server-5fuf.onrender.com/api/admin/blogs";
-const PUBLIC_BASE = "https://fillops-server-5fuf.onrender.com/api/blog";
+const ADMIN_BASE  = `${import.meta.env.VITE_BACKEND_URL}/api/admin/blogs`;
+const PUBLIC_BASE = `${import.meta.env.VITE_BACKEND_URL}/api/blog`;
 
 // ── Response extractors ───────────────────────────────────────────────────────
 const extractList = (data) =>

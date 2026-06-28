@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Logo from "@/assets/images/fillopsLogo.png";
 
-const BASE = "https://fillops-server-5fuf.onrender.com/api/blog";
+const BASE = `${import.meta.env.VITE_BACKEND_URL}/api/blog`;
 
 const CATEGORIES = ["All", "WAEC", "JAMB", "NECO", "GCE", "Study Tips", "News"];
 

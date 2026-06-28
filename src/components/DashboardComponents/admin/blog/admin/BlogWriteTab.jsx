@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import RichEditor from "@/components/ui/richeditor";
 import { CATEGORY_BADGE, CATEGORY_DOT, wc, rt } from "./BlogUtils";
 
-const UPLOAD_URL = "https://fillops-server-5fuf.onrender.com/api/admin/blogs/upload-image";
+const UPLOAD_URL = `${import.meta.env.VITE_BACKEND_URL}/api/admin/blogs/upload-image`;
 
 // ─── Core upload helper ───────────────────────────────────────────────────────
 async function uploadImage(file, getToken) {

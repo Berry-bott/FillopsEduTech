@@ -674,7 +674,7 @@ import { TypeAnimation } from "react-type-animation";
 import { useToast } from "@/components/ui/use-toast";
 import { GraduationCap, Briefcase, Target, ExternalLink } from "lucide-react";
 
-const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
 const EXAMS = {
   waec: { label: "WAEC", limit: 9 },

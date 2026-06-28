@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import useTutorAuthStore from "./tutorAuthStore";
 
-const BASE_URL = "https://fillops-server-5fuf.onrender.com/api/tutor";
+const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/api/tutor`;
 
 const getAuthHeaders = () => {
   const state = useTutorAuthStore.getState();

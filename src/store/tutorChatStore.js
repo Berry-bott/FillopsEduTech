@@ -2,7 +2,7 @@ import { create } from "zustand";
 import useTutorAuthStore from "./tutorAuthStore";
 import { connectSocket, getSocket } from "@/lib/tutorChatSocket";
 
-const API_BASE = "https://fillops-server-5fuf.onrender.com";
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 

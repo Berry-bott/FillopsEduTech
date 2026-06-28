@@ -156,7 +156,7 @@ export default function SettingsPage() {
                   {[
                     { label: "Version", value: "v1.0.0" },
                     { label: "Environment", value: "Production" },
-                    { label: "API", value: "fillops-server" },
+                    { label: "API", value: "studyapi.filloptech.com" },
                     { label: "Status", value: "Operational", green: true },
                   ].map((item) => (
                     <div key={item.label} className="rounded-lg border p-4 bg-muted/30">

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import useAdminAuthStore from "./adminAuthStore";
 
-const BASE_URL = "https://fillops-server-5fuf.onrender.com/api/admin";
+const BASE_URL = `${import.meta.env.VITE_BACKEND_URL}/api/admin`;
 
 const getAuthHeaders = () => {
   const token =

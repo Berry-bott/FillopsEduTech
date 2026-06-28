@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import useAdminAuthStore from "@/store/adminAuthStore";
 
-const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
 const useAdminTicketStore = create((set, get) => ({
   // ========== STATE ==========

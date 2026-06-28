@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import useAuthStore from "./authStore";
 
-const API_BASE = "https://fillops-server-5fuf.onrender.com/api";
+const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
 export const useQuizStore = create((set, get) => ({
   // Quiz state
