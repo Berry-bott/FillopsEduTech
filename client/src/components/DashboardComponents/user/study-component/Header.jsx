@@ -437,7 +437,7 @@
 
 
 import { useEffect, useState } from "react";
-import PageNav from "../../../DashboardComponents/PageNav";
+import PageNav from "../../PageNav";
 import { useStudyStore } from "../../../../store/studyStore";
 
 export default function Header() {

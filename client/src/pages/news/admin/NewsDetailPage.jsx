@@ -188,7 +188,7 @@ export default function NewsDetailPage() {
           <div className="mb-8 rounded-2xl overflow-hidden bg-slate-100" style={{ maxHeight: 460 }}>
             <img src={selectedNews.coverImage} alt={selectedNews.title}
               className="w-full h-full object-cover"
-              onError={e => { e.target.parentElement.style.display = "none"; }} />
+              onError={e => { e.target.parentElement.style.display = "none"; }} loading="lazy" />
             <p className="text-[11px] text-slate-400 mt-2 px-1 text-center italic">
               — FillOps News Photography
             </p>

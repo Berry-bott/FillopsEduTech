@@ -1,7 +1,7 @@
 
 
 import { useEffect, useState } from "react";
-import PageNav from "../../../DashboardComponents/PageNav";
+import PageNav from "../../PageNav";
 import { useExamStore } from "../../../../store/examStore";
 
 export default function Header() {

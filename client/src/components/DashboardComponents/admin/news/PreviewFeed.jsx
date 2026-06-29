@@ -31,7 +31,7 @@ export default function PreviewFeed({ articles }) {
             <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200" style={{ height: 420 }}>
               <img src={hero.coverImage} alt={hero.title}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                onError={e => e.target.style.display = "none"} />
+                onError={e => e.target.style.display = "none"} loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
               <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute bottom-0 left-0 right-0 p-10">
@@ -117,7 +117,7 @@ export default function PreviewFeed({ articles }) {
                   <div className="h-44 overflow-hidden bg-slate-100">
                     <img src={n.coverImage} alt={n.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={e => { e.target.parentElement.style.display = "none"; }} />
+                      onError={e => { e.target.parentElement.style.display = "none"; }} loading="lazy" />
                   </div>
                 )}
                 <div className="p-5">
@@ -159,7 +159,7 @@ export default function PreviewFeed({ articles }) {
                   <div className="h-40 overflow-hidden bg-slate-100">
                     <img src={n.coverImage} alt={n.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={e => { e.target.parentElement.style.display = "none"; }} />
+                      onError={e => { e.target.parentElement.style.display = "none"; }} loading="lazy" />
                   </div>
                 )}
                 <div className="p-4">

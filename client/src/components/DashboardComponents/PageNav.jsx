@@ -6,7 +6,7 @@ import useAuthStore from "../../store/authStore";
 import { usePaymentStore } from "@/store/paymentStore";
 import { useStudyStore } from "@/store/studyStore";
 import Logo from "../../assets/images/fillopsLogo.png";
-import { ThemeToggle } from "../DashboardComponents/theme-toggle";
+import { ThemeToggle } from "./theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function PageNav() {
