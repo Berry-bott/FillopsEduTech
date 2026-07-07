@@ -1,78 +1,94 @@
-import { Twitter, Linkedin, Mail, Facebook, Youtube, MessageCircle, Instagram  } from "lucide-react";
+import { Twitter, Linkedin, Mail, Facebook, Youtube, MessageCircle, Instagram } from "lucide-react";
 import logo from "../../assets/images/fillopsLogo.png";
 
 const Footer = () => {
-
   const whatsappNumber = "2172160029";
 
+  const navigationLinks = [
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
+    { name: "Services", href: "/services" },
+    { name: "Contact", href: "/contact" },
+  ];
+
+  const socialLinks = [
+    {
+      icon: MessageCircle,
+      link: `https://wa.me/${whatsappNumber}`,
+      label: "WhatsApp",
+    },
+    { icon: Facebook, link: "https://facebook.com/filloptech", label: "Facebook" },
+    { icon: Twitter, link: "https://X.com/filloptech", label: "Twitter" },
+    { icon: Youtube, link: "https://Youtube.com/@filloptech", label: "YouTube" },
+    { icon: Instagram, link: "https://instagram.com/filloptech", label: "Instagram" },
+    { icon: Mail, link: "mailto:help@filloptech.com", label: "Email" },
+  ];
+
   return (
-    <footer className="relative overflow-hidden bg-white py-6 px-4 border-t shadow-lg transition-colors duration-300  dark:bg-backgroundNext text-gray-700 dark:text-gray-300">
-      {/* Decorative gradient overlay */}
+    <footer className="relative bg-background border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex justify-between gap-8">
+          {/* Logo and Description Section */}
+          <div className="flex  items-center md:items-start gap-4">
+            <img
+              src={logo}
+              alt="Fillops Logo"
+              className="w-16 h-16 object-contain"
+            />
+            <p className="text-sm text-muted-foreground text-center md:text-left max-w-xs">
+              Building skills, powering solutions. Empowering students and tutors through innovative educational technology.
+            </p>
+          </div>
 
-      <div className="relative mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-        {/* Logo Section */}
-        <div className="flex flex-col items-center md:items-start gap-2">
-          <img
-            src={logo}
-            alt="Fillops Logo"
-            className="w-12 h-12 object-contain transition-all"
-          />
-           <p className="text-[6px]  md:text-[9px] xmd:text-[px]  text-education-orange dark:text-education-orange font-merriweather ml-[0px] sm:ml-[0px] ">
-                Building skills, powering solutions...  
-              </p>
+          {/* Social Links Section */}
+          <div className="flex flex-col items-center md:items-start gap-4">
+            <h3 className="text-lg font-semibold text-foreground">
+              Connect With Us
+            </h3>
+            <div className="flex flex-wrap justify-center md:justify-start gap-3">
+              {socialLinks.map(({ icon: Icon, link, label }, i) => (
+                <a
+                  key={i}
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="p-3 rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-200 transform hover:-translate-y-1"
+                  title={label}
+                >
+                  <Icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Navigation Links */}
-        <ul className="flex flex-wrap justify-center gap-6 font-medium text-white dark:text-gray-300">
-          {["Home", "About", "Services", ].map((item) => (
-            <li
-              key={item}
-              className="relative cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 group"
-            >
-              {item}
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 dark:bg-blue-400 transition-all group-hover:w-full"></span>
-            </li>
-          ))}
-        </ul>
-
-        {/* Social Links */}
-        <div className="flex gap-2">
-            {[
-             { 
-              icon: MessageCircle, 
-              link: `https://wa.me/${whatsappNumber}`, 
-              color: "text-green-500 dark:text-green-400", 
-              hover: "hover:bg-green-50 dark:hover:bg-green-900/30" 
-            },
-            { icon: Facebook, link: "https://facebook.com/filloptech", color: "text-gray-700 dark:text-gray-200 ", hover: "hover:bg-gray-200 dark:hover:bg-gray-700" },
-            { icon: Twitter, link: "https://X.com/filloptech", color: "text-blue-500", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
-            { icon: Youtube, link: "https://Youtube.com/@filloptech", color: "text-red-700 dark:text-red-400", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
-            { icon: Instagram, link: "https://nstagram.com/filloptech", color: "text-gray-800 dark:text-red-400", hover: "hover:bg-blue-50 dark:hover:bg-blue-900/30" },
-            { icon: Mail, link: "mailto:help@filloptech.com", color: "text-red-500 dark:text-red-400", hover: "hover:bg-red-50 dark:hover:bg-red-900/30" },
-          ].map(({ icon: Icon, link, color, hover }, i) => (
-            <a
-              key={i}
-              href={link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`p-3 rounded-full bg-white dark:bg-gray-800 shadow-sm ${hover} transition-all transform hover:-translate-y-1 hover:shadow-md`}
-            >
-              <Icon className={`w-5 h-5 ${color}`} />
-            </a>
-          ))}
+        {/* Divider */}
+        <div className="border-t border-gray-200 dark:border-gray-700 mt-12 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground text-center md:text-left">
+              © {new Date().getFullYear()}{" "}
+              <span className="font-semibold text-primary">
+                Fillops Tech
+              </span>
+              . All rights reserved.
+            </p>
+            <div className="flex gap-6 text-sm">
+              <a
+                href="/privacy"
+                className="text-muted-foreground hover:text-primary transition-colors duration-200"
+              >
+                Privacy Policy
+              </a>
+              <a
+                href="/terms"
+                className="text-muted-foreground hover:text-primary transition-colors duration-200"
+              >
+                Terms of Service
+              </a>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Divider line */}
-      <div className="border-t border-gray-200 dark:border-gray-700 mt-10"></div>
-
-      {/* Bottom text */}
-      <div className="text-center text-blue-300 dark:text-gray-400 mt-6 text-sm">
-        © {new Date().getFullYear()}{" "}
-        <span className="font-semibold text-blue-300 dark:text-blue-400">
-          Fillops Tech
-        </span>
-        . All rights reserved.
       </div>
     </footer>
   );
