@@ -1,3 +1,5 @@
+
+
 # name: Deploy Frontend
 # on:
 #   push:
@@ -18,9 +20,8 @@
 #             git pull origin master
 #             npm install
 #             npm run build
-#             rm -rf /var/www/fillops/*
-#             cp -r dist/* /var/www/fillops/
 #             sudo systemctl restart nginx
+
 
 
 
@@ -29,13 +30,13 @@ name: Deploy Frontend
 on:
   push:
     branches: [ "master" ]
-    jobs:
-    deploy:
+jobs:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-        - name: Deploy to VPS
-          uses: appleboy/ssh-action@v1.0.3
-          with:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
           host: ${{ secrets.VPS_IP }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
@@ -45,21 +46,6 @@ on:
             set -e
             cd ~/FillopsEduTech
             git pull origin master
+            cd client
             npm install
             npm run build
-            sudo systemctl restart nginx
-
-
-      # - name: Deploy to VPS
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.VPS_IP }}
-      #     username: ${{ secrets.VPS_USER }}
-      #     key: ${{ secrets.VPS_SSH_KEY }}
-      #     port: 2432
-      #     script: |
-      #       cd ~/FillopsEduTech
-      #       git pull origin master
-      #       npm install
-      #       npm run build
-      #       sudo systemctl restart nginx
