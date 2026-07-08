@@ -4,6 +4,33 @@ import { loginAdmin, refreshAdminAccessToken } from "../api/adminAuth";
 
 let refreshPromise = null;
 
+const getJwtPayload = (token) => {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "="
+    );
+
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+};
+
+const isAccessTokenExpired = (token) => {
+  const payload = getJwtPayload(token);
+
+  // If the token is opaque or has no exp claim, let the API be the source of truth.
+  if (!payload?.exp) return false;
+
+  const expiryBufferMs = 30 * 1000;
+  return Date.now() >= payload.exp * 1000 - expiryBufferMs;
+};
+
 const useAdminAuthStore = create(
   persist(
     (set, get) => ({
@@ -30,7 +57,7 @@ const useAdminAuthStore = create(
 
           const { accessToken, user } = data.data;
 
-        
+          sessionStorage.setItem("adminAccessToken", accessToken);
 
           set({
             admin: user,
@@ -78,6 +105,13 @@ const useAdminAuthStore = create(
 
       // 🔹 CHECK AUTH (on app load)
       checkAuth: async () => {
+        const { accessToken, isAuthenticated } = get();
+
+        if (accessToken && !isAccessTokenExpired(accessToken)) {
+          if (!isAuthenticated) set({ isAuthenticated: true });
+          return true;
+        }
+
         const refreshed = await get().refreshAccessToken();
         if (refreshed) return true;
 

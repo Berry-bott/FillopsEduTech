@@ -310,9 +310,13 @@ const Login = () => {
 
           {/* Links */}
           <div className="flex items-center justify-between mt-2 text-xs text-gray-600 dark:text-gray-400">
-            <p className="hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="hover:text-indigo-600 dark:hover:text-indigo-400"
+            >
               Forgot Password?
-            </p>
+            </button>
             <p
               onClick={() => navigate("/register")}
               className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline cursor-pointer"
@@ -353,7 +357,7 @@ const Login = () => {
                  group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition transform group-hover:scale-105 "
               >
                 <Icon icon="flat-color-icons:google" className="h-4 w-4" />
-                <span class="text-gray-400">oogle</span>
+                <span className="text-gray-400">oogle</span>
               </button>
               <div className="opacity-0 absolute inset-0 z-10 overflow-hidden rounded-full">
                 <GoogleLogin
