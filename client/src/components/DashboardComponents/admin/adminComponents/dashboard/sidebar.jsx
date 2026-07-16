@@ -12,7 +12,7 @@ const navItems = [
   { to: "/pricing", label: "Pricing", icon: UserCheck },
   { to: "/settings", label: "Settings", icon: Settings },
   { to: "/supports", label: "Ticket", icon: UserCog },
-  { to: "/news/admin", label: "News", icon: Shield },
+  { to: "/news/admin", label: "Set Notifications", icon: Shield },
   { to: "/blog/admin", label: "Blog", icon: UserCog },
   { to: "/user-promo", label: "UserPromo", icon: Activity },
   { to: "/admin/notifications", label: "Notification", icon: Activity },

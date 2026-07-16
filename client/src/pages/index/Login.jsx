@@ -357,7 +357,7 @@ const Login = () => {
                  group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition transform group-hover:scale-105 "
               >
                 <Icon icon="flat-color-icons:google" className="h-4 w-4" />
-                <span className="text-gray-400">oogle</span>
+                <span className="text-gray-400"> Google</span>
               </button>
               <div className="opacity-0 absolute inset-0 z-10 overflow-hidden rounded-full">
                 <GoogleLogin
