@@ -164,7 +164,7 @@ export default function AdminBlogPage() {
           <div className="flex items-center gap-3 mr-auto">
             <img src={Logo} alt="FillOps Logo" className="w-10 h-10 object-contain" />
             <div>
-              <p className="text-[15px] font-bold text-slate-900 leading-none">FillOps Blog</p>
+              <p className="text-[15px] font-bold text-slate-900 leading-none">Fillop</p>
               <p className="text-[10px] text-slate-400 mt-0.5">Editorial Dashboard</p>
             </div>
           </div>

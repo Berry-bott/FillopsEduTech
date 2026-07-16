@@ -57,14 +57,23 @@ function Navbar() {
       <div className="max-w-8xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 no-underline">
           <img src={Logo} alt="FillOps" className="w-8 h-8 object-contain" />
-          <span className="text-[15px] font-bold text-slate-900 tracking-tight">FillOps Blog</span>
+          <span className="text-primary dark:text-primary text-xl md:text-[1rem] xmd:text-2xl lg:text-3xl font-extrabold">Fillop</span>
         </Link>
-        <Link
-          to="/"
-          className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors no-underline"
-        >
-          ← Back to FillOps
-        </Link>
+        <div className="flex gap-4 md:pr-12">
+          <Link
+            to="/"
+            className=" border border-transparent px-3 py-2 text-sm font-semibold text-slate-500 no-underline transition-all duration-200 hover:border-gray-300 hover:bg-gray-200 hover:text-slate-900"
+          >
+            Explore Fillop Study
+          </Link>
+
+          <a
+            href="https://filloptech.com/"
+            className=" border border-transparent px-3 py-2 text-sm font-semibold text-slate-500 no-underline transition-all duration-200 hover:border-gray-300 hover:bg-gray-200 hover:text-slate-900"
+          >
+            Professional Courses
+          </a>
+        </div>
       </div>
     </nav>
   );
@@ -75,10 +84,9 @@ function Footer() {
   return (
     <footer className="bg-white border-t border-slate-100 mt-24">
       <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <img src={Logo} alt="FillOps" className="w-7 h-7 object-contain" />
-          <span className="font-bold text-slate-700 text-sm">FillOps Blog</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2.5 no-underline">
+new           <span className="text-primary dark:text-primary text-xl md:text-[1rem] xmd:text-2xl lg:text-3xl font-extrabold">Fillop</span>
+        </Link>
         <p className="text-xs text-slate-400">© {new Date().getFullYear()} FillOps. All rights reserved.</p>
       </div>
     </footer>
@@ -106,7 +114,7 @@ function CardSkeleton() {
 
 // ─── Hero card ────────────────────────────────────────────────────────────────
 function HeroCard({ blog }) {
-  const author = blog.author ? `${blog.author.firstName} ${blog.author.lastName}` : "FillOps";
+  const author = blog.author ? `${blog.author.firstName} ${blog.author.lastName}` : "FillOp";
   const excerpt = blog.metaDescription || cleanExcerpt(blog.content, 240);
 
   return (
@@ -126,7 +134,7 @@ function HeroCard({ blog }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
           {blog.category && (
-            <span className="inline-block mb-3 px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm">
+            <span className="inline-block  mb-3 px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm">
               {blog.category}
             </span>
           )}
@@ -344,10 +352,10 @@ export default function BlogPage() {
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`shrink-0 px-4 py-3 text-sm font-medium transition-all border-b-2 ${
+                className={`shrink-0 px-4 py-3 border border-transparent  text-sm font-semibold no-underline transition-all duration-200 hover:border-gray-300 hover:bg-gray-200 border-b-2 ${
                   category === cat
                     ? "border-primary-hover text-primary"
-                    : "border-transparent text-slate-500 hover:text-slate-800"
+                    : "border border-transparent px-1 py-1 text-sm font-semibold text-slate-500 no-underline transition-all duration-200 hover:border-gray-300 hover:bg-gray-200 hover:text-slate-900"
                 }`}
               >
                 {cat}

@@ -234,7 +234,7 @@ const Header = () => {
             <img src={fillopLogo} alt="Fillop Logo" className="w-12 h-12 object-contain" />
             <div className="leading-none mx-4 md:ml-2">
               <p className="text-primary dark:text-primary text-xl md:text-[1rem] xmd:text-2xl lg:text-3xl font-extrabold">
-                F<span>illop</span>Tech
+                Fillop
               </p>
               <p className="text-[6px] md:text-[9px] text-education-orange dark:text-education-orange font-merriweather">
                 Building skills, powering solutions...
