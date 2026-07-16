@@ -34,7 +34,7 @@ export default function Sidebar() {
     : "A";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-card">
+    <aside className="fixed left-0 top-0 z-40 h-screen  w-64 border-r border-border bg-card">
       <div className="flex h-full flex-col">
 
         {/* Logo */}
@@ -49,7 +49,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation – use <Link> instead of <a> */}
-        <nav className="flex-1 space-y-1 p-4">
+        <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.to;
             return (

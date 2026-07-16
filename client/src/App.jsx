@@ -39,6 +39,7 @@ const LecturerDashboard = lazy(() => import("@/pages/lecturer/LecturerDashboard"
 const LandingPage = lazy(() => import("@/pages/index/LandingPage"));
 const Login = lazy(() => import("@/pages/index/Login"));
 const ForgotPassword = lazy(() => import("@/pages/index/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/index/ResetPassword"));
 const Register = lazy(() => import("@/pages/index/Register"));
 const TermsOfUse = lazy(() => import("@/pages/index/TermsOfUse"));
 const Unauthorized = lazy(() => import("@/pages/index/Unauthorized"));
@@ -108,6 +109,7 @@ function App() {
               {/* ========== USER AUTH (PUBLIC) ========== */}
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/register" element={<Register />} />
 
               {/* ========== TUTOR AUTH (PUBLIC) ========== */}

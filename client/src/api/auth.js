@@ -40,6 +40,17 @@ export const forgotPassword = async (email) => {
   return res.json();
 };
 
+// 🔹 Reset Password
+export const resetPassword = async ({ token, password, confirmPassword }) => {
+  const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ token, password, confirmPassword }),
+    credentials: "include",
+  });
+  return res.json();
+};
+
 // 🔹 Google Login (sends ID token from Google to backend)
 export const googleLogin = async (idToken) => {
   const res = await fetch(`${API_BASE}/auth/google`, {
