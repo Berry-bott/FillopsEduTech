@@ -154,7 +154,7 @@ export default function NotificationsPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-xl mx-auto" style={{ minHeight: "100vh" }}>
+      <div className="relative z-10  mx-auto" style={{ minHeight: "100vh" }}>
         <div className="px-4 py-1 pb-20">
 
           {/* ── Header ── */}

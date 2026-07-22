@@ -1,48 +1,47 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { Mail, User, Loader2, Upload, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import useAuthStore from "../../store/authStore"; 
+import { Formio } from "formiojs";
+import "formiojs/dist/formio.full.min.css";
 import { useToast } from "@/components/ui/use-toast";
+import useAuthStore from "../../store/authStore";
 import Logo from "../../assets/images/fillopsLogo.png";
 
-// ----------------------------------------
-// VALIDATION SCHEMAS FOR EACH STEP
-// ----------------------------------------
-const step1Schema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phoneNumber: z.string().min(10, "Phone number is required"),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
-  gender: z.string().min(1, "Gender is required"),
-});
-
-const step2Schema = z.object({
-  schoolAttended: z.string().min(1, "School attended is required"),
-  department: z.string().optional(),                    
-  degree: z.string().min(1, "Degree is required"),
-  areaOfSpecialization: z.string().min(1, "Area of specialization is required"),
-  otherCertifications: z.string().optional(),
-  professionalCertificate: z.string().optional(),
-  membershipOfProfessionalBodies: z.string().optional(),
-});
-
-const step3Schema = z.object({
-  country: z.string().min(1, "Country is required"),
-  state: z.string().min(1, "State is required"),
-  socialLinks: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-});
+// Register base64 storage provider with Form.io
+const Base64StorageProvider = {
+  type: "base64",
+  config: {
+    public: true,
+  },
+  upload: async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve({
+          storage: "base64",
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: reader.result,
+        });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  },
+  download: (file) => {
+    return file.data;
+  },
+};
 
 // ----------------------------------------
 // PROGRESS INDICATOR
 // ----------------------------------------
 const ProgressIndicator = ({ currentStep, totalSteps }) => {
   const steps = ["Personal Info", "Education", "More Details"];
-  
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between">
@@ -85,6 +84,200 @@ const ProgressIndicator = ({ currentStep, totalSteps }) => {
 };
 
 // ----------------------------------------
+// FORM SCHEMAS FOR FORM.IO
+// ----------------------------------------
+const STEP1_SCHEMA = {
+  display: "form",
+  components: [
+    {
+      type: "textfield",
+      key: "firstName",
+      label: "First Name",
+      placeholder: "First Name",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+    {
+      type: "textfield",
+      key: "lastName",
+      label: "Last Name",
+      placeholder: "Last Name",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+    {
+      type: "email",
+      key: "email",
+      label: "Email Address",
+      placeholder: "Email Address",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+    {
+      type: "textfield",
+      key: "phoneNumber",
+      label: "Phone Number",
+      placeholder: "Phone Number",
+      validateOn: "submit",
+      validate: {
+        required: true,
+        minLength: 10,
+      },
+    },
+    {
+      type: "datetime",
+      key: "dateOfBirth",
+      label: "Date of Birth",
+      format: "yyyy-MM-dd",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+{
+  type: "select",
+  key: "gender",
+  label: "Gender",
+  placeholder: "Select Gender",
+  dataSrc: "values",
+  data: {
+    values: [
+      { label: "Male", value: "male" },
+      { label: "Female", value: "female" },
+      { label: "Other", value: "other" },
+    ],
+  },
+  widget: "html5",
+  validateOn: "submit",
+  validate: {
+    required: true,
+  },
+},
+  ],
+};
+
+const STEP2_SCHEMA = {
+  display: "form",
+  components: [
+    {
+      type: "textfield",
+      key: "schoolAttended",
+      label: "School Attended",
+      placeholder: "School Attended",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+    {
+      type: "textfield",
+      key: "department",
+      label: "Department",
+      placeholder: "Department",
+    },
+    {
+      type: "textfield",
+      key: "degree",
+      label: "Degree (e.g., B.Sc, M.Sc, PhD)",
+      placeholder: "Degree",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+    {
+      type: "textfield",
+      key: "areaOfSpecialization",
+      label: "Area of Specialization",
+      placeholder: "Area of Specialization",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+    {
+      type: "textarea",
+      key: "otherCertifications",
+      label: "Other Certifications (Optional)",
+      placeholder: "Other Certifications",
+    },
+    {
+      type: "textfield",
+      key: "professionalCertificate",
+      label: "Professional Certificate (Optional)",
+      placeholder: "Professional Certificate",
+    },
+    {
+      type: "textarea",
+      key: "membershipOfProfessionalBodies",
+      label: "Membership of Professional Bodies (Optional)",
+      placeholder: "Membership of Professional Bodies",
+    },
+  ],
+};
+
+const STEP3_SCHEMA = {
+  display: "form",
+  components: [
+    {
+      type: "textfield",
+      key: "country",
+      label: "Country",
+      placeholder: "Country",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+    {
+      type: "textfield",
+      key: "state",
+      label: "State",
+      placeholder: "State",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+    {
+      type: "textfield",
+      key: "socialLinks",
+      label: "Any social links (optional)",
+      placeholder: "https://...",
+      type: "url",
+    },
+    {
+      type: "file",
+      key: "pdf",
+      label: "Upload CV / Certificate (PDF)",
+      file: {
+        type: ["application/pdf"],
+      },
+      storage: "base64",
+    },
+    {
+      type: "file",
+      key: "passport",
+      label: "Upload Passport Photograph",
+      file: {
+        type: ["image/png", "image/jpeg"],
+      },
+      storage: "base64",
+      validateOn: "submit",
+      validate: {
+        required: true,
+      },
+    },
+  ],
+};
+
+// ----------------------------------------
 // MAIN REGISTER COMPONENT
 // ----------------------------------------
 const Register = () => {
@@ -96,117 +289,111 @@ const Register = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [showVerifyNotice, setShowVerifyNotice] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
-  const [passportFile, setPassportFile] = useState(null);
-  const [passportPreview, setPassportPreview] = useState(null);
-  const [pdfFile, setPdfFile] = useState(null);
-  const [pdfName, setPdfName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({});
+  const formDataRef = useRef({});
+  const currentStepRef = useRef(0);
 
-  const { register: registerUser, loading, error, success, clearMessages } = useAuthStore();
+  const { register: registerUser } = useAuthStore();
+  const formRef = useRef(null);
+  const formioInstanceRef = useRef(null);
+  const isInitializingRef = useRef(false);
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-    dateOfBirth: "",
-    gender: "",
-    country: "",
-    state: "",
-    schoolAttended: "",
-    degree: "",
-    areaOfSpecialization: "",
-    otherCertifications: "",
-    department: "",
-    professionalCertificate: "",
-    membershipOfProfessionalBodies: "",
-    socialLinks: "",
-    cvUploads: "",
-  });
+  const schemas = [STEP1_SCHEMA, STEP2_SCHEMA, STEP3_SCHEMA];
 
-  // Get current schema based on step
-  const getCurrentSchema = () => {
-    switch (currentStep) {
-      case 0:
-        return step1Schema;
-      case 1:
-        return step2Schema;
-      case 2:
-        return step3Schema;
-      default:
-        return step1Schema;
+  // Keep refs in sync with state
+  useEffect(() => {
+    formDataRef.current = formData;
+    currentStepRef.current = currentStep;
+  }, [formData, currentStep]);
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentStep]);
+
+
+  // Register base64 storage provider on mount
+  useEffect(() => {
+    if (Formio && !Formio.storage) {
+      Formio.storage = {};
     }
-  };
+    if (Formio && !Formio.storage.base64) {
+      Formio.storage.base64 = Base64StorageProvider;
+    }
+  }, []);
 
-  const { register, handleSubmit, formState: { errors }, reset, trigger } = useForm({
-    resolver: zodResolver(getCurrentSchema()),
-    defaultValues: formData,
-    mode: "onChange",
-  });
-
-  // Handle passport file upload
-  const handlePassportUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5000000) { // 5MB limit
-        toast({
-          variant: "destructive",
-          title: "File too large",
-          description: "Passport image must be less than 5MB",
-        });
-        return;
-      }
+  // Initialize Form.io form on step change
+  useEffect(() => {
+    if (!showVerifyNotice) {
+      isInitializingRef.current = true;
       
-      setPassportFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPassportPreview(reader.result);
+      // Use multiple rAFs to ensure DOM is fully committed and ref is updated
+      const timer = setTimeout(() => {
+        requestAnimationFrame(() => {
+          // Empty the container to prevent Form.io from appending multiple forms
+          if (formRef.current) {
+            formRef.current.innerHTML = "";
+          }
+
+          Formio.createForm(formRef.current, schemas[currentStep], {
+            i18n: {
+              en: {
+                required: "This field is required",
+              },
+            },
+            validateOn: "submit",
+          }).then((form) => {
+            formioInstanceRef.current = form;
+            isInitializingRef.current = false;
+
+            // Set previous data if available
+            if (Object.keys(formDataRef.current).length > 0) {
+              form.submission = { data: formDataRef.current };
+            }
+
+            // Handle form submit
+            form.on("submit", handleFormSubmit);
+
+            // Handle validation errors - prevent the default error alert box at top
+            form.on("error", (errors) => {
+              // Form.io adds an alert-danger div by default - remove it
+              const alert = form.element?.querySelector(".alert.alert-danger");
+              if (alert) {
+                alert.style.display = "none";
+              }
+            });
+          }).catch(err => {
+            console.error("Error creating Form.io form:", err);
+            isInitializingRef.current = false;
+          });
+        });
+      }, 150);
+
+      return () => {
+        clearTimeout(timer);
+        isInitializingRef.current = false;
       };
-      reader.readAsDataURL(file);
     }
-  };
+  }, [currentStep, showVerifyNotice]);
 
-  const handlePdfUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.type !== "application/pdf") {
-        toast({
-          variant: "destructive",
-          title: "Invalid file type",
-          description: "Please upload a PDF file only",
-        });
-        return;
+  // Cleanup form on unmount only
+  useEffect(() => {
+    return () => {
+      if (formioInstanceRef.current) {
+        formioInstanceRef.current.destroy(true);
+        formioInstanceRef.current = null;
       }
-      if (file.size > 10000000) { // 10MB limit
-        toast({
-          variant: "destructive",
-          title: "File too large",
-          description: "PDF must be less than 10MB",
-        });
-        return;
-      }
-      setPdfFile(file);
-      setPdfName(file.name);
-    }
-  };
+    };
+  }, []);
 
-  const removePdf = () => {
-    setPdfFile(null);
-    setPdfName("");
-  };
-
-  const removePassport = () => {
-    setPassportFile(null);
-    setPassportPreview(null);
-  };
-
-  // Handle URL param messages
+  // Handle URL param messages (verification)
   useEffect(() => {
     const verified = searchParams.get("verified");
     const errorParam = searchParams.get("error");
     const reason = searchParams.get("reason");
 
     if (verified === "true") {
-      clearMessages?.();
       toast({
         title: "Email Verified 🎉",
         description: "You can now log in to your account.",
@@ -215,19 +402,17 @@ const Register = () => {
     }
 
     if (errorParam) {
-      clearMessages?.();
       let title = "Error";
       let description = "Your verification link is invalid or has expired.";
 
       if (errorParam === "verification_failed") {
         title = "Verification Failed";
         if (reason === "invalid-or-expired") {
-          description = "Your verification link is invalid or has expired. Please request a new verification email.";
+          description =
+            "Your verification link is invalid or has expired. Please request a new verification email.";
         } else if (reason) {
-          description = reason.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+          description = reason.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
         }
-      } else if (reason) {
-        description = reason.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
       }
 
       toast({
@@ -237,49 +422,38 @@ const Register = () => {
       });
       navigate(location.pathname, { replace: true });
     }
-  }, [searchParams, clearMessages, toast, navigate, location]);
+  }, [searchParams, toast, navigate, location]);
 
-  // Handle next / submit
-  const handleNext = async (data) => {
-    setFormData({ ...formData, ...data });
-    
-    if (currentStep < 2) {
-      setCurrentStep(currentStep + 1);
-    } else if (currentStep === 2) {
-      // Final step - validate passport
-      if (!passportFile) {
-        toast({
-          variant: "destructive",
-          title: "Passport Required",
-          description: "Please upload your passport photograph",
-        });
-        return;
-      }
+  const handleFormSubmit = async (submission) => {
+    const stepData = submission.data;
+    const currentStepValue = currentStepRef.current;
 
-      const finalData = { ...formData, ...data };
+    // Merge with existing form data
+    const allData = { ...formDataRef.current, ...stepData };
+    setFormData(allData);
 
-      const formDataToSend = new FormData();
-      Object.keys(finalData).forEach(key => {
-        if (finalData[key]) formDataToSend.append(key, finalData[key]);
-      });
-      if (passportFile) formDataToSend.append('passport', passportFile);
-      if (pdfFile) formDataToSend.append('pdf', pdfFile);
+    if (currentStepValue < 2) {
+      // Move to next step
+      setCurrentStep(currentStepValue + 1);
+    } else if (currentStepValue === 2) {
+      // Final submission
+      setLoading(true);
 
       try {
-        const result = await registerUser(finalData); 
+        const result = await registerUser(allData);
 
         if (result?.success) {
-          setRegisteredEmail(finalData.email);
+          setRegisteredEmail(allData.email);
           setShowVerifyNotice(true);
           toast({
             title: "Registration Successful",
             description: "Check your email to verify your account 🔐",
           });
-        } else if (error) {
+        } else {
           toast({
             variant: "destructive",
             title: "Registration Failed",
-            description: error || "Please check your details and try again.",
+            description: result?.error || "Please check your details and try again.",
           });
         }
       } catch (err) {
@@ -288,6 +462,8 @@ const Register = () => {
           title: "Registration Failed",
           description: "An unexpected error occurred. Please try again.",
         });
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -298,13 +474,21 @@ const Register = () => {
     }
   };
 
+  const handleNext = () => {
+    if (formioInstanceRef.current) {
+      formioInstanceRef.current.submit();
+    }
+  };
+
   // Show email verification notice
   if (showVerifyNotice) {
     return (
       <section className="min-h-screen flex items-center justify-center bg-white dark:bg-background px-3 py-6 transition-colors duration-300">
         <div className="text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Check your email</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+            Check your email
+          </h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             A verification link has been sent to <strong>{registeredEmail}</strong>
           </p>
@@ -321,6 +505,7 @@ const Register = () => {
         transition={{ duration: 0.8 }}
         className="relative w-full max-w-2xl bg-white dark:bg-background border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-6 overflow-hidden"
       >
+        {/* Decorative Background */}
         <div className="absolute -top-11 -right-9 w-32 h-32">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -348,19 +533,6 @@ const Register = () => {
                 }}
               />
             ))}
-            <div
-              className="relative w-32 h-32"
-              style={{
-                clipPath:
-                  "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-              }}
-            >
-              <img
-                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1920&h=1080&fit=crop"
-                alt="Decorative"
-                className="w-full h-full object-cover shadow-lg border border-white"
-              />
-            </div>
           </motion.div>
         </div>
 
@@ -386,421 +558,71 @@ const Register = () => {
         {/* Progress Indicator */}
         <ProgressIndicator currentStep={currentStep} totalSteps={3} />
 
-        {/* Error & Success Messages */}
-        {success && (
-          <p className="text-green-600 text-sm mb-3 text-center">{success}</p>
-        )}
-        {error && (
-          <p className="text-red-600 text-sm mb-3 text-center">{error}</p>
-        )}
+        {/* Form.io Form Container */}
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+          ref={formRef}
+          className="formio-container mb-6"
+        />
 
-        {/* Multi-Step Form */}
-        <AnimatePresence mode="wait">
-          {currentStep === 0 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
+        {/* Navigation Buttons */}
+        <div className="flex gap-3 mt-6">
+          {currentStep > 0 && (
+            <button
+              type="button"
+              onClick={handlePrevious}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-lg shadow-md transition duration-200 disabled:opacity-50"
             >
-              <form onSubmit={handleSubmit(handleNext)} className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-1 mb-3">
-                  Personal Information
-                </h3>
-
-                {/* First Name */}
-                <div className="relative">
-                  <User className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
-                  <input
-                    {...register("firstName")}
-                    type="text"
-                    placeholder="First Name"
-                    defaultValue={formData.firstName}
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.firstName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>
-                  )}
-                </div>
-
-                {/* Last Name */}
-                <div className="relative">
-                  <User className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
-                  <input
-                    {...register("lastName")}
-                    type="text"
-                    placeholder="Last Name"
-                    defaultValue={formData.lastName}
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.lastName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
-                  <input
-                    {...register("email")}
-                    type="email"
-                    placeholder="Email Address"
-                    defaultValue={formData.email}
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div className="relative">
-                  <User className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
-                  <input
-                    {...register("phoneNumber")}
-                    type="tel"
-                    placeholder="Phone Number"
-                    defaultValue={formData.phoneNumber}
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.phoneNumber && (
-                    <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>
-                  )}
-                </div>
-
-                {/* Date of Birth */}
-                <div className="relative">
-                  <input
-                    {...register("dateOfBirth")}
-                    type="date"
-                    defaultValue={formData.dateOfBirth}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.dateOfBirth && (
-                    <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth.message}</p>
-                  )}
-                </div>
-
-                {/* Gender */}
-                <div className="relative">
-                  <select
-                    {...register("gender")}
-                    defaultValue={formData.gender}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 bg-white dark:bg-background focus:ring-2 focus:ring-indigo-400"
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                  {errors.gender && (
-                    <p className="text-red-500 text-xs mt-1">{errors.gender.message}</p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 rounded-lg shadow-md transition duration-200"
-                >
-                  Next <ArrowRight className="w-4 h-4" />
-                </button>
-              </form>
-            </motion.div>
+              <ArrowLeft className="w-4 h-4" /> Previous
+            </button>
           )}
 
-          {currentStep === 1 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
-            >
-              <form onSubmit={handleSubmit(handleNext)} className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-1 mb-3">
-                  Education
-                </h3>
-
-                {/* School Attended */}
-                <div className="relative">
-                  <input
-                    {...register("schoolAttended")}
-                    type="text"
-                    placeholder="School Attended"
-                    defaultValue={formData.schoolAttended}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.schoolAttended && (
-                    <p className="text-red-500 text-xs mt-1">{errors.schoolAttended.message}</p>
-                  )}
-                </div>
-
-                {/* Department */}
-                <div className="relative">
-                  <input
-                    {...register("department")}
-                    type="text"
-                    placeholder="Department"
-                    defaultValue={formData.department}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                </div>
-
-                {/* Degree */}
-                <div className="relative">
-                  <input
-                    {...register("degree")}
-                    type="text"
-                    placeholder="Degree (e.g., B.Sc, M.Sc, PhD)"
-                    defaultValue={formData.degree}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.degree && (
-                    <p className="text-red-500 text-xs mt-1">{errors.degree.message}</p>
-                  )}
-                </div>
-
-                {/* Area of Specialization */}
-                <div className="relative">
-                  <input
-                    {...register("areaOfSpecialization")}
-                    type="text"
-                    placeholder="Area of Specialization"
-                    defaultValue={formData.areaOfSpecialization}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.areaOfSpecialization && (
-                    <p className="text-red-500 text-xs mt-1">{errors.areaOfSpecialization.message}</p>
-                  )}
-                </div>
-
-                {/* Other Certifications */}
-                <div className="relative">
-                  <textarea
-                    {...register("otherCertifications")}
-                    placeholder="Other Certifications (Optional)"
-                    defaultValue={formData.otherCertifications}
-                    rows={2}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400 resize-none"
-                  />
-                </div>
-
-                {/* Professional Certificate */}
-                <div className="relative">
-                  <input
-                    {...register("professionalCertificate")}
-                    type="text"
-                    placeholder="Professional Certificate (Optional)"
-                    defaultValue={formData.professionalCertificate}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                </div>
-
-                {/* Membership of Professional Bodies */}
-                <div className="relative">
-                  <textarea
-                    {...register("membershipOfProfessionalBodies")}
-                    placeholder="Membership of Professional Bodies (Optional)"
-                    defaultValue={formData.membershipOfProfessionalBodies}
-                    rows={2}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400 resize-none"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={handlePrevious}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-lg shadow-md transition duration-200"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Previous
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 rounded-lg shadow-md transition duration-200"
-                  >
-                    Next <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-
-          {currentStep === 2 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
-            >
-              <form onSubmit={handleSubmit(handleNext)} className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-1">
-                  More Details
-                </h3>
-
-                {/* Country */}
-                <div className="relative">
-                  <input
-                    {...register("country")}
-                    type="text"
-                    placeholder="Country"
-                    defaultValue={formData.country}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.country && (
-                    <p className="text-red-500 text-xs mt-1">{errors.country.message}</p>
-                  )}
-                </div>
-
-                {/* State */}
-                <div className="relative">
-                  <input
-                    {...register("state")}
-                    type="text"
-                    placeholder="State"
-                    defaultValue={formData.state}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.state && (
-                    <p className="text-red-500 text-xs mt-1">{errors.state.message}</p>
-                  )}
-                </div>
-
-                {/* Social Links */}
-                <div className="relative">
-                  <input
-                    {...register("socialLinks")}
-                    type="url"
-                    placeholder="Any social links (optional)"
-                    defaultValue={formData.socialLinks}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  {errors.socialLinks && (
-                    <p className="text-red-500 text-xs mt-1">{errors.socialLinks.message}</p>
-                  )}
-                </div>
-
-                {/* CV / PDF Upload */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-gray-700 dark:text-gray-300">
-                    Upload CV / Certificate (PDF)
-                  </label>
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={handlePdfUpload}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:ring-2 focus:ring-indigo-400"
-                  />
-                  
-                  {pdfName && (
-                    <div className="flex items-center justify-between mt-1">
-                      <p className="text-sm text-gray-500">{pdfName}</p>
-                      <button
-                        type="button"
-                        onClick={removePdf}
-                        className="text-red-500 text-xs hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Passport Photograph */}
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
-                  {!passportPreview ? (
-                    <div>
-                      <Upload className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        Click to upload your passport photograph
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">
-                        PNG, JPG up to 5MB
-                      </p>
-                      <label className="cursor-pointer">
-                        <span className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg inline-block transition">
-                          Choose File
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePassportUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                  ) : (
-                    <div>
-                      <img
-                        src={passportPreview}
-                        alt="Passport preview"
-                        className="mx-auto h-40 w-40 object-cover rounded-lg border-2 border-primary-hover mb-3"
-                      />
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        {passportFile?.name}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={removePassport}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={handlePrevious}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-lg shadow-md transition duration-200"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Previous
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`flex-1 flex items-center justify-center gap-2 ${
-                      loading
-                        ? "bg-blue-400 cursor-not-allowed"
-                        : "bg-primary hover:bg-primary-hover"
-                    } text-white font-semibold py-2.5 rounded-lg shadow-md transition duration-200`}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
-                      </>
-                    ) : (
-                      <>Complete Registration</>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <button
+            type="button"
+            onClick={handleNext}
+            disabled={loading}
+            className={`flex-1 flex items-center justify-center gap-2 ${
+              loading
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-primary hover:bg-primary-hover"
+            } text-white font-semibold py-2.5 rounded-lg shadow-md transition duration-200 disabled:opacity-50`}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
+              </>
+            ) : currentStep === 2 ? (
+              <>Complete Registration</>
+            ) : (
+              <>
+                Next <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
 
         {/* Login Link */}
         <div className="text-center mt-4">
           <p
             onClick={() => navigate("/tutor/login")}
-            className="text-primary  dark:text-primary-hover hover:underline text-sm cursor-pointer"
+            className="text-primary dark:text-primary-hover hover:underline text-sm cursor-pointer"
           >
             Already have an account? Sign in
-            
           </p>
-          <p className="text-xs">By signing in or registering, you agree to our{" "}
-            <a 
-        href="/terms#your-content"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary text-sm hover:underline"
-        >Terms of Use</a>
+          <p className="text-xs">
+            By signing in or registering, you agree to our{" "}
+            <a
+              href="/terms#your-content"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary text-sm hover:underline"
+            >
+              Terms of Use
+            </a>
           </p>
-          
         </div>
       </motion.div>
     </section>

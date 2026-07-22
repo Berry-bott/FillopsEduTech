@@ -1,19 +1,25 @@
-import React from "react"
+import React, { createContext, useContext } from "react"
+
+const AlertDialogContext = createContext(null)
 
 export function AlertDialog({ open, onOpenChange, children }) {
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        onClick={() => onOpenChange(false)}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-      ></div>
+  const handleClose = () => onOpenChange(false)
 
-      <div className="relative z-50 w-full max-w-md rounded-lg bg-background p-6 shadow-lg border">
-        {children}
+  return (
+    <AlertDialogContext.Provider value={handleClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div
+          onPointerDown={(e) => e.preventDefault()}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        ></div>
+
+        <div className="relative z-50 w-full max-w-md rounded-lg bg-background p-6 shadow-lg border">
+          {children}
+        </div>
       </div>
-    </div>
+    </AlertDialogContext.Provider>
   )
 }
 
@@ -37,11 +43,14 @@ export function AlertDialogFooter({ children }) {
   return <div className="flex justify-end gap-2 mt-4">{children}</div>
 }
 
-export function AlertDialogCancel({ children, onClick }) {
+export function AlertDialogCancel({ children, onClick, disabled }) {
+  const handleClose = useContext(AlertDialogContext)
+  
   return (
     <button
-      onClick={onClick}
-      className="px-4 py-2 rounded-md border hover:bg-accent text-sm"
+      onClick={onClick || handleClose}
+      disabled={disabled}
+      className="px-4 py-2 rounded-md border hover:bg-accent text-sm disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {children}
     </button>

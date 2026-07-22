@@ -1,14 +1,5 @@
 import useTutorAuthStore from "../store/tutorAuthStore";
 
-export const apiFetch = (url, options = {}) => {
-  const token = useTutorAuthStore.getState().accessToken;
-
-  return fetch(url, {
-    ...options,
-    headers: {
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-    credentials: "include",
-  });
+export const apiFetch = async (url, options = {}) => {
+  return useTutorAuthStore.getState().fetchWithAuth(url, options);
 };

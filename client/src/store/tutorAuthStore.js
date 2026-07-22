@@ -1,5 +1,3 @@
-
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
@@ -46,10 +44,6 @@ const useTutorAuthStore = create(
 
           const { accessToken, tutor } = res.data;
 
-          sessionStorage.setItem("accessToken", accessToken);
-          console.log("🍪 All cookies after login:", document.cookie);
-          console.log("📦 Login response:", res);
-
           set({
             tutor,
             accessToken,
@@ -81,8 +75,6 @@ const useTutorAuthStore = create(
       
             const { accessToken, tutor } = res.data;
       
-            sessionStorage.setItem("accessToken", accessToken);
-      
             set({
               accessToken,
               tutor: tutor || get().tutor,
@@ -103,13 +95,10 @@ const useTutorAuthStore = create(
 
      
       checkTutorAuth: async () => {
-  // 🔹 STEP 1: Get token from session storage OR state
-  let token = sessionStorage.getItem("accessToken") || get().accessToken;
+  // 🔹 STEP 1: Get token from state (no sessionStorage fallback)
+  let token = get().accessToken;
 
   if (token) {
-    // Update state with token from sessionStorage
-    set({ accessToken: token });
-    
     try {
       const res = await getProfile();
       
@@ -150,32 +139,9 @@ const useTutorAuthStore = create(
 
   // 🔹 STEP 3: Everything failed - clear auth
   console.log("❌ Auth check failed - logging out");
-  sessionStorage.removeItem("accessToken");
   set({ tutor: null, accessToken: null, isAuthenticated: false });
   return false;
       },
-
-    // checkTutorAuth: async () => {
-    //   let token = get().accessToken || sessionStorage.getItem("accessToken");
-
-    //   if (token) {
-    //     try {
-    //       const res = await getProfile(token);
-    //       if (res.success) {
-    //         set({ tutor: res.data, isAuthenticated: true, accessToken: token });
-    //         return true;
-    //       }
-    //     } catch {}
-    //   }
-
-    //   const refreshed = await get().refreshAccessToken();
-    //   console.log("🔄 Refresh result:", refreshed);
-    //   if (refreshed) return true;
-
-    //   sessionStorage.removeItem("accessToken");
-    //   set({ tutor: null, accessToken: null, isAuthenticated: false });
-    //   return false;
-    // },
 
 
       // 🔹 UPDATE PROFILE
@@ -217,24 +183,27 @@ const useTutorAuthStore = create(
 
 
       uploadAvatar: async (formData) => {
-        const token = get().accessToken; 
-        
-        if (!token) {
-          return { success: false, message: "Not authenticated" };
-        }
-
         set({ loading: true, error: "" });
 
         try {
-          const response = await fetch(`${API_BASE}/tutor/profile/avatar`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              // Don't set Content-Type - let browser set it with boundary
-            },
-            credentials: "include",
-            body: formData,
-          });
+          let token = get().accessToken;
+
+          const doUpload = (t) =>
+            fetch(`${API_BASE}/tutor/profile/avatar`, {
+              method: "POST",
+              headers: t ? { Authorization: `Bearer ${t}` } : {},
+              credentials: "include",
+              body: formData,
+            });
+
+          let response = await doUpload(token);
+
+          if (response.status === 401 || response.status === 403) {
+            const refreshed = await get().refreshAccessToken();
+            if (!refreshed) throw new Error("Session expired");
+            token = get().accessToken;
+            response = await doUpload(token);
+          }
 
           const result = await response.json();
 
@@ -272,23 +241,29 @@ const useTutorAuthStore = create(
 
       // 🔹 DELETE AVATAR
       deleteAvatar: async () => {
-        const token = get().accessToken; // ✅ Direct access to state
-        
-        if (!token) {
-          return { success: false, message: "Not authenticated" };
-        }
-
         set({ loading: true, error: "" });
 
         try {
-          const response = await fetch(`${API_BASE}/tutor/profile/avatar`, {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-          });
+          let token = get().accessToken;
+
+          const doDelete = (t) =>
+            fetch(`${API_BASE}/tutor/profile/avatar`, {
+              method: "DELETE",
+              headers: {
+                ...(t ? { Authorization: `Bearer ${t}` } : {}),
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+            });
+
+          let response = await doDelete(token);
+
+          if (response.status === 401 || response.status === 403) {
+            const refreshed = await get().refreshAccessToken();
+            if (!refreshed) throw new Error("Session expired");
+            token = get().accessToken;
+            response = await doDelete(token);
+          }
 
           const result = await response.json();
 
@@ -375,7 +350,6 @@ const useTutorAuthStore = create(
         } catch (err) {
           console.error(err);
         } finally {
-          sessionStorage.removeItem("accessToken");
           set({ tutor: null, accessToken: null, isAuthenticated: false });
         }
       },
@@ -397,9 +371,9 @@ const useTutorAuthStore = create(
 
         let res = await request();
 
-        // 🔹 If 401, try to refresh and retry
-        if (res.status === 401) {
-          console.log("🔄 Got 401, attempting refresh...");
+        // 🔹 If 401 or 403, try to refresh and retry
+        if (res.status === 401 || res.status === 403) {
+          console.log(`🔄 Got ${res.status}, attempting refresh...`);
           
           const refreshed = await get().refreshAccessToken();
           
@@ -407,7 +381,6 @@ const useTutorAuthStore = create(
             console.error("❌ Refresh failed - session expired");
             
             // Clear auth state
-            sessionStorage.removeItem("accessToken");
             set({ tutor: null, accessToken: null, isAuthenticated: false });
             
             throw new Error("Session expired");
@@ -421,35 +394,9 @@ const useTutorAuthStore = create(
 
         return res.json();
       },
-      // fetchWithAuth: async (url, options = {}) => {
-      //   let token = get().accessToken;
-      
-      //   const request = () =>
-      //     fetch(url, {
-      //       ...options,
-      //       headers: {
-      //         "Content-Type": "application/json",
-      //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      //         ...options.headers,
-      //       },
-      //       credentials: "include",
-      //     });
-      
-      //   let res = await request();
-      
-      //   if (res.status === 401) {
-      //     const refreshed = await get().refreshAccessToken();
-      //     if (!refreshed) throw new Error("Session expired");
-      
-      //     token = get().accessToken;
-      //     res = await request(); // ✅ retry AFTER refresh
-      //   }
-      
-      //   return res.json();
-      // },      
       }),
       {
-        name: "auth-store",
+        name: "tutor-auth-store",
       storage: {
         getItem: (key) => sessionStorage.getItem(key),
         setItem: (key, value) => sessionStorage.setItem(key, value),

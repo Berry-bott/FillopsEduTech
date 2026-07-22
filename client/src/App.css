@@ -72,3 +72,83 @@
   font-size: 18px;
   cursor: pointer;
 }
+
+
+  /* Form.io CSS */
+    .formio-container {
+      --primary-color: var(--color-primary, #6366f1);
+      --primary-hover: var(--color-primary-hover, #4f46e5);
+    }
+
+    /* Hide the Form.io error alert box at the top - bad UX */
+    .formio-container .alert.alert-danger {
+      display: none !important;
+    }
+
+    .formio-container .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .formio-container input,
+    .formio-container textarea,
+    .formio-container select {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .dark .formio-container input,
+    .dark .formio-container textarea,
+    .dark .formio-container select {
+      border-color: #4b5563;
+      background-color: transparent;
+      color: #e5e7eb;
+    }
+
+    .formio-container input:focus,
+    .formio-container textarea:focus,
+    .formio-container select:focus {
+      outline: none;
+      ring: 2px;
+      ring-color: #818cf8;
+    }
+
+    .formio-container label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .dark .formio-container label {
+      color: #d1d5db;
+    }
+
+    .formio-container .help-block {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    .formio-container .error {
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .formio-container .form-control.is-invalid,
+    .formio-container .is-invalid .form-control {
+      border-color: #ef4444;
+    }
+
+    .formio-container .form-check {
+      margin-bottom: 0.75rem;
+    }
+
+    .formio-container .form-check-input {
+      margin-right: 0.5rem;
+    }

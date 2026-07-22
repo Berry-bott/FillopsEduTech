@@ -1,15 +1,5 @@
 import useAdminAuthStore from "../store/adminAuthStore";
 
-export const apiFetch = (url, options = {}) => {
-  const token = useAdminAuthStore.getState().accessToken;
-
-  return fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-    credentials: "include",
-  });
+export const apiFetch = async (url, options = {}) => {
+  return useAdminAuthStore.getState().fetchWithAuth(url, options);
 };

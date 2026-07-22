@@ -57,8 +57,6 @@ const useAdminAuthStore = create(
 
           const { accessToken, user } = data.data;
 
-          sessionStorage.setItem("adminAccessToken", accessToken);
-
           set({
             admin: user,
             accessToken,
@@ -82,8 +80,6 @@ const useAdminAuthStore = create(
             if (!data.success) return false;
 
             const { accessToken, user } = data.data;
-
-            sessionStorage.setItem("adminAccessToken", accessToken);
 
             set({
               accessToken,
@@ -115,14 +111,12 @@ const useAdminAuthStore = create(
         const refreshed = await get().refreshAccessToken();
         if (refreshed) return true;
 
-        sessionStorage.removeItem("adminAccessToken");
         set({ admin: null, accessToken: null, isAuthenticated: false });
         return false;
       },
 
       // 🔹 LOGOUT
       logout: () => {
-        sessionStorage.removeItem("adminAccessToken");
         set({ admin: null, accessToken: null, isAuthenticated: false });
       },
 

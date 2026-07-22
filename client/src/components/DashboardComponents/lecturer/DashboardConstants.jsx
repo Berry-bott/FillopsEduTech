@@ -4,7 +4,7 @@ import {
 } from "lucide-react"
 
 export const EXAM_BODIES = [
-  { id: "all-catigories", label: "AllCategories", color: "bg-pink-500/10 text-blue-600 dark:text-blue-400" },
+  { id: "all-catigories", label: "All Categories", color: "bg-pink-500/10 text-blue-600 dark:text-blue-400" },
   { id: "jamb",           label: "JAMB",          color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
   { id: "waec",           label: "WAEC",          color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   { id: "neco",           label: "NECO",          color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
