@@ -74,7 +74,7 @@ export function wc(h) {
 }
 
 export function rt(h) {
-  return Math.max(1, Math.ceil(wc(h) / 200));
+  return Math.ceil(wc(h) / 50);
 }
 
 export function cleanContent(html) {

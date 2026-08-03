@@ -1,5 +1,4 @@
 
-import { Icon } from "@iconify/react";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -25,6 +24,7 @@ const Login = () => {
   const { toast } = useToast();
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // ✅ Get both login function and loading state
   const { login, googleLogin, loading, accessToken } = useAuthStore();
@@ -141,6 +141,7 @@ const Login = () => {
   // ✅ Google login — credentialResponse.credential is the ID token (eyJhbGci...)
   const onGoogleSuccess = async (credentialResponse) => {
     setError("");
+    setGoogleLoading(true);
     try {
       const res = await googleLogin(credentialResponse.credential);
       if (!res?.success) {
@@ -156,7 +157,14 @@ const Login = () => {
         description: "Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setGoogleLoading(false);
     }
+  };
+
+  const onGoogleError = () => {
+    setError("Google sign-in was cancelled or failed. Please try again.");
+    setGoogleLoading(false);
   };
 
   return (
@@ -347,25 +355,20 @@ const Login = () => {
             <span className="h-[1px] w-1/4 bg-gray-300 dark:bg-gray-700"></span>
           </div>
 
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex justify-center">
 
             {/* Google */}
-            <div className="group relative w-full h-full flex items-center justify-center cursor-pointer">
-              <button
-                type="button"
-                className="relative inset-0 w-full h-10 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 group-hover:border-red-400
-                 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition transform group-hover:scale-105 "
-              >
-                <Icon icon="flat-color-icons:google" className="h-4 w-4" />
-                <span className="text-gray-400"> Google</span>
-              </button>
-              <div className="opacity-0 absolute inset-0 z-10 overflow-hidden rounded-full">
-                <GoogleLogin
-                  onSuccess={onGoogleSuccess}
-                  onError={() => setError("Google sign-in was cancelled or failed.")}
-                  width="40"
-                />
-              </div>
+            <div className="w-full flex justify-center">
+              <GoogleLogin
+                onSuccess={onGoogleSuccess}
+                onError={onGoogleError}
+                disabled={googleLoading || loading}
+                theme="outline"
+                size="large"
+                width={280}
+                text="continue_with"
+                shape="rectangular"
+              />
             </div>
 
           </div>

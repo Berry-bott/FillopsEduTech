@@ -855,7 +855,10 @@ export default function QuizPage() {
 
         {/* Question Card */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-6">{currentQ.text}</h2>
+          <div 
+            className="text-xl font-semibold mb-6 prose prose-sm max-w-none [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
+            dangerouslySetInnerHTML={{ __html: currentQ.text }}
+          />
 
           <div className="space-y-3">
             {currentQ.options.map((opt) => {

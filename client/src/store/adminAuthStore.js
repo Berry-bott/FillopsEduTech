@@ -99,6 +99,23 @@ const useAdminAuthStore = create(
         return refreshPromise;
       },
 
+      // 🔹 PROACTIVE REFRESH (checks JWT expiry before request)
+      ensureFreshToken: async () => {
+        const { accessToken } = get();
+        if (!accessToken) return false;
+
+        if (isAccessTokenExpired(accessToken)) {
+          console.log("🕐 Token expiring soon → refreshing proactively");
+          const refreshed = await get().refreshAccessToken();
+          if (!refreshed) {
+            console.warn("❌ Proactive refresh failed");
+          }
+          return refreshed;
+        }
+
+        return true;
+      },
+
       // 🔹 CHECK AUTH (on app load)
       checkAuth: async () => {
         const { accessToken, isAuthenticated } = get();
@@ -135,15 +152,12 @@ const useAdminAuthStore = create(
             credentials: "include",
           });
 
+        // 🔹 Proactively refresh if token is about to expire
+        await get().ensureFreshToken();
+        token = get().accessToken;
+
         let res = await request();
 
-        // if (res.status === 401) {
-        //   const refreshed = await get().refreshAccessToken();
-        //   if (!refreshed) throw new Error("Session expired");
-
-        //   token = get().accessToken;
-        //   res = await request();
-        // }
         if (res.status === 401 || res.status === 403) {
           const refreshed = await get().refreshAccessToken();
           if (!refreshed) throw new Error("Session expired");

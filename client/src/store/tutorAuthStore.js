@@ -8,11 +8,35 @@ import {
     tutorLogout,
     refreshAccessToken as apiRefreshAccessToken,
   } from "../api/tutorAuth";
+   
   
+  const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
+  
+  let refreshPromise = null;
 
-const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
+  // Helper: decode JWT payload
+  const getJwtPayload = (token) => {
+    try {
+      const payload = token.split(".")[1];
+      if (!payload) return null;
+      const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized.padEnd(
+        normalized.length + ((4 - (normalized.length % 4)) % 4),
+        "="
+      );
+      return JSON.parse(atob(padded));
+    } catch {
+      return null;
+    }
+  };
 
-let refreshPromise = null;
+  // Helper: check if token is within 30 seconds of expiring
+  const isAccessTokenExpired = (token) => {
+    const payload = getJwtPayload(token);
+    if (!payload?.exp) return false;
+    const expiryBufferMs = 30 * 1000;
+    return Date.now() >= payload.exp * 1000 - expiryBufferMs;
+  };
 
 const useTutorAuthStore = create(
   persist(
@@ -59,28 +83,25 @@ const useTutorAuthStore = create(
 
       // 🔹 REFRESH ACCESS TOKEN
       refreshAccessToken: async () => {
-        // 👇 if refresh already running, wait for it
-        if (refreshPromise) {
-          return refreshPromise;
-        }
+        if (refreshPromise) return refreshPromise;
       
         refreshPromise = (async () => {
           try {
             const res = await apiRefreshAccessToken();
-      
+          
             if (!res.success) {
               refreshPromise = null;
               return false;
             }
-      
+          
             const { accessToken, tutor } = res.data;
-      
+          
             set({
               accessToken,
               tutor: tutor || get().tutor,
               isAuthenticated: true,
             });
-      
+          
             return true;
           } catch (err) {
             console.warn("Refresh failed:", err);
@@ -91,6 +112,23 @@ const useTutorAuthStore = create(
         })();
       
         return refreshPromise;
+      },
+
+      // 🔹 PROACTIVE REFRESH (checks JWT expiry before request)
+      ensureFreshToken: async () => {
+        const { accessToken } = get();
+        if (!accessToken) return false;
+      
+        if (isAccessTokenExpired(accessToken)) {
+          console.log("🕐 Token expiring soon → refreshing proactively");
+          const refreshed = await get().refreshAccessToken();
+          if (!refreshed) {
+            console.warn("❌ Proactive refresh failed");
+          }
+          return refreshed;
+        }
+      
+        return true;
       },
 
      
@@ -368,6 +406,10 @@ const useTutorAuthStore = create(
             },
             credentials: "include",
           });
+
+        // 🔹 Proactively refresh if token is about to expire
+        await get().ensureFreshToken();
+        token = get().accessToken;
 
         let res = await request();
 

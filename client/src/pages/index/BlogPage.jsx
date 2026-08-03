@@ -22,7 +22,7 @@ function cleanExcerpt(html, max) {
 }
 
 function readTime(html) {
-  return Math.max(1, Math.ceil(stripHtml(html).trim().split(/\s+/).filter(Boolean).length / 200));
+  return Math.ceil(stripHtml(html).trim().split(/\s+/).filter(Boolean).length / 50);
 }
 
 function fmtDate(d) {

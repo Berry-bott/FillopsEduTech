@@ -10,12 +10,12 @@ const navItems = [
   { to: "/manage-users", label: "User Management", icon: Users },
   { to: "/activity", label: "Activity Logs", icon: Activity },
   { to: "/pricing", label: "Pricing", icon: UserCheck },
-  { to: "/settings", label: "Settings", icon: Settings },
   { to: "/supports", label: "Ticket", icon: UserCog },
-  { to: "/news/admin", label: "Set Notifications", icon: Shield },
   { to: "/blog/admin", label: "Blog", icon: UserCog },
   { to: "/user-promo", label: "UserPromo", icon: Activity },
   { to: "/admin/notifications", label: "Notification", icon: Activity },
+  { to: "/news/admin", label: "Set Notifications", icon: Shield },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Sidebar() {

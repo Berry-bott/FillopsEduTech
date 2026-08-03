@@ -186,9 +186,10 @@ export default function QuizResultsPage() {
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                          <p className="text-sm text-gray-700 leading-relaxed">{q.explanation}</p>
-                        </div>
+                        <div 
+                          className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200"
+                          dangerouslySetInnerHTML={{ __html: q.explanation }}
+                        />
                       )}
                     </div>
                   )}

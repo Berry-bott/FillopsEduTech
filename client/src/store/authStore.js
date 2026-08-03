@@ -14,6 +14,30 @@ import {
 
 let refreshPromise = null;
 
+// Helper: decode JWT payload
+const getJwtPayload = (token) => {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "="
+    );
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+};
+
+// Helper: check if token is within 30 seconds of expiring
+const isAccessTokenExpired = (token) => {
+  const payload = getJwtPayload(token);
+  if (!payload?.exp) return false;
+  const expiryBufferMs = 30 * 1000;
+  return Date.now() >= payload.exp * 1000 - expiryBufferMs;
+};
+
 const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -129,6 +153,23 @@ const useAuthStore = create(
         })();
 
         return refreshPromise;
+      },
+
+      // 🔹 PROACTIVE REFRESH (checks JWT expiry before request)
+      ensureFreshToken: async () => {
+        const { accessToken } = get();
+        if (!accessToken) return false;
+
+        if (isAccessTokenExpired(accessToken)) {
+          console.log("🕐 Token expiring soon → refreshing proactively");
+          const refreshed = await get().refreshAccessToken();
+          if (!refreshed) {
+            console.warn("❌ Proactive refresh failed");
+          }
+          return refreshed;
+        }
+
+        return true;
       },
 
       // 🔹 CHECK AUTH (on app load)
@@ -298,6 +339,10 @@ const useAuthStore = create(
             },
             credentials: "include",
           });
+
+        // 🔹 Proactively refresh if token is about to expire
+        await get().ensureFreshToken();
+        token = get().accessToken;
 
         let res = await request();
 

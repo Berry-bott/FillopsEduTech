@@ -441,14 +441,14 @@ export default function SideBar() {
                 >
                   <img
                     src={Logo}
-                    alt="Fillop Tech"
+                    alt="Fillop Study"
                     width={32}
                     height={32}
                     className="flex-shrink-0"
                   />
                   <div>
                     <span className="text-3xl font-semibold text-primary  transition-opacity duration-200">
-                    Fillop Tech
+                    Fillop
                     </span>
                     <p className="text-[9px] text-destructive">Building skills, powering solutions...</p>
                   </div>
@@ -522,7 +522,7 @@ export default function SideBar() {
                 <Link to="/" className="flex items-center gap-3 w-full">
                   <img
                     src={Logo}
-                    alt="Fillop Tech"
+                    alt="Fillop Study"
                     width={32}
                     height={32}
                     className="flex-shrink-0"
@@ -530,7 +530,7 @@ export default function SideBar() {
                   <div>
 
                   <span className="text-3xl font-semibold text-primary  transition-opacity duration-200">
-                  Fillop Tech
+                  Fillop
                   </span>
                   <p className="text-[9px] text-destructive/100">Building skills, powering solutions...</p>
                   </div>

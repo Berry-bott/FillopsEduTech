@@ -306,9 +306,10 @@ const handleNewSession = () => {
                     </div>
 
                     {/* Question text */}
-                    <p className="text-gray-800 dark:text-gray-200 leading-relaxed mb-2">
-                      {question.text}
-                    </p>
+                    <div 
+                      className="text-gray-800 dark:text-gray-200 leading-relaxed mb-2 prose prose-sm max-w-none [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
+                      dangerouslySetInnerHTML={{ __html: question.text }}
+                    />
 
                     {/* Answer info ── correct answer ALWAYS shown */}
                     <div className="bg-white/70 dark:bg-gray-700/40 rounded-lg p-2 space-y-1">

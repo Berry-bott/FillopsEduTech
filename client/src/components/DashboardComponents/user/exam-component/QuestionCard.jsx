@@ -517,7 +517,10 @@ if (isInitializing || loading || !q) {
                   </div>
                 </div>
 
-                <p className="mt-4 mb-1  text-md">{q.text}</p>
+                <div 
+                  className="mt-4 mb-1 text-md prose prose-sm max-w-none [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
+                  dangerouslySetInnerHTML={{ __html: q.text }}
+                />
 
                 {/* Options */}
                 {Array.isArray(q.options) &&

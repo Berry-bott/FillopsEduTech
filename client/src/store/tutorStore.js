@@ -3,6 +3,11 @@
   import useTutorAuthStore from "./tutorAuthStore"; 
 
   const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
+  
+  // Helper to get the refresh-aware fetchWithAuth from tutorAuthStore
+  const authFetch = (url, options = {}) => {
+    return useTutorAuthStore.getState().fetchWithAuth(url, options);
+  };
   const useTutorStore = create(
     persist(
       (set, get) => ({
@@ -53,39 +58,22 @@
 
         // 🔹 GET TUTOR DASHBOARD
         fetchDashboard: async () => {
-          const token = get().getAccessToken();
-          
-          if (!token) {
-            set({ error: "Not authenticated" });
-            return { success: false, message: "Not authenticated" };
-          }
-
           set({ loading: true, error: "", dashboardData: null });
 
           try {
-            const response = await fetch(`${API_BASE}/tutor/dashboard`, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              credentials: "include",
-            });
+            const res = await authFetch(`${API_BASE}/tutor/dashboard`);
 
-            const res = await response.json();
-
-            if (!res.success) {
+            if (res.success) {
+              set({
+                dashboardData: res.data,
+                success: "Dashboard loaded successfully",
+              });
+              console.log("✅ Dashboard data fetched:", res.data);
+            } else {
               set({ error: res.message || "Failed to fetch dashboard" });
-              return { success: false, message: res.message };
             }
 
-            set({
-              dashboardData: res.data,
-              success: "Dashboard loaded successfully",
-            });
-
-            console.log("✅ Dashboard data fetched:", res.data);
-            return { success: true, data: res.data };
+            return res;
           } catch (error) {
             console.error("❌ Error fetching dashboard:", error);
             const errorMessage = "Network error. Please check your connection.";
@@ -96,32 +84,9 @@
           }
         },
 
-        // 🔹 FETCH WITH AUTH (Helper for tutor endpoints)
+        // 🔹 FETCH WITH AUTH (delegates to tutorAuthStore which handles 401/403 refresh)
         fetchWithAuth: async (url, options = {}) => {
-          const token = get().getAccessToken();
-
-          if (!token) {
-            console.error("❌ No access token found");
-            return { success: false, message: "Not authenticated" };
-          }
-
-          try {
-            const response = await fetch(url, {
-              ...options,
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-                ...options.headers,
-              },
-              credentials: "include",
-            });
-
-            const data = await response.json();
-            return data;
-          } catch (error) {
-            console.error("❌ Fetch error:", error);
-            return { success: false, message: error.message };
-          }
+          return authFetch(url, options);
         },
 
         // ========== SUBJECTS ==========

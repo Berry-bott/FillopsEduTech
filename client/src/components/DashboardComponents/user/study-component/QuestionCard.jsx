@@ -784,7 +784,10 @@ export default function QuestionCard() {
               )}
 
               {/* Question text */}
-              <p className="mb-6 text-gray-800 dark:text-gray-200 text-lg leading-relaxed">{q.text}</p>
+              <div 
+                className="mb-6 text-gray-800 dark:text-gray-200 text-lg leading-relaxed prose prose-sm max-w-none [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
+                dangerouslySetInnerHTML={{ __html: q.text }}
+              />
 
               {/* Options */}
               <div className="space-y-2">
@@ -881,9 +884,10 @@ export default function QuestionCard() {
                   {/* Explanation */}
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
                     <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">💡 Explanation</h4>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                      {q.explanation || "No explanation available for this question."}
-                    </p>
+                    <div 
+                      className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm max-w-none [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
+                      dangerouslySetInnerHTML={{ __html: q.explanation || "No explanation available for this question." }}
+                    />
                   </div>
 
                   {/* Additional Resources */}
