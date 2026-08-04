@@ -48,4 +48,5 @@ jobs:
             git pull origin master
             cd client
             npm install
+            NODE_OPTIONS="--max-old-space-size=4096"
             npm run build

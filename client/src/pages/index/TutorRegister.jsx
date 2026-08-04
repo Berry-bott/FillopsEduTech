@@ -246,7 +246,6 @@ const STEP3_SCHEMA = {
       },
     },
     {
-      type: "textfield",
       key: "socialLinks",
       label: "Any social links (optional)",
       placeholder: "https://...",
