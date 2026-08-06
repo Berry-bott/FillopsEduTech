@@ -17,9 +17,9 @@ export const loginAdmin = async (formData) => {
   return res.json();
 };
 
-// 🔹 Refresh admin access token (uses same refresh endpoint as user)
+// 🔹 Refresh admin access token (uses refresh cookie for admin role)
 export const refreshAdminAccessToken = async () => {
-  const res = await fetch(`${API_BASE}/auth/refresh`, {
+  const res = await fetch(`${API_BASE}/auth/refresh?role=admin`, {
     method: "POST",
     credentials: "include",
   });

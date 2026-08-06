@@ -63,7 +63,7 @@ export default function SubjectsPanel({
     if (!storeSubjects || storeSubjects.length === 0) {
       fetchSubjects()
     }
-  }, [])
+  }, [storeSubjects])
 
   const fetchSubjects = async () => {
     try {
@@ -215,6 +215,13 @@ export default function SubjectsPanel({
     const subjectName = subjectToDelete.subjectName || subjectToDelete.name
     const subjectCode = subjectToDelete.subjectCode || subjectToDelete.code
 
+    const cleanDeleteMessage = (message) => {
+      return String(message || "")
+        .replace(/Use force=true to delete anyway/gi, "")
+        .replace(/Cannot delete subject with related data\./gi, "")
+        .trim() || "Failed to delete subject"
+    }
+
     setIsDeleting(true)
 
     try {
@@ -240,7 +247,7 @@ export default function SubjectsPanel({
       } else {
         toast({
           title: "Deletion Failed",
-          description: result.error || result.message || "Failed to delete subject",
+          description: cleanDeleteMessage(result.error || result.message),
           variant: "destructive",
         })
       }

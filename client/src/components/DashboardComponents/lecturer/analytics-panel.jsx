@@ -25,6 +25,7 @@ import {
   AlertCircle,
   Activity,
   Target,
+  UserCheck,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useTutorStore from "@/store/tutorStore";
@@ -36,10 +37,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function AnalyticsPanel({ subjects }) {
+export default function AnalyticsPanel({ subjects: propSubjects }) {
   const { toast } = useToast();
-  const { getSubjectEnrolledStudents, dashboardData, fetchDashboard, loading } = useTutorStore();
+  const {
+    getSubjectEnrolledStudents,
+    dashboardData,
+    fetchDashboard,
+    loading,
+    subjects: storeSubjects,
+    getSubjects,
+  } = useTutorStore();
 
+  const subjects = propSubjects?.length ? propSubjects : storeSubjects || [];
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [enrolledStudents, setEnrolledStudents] = useState([]);
   const [localSearch, setLocalSearch] = useState("");
@@ -50,10 +59,55 @@ export default function AnalyticsPanel({ subjects }) {
     completionRate: 0,
     averageProgress: 0,
   });
+  const [subjectsWithEnrollment, setSubjectsWithEnrollment] = useState([]);
+  const [loadingEnrollment, setLoadingEnrollment] = useState(false);
 
   useEffect(() => {
     if (!dashboardData) fetchDashboard();
   }, [fetchDashboard, dashboardData]);
+
+  useEffect(() => {
+    if (!subjects?.length) {
+      getSubjects().catch(() => {});
+    }
+  }, [subjects?.length, getSubjects]);
+
+  // ─── Load enrolled students for ALL subjects ───────────────────────────
+  useEffect(() => {
+    if (!Array.isArray(subjects) || subjects.length === 0) return;
+
+    let ignore = false;
+    setLoadingEnrollment(true);
+
+    const loadEnrollments = async () => {
+      try {
+        const enriched = await Promise.all(
+          subjects.map(async (subject) => {
+            const subjectId = subject._id || subject.id;
+            if (!subjectId) return { ...subject, enrolledStudents: [], enrollmentCount: 0 };
+
+            const res = await getSubjectEnrolledStudents(subjectId);
+            if (res?.success && Array.isArray(res.data?.students)) {
+              return {
+                ...subject,
+                enrolledStudents: res.data.students,
+                enrollmentCount:  res.data.students.length,
+              };
+            }
+            return { ...subject, enrolledStudents: [], enrollmentCount: 0 };
+          })
+        );
+        if (!ignore) setSubjectsWithEnrollment(enriched);
+      } catch (err) {
+        console.error("Enrollment loading failed:", err);
+      } finally {
+        if (!ignore) setLoadingEnrollment(false);
+      }
+    };
+
+    loadEnrollments();
+    return () => { ignore = true; };
+  }, [subjects, getSubjectEnrolledStudents]);
 
   const loadEnrolledStudents = async () => {
     if (!selectedSubject) return;
@@ -78,12 +132,12 @@ export default function AnalyticsPanel({ subjects }) {
 
       const total = students.length;
       const active = students.filter((s) => s.status === "active").length;
-      const totalProgress = students.reduce((sum, s) => sum + (s.progress || 0), 0);
+      const totalProgress = students.reduce((sum, s) => sum + getProgressValue(s.progress), 0);
 
       setStats({
         totalStudents: total,
         activeStudents: active,
-        completionRate: total ? Math.round((students.filter((s) => (s.progress || 0) >= 100).length / total) * 100) : 0,
+        completionRate: total ? Math.round((students.filter((s) => getProgressValue(s.progress) >= 100).length / total) * 100) : 0,
         averageProgress: total ? Math.round(totalProgress / total) : 0,
       });
     } catch (error) {
@@ -99,8 +153,10 @@ export default function AnalyticsPanel({ subjects }) {
   };
 
   useEffect(() => {
-    if (subjects?.length && !selectedSubject) setSelectedSubject(subjects[0]);
-  }, [subjects]);
+    if (subjects?.length && (!selectedSubject || !subjects.some((subject) => String(subject.subjectId || subject.id) === String(selectedSubject.subjectId || selectedSubject.id)))) {
+      setSelectedSubject(subjects[0]);
+    }
+  }, [subjects, selectedSubject]);
 
   useEffect(() => {
     if (selectedSubject) loadEnrolledStudents();
@@ -131,6 +187,14 @@ export default function AnalyticsPanel({ subjects }) {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const getProgressValue = (progress) => {
+    if (typeof progress === "number") return progress;
+    if (progress && typeof progress === "object") {
+      return progress.completionPercent ?? 0;
+    }
+    return 0;
   };
 
   const getStatusBadge = (status) => {
@@ -180,129 +244,15 @@ export default function AnalyticsPanel({ subjects }) {
   return (
     <div className="space-y-6 sm:space-y-8 pb-6 sm:pb-8 w-full overflow-x-hidden">
       {/* HEADER */}
-      <div className="bg-primary rounded-2xl p-8 text-white shadow-xl">
+      <div className=" ">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-xl md:text-3xl font-bold flex items-center gap-3 mb-2">
-              <div className="bg-white/20 p-2 rounded-lg">
-                <BarChart3 className=" size-4 md:size-8" />
-              </div>
+            <h2 className="text-primary text-2xl md:text-3xl font-bold flex items-center gap-3 mb-2">
               Analytics Dashboard
             </h2>
-            <p className="text-blue-100  text-[12.3px] md:text-lg">
-              Comprehensive overview of your tutoring platform
-            </p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm  px-2 md:px-6 py-3 rounded-lg border border-white/20">
-            <p className="text-sm text-blue-100 max-md:text-xs">Last Updated</p>
-            <p className="font-semibold max-md:text-xs">{new Date().toLocaleDateString()}</p>
           </div>
         </div>
       </div>
-
-      {/* OVERVIEW STATS */}
-      {dashboardData?.overview && (
-        <div>
-          <div className="flex items-center gap-2 mb-6">
-            <div className="h-1 w-5 bg-blue-600 rounded-full"></div>
-            <h3 className="text-2xl font-bold text-gray-800">Platform Overview</h3>
-          </div>
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            <EnhancedStatCard
-              title="Total Bookings"
-              value={dashboardData.overview.totalBookings || 0}
-              Icon={Calendar}
-              gradient="from-blue-500 to-blue-600"
-              iconBg="bg-blue-100"
-              iconColor="text-blue-600"
-            />
-            <EnhancedStatCard
-              title="Total Questions"
-              value={dashboardData.overview.totalQuestions || 0}
-              Icon={HelpCircle}
-              gradient="from-indigo-500 to-indigo-600"
-              iconBg="bg-indigo-100"
-              iconColor="text-indigo-600"
-            />
-            <EnhancedStatCard
-              title="Total Subjects"
-              value={dashboardData.overview.totalSubjects || 0}
-              Icon={BookOpen}
-              gradient="from-cyan-500 to-cyan-600"
-              iconBg="bg-cyan-100"
-              iconColor="text-cyan-600"
-            />
-            <EnhancedStatCard
-              title="Total Topics"
-              value={dashboardData.overview.totalTopics || 0}
-              Icon={PieChart}
-              gradient="from-sky-500 to-sky-600"
-              iconBg="bg-sky-100"
-              iconColor="text-sky-600"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* BOOKING STATS */}
-      {dashboardData?.bookingStats && (
-        <div>
-          <div className="flex items-center gap-2 mb-6">
-            <div className="h-1 w-5 bg-blue-600 rounded-full"></div>
-            <h3 className="text-2xl font-bold text-gray-800">Booking Statistics</h3>
-          </div>
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            <EnhancedStatCard
-              title="Pending Sessions"
-              value={dashboardData.bookingStats.pending || 0}
-              Icon={Clock}
-              gradient="from-yellow-500 to-yellow-600"
-              iconBg="bg-yellow-100"
-              iconColor="text-yellow-600"
-            />
-            <EnhancedStatCard
-              title="Confirmed Sessions"
-              value={dashboardData.bookingStats.confirmed || 0}
-              Icon={CheckCircle2}
-              gradient="from-blue-500 to-blue-600"
-              iconBg="bg-blue-100"
-              iconColor="text-blue-600"
-            />
-            <EnhancedStatCard
-              title="Completed Sessions"
-              value={dashboardData.bookingStats.completed || 0}
-              Icon={Award}
-              gradient="from-green-500 to-green-600"
-              iconBg="bg-green-100"
-              iconColor="text-green-600"
-            />
-            <EnhancedStatCard
-              title="Cancelled Sessions"
-              value={dashboardData.bookingStats.cancelled || 0}
-              Icon={XCircle}
-              gradient="from-red-500 to-red-600"
-              iconBg="bg-red-100"
-              iconColor="text-red-600"
-            />
-            <EnhancedStatCard
-              title="User Cancelled"
-              value={dashboardData.bookingStats.cancelled_by_user || 0}
-              Icon={XCircle}
-              gradient="from-orange-500 to-orange-600"
-              iconBg="bg-orange-100"
-              iconColor="text-orange-600"
-            />
-            <EnhancedStatCard
-              title="Rescheduled"
-              value={dashboardData.bookingStats.rescheduled || 0}
-              Icon={Activity}
-              gradient="from-purple-500 to-purple-600"
-              iconBg="bg-purple-100"
-              iconColor="text-purple-600"
-            />
-          </div>
-        </div>
-      )}
 
       {/* QUESTIONS BY DIFFICULTY */}
       {dashboardData?.questionsByDifficulty && (
@@ -546,7 +496,10 @@ export default function AnalyticsPanel({ subjects }) {
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3 px-0">
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-800 text-lg mb-2">{question.text}</p>
+                      <div
+                        className="font-semibold text-gray-800 text-lg mb-2 [&_p]:m-0 [&_p]:leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: question.text || "" }}
+                      />
                       <div className="flex items-center gap-2 text-sm">
                         <BookOpen className="size-4 text-blue-600" />
                         <span className="text-blue-700 font-medium">{question.subject?.subjectName}</span>
@@ -673,9 +626,9 @@ export default function AnalyticsPanel({ subjects }) {
           </Card>
         ) : filteredStudents.length ? (
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {filteredStudents.map((student) => (
+            {filteredStudents.map((student, idx) => (
               <Card
-                key={student.id || student.studentId}
+                key={student.id || student.studentId || `${student.email || student.firstName || "student"}-${idx}`}
                 className="border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 <CardHeader className="bg-gradient-to-br from-blue-50 to-white pb-4">
@@ -702,12 +655,12 @@ export default function AnalyticsPanel({ subjects }) {
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-blue-700">Progress</span>
-                      <span className="text-lg font-bold text-blue-900">{student.progress || 0}%</span>
+                      <span className="text-lg font-bold text-blue-900">{getProgressValue(student.progress)}%</span>
                     </div>
                     <div className="w-full bg-blue-200 rounded-full h-2.5">
                       <div
                         className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500"
-                        style={{ width: `${student.progress || 0}%` }}
+                        style={{ width: `${getProgressValue(student.progress)}%` }}
                       />
                     </div>
                   </div>
@@ -727,6 +680,102 @@ export default function AnalyticsPanel({ subjects }) {
           </Card>
         ) : null}
       </div>
+
+      {/* Subjects & Enrolled Students */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Subjects & Enrolled Students</CardTitle>
+          <CardDescription>All subjects and their enrolled students</CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          {loadingEnrollment ? (
+            <div className="py-10 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading enrollment data...</p>
+            </div>
+          ) : subjectsWithEnrollment.length === 0 ? (
+            <div className="py-12 text-center">
+              <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
+              <p className="text-muted-foreground">No subjects yet</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {subjectsWithEnrollment.map((subject) => (
+                <Card key={subject._id || subject.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <CardTitle className="text-lg leading-tight">
+                        {typeof subject.name === "object"
+                          ? subject.name?.subjectName || subject.name?.id || "Unnamed Subject"
+                          : subject.name || subject.subjectName || "Unnamed Subject"}
+                      </CardTitle>
+                      <Badge
+                        variant={subject.enrollmentCount > 0 ? "default" : "secondary"}
+                        className="whitespace-nowrap"
+                      >
+                        <UserCheck className="mr-1 h-3.5 w-3.5" />
+                        {subject.enrollmentCount} student{subject.enrollmentCount !== 1 ? "s" : ""}
+                      </Badge>
+                    </div>
+                    {subject.description && (
+                      <CardDescription className="mt-2 line-clamp-2">
+                        {subject.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+
+                  <CardContent className="text-sm space-y-4">
+                    {subject.enrolledStudents?.length > 0 ? (
+                      <>
+                        <Separator />
+                        <div>
+                          <p className="font-medium text-xs text-muted-foreground mb-2 uppercase tracking-wide">
+                            Enrolled Students
+                          </p>
+                          <ul className="space-y-2.5">
+                            {subject.enrolledStudents.slice(0, 5).map((enroll, i) => {
+                              const s    = enroll.student || {};
+                              const name =
+                                [s.firstName, s.lastName].filter(Boolean).join(" ") ||
+                                s.email ||
+                                `Student ${i + 1}`;
+                              return (
+                                <li key={s.id || enroll.enrolledAt || i} className="flex items-center gap-3 text-xs">
+                                  <div className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="font-medium truncate">{name}</div>
+                                    {s.email && name !== s.email && (
+                                      <div className="text-muted-foreground text-[10px] truncate">{s.email}</div>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                    {enroll.enrolledAt ? new Date(enroll.enrolledAt).toLocaleDateString() : "—"}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                            {subject.enrolledStudents.length > 5 && (
+                              <li className="text-xs text-muted-foreground italic pl-5">
+                                + {subject.enrolledStudents.length - 5} more
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Separator />
+                        <p className="text-xs text-muted-foreground italic">No students enrolled yet</p>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

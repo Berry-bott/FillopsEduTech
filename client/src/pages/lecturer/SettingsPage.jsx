@@ -1067,13 +1067,13 @@ export default function SettingsPage({ context }) {
     setLoading(true)
 
     try {
-      const form = new FormData()
+      const payload = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        bio: profileData.bio,
+      }
 
-      form.append("firstName", profileData.firstName)
-      form.append("lastName", profileData.lastName)
-      form.append("bio", profileData.bio)
-
-      const result = await updateProfile(form)
+      const result = await updateProfile(payload)
 
       if (result.success) {
         toast({
@@ -1344,7 +1344,12 @@ export default function SettingsPage({ context }) {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} className="bg-primary-hover text-white hover:bg-primary-hovertext-primary">
+              <Button
+                type="submit"
+                variant="default"
+                disabled={loading}
+                className="bg-primary text-white hover:bg-primary/90 shadow-sm"
+              >
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -1394,7 +1399,7 @@ export default function SettingsPage({ context }) {
                   type={showPasswords.new ? "text" : "password"}
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  placeholder="Enter new password (min 6 characters)"
+                  placeholder="Enter new password"
                   className="border-primary-hovertext-primary focus:ring-primary-hovertext-primary"
                 />
                 <button
@@ -1405,6 +1410,7 @@ export default function SettingsPage({ context }) {
                   {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">Use at least 8 characters and include uppercase, lowercase, and a number.</p>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -1425,17 +1431,23 @@ export default function SettingsPage({ context }) {
                   {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">Re-enter the same password to confirm it.</p>
             </div>
 
             <div className="flex justify-end mt-4">
-              <Button type="submit" disabled={passwordLoading} className="bg-primary-hovertext-primary hover:bg-primary-hovertext-primary">
+              <Button
+                type="submit"
+                variant="default"
+                disabled={passwordLoading}
+                className="bg-primary text-white hover:bg-primary/90 shadow-sm"
+              >
                 {passwordLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Changing...
+                    Saving...
                   </>
                 ) : (
-                  "Change Password"
+                  "Save Changes"
                 )}
               </Button>
             </div>

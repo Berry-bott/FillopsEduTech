@@ -72,9 +72,9 @@ export const getProfile = async (token) => {
   return res.json();
 };
 
-// 🔹 Refresh access token (uses refresh cookie)
+// 🔹 Refresh access token (uses refresh cookie for user role)
 export const refreshAccessToken = async () => {
-  const res = await fetch(`${API_BASE}/auth/refresh`, {
+  const res = await fetch(`${API_BASE}/auth/refresh?role=user`, {
     method: "POST",
     credentials: "include",
   });

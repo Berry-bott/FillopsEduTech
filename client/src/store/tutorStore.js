@@ -314,11 +314,12 @@
 
             if (result.success) {
               console.log("✅ Topic created:", result.data)
-              
-              set({ 
-                topicsLoaded: false,
-                subjectsLoaded: false
-              })
+
+              set((state) => ({
+                topics: [result.data, ...(state.topics || [])],
+                topicsLoaded: true,
+                subjectsLoaded: false,
+              }))
             } else {
               set({ error: result.message || "Failed to create topic" })
             }
@@ -345,7 +346,26 @@
 
             if (result.success) {
               console.log("✅ Topic updated:", result.data)
-              set({ topicsLoaded: false })
+
+              set((state) => {
+                const topics = [...(state.topics || [])]
+                const idx = topics.findIndex((topic) => (topic.id || topic.topicId) === (result.data?.id || topicId))
+
+                if (idx >= 0) {
+                  topics[idx] = {
+                    ...topics[idx],
+                    ...result.data,
+                    content: result.data?.content || topics[idx]?.content || "",
+                  }
+                } else {
+                  topics.unshift(result.data)
+                }
+
+                return {
+                  topics,
+                  topicsLoaded: true,
+                }
+              })
             } else {
               set({ error: result.message || "Failed to update topic" })
             }

@@ -138,6 +138,7 @@ export default function DashboardContent({
           {activeTab === "questions" && (
             <QuestionsPanel
               key={`questions-${panelKey}`}
+              selectedSubjectId={selectedSubjectId}
               selectedTopic={selectedTopicId}
               topicName={selectedTopicName}
               subjectName={selectedSubjectName}

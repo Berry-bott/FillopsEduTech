@@ -44,9 +44,13 @@ jobs:
           script_stop: true
           script: |
             set -e
+
             cd ~/FillopsEduTech
-            git pull origin master
+
+            git fetch origin
+            git reset --hard origin/master
+
             cd client
+
             npm install
-            NODE_OPTIONS="--max-old-space-size=4096"
-            npm run build
+            NODE_OPTIONS="--max-old-space-size=4096" npm run build

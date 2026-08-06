@@ -185,28 +185,27 @@ const useTutorAuthStore = create(
       // 🔹 UPDATE PROFILE
       updateProfile: async (profileData) => {
         const token = get().accessToken;
-        
+
         if (!token) {
           set({ error: "Not authenticated" });
           return { success: false, message: "Not authenticated" };
         }
-      
+
         set({ loading: true, error: "", success: "" });
-      
+
         try {
-          const res = await updateProfile(token, profileData);
-      
+          const res = await updateProfile(profileData);
+
           if (!res.success) {
             set({ error: res.message || "Failed to update profile" });
             return res;
           }
-      
-          // Update tutor data in store
+
           set({
             tutor: res.data,
             success: "Profile updated successfully",
           });
-      
+
           console.log("✅ Profile updated:", res.data);
           return res;
         } catch (error) {
@@ -345,30 +344,29 @@ const useTutorAuthStore = create(
       // 🔹 CHANGE PASSWORD
       changePassword: async (passwordData) => {
         const token = get().accessToken;
-        
+
         if (!token) {
           set({ error: "Not authenticated" });
           return { success: false, message: "Not authenticated" };
         }
-      
-        // Validate passwords match
+
         if (passwordData.newPassword !== passwordData.confirmPassword) {
           set({ error: "New passwords do not match" });
           return { success: false, message: "New passwords do not match" };
         }
-      
+
         set({ loading: true, error: "", success: "" });
-      
+
         try {
-          const res = await changePassword(token, passwordData);
-      
+          const res = await changePassword(passwordData);
+
           if (!res.success) {
             set({ error: res.message || "Failed to change password" });
             return res;
           }
-      
+
           set({ success: "Password changed successfully" });
-      
+
           console.log("✅ Password changed successfully");
           return res;
         } catch (error) {
@@ -395,12 +393,13 @@ const useTutorAuthStore = create(
       // 🔹 FETCH WITH AUTO REFRESH
       fetchWithAuth: async (url, options = {}) => {
         let token = get().accessToken;
+        const isFormDataRequest = options.body instanceof FormData;
 
         const request = () =>
           fetch(url, {
             ...options,
             headers: {
-              "Content-Type": "application/json",
+              ...(isFormDataRequest ? {} : { "Content-Type": "application/json" }),
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
               ...options.headers,
             },

@@ -40,11 +40,13 @@ export const getProfile = async () => {
 // 🔹 Update Profile
 export const updateProfile = async (profileData) => {
   try {
+    const isFormDataPayload = profileData instanceof FormData;
+
     return await useTutorAuthStore.getState().fetchWithAuth(
       `${API_BASE}/tutor/profile`,
       {
         method: "PUT",
-        body: JSON.stringify(profileData),
+        body: isFormDataPayload ? profileData : JSON.stringify(profileData),
       }
     );
   } catch (err) {
@@ -56,11 +58,17 @@ export const updateProfile = async (profileData) => {
 // 🔹 Change Password
 export const changePassword = async (passwordData) => {
   try {
+    const payload = {
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+      confirmPassword: passwordData.confirmPassword,
+    };
+
     return await useTutorAuthStore.getState().fetchWithAuth(
-      `${API_BASE}/tutor/change-password`,
+      `${API_BASE}/auth/change-password`,
       {
-        method: "PUT",
-        body: JSON.stringify(passwordData),
+        method: "POST",
+        body: JSON.stringify(payload),
       }
     );
   } catch (err) {
@@ -69,10 +77,10 @@ export const changePassword = async (passwordData) => {
   }
 };
 
-// 🔹 Refresh access token (uses refresh cookie)
+// 🔹 Refresh access token (uses refresh cookie for tutor role)
 export const refreshAccessToken = async () => {
   try {
-    const res = await fetch(`${API_BASE}/auth/refresh`, {
+    const res = await fetch(`${API_BASE}/auth/refresh?role=tutor`, {
       method: "POST",
       credentials: "include",
     });

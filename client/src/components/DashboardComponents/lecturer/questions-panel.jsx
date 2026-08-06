@@ -249,6 +249,7 @@ function stripHtml(html) {
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function QuestionsPanel({
+  selectedSubjectId,
   selectedTopic,
   topicName,
   subjectName,
@@ -264,6 +265,10 @@ export default function QuestionsPanel({
     deleteQuestion,
     getQuestionById,
     getQuestions,
+    getTopics,
+    getSubjects,
+    subjects: storeSubjects,
+    topics: storeTopics,
     questions: storeQuestions,
     loading,
   } = useTutorStore()
@@ -288,10 +293,30 @@ export default function QuestionsPanel({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [localSelectedSubject, setLocalSelectedSubject] = useState(null)
+  const [localSelectedTopic, setLocalSelectedTopic] = useState(null)
 
   useEffect(() => {
+    if (!storeSubjects || storeSubjects.length === 0) fetchSubjects()
+    if (!storeTopics || storeTopics.length === 0) fetchTopics()
     if (!storeQuestions || storeQuestions.length === 0) fetchQuestions()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [storeSubjects, storeTopics, storeQuestions])
+
+  const fetchSubjects = async () => {
+    try {
+      await getSubjects()
+    } catch {
+      toast({ title: "Error", description: "Failed to load subjects", variant: "destructive" })
+    }
+  }
+
+  const fetchTopics = async () => {
+    try {
+      await getTopics()
+    } catch {
+      toast({ title: "Error", description: "Failed to load topics", variant: "destructive" })
+    }
+  }
 
   const fetchQuestions = async () => {
     try {
@@ -301,9 +326,37 @@ export default function QuestionsPanel({
     }
   }
 
+  const activeSubjectId = selectedSubjectId || localSelectedSubject
+  const activeTopicId = selectedTopic || localSelectedTopic
+  const activeSubjectName = subjectName || (storeSubjects || []).find((s) => (s.subjectId || s.id) === activeSubjectId)?.subjectName || ""
+  const activeTopicName = topicName || (storeTopics || []).find((t) => t.id === activeTopicId)?.topicName || ""
+  const topicOptions = (storeTopics || []).filter((t) => {
+    const subjectCandidate = t.subject?.id || t.subject?.subjectId || t.subjectId
+    return !activeSubjectId || subjectCandidate === activeSubjectId
+  })
+
+  useEffect(() => {
+    if (selectedTopic && !localSelectedTopic) {
+      setLocalSelectedTopic(selectedTopic)
+    }
+    if (!selectedTopic && !localSelectedTopic && topicOptions.length > 0) {
+      setLocalSelectedTopic(topicOptions[0]?.id || null)
+    }
+  }, [selectedTopic, localSelectedTopic, topicOptions])
+
+  useEffect(() => {
+    if (selectedSubjectId && !localSelectedSubject) {
+      setLocalSelectedSubject(selectedSubjectId)
+    }
+    if (!selectedSubjectId && !localSelectedSubject && (storeSubjects || []).length > 0) {
+      const firstSubject = storeSubjects[0]
+      setLocalSelectedSubject(firstSubject?.subjectId || firstSubject?.id || null)
+    }
+  }, [selectedSubjectId, localSelectedSubject, storeSubjects])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!selectedTopic) {
+    if (!activeTopicId) {
       toast({ title: "Error", description: "Please select a topic first", variant: "destructive" })
       return
     }
@@ -334,7 +387,7 @@ export default function QuestionsPanel({
 
       const result = editingQuestion
         ? await updateQuestion(editingQuestion.id, questionData)
-        : await createQuestion(selectedTopic, questionData)
+        : await createQuestion(activeTopicId, questionData)
 
       if (result.success) {
         toast({ title: "Success", description: editingQuestion ? "Question updated" : "Question created" })
@@ -439,7 +492,7 @@ export default function QuestionsPanel({
   }
 
   const filteredQuestions = (storeQuestions || []).filter((q) => {
-    if (selectedTopic && q.topic?.id !== selectedTopic) return false
+    if (activeTopicId && q.topic?.id !== activeTopicId) return false
     if (globalSearch) {
       const s = globalSearch.toLowerCase()
       if (!stripHtml(q.text).toLowerCase().includes(s) && !stripHtml(q.explanation).toLowerCase().includes(s)) return false
@@ -450,33 +503,69 @@ export default function QuestionsPanel({
     return true
   })
 
-  if (!selectedTopic) {
-    return (
-      <div className="flex items-center justify-center h-[400px]">
-        <div className="text-center space-y-4">
-          <HelpCircle className="w-16 h-16 mx-auto text-muted-foreground" />
-          <div>
-            <p className="text-lg font-semibold text-muted-foreground">No Topic Selected</p>
-            <p className="text-sm text-muted-foreground mt-2">Please select a topic to view its questions</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
 
+      {/* Direct selector when accessed from the sidebar */}
+      {!selectedTopic && (
+        <div className="grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Select Subject</Label>
+            <Select
+              value={activeSubjectId || ""}
+              onValueChange={(value) => {
+                setLocalSelectedSubject(value)
+                setLocalSelectedTopic(null)
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a subject" />
+              </SelectTrigger>
+              <SelectContent>
+                {(storeSubjects || []).map((subject) => {
+                  const subjectId = subject.subjectId || subject.id
+                  return (
+                    <SelectItem key={subjectId} value={subjectId}>
+                      {subject.subjectName || subject.name}
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Select Topic</Label>
+            <Select
+              value={activeTopicId || ""}
+              onValueChange={(value) => setLocalSelectedTopic(value)}
+              disabled={!activeSubjectId}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a topic" />
+              </SelectTrigger>
+              <SelectContent>
+                {topicOptions.map((topic) => (
+                  <SelectItem key={topic.id} value={topic.id}>
+                    {topic.topicName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
       {/* Topic Header */}
-      {topicName && (
+      {activeTopicName && (
         <div className="flex items-center gap-3 pb-4 border-b">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <FileText className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold">{topicName}</h2>
+            <h2 className="text-xl font-semibold">{activeTopicName}</h2>
             <p className="text-sm text-muted-foreground">
-              {subjectName ? `${subjectName} • Manage questions` : "Manage questions for this topic"}
+              {activeSubjectName ? `${activeSubjectName} • Manage questions` : "Manage questions for this topic"}
             </p>
           </div>
         </div>
@@ -486,7 +575,7 @@ export default function QuestionsPanel({
       <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-2 size-4" />New Question</Button>
+            <Button disabled={!activeTopicId}><Plus className="mr-2 size-4" />New Question</Button>
           </DialogTrigger>
 
           <DialogContent 
@@ -611,7 +700,16 @@ export default function QuestionsPanel({
 
       {/* Questions Grid */}
       <div className="grid gap-4">
-        {loading ? (
+        {!activeTopicId ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <HelpCircle className="size-12 text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground text-center">
+                Select a subject and a topic to manage its questions.
+              </p>
+            </CardContent>
+          </Card>
+        ) : loading ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-12 w-12 animate-spin text-muted-foreground/50 mb-4" />
@@ -642,7 +740,7 @@ export default function QuestionsPanel({
                         className="text-base font-semibold [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
                         dangerouslySetInnerHTML={{ __html: question.text }}
                       />
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 pb-4">
                         <Badge variant="outline">{question.type.replace("_", " ")}</Badge>
                         <Badge variant="secondary">{question.difficulty}</Badge>
                         <Badge>{question.category}</Badge>
