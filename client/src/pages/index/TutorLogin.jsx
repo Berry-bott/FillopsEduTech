@@ -37,33 +37,35 @@ const TutorLogin = () => {
   }, [isAuthenticated]);
 
   const onSubmit = async (formData) => {
-    setError("");
+  setError("");
 
-    try {
-      const res = await login(formData);
+  try {
+    const res = await login(formData);
 
-      if (res?.success) {
-        toast({
-          title: "Welcome back! 👨‍🏫",
-          description: "Successfully logged in as tutor.",
-        });
+    if (res?.success) {
+      toast({
+        title: "Welcome back! 👨‍🏫",
+        description: "Successfully logged in as tutor.",
+      });
 
-        // ✅ Wait for persist to complete before navigating
-        await new Promise(resolve => setTimeout(resolve, 100));
-        navigate("/tutor/dashboard", { replace: true });
-        return;
+      // ✅ Only fetch profile if login succeeded
+      const profileRes = await getProfile(res.data.accessToken);
+      if (profileRes.success) {
+        useTutorAuthStore.getState().setTutor(profileRes.data);
       }
-        const profileRes = await getProfile(res.data.accessToken);
-    if (profileRes.success) {
-      useTutorAuthStore.getState().setTutor(profileRes.data);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+      navigate("/tutor/dashboard", { replace: true });
+      return;
     }
 
-      setError(res?.message || "Invalid email or password");
-    } catch (error) {
-      console.error("Tutor login error:", error);
-      setError("Network error. Please check your connection.");
-    }
-  };
+    // ✅ Handle failed login properly
+    setError(res?.message || "Invalid email or password");
+  } catch (error) {
+    console.error("Tutor login error:", error);
+    setError("Network error. Please check your connection.");
+  }
+};
 
   // ✅ Don't render form if already authenticated
   if (isAuthenticated) {
