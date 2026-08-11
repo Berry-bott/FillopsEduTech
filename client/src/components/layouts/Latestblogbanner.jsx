@@ -44,9 +44,13 @@ export default function LatestBlogBanner() {
             rel="noopener noreferrer"
             className="flex-1 min-w-0 flex items-center justify-between no-underline"
           >
-            <h3 className="text-[13px] text-primary-hover dark:text-white truncate group-hover:text-primary transition-colors px-2">
-              {post.title}
-            </h3>
+            <div className="w-[900px] max-w-full border ml-4 overflow-hidden">
+              <div className="min-w-full inline-flex animate-scroll-banner whitespace-nowrap">
+                <span className="text-[13px] text-orange-500 dark:text-white group-hover:text-primary transition-colors px-2 md:ml-6">
+                  {post.title}
+                </span>
+              </div>
+            </div>
 
             <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white text-primary transition-all duration-200">
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />

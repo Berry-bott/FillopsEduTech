@@ -249,7 +249,7 @@ export default function TopicsPanel({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [topicToDelete, setTopicToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [localSelectedSubject, setLocalSelectedSubject] = useState(null)
+  const [subjectFilterValue, setSubjectFilterValue] = useState("all")
   const [topicContentCache, setTopicContentCache] = useState({})
 
   // ✅ Fetch topics only once - Zustand will cache them
@@ -288,23 +288,17 @@ export default function TopicsPanel({
     }
   }
 
-  const resolvedSubjectId = selectedSubject || localSelectedSubject
+  const isAllSubjects = !selectedSubject && subjectFilterValue === "all"
+  const resolvedSubjectId = selectedSubject || (isAllSubjects ? null : subjectFilterValue)
   const resolvedSubjectName = subjectName || (storeSubjects || []).find((s) => {
     const candidateId = s.subjectId || s.id
     return candidateId === resolvedSubjectId
-  })?.subjectName || ""
-
-  useEffect(() => {
-    if (!selectedSubject && !localSelectedSubject && (storeSubjects || []).length > 0) {
-      const firstSubject = storeSubjects[0]
-      setLocalSelectedSubject(firstSubject?.subjectId || firstSubject?.id || null)
-    }
-  }, [selectedSubject, localSelectedSubject, storeSubjects])
+  })?.subjectName || (isAllSubjects ? "All Subjects" : "")
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!resolvedSubjectId) {
+    if (!editingTopic && !resolvedSubjectId) {
       toast({
         title: "Error",
         description: "Please select a subject first",
@@ -522,15 +516,16 @@ export default function TopicsPanel({
       {!selectedSubject && (
         <div className="flex flex-col max-w-[500px] gap-3 rounded border bg-card p-4 md:flex-row md:items-end">
           <div className="flex-1 space-y-2">
-            <Label className="text-sm font-medium">Select Subject</Label>
+            <Label className="text-sm font-medium">Filter by Subject</Label>
             <Select
-              value={resolvedSubjectId || ""}
-              onValueChange={(value) => setLocalSelectedSubject(value)}
+              value={subjectFilterValue}
+              onValueChange={setSubjectFilterValue}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose a subject to view its topics" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
                 {(storeSubjects || []).map((subject) => {
                   const subjectId = subject.subjectId || subject.id
                   return (
@@ -554,7 +549,7 @@ export default function TopicsPanel({
           <div>
             <h2 className="text-xl font-semibold">{resolvedSubjectName}</h2>
             <p className="text-sm text-muted-foreground">
-              Manage topics for this subject
+              {isAllSubjects ? "Manage topics across all subjects" : "Manage topics for this subject"}
             </p>
           </div>
         </div>
@@ -564,7 +559,10 @@ export default function TopicsPanel({
       <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button
+              disabled={isAllSubjects}
+              title={isAllSubjects ? "Select a specific subject to create a topic" : undefined}
+            >
               <Plus className="mr-2 size-4" />
               New Topic
             </Button>
@@ -577,7 +575,7 @@ export default function TopicsPanel({
             <DialogHeader>
               <DialogTitle>{editingTopic ? "Edit Topic" : "Add New Topic"}</DialogTitle>
               <DialogDescription>
-                {editingTopic ? "Update this" : "Create a new"} topic for <span className="font-semibold text-primary">{resolvedSubjectName}</span>
+                {editingTopic ? "Update this" : "Create a new"} topic for <span className="font-semibold text-primary">{editingTopic?.subject?.subjectName || resolvedSubjectName}</span>
               </DialogDescription>
             </DialogHeader>
 
@@ -652,9 +650,11 @@ export default function TopicsPanel({
               <p className="text-muted-foreground text-center mb-2">
                 {globalSearch
                   ? "No topics found matching your search criteria" 
-                  : `No topics found for ${resolvedSubjectName || "this subject"}.`}
+                  : isAllSubjects
+                    ? "No topics found across all subjects."
+                    : `No topics found for ${resolvedSubjectName || "this subject"}.`}
               </p>
-              {!globalSearch && (
+              {!globalSearch && !isAllSubjects && (
                 <p className="text-sm text-muted-foreground">Click "New Topic" to create your first topic.</p>
               )}
             </CardContent>

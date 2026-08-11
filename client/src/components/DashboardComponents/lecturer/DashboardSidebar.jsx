@@ -40,7 +40,7 @@ export default function DashboardSidebar({
       <div className="flex items-center p-2">
         <img src={fillopLogo} alt="Fillop Logo" className="w-12 h-12 object-contain" />
         <div className="leading-none mx-4 md:ml-2">
-          <p className="text-primary font-bold font-merriweather text-xl">FILLOP TECH</p>
+          <p className="text-primary font-extrabold  text-2xl">FILLOP</p>
           <p className="text-education-orange text-[9px] font-merriweather">...simplifying your tech world</p>
         </div>
       </div>

@@ -36,6 +36,7 @@ import useTutorStore from "@/store/tutorStore"
 const DIFFICULTY_LEVELS = ["EASY", "MEDIUM", "HARD"]
 const QUESTION_TYPES = ["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]
 const CATEGORIES = ["JAMB", "WAEC", "NECO", "NABTEB"]
+const ALL_TOPIC = "all-topics"
 
 // ── Rich Text Toolbar ──────────────────────────────────────────────────────────
 
@@ -295,6 +296,7 @@ export default function QuestionsPanel({
   const [isDeleting, setIsDeleting] = useState(false)
   const [localSelectedSubject, setLocalSelectedSubject] = useState(null)
   const [localSelectedTopic, setLocalSelectedTopic] = useState(null)
+  const [isAllTopics, setIsAllTopics] = useState(false)
 
   useEffect(() => {
     if (!storeSubjects || storeSubjects.length === 0) fetchSubjects()
@@ -326,8 +328,8 @@ export default function QuestionsPanel({
     }
   }
 
-  const activeSubjectId = selectedSubjectId || localSelectedSubject
-  const activeTopicId = selectedTopic || localSelectedTopic
+  const activeSubjectId = localSelectedSubject || selectedSubjectId
+  const activeTopicId = isAllTopics ? null : (localSelectedTopic || selectedTopic)
   const activeSubjectName = subjectName || (storeSubjects || []).find((s) => (s.subjectId || s.id) === activeSubjectId)?.subjectName || ""
   const activeTopicName = topicName || (storeTopics || []).find((t) => t.id === activeTopicId)?.topicName || ""
   const topicOptions = (storeTopics || []).filter((t) => {
@@ -336,16 +338,21 @@ export default function QuestionsPanel({
   })
 
   useEffect(() => {
-    if (selectedTopic && !localSelectedTopic) {
+    if (selectedTopic) {
       setLocalSelectedTopic(selectedTopic)
+      setIsAllTopics(false)
     }
+  }, [selectedTopic])
+
+  useEffect(() => {
+    if (isAllTopics) return
     if (!selectedTopic && !localSelectedTopic && topicOptions.length > 0) {
       setLocalSelectedTopic(topicOptions[0]?.id || null)
     }
-  }, [selectedTopic, localSelectedTopic, topicOptions])
+  }, [selectedTopic, localSelectedTopic, topicOptions, isAllTopics])
 
   useEffect(() => {
-    if (selectedSubjectId && !localSelectedSubject) {
+    if (selectedSubjectId) {
       setLocalSelectedSubject(selectedSubjectId)
     }
     if (!selectedSubjectId && !localSelectedSubject && (storeSubjects || []).length > 0) {
@@ -506,58 +513,78 @@ export default function QuestionsPanel({
   return (
     <div className="space-y-6">
 
-      {/* Direct selector when accessed from the sidebar */}
-      {!selectedTopic && (
-        <div className="grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Select Subject</Label>
-            <Select
-              value={activeSubjectId || ""}
-              onValueChange={(value) => {
-                setLocalSelectedSubject(value)
-                setLocalSelectedTopic(null)
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose a subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {(storeSubjects || []).map((subject) => {
-                  const subjectId = subject.subjectId || subject.id
-                  return (
-                    <SelectItem key={subjectId} value={subjectId}>
-                      {subject.subjectName || subject.name}
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Select Topic</Label>
-            <Select
-              value={activeTopicId || ""}
-              onValueChange={(value) => setLocalSelectedTopic(value)}
-              disabled={!activeSubjectId}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose a topic" />
-              </SelectTrigger>
-              <SelectContent>
-                {topicOptions.map((topic) => (
-                  <SelectItem key={topic.id} value={topic.id}>
-                    {topic.topicName}
+      {/* Subject & Topic selectors */}
+      <div className="grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Select Subject</Label>
+          <Select
+            value={activeSubjectId || ""}
+            onValueChange={(value) => {
+              setLocalSelectedSubject(value)
+              setLocalSelectedTopic(null)
+              setIsAllTopics(false)
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Choose a subject" />
+            </SelectTrigger>
+            <SelectContent>
+              {(storeSubjects || []).map((subject) => {
+                const subjectId = subject.subjectId || subject.id
+                return (
+                  <SelectItem key={subjectId} value={subjectId}>
+                    {subject.subjectName || subject.name}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                )
+              })}
+            </SelectContent>
+          </Select>
         </div>
-      )}
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Select Topic</Label>
+          <Select
+            value={isAllTopics ? ALL_TOPIC : (activeTopicId || ALL_TOPIC)}
+            onValueChange={(value) => {
+              if (value === ALL_TOPIC) {
+                setIsAllTopics(true)
+                setLocalSelectedTopic(null)
+              } else {
+                setIsAllTopics(false)
+                setLocalSelectedTopic(value)
+              }
+            }}
+            disabled={!activeSubjectId}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Choose a topic" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_TOPIC}>ALL TOPIC</SelectItem>
+              {topicOptions.map((topic) => (
+                <SelectItem key={topic.id} value={topic.id}>
+                  {topic.topicName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       {/* Topic Header */}
-      {activeTopicName && (
+      {isAllTopics ? (
+        <div className="flex items-center gap-3 pb-4 border-b">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <FileText className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">All Topics</h2>
+            <p className="text-sm text-muted-foreground">
+              {activeSubjectName ? `${activeSubjectName} • All questions` : "All questions across all topics"}
+            </p>
+          </div>
+        </div>
+      ) : activeTopicName && (
         <div className="flex items-center gap-3 pb-4 border-b">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <FileText className="w-5 h-5 text-primary" />
@@ -575,7 +602,12 @@ export default function QuestionsPanel({
       <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button disabled={!activeTopicId}><Plus className="mr-2 size-4" />New Question</Button>
+            <Button 
+              disabled={!activeTopicId}
+              title={isAllTopics ? "Select a specific topic to create a question" : undefined}
+            >
+              <Plus className="mr-2 size-4" />New Question
+            </Button>
           </DialogTrigger>
 
           <DialogContent 
@@ -700,7 +732,7 @@ export default function QuestionsPanel({
 
       {/* Questions Grid */}
       <div className="grid gap-4">
-        {!activeTopicId ? (
+        {!activeTopicId && !isAllTopics ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <HelpCircle className="size-12 text-muted-foreground/50 mb-4" />
@@ -721,7 +753,7 @@ export default function QuestionsPanel({
             <CardContent className="flex flex-col items-center justify-center py-12">
               <HelpCircle className="size-12 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground text-center">
-                {globalSearch ? "No questions match your search" : "No questions yet. Create your first question."}
+                {globalSearch ? "No questions match your search" : isAllTopics ? "No questions found across all topics" : "No questions yet. Create your first question."}
               </p>
             </CardContent>
           </Card>
