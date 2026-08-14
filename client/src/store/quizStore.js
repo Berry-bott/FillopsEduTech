@@ -3,6 +3,9 @@ import useAuthStore from "./authStore";
 
 const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
+// Quiz lasts 6 minutes 30 seconds = 390 seconds
+export const QUIZ_DURATION_SECONDS = 6 * 60 + 30;
+
 export const useQuizStore = create((set, get) => ({
   // Quiz state
   questions: [],
@@ -12,6 +15,11 @@ export const useQuizStore = create((set, get) => ({
   startTime: null,
   timerSeconds: 0,
   timerInterval: null,
+
+  // Countdown timer (6:30 → 0)
+  timeRemaining: QUIZ_DURATION_SECONDS,
+  totalDuration: QUIZ_DURATION_SECONDS,
+  timeUp: false,
   
   // Stats from backend
   stats: {
@@ -112,9 +120,16 @@ export const useQuizStore = create((set, get) => ({
           currentIndex: startIndex,
           loading: false,
           startTime: Date.now(),
+          timerSeconds: 0,
+          timeRemaining: QUIZ_DURATION_SECONDS,
+          timeUp: false,
+          timerInterval: null,
+          finished: false,
+          result: null,
         });
         
-        // Start timer
+        // Start timer (countdown 6:30 → 0)
+        get().stopTimer(); // avoid duplicate intervals
         get().startTimer();
       }
     } catch (err) {
@@ -123,12 +138,26 @@ export const useQuizStore = create((set, get) => ({
     }
   },
 
-  // ---------------- TIMER ----------------
+  // ---------------- TIMER (countdown 6:30 → 0) ----------------
   startTimer: () => {
     const interval = setInterval(() => {
-      set((s) => ({ timerSeconds: s.timerSeconds + 1 }));
+      set((s) => {
+        const nextRemaining = Math.max(0, s.timeRemaining - 1);
+        const timeUp = nextRemaining <= 0;
+
+        if (timeUp) {
+          // Stop the interval so we don't keep ticking past 0
+          clearInterval(s.timerInterval);
+        }
+
+        return {
+          timerSeconds: s.timerSeconds + 1, // elapsed (for timeSpent reporting)
+          timeRemaining: nextRemaining,
+          timeUp,
+        };
+      });
     }, 1000);
-    
+
     // Store interval ID for cleanup
     set({ timerInterval: interval });
   },
@@ -138,6 +167,7 @@ export const useQuizStore = create((set, get) => ({
     if (timerInterval) {
       clearInterval(timerInterval);
     }
+    set({ timerInterval: null });
   },
 
   // ---------------- NAV ----------------
@@ -299,6 +329,8 @@ export const useQuizStore = create((set, get) => ({
       startTime: null,
       timerSeconds: 0,
       timerInterval: null,
+      timeRemaining: QUIZ_DURATION_SECONDS,
+      timeUp: false,
       result: null,
     });
   },

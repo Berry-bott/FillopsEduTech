@@ -136,16 +136,7 @@ export default function QuizHistoryPage() {
           </div>
         ) : (
           <>
-            {/* Debug Info Card */}
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 mb-4">
-              <h3 className="font-bold text-yellow-900 mb-2">🔍 Debug Information</h3>
-              <p className="text-sm text-yellow-800">
-                Total quizzes loaded: <strong>{history.length}</strong>
-              </p>
-              <p className="text-sm text-yellow-800 mt-1">
-                Check browser console for detailed history logs
-              </p>
-            </div>
+
 
             <div className="space-y-4">
             {history.map((quiz, idx) => {

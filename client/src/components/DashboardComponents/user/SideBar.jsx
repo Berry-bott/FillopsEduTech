@@ -527,12 +527,12 @@ export default function SideBar() {
                     height={32}
                     className="flex-shrink-0"
                   />
-                  <div>
+                  <div className="flex gap-2 justify-center items-center">
 
                   <span className="text-3xl font-semibold text-primary  transition-opacity duration-200">
                   Fillop
                   </span>
-                  <p className="text-[9px] text-destructive/100">Building skills, powering solutions...</p>
+                  <p className="text-[10px] font-extrabold rounded bg-orange-500 p-2 text-white">Study Platform</p>
                   </div>
 
                 </Link>
