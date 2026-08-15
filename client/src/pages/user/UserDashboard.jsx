@@ -46,7 +46,7 @@ export default function UserDashboard() {
 
           <div className="flex gap-2">
             <button className="px-2 py-2 border border-border text-foreground rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors text-sm font-medium">
-              <a href="https://busines.filloptech.com/cbt-guru" className="no-underline">
+              <a href="https://business.filloptech.com/cbt-guru" className="no-underline">
                 <span className="block transition-transform duration-300 ease-in-out group-hover:-translate-y-full">
                   Download CBT Guru
                 </span>
