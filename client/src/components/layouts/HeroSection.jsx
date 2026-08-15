@@ -95,7 +95,6 @@ const HeroSection = () => {
               </div>
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
-                {/* chat-bot  */}
             {/* <ChatBot/> */}
 
             {/* Download Button */}
