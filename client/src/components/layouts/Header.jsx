@@ -236,9 +236,6 @@ const Header = () => {
               <p className="text-primary dark:text-primary text-xl md:text-[1rem] xmd:text-2xl lg:text-3xl font-extrabold">
                 Fillop
               </p>
-              <p className="text-[6px] md:text-[9px] text-education-orange dark:text-education-orange font-merriweather">
-                Building skills, powering solutions...
-              </p>
             </div>
           </div>
 

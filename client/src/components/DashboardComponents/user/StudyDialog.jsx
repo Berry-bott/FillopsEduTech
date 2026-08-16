@@ -410,7 +410,7 @@ export default function StudyDialog(props) {
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerContent className="h-[92vh] border-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
         <div className="w-full h-full flex flex-col items-center lg:ml-[130px]">
-          <div className="w-full max-w-3xl flex flex-col h-full overflow-hidden">
+          <div className="w-full max-w-4xl flex flex-col h-full overflow-hidden">
             {/* Fixed Header */}
             <DrawerHeader className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
               <DrawerTitle className="text-lg md:text-xl font-semibold text-primary dark:text-gray-100">

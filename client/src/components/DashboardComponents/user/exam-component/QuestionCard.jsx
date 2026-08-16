@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef  } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate  } from "react-router-dom";
 import { useExamStore, setExamNavigationCallback } from "@/store/examStore";
 import InitializePayment from "../../../../payment/initializePayment";
@@ -40,8 +40,6 @@ export default function ExamQuestionCard() {
   const [showExplanation, setShowExplanation] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showEndExamConfirm, setShowEndExamConfirm] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true); 
-  const hasInitialized = useRef(false);
   const userChoice = q ? selectedAnswers[q.id] : null;
   const isCorrect = q && userChoice === q.correctAnswer;
 
@@ -69,39 +67,10 @@ export default function ExamQuestionCard() {
     };
   }, [navigate, toast]);
 
-  // ✅ Wait for exam to be fully initialized
 
-  useEffect(() => {
-  // Only run once when everything is ready
-  if (!hasInitialized.current && 
-      examActive && 
-      examId && 
-      timeRemaining !== null && 
-      questions.length > 0) {
-    console.log("✅ Exam fully initialized, showing questions");
-    hasInitialized.current = true; // ✅ Mark as initialized
-    
-    const timer = setTimeout(() => {
-      setIsInitializing(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }
-}, [examActive, examId, timeRemaining, questions.length]);
-
-//   useEffect(() => {
-//     // Check if exam is fully ready
-//     if (examActive && examId && timeRemaining !== null && questions.length > 0) {
-//       console.log("✅ Exam fully initialized, showing questions");
-//       // Add small delay to ensure everything is ready
-//       const timer = setTimeout(() => {
-//         setIsInitializing(false);
-//       }, 100);
-//       return () => clearTimeout(timer);
-//     }
-//   }, [examActive, examId, timeRemaining, questions.length, isInitializing]);
 
   // ✅ Only render question when allowed AND fully initialized
-  const canRenderQuestion = !!q && !paymentLocked && !examCompleted && !isInitializing;
+  const canRenderQuestion = !!q && !paymentLocked && !examCompleted;
 
   // ----------------------------
   // Format time remaining
@@ -294,162 +263,22 @@ const handleEndExam = async () => {
     }
   };
 
-  // ----------------------------
-  // Show loading while initializing or fetching questions
-  // ----------------------------
-if (isInitializing || loading || !q) {
-  return (
-    <main className="p-4">
 
-      {/* Modern Loading Animation */}
-      <div className="min-h-[40vh] border w-[400px] m-auto border-border flex items-center justify-center p-4">
-        <div className="max-w-md w-full space-y-4">
-          {/* Animated Dots Loader */}
+  // ----------------------------
+  // Simple loading state
+  // ----------------------------
+  if (loading || !q) {
+    return (
+      <main className="p-4 flex items-center justify-center min-h-[40vh]">
+        <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="flex space-x-2">
-              <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-              <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-              <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"></div>
-            </div>
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
-
-          {/* Title */}
-          <div className="text-center space-y-2">
-            <h3 className="text-md font-bold text-gray-900 dark:text-white">
-              Preparing Your Exam
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Setting up your personalized exam experience
-            </p>
-          </div>
-
-          {/* Progress Steps */}
-          <div className="space-y-4">
-            {/* Step 1: Starting Session */}
-            <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-100 dark:border-blue-800 transition-all duration-500">
-              <div className="flex-shrink-0">
-                {examId ? (
-                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="relative w-5 h-5">
-                    <div className="absolute inset-0 border-4 border-blue-200 dark:border-blue-700 rounded-full"></div>
-                    <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`font-semibold ${examId ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                  Starting Exam Session
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {examId ? 'Session initialized' : 'Connecting to server...'}
-                </p>
-              </div>
-            </div>
-
-            {/* Step 2: Timer */}
-            <div className={`flex items-center gap-4 p-2 rounded-lg border transition-all duration-500 ${
-              timeRemaining !== null 
-                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-100 dark:border-blue-800' 
-                : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
-            }`}>
-              <div className="flex-shrink-0">
-                {timeRemaining !== null ? (
-                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`font-semibold ${timeRemaining !== null ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                  Initializing Timer
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {timeRemaining !== null ? 'Timer ready' : 'Waiting for session...'}
-                </p>
-              </div>
-            </div>
-
-            {/* Step 3: Loading Questions */}
-            <div className={`flex items-center gap-2 p-2 rounded-lg border transition-all duration-500 ${
-              questions.length > 0 
-                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-100 dark:border-blue-800' 
-                : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
-            }`}>
-              <div className="flex-shrink-0">
-                {questions.length > 0 ? (
-                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`font-semibold ${questions.length > 0 ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                  Loading Questions
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {questions.length > 0 ? 'Questions loaded' : 'Fetching your questions...'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-              <span>Progress</span>
-              <span>
-                {examId && timeRemaining !== null && questions.length > 0 ? '100' : 
-                 examId && timeRemaining !== null ? '67' : 
-                 examId ? '33' : '0'}%
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500 ease-out"
-                style={{ 
-                  width: `${examId && timeRemaining !== null && questions.length > 0 ? '100' : 
-                           examId && timeRemaining !== null ? '67' : 
-                           examId ? '33' : '0'}%` 
-                }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Fun Message */}
-          <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-              {!examId && "Connecting to exam server..."}
-              {examId && timeRemaining === null && "Setting up your timer..."}
-              {examId && timeRemaining !== null && questions.length === 0 && "Preparing your questions..."}
-              {examId && timeRemaining !== null && questions.length > 0 && "Almost ready! 🎯"}
-            </p>
-          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Loading your questions...</p>
         </div>
-      </div>
-    </main>
-  );
-}
+      </main>
+    );
+  }
 
   return (
     <section className="py-0">

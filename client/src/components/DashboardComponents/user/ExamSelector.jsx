@@ -158,9 +158,59 @@ export default function ExamSelector() {
           setSelectedTopics(prev => {
             const arr = prev[subjectId] || [];
             const exists = arr.includes(topicId);
+            
+            // ✅ NEW: Check if we've already selected 4 topics for this subject
+            const topicCount = arr.length;
+            const maxTopicsPerSubject = 4;
+            
+            if (exists) {
+              // User is clicking to deselect - allow it
+              return { 
+                ...prev, 
+                [subjectId]: arr.filter(x => x !== topicId) 
+              };
+            }
+            
+            if (topicCount >= maxTopicsPerSubject) {
+              toast({
+                title: "Limit reached",
+                description: `You can select up to ${maxTopicsPerSubject} topics`,
+                variant: "destructive",
+                className: "z-[9999]",
+              });
+              return prev;
+            }
+            
+            // ✅ NEW: When selecting a topic from a new subject, 
+            // clear previously selected topics from other subjects
+            // to enforce "one topic subject per time" rule
+            // If selecting from a different subject than currently selected, clear others
+            const selectedSubjectKeys = Object.keys(prev);
+            const alreadyHasSelectedSubject = selectedSubjectKeys.find(
+              (key) => prev[key] && prev[key].length > 0
+            );
+            
+            // If user is clicking on a different subject than the one already selected
+            if (alreadyHasSelectedSubject && alreadyHasSelectedSubject !== subjectId) {
+              // Clear all other subjects' topics, keep only the current subject's topics
+              const newSelectedTopics = {};
+              selectedSubjectKeys.forEach((key) => {
+                if (key === subjectId) {
+                  newSelectedTopics[subjectId] = [...arr, topicId];
+                } else {
+                  newSelectedTopics[key] = []; // Clear topics for other subjects
+                }
+              });
+              // If the subject was completely new (not in prev), just set it
+              if (!newSelectedTopics[subjectId]) {
+                newSelectedTopics[subjectId] = [topicId];
+              }
+              return newSelectedTopics;
+            }
+            
             return { 
               ...prev, 
-              [subjectId]: exists ? arr.filter(x => x !== topicId) : [...arr, topicId] 
+              [subjectId]: [...arr, topicId] 
             };
           });
         }}

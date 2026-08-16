@@ -1281,8 +1281,6 @@ import { useStudyStore } from '../../store/studyStore';
 export default function StudyPage() {
   const navigate          = useNavigate();
   const init              = useStudyStore((s) => s.syncSaved);
-  const loading           = useStudyStore((s) => s.loading);
-  const showSummary       = useStudyStore((s) => s.showSummary);
   const startStudySession = useStudyStore((s) => s.startStudySession);
   const endStudySession   = useStudyStore((s) => s.endStudySession);
   const sessionActive     = useStudyStore((s) => s.sessionActive);
@@ -1319,6 +1317,11 @@ export default function StudyPage() {
         return;
       }
 
+      // ✅ Save selections to localStorage is NOT needed here — syncSaved already
+      // loaded them from localStorage, and the selector wrote them on selection.
+      // (A previous saveSelections() call here could THROW and silently prevent
+      // startStudySession() from ever running, so no session endpoints fired.)
+
       if (!sessionActiveRef.current) {
         const sessionId = await startStudySession(savedData);
         console.log(sessionId ? `✅ Session: ${sessionId}` : '⚠️ Session failed');
@@ -1334,20 +1337,10 @@ export default function StudyPage() {
     };
   }, [sessionKey]); // ← re-runs whenever sessionKey changes (i.e. "New Session")
 
-  if (loading) {
-    return (
-      <div className="p-4">
-        <div className="h-[400px] flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-              Loading questions...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ✅ No full-page loading gate. Header + QuestionCard each render their own
+  // inline skeleton while data loads, so switching subjects/topics never blanks
+  // the page (previously a global `loading` flag here exchanged the entire UI
+  // for a full-screen spinner, which felt exactly like a page reload).
 
   return (
     <div className="p-4">

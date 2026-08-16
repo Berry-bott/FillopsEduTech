@@ -139,7 +139,7 @@ function App() {
               >
                 <Route path="/user/dashboard" element={<UserDashboard />} />
                 <Route path="/onboarding" element={<PreferencePage />} />
-                <Route path="/study" element={<StudyPage key={location.key} />} />
+                <Route path="/study" element={<StudyPage />} />
                 <Route path="/reports/financial" element={<FinancialReport />} />
                 <Route path="/dashboard/analytics" element={<Analyticspage />} />
                 <Route path="/quiz" element={<QuizPage />} />

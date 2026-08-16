@@ -177,15 +177,12 @@ export default function PageNav() {
           <div className="flex items-center gap-2 md:gap-6">
             {/* Logo Section */}
             <div className="flex items-center border-r-2 pr-2 md:pr-6 dark:border-gray-700">
-              <Link to="/" className="flex items-center gap-3">
+              <Link to="/" className="flex items-center gap-2">
                 <img src={Logo} alt="Fillop Tech" width={32} height={32} className="flex-shrink-0" />
                 <div>
                   <span className="md:text-2xl font-semibold text-primary duration-200">
-                    Fillop Tech
+                    Fillop 
                   </span>
-                  <p className="text-[7.5px] text-destructive/100 dark:text-red-500">
-                    Building skills, powering solutions..
-                  </p>
                 </div>
               </Link>
             </div>
