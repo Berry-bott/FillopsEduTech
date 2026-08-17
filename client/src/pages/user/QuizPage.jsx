@@ -228,12 +228,12 @@ export default function QuizPage() {
   const allAnswered = answeredCount === questions.length;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-100 p-2 md:p-4">
       <div className=" mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-4">
+        <div className="bg-white rounded-lg shadow-md p-2 md:p-4">
           {/* Disclaimer banner */}
-          <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 mb-4">
+          <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 md:px-4 md:py-3 mb-4">
             <span className="text-xl">⏱️</span>
             <p className="text-sm font-semibold text-blue-800">
               This quiz will last for 6:30 minutes. The timer counts down and the
@@ -243,7 +243,7 @@ export default function QuizPage() {
 
           <div className="flex justify-between items-center  mb-4">
             <div>
-              <h1 className="text-2xl font-bold">Daily Quiz</h1>
+              <h1 className="md:text-2xl text-xl font-bold">Daily Quiz</h1>
               <p className="text-sm text-gray-600">
                 Question {currentIndex + 1} of {questions.length}
               </p>

@@ -373,12 +373,12 @@ export default function QuestionCard() {
 
         {/* LEFT: Question */}
         <main>
-          <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6">
+          <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-3 md:p-6">
             <div className={`transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}>
 
               {/* Header */}
               <div className="flex justify-between items-center mb-6">
-                <h2 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
+                <h2 className="font-semibold text-sm md:text-lg text-gray-800 dark:text-gray-100">
                   Question {currentIndex + 1} of {questions.length}
                 </h2>
                 {sessionActive && (

@@ -68,28 +68,28 @@ export default function QuizResultsPage() {
     typeof str === "string" ? str.replace(/<[^>]*>/g, "").trim() : str;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-5">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-5">
       <div className=" space-y-6">
         
         {/* Main Results Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-8xl">
+        <div className="bg-white rounded-2xl shadow-lg p-3 md:p-8 max-w-8xl">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-6xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
+            <h1 className="text-2xl md:text-6xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
           
            <div>
               {/* Score Display */}
               <div className="flex justify-center items-center mb-2">
                 <div className="flex justify-center items-center">
-                  <span className={`text-6xl font-bold ${getGradeColor(percentage)} mb-2`}>
+                  <span className={`text-2xl md:text-6xl font-bold ${getGradeColor(percentage)} mb-2`}>
                     {percentage}%
                   </span>
-                  <span className="text-2xl text-gray-600 font-semibold bg-gray-100 inline-block px-4 rounded-lg">
+                  <span className="text-sm md:text-2xl text-gray-600 font-semibold bg-gray-100 inline-block px-4 rounded-lg">
                     {score}/{totalQuestions}
                   </span>
                 </div>
               </div>
-              <p className={`text-2xl font-semibold ${getGradeColor(percentage)}`}>
+              <p className={`text-sm md:text-2xl font-semibold ${getGradeColor(percentage)}`}>
               {getGradeText(percentage)}
             </p>
            </div>

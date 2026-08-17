@@ -102,7 +102,7 @@ const handleNewSession = () => {
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-xl">🎓</span>
-                <h1 className="text-3xl  font-bold">Session Complete!</h1>
+                <h1 className="text-2xl md:text-3xl  font-bold">Session Complete!</h1>
               </div>
               <p className="text-blue-100 text-sm">Here's your performance summary</p>
               {timeSpent !== "00:00" && (
