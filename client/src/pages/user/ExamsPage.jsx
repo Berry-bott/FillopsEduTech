@@ -99,7 +99,12 @@ useEffect(() => {
     try {
       const savedData = await init();
       
-      console.log('📦 Saved exam data returned:', savedData);
+            console.log('📦 Saved exam data returned:', savedData);
+      
+      // ✅ Persist exam selections to localStorage so they survive subject/topic navigation
+      if (useExamStore.getState().saveSelections) {
+        useExamStore.getState().saveSelections();
+      }
       
       if (savedData && !examActive && !examCompleted) {
         console.log('🚀 Starting exam session...');

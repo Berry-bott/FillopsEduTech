@@ -28,7 +28,10 @@ export default function ExamQuestionCard() {
      hasNextSubjectOrTopic,        
   moveToNextSubjectOrTopic,     
   isLastSubjectOrTopic,     
-  getSubjectProgress,   
+  getSubjectProgress,  
+  units,
+  activeId,
+  saved,
   } = useExamStore();
 
   const questions = getActiveQuestions();
@@ -36,6 +39,11 @@ export default function ExamQuestionCard() {
   const answeredCount = getAnsweredCount();
   const subjectProgress = getSubjectProgress();
   const isLast = isLastSubjectOrTopic();
+  // True when the active unit has no questions.
+  const hasActiveQuestions = questions.length > 0;
+  // True when the active unit finished loading and returned ZERO questions.
+  // (startExam sets `exhausted: true` on any subject/topic with no questions.)
+  const activeUnitExhausted = !!units[activeId]?.exhausted;
   const [visible, setVisible] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
@@ -268,6 +276,35 @@ const handleEndExam = async () => {
   // Simple loading state
   // ----------------------------
   if (loading || !q) {
+    // ✅ No questions returned → show a clear message instead of an endless spinner.
+    if (!hasActiveQuestions && activeUnitExhausted) {
+      return (
+        <section className="py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+            <main>
+              <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center min-h-[320px] gap-3 text-center">
+                <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                </svg>
+                <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">
+                  No questions found
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                  There are no questions available for this {saved?.mode === "topic" ? "topic" : "subject"}.
+                  Please select a different {saved?.mode === "topic" ? "topic" : "subject"}.
+                </p>
+              </div>
+            </main>
+            <aside>
+              <div className="border border-gray-300 dark:border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center min-h-[320px] gap-3 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">No questions to display.</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+      );
+    }
+
     return (
       <main className="p-4 flex items-center justify-center min-h-[40vh]">
         <div className="text-center space-y-4">

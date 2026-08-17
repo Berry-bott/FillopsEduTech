@@ -70,9 +70,39 @@ export default function ExamResultPage() {
     navigate("/user/dashboard");
   };
 
-  const handleRetakeExam = () => {
-    // ✅ Clear exam state and navigate to exam page to start fresh
-    reset();
+           const handleRetakeExam = () => {
+    // ✅ Clear exam state but PRESERVE saved selections for re-init
+    const state = useExamStore.getState();
+    useExamStore.setState({
+      examCompleted: false,
+      examResults: null,
+      examActive: false,
+      examId: null,
+      examStartTime: null,
+      examDuration: null,
+      timeRemaining: null,
+      loading: false,
+      initialized: false,
+      activeId: state?.activeId || null,
+      selectedAnswers: {},
+      units: {},
+      currentIndex: 0,
+      paymentLocked: false,
+      // ✅ Keep 'saved' intact so syncSaved can re-init the exam
+    });
+    
+    // ✅ Clear localStorage so syncSaved starts fresh from the user's original selections
+    const saved = JSON.parse(localStorage.getItem("studySelections") || "{}");
+    if (saved && saved.saved) {
+      // Restore just the original saved selections (without answers)
+      localStorage.setItem("studySelections", JSON.stringify({
+        ...saved,
+        activeId: saved.activeId,
+        selectedAnswers: {},
+        currentIndex: 0,
+      }));
+    }
+    
     navigate("/exam");
   };
 

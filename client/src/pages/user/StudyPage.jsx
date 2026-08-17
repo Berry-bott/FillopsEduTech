@@ -1317,10 +1317,11 @@ export default function StudyPage() {
         return;
       }
 
-      // ✅ Save selections to localStorage is NOT needed here — syncSaved already
-      // loaded them from localStorage, and the selector wrote them on selection.
-      // (A previous saveSelections() call here could THROW and silently prevent
-      // startStudySession() from ever running, so no session endpoints fired.)
+            // ✅ Save current selections (selectedOptions, lockedQuestions) to localStorage
+      // so they survive subject/topic navigation and page reloads
+      if (useStudyStore.getState().saveSelections) {
+        useStudyStore.getState().saveSelections();
+      }
 
       if (!sessionActiveRef.current) {
         const sessionId = await startStudySession(savedData);
