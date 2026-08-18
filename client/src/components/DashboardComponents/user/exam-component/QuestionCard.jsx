@@ -275,7 +275,46 @@ const handleEndExam = async () => {
   // ----------------------------
   // Simple loading state
   // ----------------------------
+  // ⚠️ Payment-blocked users must ALWAYS see the payment screen, regardless of
+  // whether questions have loaded. Without this the 403/free-limit lock results
+  // in an endless spinner ("q" is null on start) and no upgrade prompt.
   if (loading || !q) {
+    // ✅ Payment required → show the upgrade screen instead of a spinner.
+    if (paymentLocked) {
+      return (
+        <section className="py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+            <main>
+              <div className="border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-6 flex flex-col items-center justify-center min-h-[320px] gap-3 text-center">
+                <svg className="w-12 h-12 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <h3 className="text-base font-semibold text-amber-800 dark:text-amber-200">
+                  Questions locked
+                </h3>
+                <p className="text-sm text-amber-700 dark:text-amber-300 max-w-sm">
+                  You need an active subscription to access questions for this{" "}
+                  {saved?.mode === "topic" ? "topic" : "subject"}. Subscribe to continue.
+                </p>
+                <button
+                  onClick={() => navigate("/user/dashboard")}
+                  className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow transition"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Back to Dashboard
+                </button>
+              </div>
+            </main>
+            <aside>
+              <InitializePayment />
+            </aside>
+          </div>
+        </section>
+      );
+    }
+
     // ✅ No questions returned → show a clear message instead of an endless spinner.
     if (!hasActiveQuestions && activeUnitExhausted) {
       return (

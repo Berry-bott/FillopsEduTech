@@ -1881,10 +1881,20 @@ export const useStudyStore = create((set, get) => ({
     set((s) => ({ sessionKey: s.sessionKey + 1 }));
   },
 
-  // ---------------- RESET ----------------
+    // ---------------- RESET ----------------
+  // ✅ Cache reset: clears BOTH the in-memory store AND the persisted
+  // `studySelections` localStorage key. Invoked whenever the user leaves the
+  // study flow (Back to Dashboard / New Session). Clearing localStorage
+  // guarantees StudyPage.syncSaved() cannot resurrect the previous session's
+  // config/units, so the GET /users/study-questions?... call fires again on
+  // the next visit.
   reset: () => {
-        console.log("🧹 Resetting store");
-    
+    console.log("🧹 Resetting study store + clearing localStorage");
+    try {
+      localStorage.removeItem("studySelections");
+    } catch (err) {
+      console.error("❌ Failed to clear studySelections:", err);
+    }
     set({
       saved: null,
       activeId: null,
@@ -2156,6 +2166,7 @@ export const useStudyStore = create((set, get) => ({
             [activeId]: {
               ...unit,
               exhausted: true,
+              needsPayment: true,
             },
           },
         });
@@ -2213,6 +2224,7 @@ export const useStudyStore = create((set, get) => ({
             [activeId]: {
               ...unit,
               exhausted: true,
+              needsPayment: true,
             },
           },
         });
@@ -2236,6 +2248,14 @@ export const useStudyStore = create((set, get) => ({
     });
 
     const state = get();
+    // ✅ If this subject/topic was previously locked (required payment), keep
+    //    showing the lock screen instead of falling into "No questions found".
+    if (state.units[id]?.needsPayment) {
+      console.log("🔒 Previously locked subject — restoring lock screen");
+      set({ paymentLocked: true, loading: false });
+      return;
+    }
+
     if (state.units[id] && state.units[id].items.length > 0) {
       console.log("✅ Already have questions");
       set({ loading: false });
@@ -2498,11 +2518,6 @@ export const useStudyStore = create((set, get) => ({
 
     let serverSessionId = null;
 
-    // ✅ Try the backend /study/start endpoint, but NEVER let its absence or
-    // failure block the session. The frontend session is what drives the UI
-    // ("Session Active" / "End Session") and the local summary. If the backend
-    // endpoint is present it returns a real id; otherwise we fall back to a
-    // local id so the study flow still works end-to-end.
     try {
       const { fetchWithAuth } = useAuthStore.getState();
       const res = await fetchWithAuth(`${API_BASE}/study/start`, {

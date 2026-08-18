@@ -74,7 +74,7 @@ const menuData = [
         label: "Dashboard",
         href: "/dashboard",
         icon: Home,
-        badge: "2",
+        badge: "1",
         children: [
              {
             id: "analytics",
@@ -82,32 +82,22 @@ const menuData = [
             href: "/dashboard/analytics",
             icon: BarChart2,
           },
-          {
-            id: "reports",
-            label: "Reports",
-            href: "/dashboard/reports",
-            icon: FileText,
-            children: [
-              {
-                id: "user-reports",
-                label: "User Reports",
-                href: "/dashboard/reports/users",
-                icon: Users2,
-              },
-              {
-                id: "financial-reports",
-                label: "Financial Reports",
-                href: "/reports/financial",
-                icon: DollarSign,
-              },
-              {
-                id: "other-reports",
-                label: "Other Reports",
-                href: "/dashboard/reports/other",
-                icon: UserPlus,
-              },
-            ],
-          },
+          // {
+          //   id: "reports",
+          //   label: "Reports",
+          //   href: "/dashboard/reports",
+          //   icon: FileText,
+          //   // children: [
+
+          //   //   {
+          //   //     id: "financial-reports",
+          //   //     label: "Financial Reports",
+          //   //     href: "/reports/financial",
+          //   //     icon: DollarSign,
+          //   //   },
+ 
+          //   // ],
+          // },
   
         ],
       },
@@ -125,46 +115,46 @@ const menuData = [
         label: "My Library",
         href: "/orders",
         icon: ShoppingCart,
-        badge: "3",
+        badge: "1",
         children: [
           {
             id: "library",
             label: " Library",
-            href: "/ Library",
+            href: "/reports/financial",
             icon: Package,
           },
-          {
-            id: "mychart",
-            label: "MyChart",
-            href: "/orders/processing",
-            icon: Timer,
-          },
+          // {
+          //   id: "mychart",
+          //   label: "MyChart",
+          //   href: "/orders/processing",
+          //   icon: Timer,
+          // },
          
-          {
-            id: "processing",
-            label: "Processing",
-            href: "/orders/processing",
-            icon: Timer,
-          },
+          // {
+          //   id: "processing",
+          //   label: "Processing",
+          //   href: "/orders/processing",
+          //   icon: Timer,
+          // },
  
         ],
       },
-      {
-        id: "Reviews",
-        label: "Reviews",
-        href: "/reviews",
-        badge: "1",
-        icon: Star,
-        children: [
+      // {
+      //   id: "Reviews",
+      //   label: "Reviews",
+      //   href: "/reviews",
+      //   badge: "1",
+      //   icon: Star,
+      //   children: [
          
-          {
-            id: "reviews",
-            label: "Users Reviews",
-            href: "/customers/reviews",
-            icon: MessageSquare,
-          },
-        ],
-      },
+      //     {
+      //       id: "reviews",
+      //       label: "Users Reviews",
+      //       href: "/customers/reviews",
+      //       icon: MessageSquare,
+      //     },
+      //   ],
+      // },
     ],
   },
   {
@@ -175,7 +165,7 @@ const menuData = [
       {
         id: "payments",
         label: "Payments",
-        badge: "3",
+        badge: "2",
         href: "/payments",
         icon: CreditCard,
         children: [
@@ -450,7 +440,6 @@ export default function SideBar() {
                     <span className="text-3xl font-semibold text-primary  transition-opacity duration-200">
                     Fillop
                     </span>
-                    <p className="text-[9px] text-destructive">Building skills, powering solutions...</p>
                   </div>
                 </Link>
               </div>

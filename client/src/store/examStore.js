@@ -1,10 +1,8 @@
 import { create } from "zustand";
 import useAuthStore from "./authStore";
-import { usePaymentStore } from "./paymentStore";
 
 const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/api`;
 const REQUEST_LIMIT = 40;
-const FREE_QUESTIONS_LIMIT = 5; // Free trial limit for exams
 let navigationCallback = null;
 
 
@@ -14,108 +12,25 @@ export const setExamNavigationCallback = (callback) => {
   navigationCallback = callback;
   console.log("✅ Navigation callback registered");
 };
-// ✅ Check if user has used their free exam questions
-function hasUsedFreeExamQuestions() {
-  const freeQuestionsUsed = localStorage.getItem('freeExamQuestionsUsed');
-  const count = parseInt(freeQuestionsUsed || '0', 10);
-  console.log(`📊 Free exam questions used: ${count}/${FREE_QUESTIONS_LIMIT}`);
-  return count >= FREE_QUESTIONS_LIMIT;
-}
 
-// ✅ Increment free exam questions counter
-function incrementFreeExamQuestionsCount(questionsCount) {
-  const current = parseInt(localStorage.getItem('freeExamQuestionsUsed') || '0', 10);
-  const newCount = current + questionsCount;
-  localStorage.setItem('freeExamQuestionsUsed', newCount.toString());
-  console.log(`📈 Free exam questions count: ${current} → ${newCount}`);
-  return newCount;
-}
 
-// ✅ STRICT CHECK: Must match EXACT subject ID + category
-function checkIfUserPaidForSubject(subjectInfo, category) {
-  const paymentState = usePaymentStore.getState();
-  
-  console.log("\n================================");
-  console.log("🔍 STRICT PAYMENT CHECK (EXAM)");
-  console.log("================================");
-  
-  const subjectId = typeof subjectInfo === 'string' ? subjectInfo : subjectInfo?.id;
-  const subjectName = typeof subjectInfo === "string" ? null : subjectInfo?.subjectName;
-
-  console.log("Looking for EXACT match:");
-  console.log("  - Required Subject ID:", subjectId);
-  console.log("  - Subject Name:", subjectName);
-  console.log("  - Required Category:", category);
-  
-  let activeSubscriptions = [];
-  
-  if (paymentState.activeSubscriptions) {
-    activeSubscriptions = paymentState.activeSubscriptions;
-  } else if (paymentState.subscriptions?.active) {
-    activeSubscriptions = paymentState.subscriptions.active;
-  } else if (paymentState.active) {
-    activeSubscriptions = paymentState.active;
-  }
-  
-  console.log("\n📋 Active Subscriptions:", activeSubscriptions.length);
-  
-  if (!activeSubscriptions || activeSubscriptions.length === 0) {
-    console.log("❌ No active subscriptions found");
-    console.log("================================\n");
-    return false;
-  }
-  
-  console.log("\n🔍 Checking each subscription:");
-  
-  const hasPaid = activeSubscriptions.some((sub, index) => {
-    console.log(`\n  Subscription ${index + 1}: ${sub.subjectName}`);
-    console.log(`    - Subscription Subject ID: ${sub.subjectId}`);
-    console.log(`    - Subscription Category: ${sub.category}`);
-    
-    const idMatches = sub.subjectId === subjectId || 
-                     sub.id === subjectId || 
-                     sub._id === subjectId;
-    
-    const categoryMatches = !category || sub.category === category;
-    const matches = idMatches && categoryMatches;
-    
-    console.log(`    - ID Match: ${idMatches}`);
-    console.log(`    - Category Match: ${categoryMatches}`);
-    console.log(`    - Result: ${matches ? '✅ MATCH!' : '❌ No match'}`);
-    
-    if (matches) {
-      console.log("\n🎉 EXACT MATCH FOUND!");
-      console.log(`   User HAS paid for: ${sub.subjectName}`);
-    }
-    
-    return matches;
-  });
-  
-  if (!hasPaid) {
-    console.log("\n❌ ACCESS DENIED - NO MATCHING SUBSCRIPTION");
-  }
-  
-  console.log("\n================================");
-  console.log(`FINAL RESULT: ${hasPaid ? '✅ ACCESS GRANTED' : '❌ ACCESS DENIED'}`);
-  console.log("================================\n");
-  
-  return hasPaid;
-}
-
+// ✅ Free trial / payment access is enforced SOLELY by the backend (403 /
+// PAYMENT_REQUIRED / requiresUpgrade on the question and exam-start endpoints).
+// No client-side subscription check is performed here - matches the study flow.
 async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
   console.log("\n🔍 ========================================");
   console.log("🔍 GET SUBJECT INFO FOR TOPIC");
   console.log("🔍 ========================================");
   console.log("Looking for Topic ID:", topicId);
   console.log("User Selected Category:", userSelectedCategory);
-  
+
   const { accessToken } = useAuthStore.getState();
-  
+
   if (!accessToken) {
     console.error("❌ No access token!");
     return null;
   }
-  
+
   if (!topicId) {
     console.error("❌ No topic ID provided!");
     return null;
@@ -135,11 +50,11 @@ async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
 
     const data = await response.json();
     const subjects = data.data || [];
-    
+
     console.log(`📚 Found ${subjects.length} subjects with topics`);
 
     // Filter by category if provided
-    const filteredSubjects = userSelectedCategory 
+    const filteredSubjects = userSelectedCategory
       ? subjects.filter(s => s.category === userSelectedCategory.toUpperCase())
       : subjects;
 
@@ -149,22 +64,22 @@ async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
     for (let i = 0; i < filteredSubjects.length; i++) {
       const subject = filteredSubjects[i];
       console.log(`\n  Checking subject ${i + 1}/${filteredSubjects.length}: ${subject.subjectName} (ID: ${subject.subjectId})`);
-      
+
       if (!subject.modules) {
         console.warn(`  ⚠️ No modules in subject`);
         continue;
       }
-      
+
       console.log(`  🔍 Searching through ${subject.modules.length} modules...`);
-      
+
       for (const module of subject.modules) {
         if (!module.topics || module.topics.length === 0) continue;
-        
+
         for (const topic of module.topics) {
-          const topicIdMatch = topic.topicId === topicId || 
-                              topic.id === topicId || 
+          const topicIdMatch = topic.topicId === topicId ||
+                              topic.id === topicId ||
                               topic._id === topicId;
-          
+
           if (topicIdMatch) {
             console.log("\n🎉 ========================================");
             console.log("🎉 TOPIC FOUND!");
@@ -175,7 +90,7 @@ async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
             console.log("Subject ID:", subject.subjectId);
             console.log("Category:", subject.category);
             console.log("========================================\n");
-            
+
             return {
               id: subject.subjectId,
               subjectName: subject.subjectName,
@@ -190,7 +105,7 @@ async function getSubjectInfoForTopic(topicId, userSelectedCategory) {
     console.log("Searched through subjects in category:", userSelectedCategory);
     console.log("Looking for topic ID:", topicId);
     console.log("========================================\n");
-    
+
     return null;
   } catch (error) {
     console.error("\n❌ ERROR IN getSubjectInfoForTopic:", error);
@@ -217,14 +132,14 @@ export const useExamStore = create((set, get) => ({
   examDuration: null, // in minutes
   timeRemaining: null, // in seconds
   timerId: null, // Store interval ID for cleanup
-  freeTrialActive: !hasUsedFreeExamQuestions(),
+  freeTrialActive: false, // Free-trial is enforced solely by the backend
   examCompleted: false,
   examResults: null,
 
   // ---------------- RESET ----------------
   reset: () => {
     console.log("🧹 Resetting exam store");
-    
+
     set({
       saved: null,
       activeId: null,
@@ -241,7 +156,7 @@ export const useExamStore = create((set, get) => ({
       examDuration: null,
       timeRemaining: null,
       loading: false,
-      freeTrialActive: !hasUsedFreeExamQuestions(),
+      freeTrialActive: false, // Free-trial is enforced solely by the backend
       examCompleted: false,
       examResults: null,
     });
@@ -250,12 +165,12 @@ export const useExamStore = create((set, get) => ({
   // ---------------- LOAD SAVED ----------------
   syncSaved: async () => {
   const state = get();
-  
+
   if (state.loading && state.initialized) {
     console.log("⏭️ Already loading");
     return null;
   }
-  
+
   if (state.initialized && !state.loading) {
     console.log("🔄 Re-initializing");
     set({ initialized: false });
@@ -266,7 +181,7 @@ export const useExamStore = create((set, get) => ({
   console.log("📝 ========================================");
 
   const saved = JSON.parse(localStorage.getItem("studySelections"));
-  
+
   if (!saved) {
     console.warn("⚠️ ========================================");
     console.warn("⚠️ NO SAVED EXAM DATA FOUND");
@@ -288,17 +203,17 @@ export const useExamStore = create((set, get) => ({
     console.log("  - Topics:", Object.keys(saved.topics || {}).length, "subjects with topics");
   }
 
-  set({ 
-    saved, 
-    initialized: true, 
+  set({
+    saved,
+    initialized: true,
     loading: true,
     examDuration: saved.duration,
-    freeTrialActive: !hasUsedFreeExamQuestions() 
+    freeTrialActive: false // Free-trial is enforced solely by the backend
   });
 
   try {
     console.log("\n📚 Fetching subject/topic names...");
-    
+
     if (saved.mode === "subject") {
       await get().fetchSubjectNames();
     } else {
@@ -314,26 +229,26 @@ export const useExamStore = create((set, get) => ({
 
     if (firstId) {
       console.log("🔄 Setting first active ID (not fetching questions yet)...");
-      
+
       // ✅ Just set the activeId, don't fetch questions
-      set({ 
+      set({
         activeId: firstId,
         currentIndex: 0,
         loading: false,
         paymentLocked: false // ✅ Don't lock yet
       });
-      
+
       // Don't call changeActive() or fetchMoreQuestions()
       // Let startExam() handle loading the questions
     } else {
       console.warn("⚠️ No first ID found");
       set({ loading: false });
     }
-    
+
     console.log("✅ ========================================");
     console.log("✅ SYNC COMPLETE");
     console.log("✅ ========================================\n");
-    
+
     return saved;
   } catch (error) {
     console.error("❌ ========================================");
@@ -398,11 +313,11 @@ export const useExamStore = create((set, get) => ({
 getAnsweredCount: () => {
   const { selectedAnswers, activeId, units } = get();
   if (!activeId || !units[activeId]) return 0;
-  
+
   const activeQuestions = units[activeId].items || [];
   const activeQuestionIds = activeQuestions.map(q => q.id);
-  
-  return Object.keys(selectedAnswers).filter(id => 
+
+  return Object.keys(selectedAnswers).filter(id =>
     activeQuestionIds.includes(id)
   ).length;
 },
@@ -410,16 +325,15 @@ getAnsweredCount: () => {
   // ---------------- FETCH QUESTIONS (WITH FREE TRIAL) ----------------
   fetchMoreQuestions: async () => {
     const state = get();
-    const { saved, activeId, units, freeTrialActive, examActive } = state;
-    
+    const { saved, activeId, units, examActive } = state;
+
     console.log("\n🔍 ========================================");
     console.log("🔍 FETCH MORE EXAM QUESTIONS");
     console.log("🔍 ========================================");
     console.log("Active ID:", activeId);
     console.log("Mode:", saved?.mode);
-    console.log("🎁 Free Trial Active:", freeTrialActive);
     console.log("📝 Exam Active:", examActive);
-    
+
     if (!saved || !activeId) {
       console.log("❌ No saved or activeId");
       set({ loading: false });
@@ -430,7 +344,7 @@ getAnsweredCount: () => {
     console.log("Category:", category);
 
     let subjectInfo = null;
-    
+
     if (saved.mode === "subject") {
       subjectInfo = {
         id: activeId,
@@ -439,13 +353,13 @@ getAnsweredCount: () => {
       console.log("📚 Subject mode - checking subject:", activeId);
     } else if (saved.mode === "topic") {
       console.log("📖 Topic mode - finding parent subject...");
-      
+
       subjectInfo = await getSubjectInfoForTopic(activeId, category);
-      
+
       if (!subjectInfo) {
         console.error("❌ Could not find subject for topic:", activeId);
-        set({ 
-          paymentLocked: true, 
+        set({
+          paymentLocked: true,
           loading: false,
           units: {
             ...get().units,
@@ -458,99 +372,15 @@ getAnsweredCount: () => {
         });
         return;
       }
-      
+
       console.log("✅ Found parent subject:", subjectInfo.subjectName);
       console.log("   Subject ID:", subjectInfo.id);
     }
 
-    // ✅ PAYMENT CHECK: Check free trial FIRST
-    const usedCount = parseInt(localStorage.getItem('freeExamQuestionsUsed') || '0', 10);
-    const hasFreeTrial = usedCount < FREE_QUESTIONS_LIMIT;
-    
-    console.log(`\n📊 ========================================`);
-    console.log(`📊 FREE TRIAL CHECK`);
-    console.log(`📊 ========================================`);
-    console.log(`📊 Free questions used: ${usedCount}/${FREE_QUESTIONS_LIMIT}`);
-    console.log(`📊 Has free trial: ${hasFreeTrial}`);
-    console.log(`📊 ========================================\n`);
-    
-    if (hasFreeTrial) {
-      console.log(`🎁 ========================================`);
-      console.log(`🎁 FREE TRIAL ACTIVE`);
-      console.log(`🎁 ========================================`);
-      console.log(`🎁 User still has free questions remaining`);
-      console.log(`🎁 Skipping payment check`);
-      console.log(`🎁 Proceeding to fetch questions...`);
-      console.log(`🎁 ========================================\n`);
-      
-      // Update freeTrialActive if it changed
-      if (!freeTrialActive) {
-        set({ freeTrialActive: true });
-      }
-    } else {
-      // ✅ Free trial exhausted - Check payment status
-      console.log(`\n💳 ========================================`);
-      console.log(`💳 FREE TRIAL EXHAUSTED`);
-      console.log(`💳 ========================================`);
-      
-      // Get current payment state (subscriptions should already be loaded by paymentStore)
-      const paymentStore = usePaymentStore.getState();
-      
-      console.log("💳 Checking current payment state...");
-      console.log("💳 Active subscriptions count:", paymentStore.activeSubscriptions?.length || 0);
-      
-      // If no subscriptions loaded yet, wait a moment for them to load
-      if (!paymentStore.activeSubscriptions || paymentStore.activeSubscriptions.length === 0) {
-        console.log("💳 No subscriptions in state yet, waiting 500ms...");
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Check again after waiting
-        const updatedState = usePaymentStore.getState();
-        console.log("💳 After wait, subscriptions count:", updatedState.activeSubscriptions?.length || 0);
-      }
-      
-      console.log("💳 Now checking access with current subscription data...");
-      
-      if (subjectInfo) {
-        const hasPaid = checkIfUserPaidForSubject(subjectInfo, category);
-        
-        if (!hasPaid) {
-          console.log("\n🚫 ========================================");
-          console.log("🚫 PAYMENT REQUIRED - ACCESS DENIED");
-          console.log("🚫 ========================================");
-          console.log("🚫 User has not paid for this subject/topic");
-          console.log("🚫 Locking questions and showing payment screen");
-          console.log("🚫 ========================================\n");
-          
-          set({ 
-            paymentLocked: true, 
-            loading: false,
-            freeTrialActive: false,
-            units: {
-              ...get().units,
-              [activeId]: {
-                items: [],
-                skip: 0,
-                exhausted: true,
-              },
-            },
-          });
-          return;
-        }
-        
-        console.log("\n✅ ========================================");
-        console.log("✅ ACCESS GRANTED - PAYMENT VERIFIED");
-        console.log("✅ ========================================");
-        console.log("✅ User has valid subscription");
-        console.log("✅ Proceeding to fetch questions...");
-        console.log("✅ ========================================\n");
-      }
-      
-      // Update freeTrialActive
-      if (freeTrialActive) {
-        set({ freeTrialActive: false });
-      }
-    }
+    // ✅ Free trial / payment is enforced SOLELY by the backend. The server
+    // returns a 403 / PAYMENT_REQUIRED / requiresUpgrade when the free limit is
+    // exhausted or the user has no active subscription. We simply proceed to
+    // fetch and react to the backend's decision below (matches the study flow).
 
     const unit = units[activeId] || {
       items: [],
@@ -577,7 +407,7 @@ getAnsweredCount: () => {
 
       if (saved.mode === "subject") {
         params.append('subjectId', activeId);
-        
+
         const year = saved.subjectYears?.[activeId];
         if (year && year !== 'random') {
           params.append('year', year);
@@ -586,11 +416,11 @@ getAnsweredCount: () => {
         }
       } else if (saved.mode === "topic") {
         params.append('topicId', activeId);
-        
+
         if (subjectInfo?.id) {
           params.append('subjectId', subjectInfo.id);
         }
-        
+
         const year = saved.topicYears?.[activeId];
         if (year && year !== 'random') {
           params.append('year', year);
@@ -606,41 +436,17 @@ getAnsweredCount: () => {
 
       if (res?.status === 403 || res?.code === "PAYMENT_REQUIRED") {
         console.log("\n🔥 API RETURNED 403 FORBIDDEN");
-        set({ paymentLocked: true, loading: false, freeTrialActive: false });
+        set({ paymentLocked: true, loading: false });
         return;
       }
 
       const data = Array.isArray(res?.data) ? res.data : [];
       console.log(`✅ Received ${data.length} questions`);
 
-      // ✅ Update free questions counter if still in trial mode
-      const stillHasFreeTrial = parseInt(localStorage.getItem('freeExamQuestionsUsed') || '0', 10) < FREE_QUESTIONS_LIMIT;
-      
-      if (stillHasFreeTrial && data.length > 0) {
-        const newCount = incrementFreeExamQuestionsCount(data.length);
-        
-        console.log(`\n🎁 ========================================`);
-        console.log(`🎁 FREE TRIAL USAGE UPDATE`);
-        console.log(`🎁 ========================================`);
-        console.log(`🎁 Questions fetched: ${data.length}`);
-        console.log(`🎁 Total used now: ${newCount}/${FREE_QUESTIONS_LIMIT}`);
-        
-        if (newCount >= FREE_QUESTIONS_LIMIT) {
-          console.log(`🎁 FREE TRIAL NOW EXHAUSTED!`);
-          console.log(`🎁 Future fetches will require payment`);
-          set({ freeTrialActive: false });
-        } else {
-          console.log(`🎁 Still have ${FREE_QUESTIONS_LIMIT - newCount} free questions`);
-        }
-        
-        console.log(`🎁 ========================================\n`);
-      }
-
       if (data.length === 0 && res?.accessInfo?.requiresUpgrade === true) {
-        set({ 
-          paymentLocked: true, 
+        set({
+          paymentLocked: true,
           loading: false,
-          freeTrialActive: false,
           units: {
             ...get().units,
             [activeId]: {
@@ -649,7 +455,7 @@ getAnsweredCount: () => {
             },
           },
         });
-        console.log("🔥 Free limit reached");
+        console.log("🔥 Free limit reached (backend requires upgrade)");
         return;
       }
 
@@ -664,11 +470,11 @@ getAnsweredCount: () => {
         },
         loading: false,
       }));
-      
+
       console.log(`💾 Total questions: ${unit.items.length + data.length}`);
     } catch (err) {
       console.error("❌ Fetch failed:", err);
-      
+
       if (
         err?.status === 403 ||
         err?.response?.status === 403 ||
@@ -677,7 +483,7 @@ getAnsweredCount: () => {
         set({ paymentLocked: true, loading: false, freeTrialActive: false });
         return;
       }
-      
+
       set({ loading: false });
     }
   },
@@ -685,7 +491,7 @@ getAnsweredCount: () => {
   // ---------------- CHANGE ACTIVE ----------------
   changeActive: async (id) => {
     console.log("🔁 Changing active to:", id);
-    
+
     set({
       activeId: id,
       currentIndex: 0,
@@ -724,13 +530,13 @@ hasNextSubjectOrTopic: () => {
 
   const orderedIds = get().getOrderedIds();
   const currentIdx = orderedIds.indexOf(activeId);
-  
+
   console.log("📊 Checking for next subject/topic:");
   console.log("  Current ID:", activeId);
   console.log("  Current Index:", currentIdx);
   console.log("  Total IDs:", orderedIds.length);
   console.log("  Has Next:", currentIdx < orderedIds.length - 1);
-  
+
   return currentIdx >= 0 && currentIdx < orderedIds.length - 1;
 },
 
@@ -744,7 +550,7 @@ moveToNextSubjectOrTopic: async () => {
 
   if (currentIdx >= 0 && currentIdx < orderedIds.length - 1) {
     const nextId = orderedIds[currentIdx + 1];
-    
+
     console.log("🔄 ========================================");
     console.log("🔄 MOVING TO NEXT SUBJECT/TOPIC");
     console.log("🔄 ========================================");
@@ -752,7 +558,7 @@ moveToNextSubjectOrTopic: async () => {
     console.log("🔄 To:", nextId);
     console.log("🔄 Progress:", `${currentIdx + 2}/${orderedIds.length}`);
     console.log("🔄 ========================================");
-    
+
     await get().changeActive(nextId);
     return true;
   }
@@ -768,7 +574,7 @@ isLastSubjectOrTopic: () => {
 
   const orderedIds = get().getOrderedIds();
   const currentIdx = orderedIds.indexOf(activeId);
-  
+
   return currentIdx === orderedIds.length - 1;
 },
 
@@ -779,7 +585,7 @@ getSubjectProgress: () => {
 
   const orderedIds = get().getOrderedIds();
   const currentIdx = orderedIds.indexOf(activeId);
-  
+
   return {
     current: currentIdx + 1,
     total: orderedIds.length,
@@ -792,7 +598,7 @@ getSubjectProgress: () => {
   next: () => {
   const { currentIndex } = get();
   const activeQuestions = get().getActiveQuestions();
-  
+
   if (currentIndex < activeQuestions.length - 1) {
     set({ currentIndex: currentIndex + 1 });
   }
@@ -800,7 +606,7 @@ getSubjectProgress: () => {
 //   next: () => {
 //     const { currentIndex } = get();
 //     const allQuestions = get().getAllQuestions();
-    
+
 //     if (currentIndex < allQuestions.length - 1) {
 //       set({ currentIndex: currentIndex + 1 });
 //     }
@@ -829,43 +635,43 @@ getSubjectProgress: () => {
   fetchSubjectNames: async () => {
     const { saved } = get();
     if (!saved?.subjects?.length) return;
-  
+
     console.log("📘 Fetching subject names");
-  
+
     try {
       const { fetchWithAuth } = useAuthStore.getState();
       const res = await fetchWithAuth(`${API_BASE}/users/my-subjects`);
-      
+
       if (!res?.data) return;
-  
+
       let subjects = [];
-      
+
       if (res.data.subjectsByCategory) {
         subjects = Object.values(res.data.subjectsByCategory).flat();
       } else if (Array.isArray(res.data)) {
         subjects = res.data;
       }
-  
+
       const names = {};
-  
+
       subjects.forEach(subject => {
         const subjectId = subject.id || subject.subjectId || subject._id;
         if (saved.subjects.includes(subjectId)) {
           names[subjectId] = subject.subjectName;
         }
       });
-  
+
       saved.subjects.forEach(id => {
         if (!names[id]) {
           names[id] = id;
         }
       });
-  
+
       set({ subjectNames: names });
-  
+
     } catch (err) {
       console.error("❌ Failed to fetch subject names:", err);
-      
+
       const names = {};
       saved.subjects.forEach(id => {
         names[id] = id;
@@ -883,7 +689,7 @@ getSubjectProgress: () => {
     try {
       const { fetchWithAuth } = useAuthStore.getState();
       const res = await fetchWithAuth(`${API_BASE}/users/my-topics`);
-      
+
       if (!res?.data) return;
 
       const subjects = res.data;
@@ -897,7 +703,7 @@ getSubjectProgress: () => {
           module.topics?.forEach(topic => {
             if (savedTopicIds.includes(topic.topicId)) {
               topicNames[topic.topicId] = topic.topicName;
-              
+
               Object.keys(saved.topics).forEach(subjectId => {
                 if (saved.topics[subjectId].includes(topic.topicId)) {
                   subjectNames[subjectId] = subject.subjectName;
@@ -919,7 +725,7 @@ getSubjectProgress: () => {
 
     } catch (err) {
       console.error("❌ Failed to fetch topic names:", err);
-      
+
       const topicNames = {};
       const savedTopicIds = Object.values(saved.topics).flat();
       savedTopicIds.forEach(id => {
@@ -932,7 +738,7 @@ getSubjectProgress: () => {
   // ---------------- EXAM SESSION ----------------
 startExam: async () => {
   const { saved, examActive } = get();
-  
+
   if (!saved || examActive) {
     console.log("⏭️ No saved config or exam already active");
     return null;
@@ -940,7 +746,7 @@ startExam: async () => {
 
   try {
     const { fetchWithAuth } = useAuthStore.getState();
-    
+
     let payload = {
       category: saved.exam,
       mode: saved.mode === "subject" ? "SUBJECT" : "TOPIC"
@@ -964,7 +770,23 @@ startExam: async () => {
     console.log("📦 FULL START EXAM RESPONSE:", JSON.stringify(res, null, 2));
     console.log("📦 Response data:", res?.data);
     console.log("📦 Response structure:", Object.keys(res || {}));
-    
+
+    // ✅ PAYMENT GATE: If the backend blocked starting the exam (403 / payment
+    // required / no active subject subscription), surface the payment screen
+    // instead of leaving the user stuck on an endless spinner.
+    const blockedByPayment =
+      res?.status === 403 ||
+      res?.code === "PAYMENT_REQUIRED" ||
+      res?.statusCode === 403 ||
+      (typeof res?.message === "string" &&
+        /active subject subscription|no active subscription|payment required|subscribe|upgrade/i.test(res.message));
+
+    if (blockedByPayment) {
+      console.log("🚫 EXAM START REJECTED - PAYMENT/SUBSCRIPTION REQUIRED");
+      set({ paymentLocked: true, loading: false, freeTrialActive: false });
+      return null;
+    }
+
     if (res?.data) {
       console.log("📦 Data structure:", Object.keys(res.data));
       console.log("📦 Exam ID:", res.data.examId);
@@ -976,28 +798,28 @@ startExam: async () => {
 
     if (res?.data?.examId) {
       const startTime = Date.now();
-      
+
       // ✅ EXTRACT QUESTIONS FROM RESPONSE
       const questionsData = res.data.questions || {};
-      
+
       console.log("\n📦 ========================================");
       console.log("📦 EXTRACTING QUESTIONS FROM API");
       console.log("📦 ========================================");
       console.log("📦 Question groups received:", Object.keys(questionsData));
-      
+
       // ✅ BUILD UNITS FROM QUESTIONS
       const newUnits = {};
-      
+
       if (saved.mode === "subject") {
         console.log("📚 Processing SUBJECT mode questions...");
-        
+
         // For subject mode, questions are grouped by subject name
         saved.subjects.forEach(subjectId => {
           console.log(`\n🔍 Looking for questions for subject: ${subjectId}`);
-          
+
           // Find the subject name from the questions
           let foundQuestions = false;
-          
+
           Object.entries(questionsData).forEach(([groupName, questions]) => {
             if (questions.length > 0 && questions[0].subjectId === subjectId) {
               newUnits[subjectId] = {
@@ -1009,7 +831,7 @@ startExam: async () => {
               foundQuestions = true;
             }
           });
-          
+
           if (!foundQuestions) {
             newUnits[subjectId] = {
               items: [],
@@ -1019,25 +841,25 @@ startExam: async () => {
             console.log(`⚠️ No questions found for subject ${subjectId}`);
           }
         });
-        
+
       } else if (saved.mode === "topic") {
         console.log("📖 Processing TOPIC mode questions...");
-        
+
         // For topic mode, questions are grouped by topic name
         const topicIds = Object.values(saved.topics).flat();
-        
+
         console.log("🔍 Looking for topics:", topicIds);
         console.log("🔍 Available question groups:", Object.keys(questionsData));
-        
+
         topicIds.forEach(topicId => {
           console.log(`\n🔍 Looking for questions for topic: ${topicId}`);
-          
+
           let foundQuestions = false;
-          
+
           // Search through all question groups to find questions for this topic
           Object.entries(questionsData).forEach(([topicName, questions]) => {
             const topicQuestions = questions.filter(q => q.topicId === topicId);
-            
+
             if (topicQuestions.length > 0) {
               newUnits[topicId] = {
                 items: topicQuestions,
@@ -1048,7 +870,7 @@ startExam: async () => {
               foundQuestions = true;
             }
           });
-          
+
           if (!foundQuestions) {
             newUnits[topicId] = {
               items: [],
@@ -1059,7 +881,7 @@ startExam: async () => {
           }
         });
       }
-      
+
       console.log("\n📊 ========================================");
       console.log("📊 UNITS CREATION SUMMARY");
       console.log("📊 ========================================");
@@ -1068,10 +890,10 @@ startExam: async () => {
         console.log(`   ${id}: ${unit.items.length} questions`);
       });
       console.log("📊 ========================================\n");
-      
+
       // ✅ Calculate duration
       let timeInSeconds;
-      
+
       if (res.data.durationSeconds) {
         timeInSeconds = res.data.durationSeconds;
         console.log("⏰ Using durationSeconds from API:", timeInSeconds, "seconds");
@@ -1085,9 +907,9 @@ startExam: async () => {
         timeInSeconds = 60 * 60;
         console.log("⏰ Using default duration: 60 minutes →", timeInSeconds, "seconds");
       }
-      
+
       const durationInMinutes = Math.ceil(timeInSeconds / 60);
-      
+
       console.log("\n⏰ ========================================");
       console.log("⏰ TIMER SETUP COMPLETE");
       console.log("⏰ ========================================");
@@ -1095,10 +917,10 @@ startExam: async () => {
       console.log("⏰ Start time:", new Date(startTime).toISOString());
       console.log("⏰ Expected end:", new Date(startTime + timeInSeconds * 1000).toISOString());
       console.log("⏰ ========================================\n");
-      
+
       // ✅ UPDATE STATE WITH QUESTIONS AND EXAM INFO
-      set({ 
-        examId: res.data.examId, 
+      set({
+        examId: res.data.examId,
         examActive: true,
         examStartTime: startTime,
         examDuration: durationInMinutes,
@@ -1107,7 +929,7 @@ startExam: async () => {
         paymentLocked: false, // ✅ Unlock since exam started successfully
         loading: false, // ✅ Stop loading
       });
-      
+
       console.log("✅ ========================================");
       console.log("✅ EXAM INITIALIZATION COMPLETE");
       console.log("✅ ========================================");
@@ -1118,11 +940,11 @@ startExam: async () => {
       console.log("✅ Payment locked:", false);
       console.log("✅ Loading:", false);
       console.log("✅ ========================================\n");
-      
+
       // Start timer immediately
       const startTimerResult = get().startTimer();
       console.log("✅ Timer started with interval ID:", startTimerResult);
-      
+
       return res.data.examId;
     }
 
@@ -1130,13 +952,28 @@ startExam: async () => {
     return null;
   } catch (err) {
     console.error("❌ Failed to start exam:", err);
+
+    // If the failure is payment/subscription-related, show the payment screen.
+    const failureMessage = err?.message || err?.data?.message || "";
+    const paymentFailure =
+      err?.status === 403 ||
+      err?.response?.status === 403 ||
+      err?.statusCode === 403 ||
+      err?.code === "PAYMENT_REQUIRED" ||
+      /active subject subscription|no active subscription|payment required|subscribe|upgrade/i.test(failureMessage);
+
+    if (paymentFailure) {
+      console.log("🚫 EXAM START REJECTED (thrown) - PAYMENT/SUBSCRIPTION REQUIRED");
+      set({ paymentLocked: true, loading: false, freeTrialActive: false });
+    }
+
     return null;
   }
 },
 
   submitAnswer: async (questionId, userChoice) => {
     const { examId, examActive } = get();
-    
+
     if (!examActive || !examId) {
       console.warn("⚠️ No active exam");
       return false;
@@ -1166,8 +1003,8 @@ startExam: async () => {
       return false;
     }
   },
- 
-  
+
+
 // ✅ COMPLETE endExam IMPLEMENTATION
 endExam: async (options = {}) => {
   const { examId, examActive, timerId } = get();
@@ -1190,7 +1027,7 @@ endExam: async (options = {}) => {
       },
       body: JSON.stringify({ examId }),
     });
-    
+
     // Set examActive to false immediately after API call
     set({ examActive: false });
 
@@ -1233,16 +1070,16 @@ endExam: async (options = {}) => {
 // Update startTimer to pass autoSubmit flag
 startTimer: () => {
   console.log("⏰ startTimer() called");
-  
+
   // Clear any existing timer
   if (get().timerId) {
     console.log("⏰ Clearing existing timer:", get().timerId);
     clearInterval(get().timerId);
   }
-  
+
   const interval = setInterval(() => {
     const state = get();
-    
+
     if (!state.examActive || state.timeRemaining === null) {
       console.log("⏰ Stopping timer - exam not active or time null");
       clearInterval(interval);
@@ -1256,7 +1093,7 @@ startTimer: () => {
       console.log("⏰ ========================================");
       clearInterval(interval);
       set({ timerId: null });
-      
+
       // ✅ Pass autoSubmit flag
       get().endExam({ autoSubmit: true });
       return;
@@ -1264,10 +1101,10 @@ startTimer: () => {
 
     set({ timeRemaining: state.timeRemaining - 1 });
   }, 1000);
-  
+
   // Store interval ID so we can clear it later
   set({ timerId: interval });
-  
+
   console.log("⏰ Timer started with interval ID:", interval);
   return interval;
 },
@@ -1275,23 +1112,23 @@ startTimer: () => {
 fetchExamResults: async (examId) => {
   try {
     const { fetchWithAuth } = useAuthStore.getState();
-    
+
     const response = await fetchWithAuth(
       `${API_BASE}/exams/${examId}/results`
     );
-    
+
     if (response?.data) {
       set({ examResults: response.data });
       return response.data;
     }
-    
+
     return null;
   } catch (error) {
     console.error("❌ Failed to fetch exam results:", error);
     throw error;
   }
 },
- 
+
   initializePayment: async () => {
     set({ paymentLoading: true });
 

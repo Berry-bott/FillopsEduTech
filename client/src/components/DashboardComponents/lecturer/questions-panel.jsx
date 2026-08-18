@@ -64,17 +64,47 @@ function ToolbarDivider() {
 
 function RichTextToolbar({ editor }) {
   const imageInputRef = useRef(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadMsg, setUploadMsg] = useState(null)
 
-  const insertImage = useCallback((e) => {
+  const insertImage = useCallback(async (e) => {
     const file = e.target.files?.[0]
     if (!file || !editor) return
-
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      editor.chain().focus().setImage({ src: ev.target.result, alt: file.name }).run()
-    }
-    reader.readAsDataURL(file)
     e.target.value = ""
+
+    // Validate file
+    if (!file.type.startsWith("image/")) {
+      setUploadMsg({ type: "error", msg: "Please select an image file." })
+      setTimeout(() => setUploadMsg(null), 4000)
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadMsg({ type: "error", msg: "Image must be under 5 MB." })
+      setTimeout(() => setUploadMsg(null), 4000)
+      return
+    }
+
+    setUploadingImage(true)
+    setUploadMsg(null)
+
+    try {
+      // Upload file to server and get the URL
+      const result = await useTutorStore.getState().uploadQuestionImage(file)
+
+      if (result.success && result.imageUrl) {
+        editor.chain().focus().setImage({ src: result.imageUrl, alt: file.name }).run()
+        setUploadMsg({ type: "success", msg: "Image inserted" })
+        setTimeout(() => setUploadMsg(null), 3000)
+      } else {
+        setUploadMsg({ type: "error", msg: result.message || "Upload failed" })
+        setTimeout(() => setUploadMsg(null), 4000)
+      }
+    } catch (err) {
+      setUploadMsg({ type: "error", msg: err.message || "Upload failed" })
+      setTimeout(() => setUploadMsg(null), 4000)
+    } finally {
+      setUploadingImage(false)
+    }
   }, [editor])
 
   const insertImageFromUrl = useCallback(() => {
@@ -188,13 +218,24 @@ function RichTextToolbar({ editor }) {
       <ToolbarDivider />
 
       {/* Image upload */}
-      <ToolbarButton onClick={() => imageInputRef.current?.click()} title="Upload Image">
-        <ImageIcon className="w-3.5 h-3.5" />
+      <ToolbarButton onClick={() => !uploadingImage && imageInputRef.current?.click()} title={uploadingImage ? "Uploading..." : "Upload Image"}>
+        {uploadingImage ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <ImageIcon className="w-3.5 h-3.5" />
+        )}
       </ToolbarButton>
       <ToolbarButton onClick={insertImageFromUrl} title="Insert Image from URL">
         <LinkIcon className="w-3.5 h-3.5" />
       </ToolbarButton>
       <input ref={imageInputRef} type="file" accept="image/*" className="sr-only" onChange={insertImage} />
+
+      {/* Upload status message */}
+      {uploadMsg && (
+        <span className={`text-xs font-medium ${uploadMsg.type === "success" ? "text-emerald-600" : "text-red-600"}`}>
+          {uploadMsg.msg}
+        </span>
+      )}
     </div>
   )
 }
@@ -284,6 +325,9 @@ export default function QuestionsPanel({
     year: new Date().getFullYear(),
     category: "JAMB",
     explanation: "",    // HTML string from rich editor
+    imageUrl: null,      // Main question image URL (uploaded to server)
+    instruction: "",     // e.g. "Solve for x."
+    diagrams: [],        // Array of diagram image URLs
   })
   const [options, setOptions] = useState(["", "", "", ""])
   const [correctAnswer, setCorrectAnswer] = useState("")
@@ -388,8 +432,11 @@ export default function QuestionsPanel({
         year: parseInt(formData.year),
         category: formData.category,
         explanation: formData.explanation, // HTML
+        imageUrl: formData.imageUrl,      // Main question image URL
+        instruction: formData.instruction, // e.g. "Solve for x."
         options: formData.type === "MULTIPLE_CHOICE" ? options.filter((o) => o.trim()) : [],
         correctAnswer: formData.type === "MULTIPLE_CHOICE" ? correctAnswer : formData.text,
+        diagrams: formData.diagrams,        // Array of diagram image URLs
       }
 
       const result = editingQuestion
@@ -413,8 +460,12 @@ export default function QuestionsPanel({
   }
 
   function resetForm() {
-  setFormData({ text: "", type: "MULTIPLE_CHOICE", difficulty: "MEDIUM", 
-    year: new Date().getFullYear(), category: "JAMB", explanation: "" })
+  setFormData({ text: "", type: "MULTIPLE_CHOICE", difficulty: "MEDIUM",
+    year: new Date().getFullYear(), category: "JAMB", explanation: "",
+    imageUrl: null,
+    instruction: "",
+    diagrams: [] })
+
   setOptions(["", "", "", ""])
   setCorrectAnswer("")
   setEditingQuestion(null)
@@ -436,6 +487,9 @@ export default function QuestionsPanel({
       year: question.year,
       category: question.category,
       explanation: question.explanation || "",
+      imageUrl: question.imageUrl || null,
+      instruction: question.instruction || "",
+      diagrams: question.diagrams || [],
     })
     setOptions(question.options || ["", "", "", ""])
     setCorrectAnswer(question.correctAnswer || "")
@@ -658,6 +712,160 @@ export default function QuestionsPanel({
                 </div>
               </div>
 
+              {/* 📸 Question Image Upload */}
+              <div className="space-y-3">
+                <Label>Question Image</Label>
+                <div className="border rounded-lg p-3 bg-muted/50 cursor-pointer hover:bg-muted/100 transition-colors">
+                  {formData.imageUrl ? (
+                    <div className="mb-2">
+                      <img
+                        src={formData.imageUrl}
+                        alt="Question image"
+                        className="max-w-full h-auto rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setFormData({ ...formData, imageUrl: null })
+                        }
+                        className="text-xs text-red-600"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const fileInput = document.createElement("input");
+                          fileInput.type = "file";
+                          fileInput.accept = "image/*";
+                          fileInput.click();
+
+                          fileInput.onchange = async e => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+
+                            setFormData({ ...formData, imageUrl: null });
+                            setIsSubmitting(true);
+
+                            const result = await useTutorStore.getState().uploadQuestionImage(file);
+
+                            setIsSubmitting(false);
+
+                            if (result.success && result.imageUrl) {
+                              setFormData({ ...formData, imageUrl: result.imageUrl });
+                              toast({
+                                title: "Success",
+                                description: "Question image uploaded",
+                              });
+                            } else if (result.error) {
+                              toast({
+                                title: "Error",
+                                description: result.error,
+                                variant: "destructive",
+                              });
+                            }
+                          };
+                        }}
+                      >
+                        Upload Image
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Max 5MB, PNG/JPG/JPEG
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 📊 Diagrams Upload */}
+              {formData.diagrams.length > 0 ? (
+                <div className="space-y-3 mt-2">
+                  <Label>Diagrams</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {formData.diagrams.map((diagramUrl, idx) => (
+                      <div key={idx} className="border rounded-lg p-2 bg-muted/50">
+                        <img
+                          src={diagramUrl}
+                          alt="Diagram"
+                          className="max-w-full h-40 object-cover rounded"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => {
+                            const newDiagrams = [...formData.diagrams]
+                            newDiagrams.splice(idx, 1)
+                            setFormData({ ...formData, diagrams: newDiagrams })
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 mt-2">
+                  <Label>Diagrams</Label>
+                  <div className="border rounded-lg p-3 bg-muted/50 cursor-pointer hover:bg-muted/100 transition-colors">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const fileInput = document.createElement("input");
+                        fileInput.type = "file";
+                        fileInput.multiple = true;
+                        fileInput.accept = "image/*";
+                        fileInput.click();
+
+                        fileInput.onchange = async e => {
+                          const files = e.target.files || [];
+                          if (files.length === 0) return;
+
+                          setFormData({ ...formData, diagrams: [] });
+                          setIsSubmitting(true);
+
+                          const uploadedUrls = [];
+                          for (const file of files) {
+                            const result = await useTutorStore.getState().uploadQuestionImage(file);
+                            if (result.success && result.imageUrl) {
+                              uploadedUrls.push(result.imageUrl);
+                            } else if (result.error) {
+                              toast({
+                                title: "Error",
+                                description: result.error,
+                                variant: "destructive",
+                              });
+                            }
+                          }
+
+                          setFormData({ ...formData, diagrams: uploadedUrls });
+                          setIsSubmitting(false);
+                          toast({
+                            title: "Success",
+                            description: `${uploadedUrls.length} diagram(s) uploaded`,
+                          });
+                        };
+                      }}
+                    >
+                      Upload Diagrams
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Max 5MB each, PNG/JPG/JPEG
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* ✅ Rich Text — Question */}
               <div className="space-y-2">
                 <Label>Question Text</Label>
@@ -804,6 +1012,37 @@ export default function QuestionsPanel({
               </CardHeader>
 
               <CardContent>
+                {question.imageUrl && (
+                  <div className="mb-3">
+                    <img
+                      src={question.imageUrl}
+                      alt="Question image"
+                      className="max-w-full h-40 object-contain rounded-lg border border-muted mb-2"
+                    />
+                    {question.instruction && (
+                      <p className="text-xs font-medium text-blue-700 italic mb-2">
+                        {question.instruction}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {question.diagrams && question.diagrams.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Diagrams:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {question.diagrams.map((diagramUrl, idx) => (
+                        <img
+                          key={idx}
+                          src={diagramUrl}
+                          alt={`Diagram ${idx + 1}`}
+                          className="max-w-full h-32 object-cover rounded"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {question.type === "MULTIPLE_CHOICE" && question.options && (
                   <div className="space-y-2 mb-3">
                     {question.options.map((opt, idx) => (
@@ -876,11 +1115,41 @@ export default function QuestionsPanel({
             <div className="space-y-6 py-4">
               <div className="space-y-2">
                 <h4 className="font-semibold">Question</h4>
+                {viewingQuestion.instruction && (
+                  <p className="text-sm font-medium text-blue-700 italic">
+                    {viewingQuestion.instruction}
+                  </p>
+                )}
+                {viewingQuestion.imageUrl && (
+                  <div className="my-3">
+                    <img
+                      src={viewingQuestion.imageUrl}
+                      alt="Question image"
+                      className="max-w-full h-auto rounded-lg border border-muted"
+                    />
+                  </div>
+                )}
                 <div
                   className="text-muted-foreground [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: viewingQuestion.text }}
                 />
               </div>
+
+              {viewingQuestion.diagrams && viewingQuestion.diagrams.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Diagrams</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {viewingQuestion.diagrams.map((diagramUrl, idx) => (
+                      <img
+                        key={idx}
+                        src={diagramUrl}
+                        alt={`Diagram ${idx + 1}`}
+                        className="max-w-full h-40 object-cover rounded-lg border border-muted"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <Separator />
 

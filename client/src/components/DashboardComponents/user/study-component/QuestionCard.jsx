@@ -103,10 +103,11 @@ export default function QuestionCard() {
     activeId,
     units,
     changeActive,
-    lockedQuestions = {},
+        lockedQuestions = {},
     setQuestionLocked,
       namesReady,
     saved,
+    reset, // ✅ clear store + localStorage when leaving study → forces fresh GET /users/study-questions on next visit
   } = useStudyStore();
 
   const questions = getQuestions();
@@ -230,8 +231,15 @@ export default function QuestionCard() {
     });
   };
 
-  const handleReturnToDashboard = () => {
+    const handleReturnToDashboard = () => {
     setShowSummary(false);
+    // ✅ Reset BOTH the in-memory store and the localStorage "studySelections"
+    // cache so the next time the user starts a study session, StudyPage can't
+    // reuse the previous units — forcing the GET /users/study-questions?...
+    // endpoint to fire again. (reset() also clears the intent cache.)
+    if (typeof reset === "function") {
+      reset();
+    }
     navigate("/user/dashboard");
   };
 
@@ -273,6 +281,15 @@ export default function QuestionCard() {
               <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">
                 You've used your free questions. Subscribe to unlock unlimited access.
               </p>
+                            <button
+                onClick={handleReturnToDashboard}
+                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow transition"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Back to Dashboard
+              </button>
             </div>
           </main>
           <aside><InitializePayment /></aside>

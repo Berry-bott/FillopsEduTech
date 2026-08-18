@@ -62,10 +62,11 @@ const handleNewSession = () => {
 };
 
   // ── Dashboard ───────────────────────────────────────────────────────────────
-  const handleDashboard = () => {
+    const handleDashboard = () => {
     if (typeof onReturnToDashboard === "function") {
-      onReturnToDashboard();
+      onReturnToDashboard(); // ✅ delegates to QuestionCard.handleReturnToDashboard → reset() + navigate
     } else {
+      reset(); // safety: still clear the study cache even if no handler was passed
       navigate("/user/dashboard");
     }
   };

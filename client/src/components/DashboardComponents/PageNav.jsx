@@ -5,6 +5,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { usePaymentStore } from "@/store/paymentStore";
 import { useStudyStore } from "@/store/studyStore";
+import { useExamStore } from "@/store/examStore";
 import Logo from "../../assets/images/fillopsLogo.png";
 import { ThemeToggle } from "./theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,7 +15,8 @@ export default function PageNav() {
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const { paid, expiresAt, activeSubscriptions, checkStatus } = usePaymentStore();
-  const { activeId, saved } = useStudyStore();
+  const { activeId: studyActiveId, saved: studySaved } = useStudyStore();
+  const { activeId: examActiveId, saved: examSaved } = useExamStore();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [examType, setExamType] = useState("");
@@ -22,7 +24,13 @@ export default function PageNav() {
   const [ready, setReady] = useState(false);
   const [hasPremiumForCurrent, setHasPremiumForCurrent] = useState(false);
 
-  const currentActiveId = activeId;
+  // ✅ Use the correct store depending on the current page. The exam page keeps
+  // its active subject/topic in the EXAM store, while study/quiz use the STUDY
+  // store. Reading the wrong one made PageNav show "Subscribe" even for paid
+  // users on the exam page (because study's activeId was empty there).
+  const isExamPage = location.pathname.includes("/exam");
+  const saved = isExamPage ? examSaved : studySaved;
+  const currentActiveId = isExamPage ? examActiveId : studyActiveId;
 
   /* ===============================
      LOAD LOCAL STORAGE & CHECK PAYMENT STATUS

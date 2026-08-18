@@ -539,6 +539,46 @@
           }
         },
 
+        // Upload question image
+        uploadQuestionImage: async (file) => {
+          set({ loading: true, error: "" })
+
+          try {
+            const formData = new FormData()
+            formData.append("image", file)
+
+            const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions/upload-image`, {
+              method: "POST",
+              body: formData,
+            })
+
+            if (result.success) {
+              const imageUrl =
+                result.data?.url ??
+                result.data?.imageUrl ??
+                result?.url ??
+                null
+
+              if (imageUrl) {
+                console.log("✅ Question image uploaded:", imageUrl)
+                return { success: true, imageUrl }
+              }
+
+              set({ error: "Upload succeeded but no URL returned" })
+              return { success: false, message: "Upload succeeded but no URL returned" }
+            } else {
+              set({ error: result.message || "Failed to upload image" })
+              return result
+            }
+          } catch (error) {
+            console.error("❌ Error uploading question image:", error)
+            set({ error: "Network error" })
+            return { success: false, message: error.message }
+          } finally {
+            set({ loading: false })
+          }
+        },
+
         // Delete question
         deleteQuestion: async (questionId) => {
           set({ loading: true, error: "" })
