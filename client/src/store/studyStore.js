@@ -2057,23 +2057,6 @@ export const useStudyStore = create((set, get) => ({
 
   getQuestions: () => get().getUnit().items,
 
-  // Returns the aggregate answer/total counts across ALL selected units
-  // (subjects or topics), so the End-Session modal can show e.g. "12 / 100"
-  // instead of only the currently active unit's count.
-  getSessionTotals: () => {
-    const { units, selectedOptions } = get();
-    const ids = get().getOrderedIds();
-    const answeredIds = new Set(Object.keys(selectedOptions));
-    let total = 0;
-    let answered = 0;
-    ids.forEach((id) => {
-      const qs = units?.[id]?.items || [];
-      total += qs.length;
-      answered += qs.filter((q) => answeredIds.has(q.id)).length;
-    });
-    return { answered, total };
-  },
-
   // ---------------- SELECTION ----------------
   // ✅ MODIFIED: Selections persist across subject changes
   setSelectedOption: (questionId, optionId) => {

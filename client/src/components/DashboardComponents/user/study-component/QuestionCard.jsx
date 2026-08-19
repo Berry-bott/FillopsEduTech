@@ -91,7 +91,6 @@ export default function QuestionCard() {
     prev,
     paymentLocked,
     getQuestions,
-    getSessionTotals,
     submitAnswer,
     sessionActive,
     endStudySession,
@@ -113,8 +112,6 @@ export default function QuestionCard() {
 
   const questions = getQuestions();
   const q = questions?.[currentIndex] ?? null;
-  // Aggregate answered/total counts across ALL selected subjects/topics.
-  const sessionTotals = getSessionTotals();
 
   const [visible, setVisible] = useState(false);
   const [showStudyPanel, setShowStudyPanel] = useState(false);
@@ -590,8 +587,8 @@ export default function QuestionCard() {
         isOpen={showEndModal}
         onConfirm={handleEndSession}
         onCancel={() => setShowEndModal(false)}
-        questionsAnswered={sessionTotals.answered}
-        totalQuestions={sessionTotals.total}
+        questionsAnswered={Object.keys(selectedOptions).length}
+        totalQuestions={questions.length}
       />
     </section>
   );

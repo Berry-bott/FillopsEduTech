@@ -387,16 +387,6 @@ export default function Settings() {
               </h2>
 
               <div className="space-y-4">
-                <button
-                  onClick={() => navigate('/change-password')}
-                  className="w-full flex items-center justify-between px-5 py-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
-                >
-                  <div className="flex items-center gap-3">
-                    <Lock size={20} className="text-gray-600" />
-                    <span className="font-medium">Change Password</span>
-                  </div>
-                  <span className="text-gray-400">→</span>
-                </button>
 
                 {/* Updated Logout Button with shadcn/ui */}
                 <Button
@@ -411,16 +401,6 @@ export default function Settings() {
                   <span className="text-gray-400">→</span>
                 </Button>
 
-                <button
-                  disabled
-                  className="w-full flex items-center justify-between px-5 py-4 border border-red-200 rounded-xl bg-red-50/30 text-red-600/70 cursor-not-allowed"
-                >
-                  <div className="flex items-center gap-3">
-                    <ShieldAlert size={20} />
-                    <span className="font-medium">Delete Account</span>
-                  </div>
-                  <span className="text-gray-400">→</span>
-                </button>
               </div>
             </div>
           </div>

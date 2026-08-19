@@ -352,7 +352,7 @@ function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopi
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
   const [subjectToDelete, setSubjectToDelete]     = useState(null);
   const [isDeletingSubject, setIsDeletingSubject] = useState(false);
-  const [tutorSort, setTutorSort]                 = useState(""); // "" = all, or a tutor full name to sort to the top
+  const [tutorSort, setTutorSort]                 = useState("all"); // "all" = no preference, or a tutor full name to sort to the top
 
   const subjectList = subjects ?? [];
   const topicList   = topics   ?? [];
@@ -374,7 +374,7 @@ function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopi
     })
     .sort((a, b) => {
       // If a tutor is selected, sort that tutor's items to the top first.
-      if (tutorSort) {
+      if (tutorSort && tutorSort !== "all") {
         const aMatch = tutorNameOf(a) === tutorSort ? 0 : 1;
         const bMatch = tutorNameOf(b) === tutorSort ? 0 : 1;
         if (aMatch !== bMatch) return aMatch - bMatch;
@@ -421,7 +421,7 @@ function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopi
         <Select value={tutorSort} onValueChange={setTutorSort}>
           <SelectTrigger className="h-8 w-48 text-xs"><SelectValue placeholder="Sort by tutor" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All tutors</SelectItem>
+            <SelectItem value="all">All tutors</SelectItem>
             {tutorOptions.map((name) => (
               <SelectItem key={name} value={name}>
                 {name.split(" ").map((w) => (w[0] ?? "").toUpperCase() + w.slice(1)).join(" ")}
@@ -601,7 +601,7 @@ function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilte
   const [selectedTopicId, setSelectedTopicId] = useState(null);
   const [topicToDelete, setTopicToDelete]     = useState(null);
   const [isDeletingTopic, setIsDeletingTopic] = useState(false);
-  const [tutorFilter, setTutorFilter]         = useState(""); // "" = all, or a tutor full name
+  const [tutorSort, setTutorSort]         = useState("all"); // "all" = no preference, or a tutor full name to sort to the top
 
   const topicList   = topics   ?? [];
   const subjectList = subjects ?? [];
@@ -626,10 +626,15 @@ function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilte
         subjectFilter === "all" ||
         t.subjectId === subjectFilter ||
         t.subject?.id === subjectFilter;
-      const matchesTutor = !tutorFilter || tutorNameOf(t) === tutorFilter;
-      return matchesSearch && matchesSubject && matchesTutor;
+      return matchesSearch && matchesSubject;
     })
     .sort((a, b) => {
+      // If a tutor is selected, sort that tutor's items to the top first.
+      if (tutorSort && tutorSort !== "all") {
+        const aMatch = tutorNameOf(a) === tutorSort ? 0 : 1;
+        const bMatch = tutorNameOf(b) === tutorSort ? 0 : 1;
+        if (aMatch !== bMatch) return aMatch - bMatch;
+      }
       const na = tutorNameOf(a);
       const nb = tutorNameOf(b);
       if (na === nb) return 0;
@@ -674,10 +679,10 @@ function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilte
             ))}
           </SelectContent>
         </Select>
-        <Select value={tutorFilter} onValueChange={setTutorFilter}>
+        <Select value={tutorSort} onValueChange={setTutorSort}>
           <SelectTrigger className="h-8 w-48 text-xs"><SelectValue placeholder="Sort by tutor" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All tutors</SelectItem>
+            <SelectItem value="all">All tutors</SelectItem>
             {tutorOptions.map((name) => (
               <SelectItem key={name} value={name}>
                 {name.split(" ").map((w) => (w[0] ?? "").toUpperCase() + w.slice(1)).join(" ")}
