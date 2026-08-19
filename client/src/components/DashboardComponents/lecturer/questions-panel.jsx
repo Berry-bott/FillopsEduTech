@@ -65,7 +65,6 @@ function ToolbarDivider() {
 
 function RichTextToolbar({ editor }) {
   const imageInputRef = useRef(null)
-  const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadMsg, setUploadMsg] = useState(null)
 
   const insertImage = useCallback(async (e) => {
@@ -85,27 +84,14 @@ function RichTextToolbar({ editor }) {
       return
     }
 
-    setUploadingImage(true)
-    setUploadMsg(null)
-
-    try {
-      // Upload file to server and get the URL
-      const result = await useTutorStore.getState().uploadQuestionImage(file)
-
-      if (result.success && result.imageUrl) {
-        editor.chain().focus().setImage({ src: result.imageUrl, alt: file.name }).run()
-        setUploadMsg({ type: "success", msg: "Image inserted" })
-        setTimeout(() => setUploadMsg(null), 3000)
-      } else {
-        setUploadMsg({ type: "error", msg: result.message || "Upload failed" })
-        setTimeout(() => setUploadMsg(null), 4000)
-      }
-    } catch (err) {
-      setUploadMsg({ type: "error", msg: err.message || "Upload failed" })
-      setTimeout(() => setUploadMsg(null), 4000)
-    } finally {
-      setUploadingImage(false)
-    }
+    // There is no standalone image-upload endpoint anymore (it returned 404).
+    // Inline images in the question text must be inserted via an image URL,
+    // or uploaded with the main question image. Prompt the user accordingly.
+    setUploadMsg({
+      type: "error",
+      msg: "Inline image upload is unavailable. Use the link button or upload a question image instead.",
+    })
+    setTimeout(() => setUploadMsg(null), 5000)
   }, [editor])
 
   const insertImageFromUrl = useCallback(() => {
@@ -219,12 +205,8 @@ function RichTextToolbar({ editor }) {
       <ToolbarDivider />
 
       {/* Image upload */}
-      <ToolbarButton onClick={() => !uploadingImage && imageInputRef.current?.click()} title={uploadingImage ? "Uploading..." : "Upload Image"}>
-        {uploadingImage ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <ImageIcon className="w-3.5 h-3.5" />
-        )}
+      <ToolbarButton onClick={() => imageInputRef.current?.click()} title="Upload Image">
+        <ImageIcon className="w-3.5 h-3.5" />
       </ToolbarButton>
       <ToolbarButton onClick={insertImageFromUrl} title="Insert Image from URL">
         <LinkIcon className="w-3.5 h-3.5" />
@@ -330,6 +312,7 @@ export default function QuestionsPanel({
     instruction: "",     // e.g. "Solve for x."
     isPastQuestion: true, // toggle ON by default → origin is "PAST_QUESTION"
     origin: "PAST_QUESTION",
+    imageFile: null,      // selected image File object (sent with the question body)
   })
   const [options, setOptions] = useState(["", "", "", ""])
   const [correctAnswer, setCorrectAnswer] = useState("")
@@ -434,16 +417,19 @@ export default function QuestionsPanel({
         year: parseInt(formData.year),
         category: formData.category,
         explanation: formData.explanation, // HTML
-        imageUrl: formData.imageUrl,      // Main question image URL
+        // If a new image file was selected it is sent as a multipart field,
+        // otherwise the existing stored URL is preserved.
+        imageUrl: formData.imageFile ? null : formData.imageUrl,
         instruction: formData.instruction, // e.g. "Solve for x."
         origin: formData.isPastQuestion ? "PAST_QUESTION" : (formData.origin || "MANUAL"),
         options: formData.type === "MULTIPLE_CHOICE" ? options.filter((o) => o.trim()) : [],
         correctAnswer: formData.type === "MULTIPLE_CHOICE" ? correctAnswer : formData.text,
       }
+      const imageFile = formData.imageFile || null
 
       const result = editingQuestion
-        ? await updateQuestion(editingQuestion.id, questionData)
-        : await createQuestion(activeTopicId, questionData)
+        ? await updateQuestion(editingQuestion.id, questionData, imageFile)
+        : await createQuestion(activeTopicId, questionData, imageFile)
 
       if (result.success) {
         toast({ title: "Success", description: editingQuestion ? "Question updated" : "Question created" })
@@ -468,6 +454,7 @@ export default function QuestionsPanel({
     instruction: "",
     isPastQuestion: true,
     origin: "PAST_QUESTION",
+    imageFile: null,
   })
 
   setOptions(["", "", "", ""])
@@ -495,6 +482,7 @@ export default function QuestionsPanel({
       instruction: question.instruction || "",
       isPastQuestion: (question.origin || "PAST_QUESTION") === "PAST_QUESTION",
       origin: question.origin || "PAST_QUESTION",
+      imageFile: null, // cannot pre-populate a file when editing
     })
     setOptions(question.options || ["", "", "", ""])
     setCorrectAnswer(question.correctAnswer || "")
@@ -739,10 +727,10 @@ export default function QuestionsPanel({
               <div className="space-y-3">
                 <Label>Question Image</Label>
                 <div className="border rounded-lg p-3 bg-muted/50 cursor-pointer hover:bg-muted/100 transition-colors">
-                  {formData.imageUrl ? (
+                  {formData.imageFile || formData.imageUrl ? (
                     <div className="mb-2">
                       <img
-                        src={formData.imageUrl}
+                        src={formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl}
                         alt="Question image"
                         className="max-w-full h-auto rounded-lg"
                       />
@@ -751,7 +739,7 @@ export default function QuestionsPanel({
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          setFormData({ ...formData, imageUrl: null })
+                          setFormData({ ...formData, imageUrl: null, imageFile: null })
                         }
                         className="text-xs text-red-600"
                       >
@@ -770,30 +758,32 @@ export default function QuestionsPanel({
                           fileInput.accept = "image/*";
                           fileInput.click();
 
-                          fileInput.onchange = async e => {
+                          fileInput.onchange = e => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-
-                            setFormData({ ...formData, imageUrl: null });
-                            setIsSubmitting(true);
-
-                            const result = await useTutorStore.getState().uploadQuestionImage(file);
-
-                            setIsSubmitting(false);
-
-                            if (result.success && result.imageUrl) {
-                              setFormData({ ...formData, imageUrl: result.imageUrl });
-                              toast({
-                                title: "Success",
-                                description: "Question image uploaded",
-                              });
-                            } else if (result.error) {
+                            if (!file.type.startsWith("image/")) {
                               toast({
                                 title: "Error",
-                                description: result.error,
+                                description: "Please select an image file.",
                                 variant: "destructive",
                               });
+                              return;
                             }
+                            if (file.size > 5 * 1024 * 1024) {
+                              toast({
+                                title: "Error",
+                                description: "Image must be under 5 MB.",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            // Hold the file locally; it is uploaded together with the
+                            // question when the form is submitted.
+                            setFormData({ ...formData, imageUrl: null, imageFile: file });
+                            toast({
+                              title: "Pending",
+                              description: "Image attached — it will be uploaded when you save the question.",
+                            });
                           };
                         }}
                       >
@@ -880,7 +870,7 @@ export default function QuestionsPanel({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>Cancel</Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
+              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{editingQuestion ? "Updating..." : "Creating..."}</>
                 ) : (

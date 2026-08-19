@@ -8,6 +8,25 @@
   const authFetch = (url, options = {}) => {
     return useTutorAuthStore.getState().fetchWithAuth(url, options);
   };
+
+  // Build a multipart FormData body from question fields + optional image file.
+  // Used by create/update so the image is sent through the question endpoint body
+  // (the separate /tutor/questions/upload-image endpoint does not exist).
+  function buildQuestionFormData(questionData, file) {
+    const fd = new FormData();
+    Object.entries(questionData).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      if (Array.isArray(value)) {
+        value.forEach((item) => fd.append(key, String(item)));
+      } else if (typeof value === "object") {
+        fd.append(key, JSON.stringify(value));
+      } else {
+        fd.append(key, String(value));
+      }
+    });
+    if (file) fd.append("image", file);
+    return fd;
+  }
   const useTutorStore = create(
     persist(
       (set, get) => ({
@@ -480,18 +499,29 @@
         },
 
         // Create question
-        createQuestion: async (topicId, questionData) => {
+        createQuestion: async (topicId, questionData, file) => {
           set({ loading: true, error: "" })
 
           try {
+            const isMultipart = !!file
             const result = await get().fetchWithAuth(`${API_BASE}/tutor/topics/${topicId}/questions`, {
               method: "POST",
-              body: JSON.stringify(questionData),
+              body: isMultipart ? buildQuestionFormData(questionData, file) : JSON.stringify(questionData),
             })
 
             if (result.success) {
               console.log("✅ Question created:", result.data)
-              
+
+              // If we uploaded an image, surface the URL the backend stored.
+              if (isMultipart && result.data) {
+                const storedImageUrl =
+                  result.data.imageUrl ??
+                  result.data.url ??
+                  result.data.image?.url ??
+                  null
+                if (storedImageUrl) result.data.imageUrl = storedImageUrl
+              }
+
               set({ 
                 questionsLoaded: false,
                 topicsLoaded: false,
@@ -513,17 +543,29 @@
         },
 
         // Update question
-        updateQuestion: async (questionId, questionData) => {
+        updateQuestion: async (questionId, questionData, file) => {
           set({ loading: true, error: "" })
 
           try {
+            const isMultipart = !!file
             const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions/${questionId}`, {
               method: "PATCH",
-              body: JSON.stringify(questionData),
+              body: isMultipart ? buildQuestionFormData(questionData, file) : JSON.stringify(questionData),
             })
 
             if (result.success) {
               console.log("✅ Question updated:", result.data)
+
+              // If we uploaded an image, surface the URL the backend stored.
+              if (isMultipart && result.data) {
+                const storedImageUrl =
+                  result.data.imageUrl ??
+                  result.data.url ??
+                  result.data.image?.url ??
+                  null
+                if (storedImageUrl) result.data.imageUrl = storedImageUrl
+              }
+
               set({ questionsLoaded: false })
             } else {
               set({ error: result.message || "Failed to update question" })
@@ -532,46 +574,6 @@
             return result
           } catch (error) {
             console.error("❌ Error updating question:", error)
-            set({ error: "Network error" })
-            return { success: false, message: error.message }
-          } finally {
-            set({ loading: false })
-          }
-        },
-
-        // Upload question image
-        uploadQuestionImage: async (file) => {
-          set({ loading: true, error: "" })
-
-          try {
-            const formData = new FormData()
-            formData.append("image", file)
-
-            const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions/upload-image`, {
-              method: "POST",
-              body: formData,
-            })
-
-            if (result.success) {
-              const imageUrl =
-                result.data?.url ??
-                result.data?.imageUrl ??
-                result?.url ??
-                null
-
-              if (imageUrl) {
-                console.log("✅ Question image uploaded:", imageUrl)
-                return { success: true, imageUrl }
-              }
-
-              set({ error: "Upload succeeded but no URL returned" })
-              return { success: false, message: "Upload succeeded but no URL returned" }
-            } else {
-              set({ error: result.message || "Failed to upload image" })
-              return result
-            }
-          } catch (error) {
-            console.error("❌ Error uploading question image:", error)
             set({ error: "Network error" })
             return { success: false, message: error.message }
           } finally {
