@@ -8,13 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import useAdminStore from "@/store/adminStore";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import {
   Search, BookOpen, Layers, RefreshCw, Eye,
   HelpCircle, Clock, FileText, X,
-  Paperclip, ChevronRight, Loader2,
+  Paperclip, ChevronRight, Loader2, Trash2, AlertTriangle,
 } from "lucide-react";
 
 const TABS = [
@@ -22,14 +33,22 @@ const TABS = [
   { id: "topics",   label: "Topics",   icon: Layers   },
 ];
 
-const CATEGORIES = ["WAEC", "JAMB", "NECO", "PUTME"];
+const CATEGORIES = ["WAEC", "JAMB", "NECO"];
 
 const CATEGORY_STYLES = {
   WAEC:  "border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400",
   JAMB:  "border-purple-400 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-400",
   NECO:  "border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-400",
-  PUTME: "border-teal-400 bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-400",
 };
+
+// Extract a normalized lowercase tutor/creator name from a subject/topic object,
+// used both for sorting and for matching against the selected tutor filter.
+const tutorNameOf = (item) =>
+  (((item?.createdBy?.firstName ?? "") + " " + (item?.createdBy?.lastName ?? "")).trim().toLowerCase());
+
+// Build a display + match key from a raw tutor record { firstName, lastName }.
+const tutorFullName = (t) =>
+  `${t?.firstName ?? ""} ${t?.lastName ?? ""}`.trim();
 
 function SkeletonRows({ rows = 5 }) {
   return (
@@ -325,24 +344,46 @@ function TopicDrawer({ topicId, onClose }) {
 // ═══════════════════════════════════════════════════════════════
 //  SUBJECTS VIEW
 // ═══════════════════════════════════════════════════════════════
-function SubjectsView({ subjects, topics, loading, onRefresh, onViewTopics }) {
+function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopics }) {
+  const { deleteSubject } = useAdminStore();
+  const { toast } = useToast();
   const [search, setSearch]                       = useState("");
   const [categoryFilter, setCategoryFilter]       = useState("all");
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
+  const [subjectToDelete, setSubjectToDelete]     = useState(null);
+  const [isDeletingSubject, setIsDeletingSubject] = useState(false);
+  const [tutorSort, setTutorSort]                 = useState(""); // "" = all, or a tutor full name to sort to the top
 
   const subjectList = subjects ?? [];
   const topicList   = topics   ?? [];
+  const tutorList   = tutors   ?? [];
+  // Unique normalized tutor names (from the fetched endpoint) for the dropdown.
+  const tutorOptions = [...new Set(tutorList.map((t) => tutorFullName(t).toLowerCase()).filter(Boolean))].sort();
 
-  const filteredSubjects = subjectList.filter((s) => {
-    const name = s.subjectName ?? s.name ?? "";
-    const desc = s.description ?? "";
-    const code = s.subjectCode ?? "";
-    const matchesSearch =
-      name.toLowerCase().includes(search.toLowerCase()) ||
-      desc.toLowerCase().includes(search.toLowerCase()) ||
-      code.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch && (categoryFilter === "all" || s.category === categoryFilter);
-  });
+  const filteredSubjects = subjectList
+    .filter((s) => {
+      const name = s.subjectName ?? s.name ?? "";
+      const desc = s.description ?? "";
+      const code = s.subjectCode ?? "";
+      const matchesSearch =
+        name.toLowerCase().includes(search.toLowerCase()) ||
+        desc.toLowerCase().includes(search.toLowerCase()) ||
+        code.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || s.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      // If a tutor is selected, sort that tutor's items to the top first.
+      if (tutorSort) {
+        const aMatch = tutorNameOf(a) === tutorSort ? 0 : 1;
+        const bMatch = tutorNameOf(b) === tutorSort ? 0 : 1;
+        if (aMatch !== bMatch) return aMatch - bMatch;
+      }
+      const na = tutorNameOf(a);
+      const nb = tutorNameOf(b);
+      if (na === nb) return 0;
+      return na < nb ? -1 : 1;
+    });
 
   const totalQuestions = subjectList.reduce((sum, s) => sum + (s._count?.question ?? 0), 0);
   const totalSessions  = subjectList.reduce((sum, s) => sum + (s._count?.studySession ?? 0), 0);
@@ -375,6 +416,17 @@ function SubjectsView({ subjects, topics, loading, onRefresh, onViewTopics }) {
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
             {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={tutorSort} onValueChange={setTutorSort}>
+          <SelectTrigger className="h-8 w-48 text-xs"><SelectValue placeholder="Sort by tutor" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All tutors</SelectItem>
+            {tutorOptions.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name.split(" ").map((w) => (w[0] ?? "").toUpperCase() + w.slice(1)).join(" ")}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={onRefresh} className="h-8 gap-1.5 text-xs px-3">
@@ -457,15 +509,25 @@ function SubjectsView({ subjects, topics, loading, onRefresh, onViewTopics }) {
                         <TableCell className="py-1.5 text-muted-foreground whitespace-nowrap">
                           {subject.createdAt ? format(new Date(subject.createdAt), "MMM d, yy") : "—"}
                         </TableCell>
-                        <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onViewTopics(subject.id ?? subject._id)}
-                            className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                          >
-                            <Eye className="h-3 w-3" /> Topics
-                          </Button>
+                                                <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onViewTopics(subject.id ?? subject._id)}
+                              className="h-6 gap-1 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              <Eye className="h-3 w-3" /> Topics
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSubjectToDelete(subject)}
+                              className="h-6 w-6 px-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -474,10 +536,56 @@ function SubjectsView({ subjects, topics, loading, onRefresh, onViewTopics }) {
               </Table>
             </div>
           ) : (
-            <EmptyState icon={BookOpen} label="No subjects found" />
+                                <EmptyState icon={BookOpen} label="No subjects found" />
           )}
-        </CardContent>
+          </CardContent>
       </Card>
+
+      {subjectToDelete && (
+        <AlertDialog open={!!subjectToDelete} onOpenChange={(open) => { if (!open) setSubjectToDelete(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="size-5 text-destructive" />
+                Delete Subject
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{subjectToDelete.subjectName ?? subjectToDelete.name}</strong>? This action cannot be undone and will also delete all associated topics and questions.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingSubject}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isDeletingSubject}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (isDeletingSubject) return;
+                  const subjectId = subjectToDelete.id ?? subjectToDelete._id;
+                  setIsDeletingSubject(true);
+                  const result = await deleteSubject(subjectId);
+                  setIsDeletingSubject(false);
+                  if (result?.success) {
+                    toast({ title: "Success", description: "Subject deleted successfully" });
+                    setSubjectToDelete(null);
+                    onRefresh && onRefresh();
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: result?.message || "Failed to delete subject",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeletingSubject && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Delete Subject
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 }
@@ -485,32 +593,48 @@ function SubjectsView({ subjects, topics, loading, onRefresh, onViewTopics }) {
 // ═══════════════════════════════════════════════════════════════
 //  TOPICS VIEW
 // ═══════════════════════════════════════════════════════════════
-function TopicsView({ topics, subjects, loading, onRefresh, subjectFilter: initialSubjectFilter }) {
+function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilter: initialSubjectFilter }) {
+  const { deleteTopic } = useAdminStore();
+  const { toast } = useToast();
   const [search, setSearch]                   = useState("");
   const [subjectFilter, setSubjectFilter]     = useState(initialSubjectFilter ?? "all");
   const [selectedTopicId, setSelectedTopicId] = useState(null);
+  const [topicToDelete, setTopicToDelete]     = useState(null);
+  const [isDeletingTopic, setIsDeletingTopic] = useState(false);
+  const [tutorFilter, setTutorFilter]         = useState(""); // "" = all, or a tutor full name
 
   const topicList   = topics   ?? [];
   const subjectList = subjects ?? [];
+  const tutorList   = tutors   ?? [];
+  // Unique normalized tutor names (from the fetched endpoint) for the dropdown.
+  const tutorOptions = [...new Set(tutorList.map((t) => tutorFullName(t).toLowerCase()).filter(Boolean))].sort();
 
   useEffect(() => {
     if (initialSubjectFilter) setSubjectFilter(initialSubjectFilter);
   }, [initialSubjectFilter]);
 
-  const filteredTopics = topicList.filter((t) => {
-    const name     = t.topicName ?? t.name ?? "";
-    const desc     = t.description ?? "";
-    const subjName = t.subject?.subjectName ?? "";
-    const matchesSearch =
-      name.toLowerCase().includes(search.toLowerCase())     ||
-      desc.toLowerCase().includes(search.toLowerCase())     ||
-      subjName.toLowerCase().includes(search.toLowerCase());
-    const matchesSubject =
-      subjectFilter === "all" ||
-      t.subjectId === subjectFilter ||
-      t.subject?.id === subjectFilter;
-    return matchesSearch && matchesSubject;
-  });
+  const filteredTopics = topicList
+    .filter((t) => {
+      const name     = t.topicName ?? t.name ?? "";
+      const desc     = t.description ?? "";
+      const subjName = t.subject?.subjectName ?? "";
+      const matchesSearch =
+        name.toLowerCase().includes(search.toLowerCase())     ||
+        desc.toLowerCase().includes(search.toLowerCase())     ||
+        subjName.toLowerCase().includes(search.toLowerCase());
+      const matchesSubject =
+        subjectFilter === "all" ||
+        t.subjectId === subjectFilter ||
+        t.subject?.id === subjectFilter;
+      const matchesTutor = !tutorFilter || tutorNameOf(t) === tutorFilter;
+      return matchesSearch && matchesSubject && matchesTutor;
+    })
+    .sort((a, b) => {
+      const na = tutorNameOf(a);
+      const nb = tutorNameOf(b);
+      if (na === nb) return 0;
+      return na < nb ? -1 : 1;
+    });
 
   const totalQuestions = topicList.reduce((sum, t) => sum + (t._count?.question ?? 0), 0);
   const withContent    = topicList.filter((t) => t.content).length;
@@ -550,6 +674,17 @@ function TopicsView({ topics, subjects, loading, onRefresh, subjectFilter: initi
             ))}
           </SelectContent>
         </Select>
+        <Select value={tutorFilter} onValueChange={setTutorFilter}>
+          <SelectTrigger className="h-8 w-48 text-xs"><SelectValue placeholder="Sort by tutor" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All tutors</SelectItem>
+            {tutorOptions.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name.split(" ").map((w) => (w[0] ?? "").toUpperCase() + w.slice(1)).join(" ")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button variant="outline" size="sm" onClick={onRefresh} className="h-8 gap-1.5 text-xs px-3">
           <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} /> Refresh
         </Button>
@@ -579,8 +714,9 @@ function TopicsView({ topics, subjects, loading, onRefresh, subjectFilter: initi
                     <TableHead className="py-2 text-xs text-center">Qs</TableHead>
                     <TableHead className="py-2 text-xs text-center">Content</TableHead>
                     <TableHead className="py-2 text-xs text-center">File</TableHead>
-                    <TableHead className="py-2 text-xs">Created By</TableHead>
+                                        <TableHead className="py-2 text-xs">Created By</TableHead>
                     <TableHead className="py-2 text-xs">Created</TableHead>
+                    <TableHead className="py-2 text-xs text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -629,8 +765,18 @@ function TopicsView({ topics, subjects, loading, onRefresh, subjectFilter: initi
                             : <span className="text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="py-1.5 text-muted-foreground whitespace-nowrap">{createdBy}</TableCell>
-                        <TableCell className="py-1.5 text-muted-foreground whitespace-nowrap">
+                                                <TableCell className="py-1.5 text-muted-foreground whitespace-nowrap">
                           {topic.createdAt ? format(new Date(topic.createdAt), "MMM d, yy") : "—"}
+                        </TableCell>
+                        <TableCell className="py-1.5 text-center" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setTopicToDelete(topic)}
+                            className="h-6 w-6 px-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -639,10 +785,56 @@ function TopicsView({ topics, subjects, loading, onRefresh, subjectFilter: initi
               </Table>
             </div>
           ) : (
-            <EmptyState icon={Layers} label="No topics found" />
+                                <EmptyState icon={Layers} label="No topics found" />
           )}
         </CardContent>
       </Card>
+
+      {topicToDelete && (
+        <AlertDialog open={!!topicToDelete} onOpenChange={(open) => { if (!open) setTopicToDelete(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="size-5 text-destructive" />
+                Delete Topic
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{topicToDelete.topicName ?? topicToDelete.name}</strong>? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingTopic}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isDeletingTopic}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (isDeletingTopic) return;
+                  const topicId = topicToDelete.id ?? topicToDelete._id;
+                  setIsDeletingTopic(true);
+                  const result = await deleteTopic(topicId);
+                  setIsDeletingTopic(false);
+                  if (result?.success) {
+                    toast({ title: "Success", description: "Topic deleted successfully" });
+                    setTopicToDelete(null);
+                    onRefresh && onRefresh();
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: result?.message || "Failed to delete topic",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeletingTopic && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Delete Topic
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 }
@@ -651,7 +843,7 @@ function TopicsView({ topics, subjects, loading, onRefresh, subjectFilter: initi
 //  MAIN PAGE
 // ═══════════════════════════════════════════════════════════════
 export default function SubjectsPage() {
-  const { fetchSubjects, fetchTopics, subjects, topics, loading } = useAdminStore();
+  const { fetchSubjects, fetchTopics, fetchTutors, tutors, subjects, topics, loading } = useAdminStore();
 
   const [activeTab, setActiveTab]                   = useState("subjects");
   const [topicSubjectFilter, setTopicSubjectFilter] = useState("all");
@@ -659,6 +851,8 @@ export default function SubjectsPage() {
   useEffect(() => {
     fetchSubjects();
     fetchTopics();
+    if (!tutors || tutors.length === 0) fetchTutors({ page: 1, limit: 100 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleViewTopics = (subjectId) => {
@@ -700,6 +894,7 @@ export default function SubjectsPage() {
             <SubjectsView
               subjects={subjects}
               topics={topics}
+              tutors={tutors}
               loading={loading}
               onRefresh={() => { fetchSubjects(); fetchTopics(); }}
               onViewTopics={handleViewTopics}
@@ -709,6 +904,7 @@ export default function SubjectsPage() {
             <TopicsView
               topics={topics}
               subjects={subjects}
+              tutors={tutors}
               loading={loading}
               onRefresh={fetchTopics}
               subjectFilter={topicSubjectFilter}

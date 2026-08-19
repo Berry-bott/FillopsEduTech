@@ -1475,10 +1475,42 @@ const useAdminStore = create((set, get) => ({
     finally { set({ loading: false }); }
   },
 
-  fetchTopic: async (id) => {
+    fetchTopic: async (id) => {
     console.log("[fetchTopic] ID:", id);
     try { return await get()._fetch(`${API_BASE}/admin/topics/${id}`); }
     catch (err) { console.error("[fetchTopic] Error:", err); return { success: false, message: err.message }; }
+  },
+
+  // ========== DELETE SUBJECT ==========
+  deleteSubject: async (subjectId) => {
+    console.log("[deleteSubject] Deleting subject ID:", subjectId);
+    try {
+      const data = await get()._fetch(`${API_BASE}/admin/subjects/${subjectId}?force=true`, { method: "DELETE" });
+      if (data.success) {
+        console.log("[deleteSubject] Deleted successfully");
+        set((state) => ({ subjects: state.subjects.filter((s) => (s.id ?? s._id) !== subjectId) }));
+      }
+      return data;
+    } catch (err) {
+      console.error("[deleteSubject] Error:", err);
+      return { success: false, message: err.message };
+    }
+  },
+
+  // ========== DELETE TOPIC ==========
+  deleteTopic: async (topicId) => {
+    console.log("[deleteTopic] Deleting topic ID:", topicId);
+    try {
+      const data = await get()._fetch(`${API_BASE}/admin/topics/${topicId}?force=true`, { method: "DELETE" });
+      if (data.success) {
+        console.log("[deleteTopic] Deleted successfully");
+        set((state) => ({ topics: state.topics.filter((t) => (t.id ?? t._id) !== topicId) }));
+      }
+      return data;
+    } catch (err) {
+      console.error("[deleteTopic] Error:", err);
+      return { success: false, message: err.message };
+    }
   },
 
   // ========== COMMUNITY GROUPS ==========

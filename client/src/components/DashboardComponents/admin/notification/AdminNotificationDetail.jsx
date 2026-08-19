@@ -39,7 +39,7 @@ export default function AdminNotificationDetail({ notification, onBack, onMarkRe
       </div>
 
       {/* ── Body ── */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 border-2">
         {/* Type badge + icon */}
         <div className="flex items-center gap-3 mb-5">
           <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${cfg.bg} ${cfg.icon}`}>

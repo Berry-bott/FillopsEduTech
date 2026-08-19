@@ -36,7 +36,7 @@ import useTutorStore from "@/store/tutorStore"
 
 const DIFFICULTY_LEVELS = ["EASY", "MEDIUM", "HARD"]
 const QUESTION_TYPES = ["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]
-const CATEGORIES = ["JAMB", "WAEC", "NECO", "NABTEB"]
+const CATEGORIES = ["JAMB", "WAEC", "NECO"]
 const ALL_TOPIC = "all-topics"
 
 // ── Rich Text Toolbar ──────────────────────────────────────────────────────────

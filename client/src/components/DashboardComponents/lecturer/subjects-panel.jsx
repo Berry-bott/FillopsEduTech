@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/components/ui/use-toast"
 import useTutorStore from "@/store/tutorStore"
 
-const categories = ["WAEC", "NECO", "JAMB", "PUTME"]
+const categories = ["WAEC", "NECO", "JAMB"]
 const colorOptions = [
   { value: "bg-blue-500", label: "Blue", color: "bg-blue-500" },
   { value: "bg-emerald-500", label: "Green", color: "bg-emerald-500" },

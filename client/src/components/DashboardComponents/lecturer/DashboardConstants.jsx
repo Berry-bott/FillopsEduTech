@@ -8,7 +8,6 @@ export const EXAM_BODIES = [
   { id: "jamb",           label: "JAMB",          color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
   { id: "waec",           label: "WAEC",          color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   { id: "neco",           label: "NECO",          color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-  { id: "putme",          label: "Post-UTME",     color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
 ]
 
 export const COLOR_OPTIONS = [

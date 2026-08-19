@@ -54,7 +54,7 @@ export default function ReassignSubjectModal({ open, onOpenChange, tutor, onSucc
       try {
         const { _fetch } = useAdminStore.getState();
         const res = await _fetch(
-          `https://fillops-server-5fuf.onrender.com/api/admin/subjects?tutorId=${tutor.id}&page=1&limit=100`
+          `${import.meta.env.VITE_BACKEND_URL}/api/admin/subjects?tutorId=${tutor.id}&page=1&limit=100`
         );
 
         if (res?.success) {
