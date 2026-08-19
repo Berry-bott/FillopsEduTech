@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
+import { Switch } from "@/components/ui/switch"
 import useTutorStore from "@/store/tutorStore"
 
 const DIFFICULTY_LEVELS = ["EASY", "MEDIUM", "HARD"]
@@ -327,7 +328,8 @@ export default function QuestionsPanel({
     explanation: "",    // HTML string from rich editor
     imageUrl: null,      // Main question image URL (uploaded to server)
     instruction: "",     // e.g. "Solve for x."
-    diagrams: [],        // Array of diagram image URLs
+    isPastQuestion: true, // toggle ON by default → origin is "PAST_QUESTION"
+    origin: "PAST_QUESTION",
   })
   const [options, setOptions] = useState(["", "", "", ""])
   const [correctAnswer, setCorrectAnswer] = useState("")
@@ -434,9 +436,9 @@ export default function QuestionsPanel({
         explanation: formData.explanation, // HTML
         imageUrl: formData.imageUrl,      // Main question image URL
         instruction: formData.instruction, // e.g. "Solve for x."
+        origin: formData.isPastQuestion ? "PAST_QUESTION" : (formData.origin || "MANUAL"),
         options: formData.type === "MULTIPLE_CHOICE" ? options.filter((o) => o.trim()) : [],
         correctAnswer: formData.type === "MULTIPLE_CHOICE" ? correctAnswer : formData.text,
-        diagrams: formData.diagrams,        // Array of diagram image URLs
       }
 
       const result = editingQuestion
@@ -464,7 +466,9 @@ export default function QuestionsPanel({
     year: new Date().getFullYear(), category: "JAMB", explanation: "",
     imageUrl: null,
     instruction: "",
-    diagrams: [] })
+    isPastQuestion: true,
+    origin: "PAST_QUESTION",
+  })
 
   setOptions(["", "", "", ""])
   setCorrectAnswer("")
@@ -489,7 +493,8 @@ export default function QuestionsPanel({
       explanation: question.explanation || "",
       imageUrl: question.imageUrl || null,
       instruction: question.instruction || "",
-      diagrams: question.diagrams || [],
+      isPastQuestion: (question.origin || "PAST_QUESTION") === "PAST_QUESTION",
+      origin: question.origin || "PAST_QUESTION",
     })
     setOptions(question.options || ["", "", "", ""])
     setCorrectAnswer(question.correctAnswer || "")
@@ -710,6 +715,24 @@ export default function QuestionsPanel({
                   <Label>Year</Label>
                   <Input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: e.target.value })} min="2000" max="2030" />
                 </div>
+                <div className="space-y-2">
+                  <Label>Origin</Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={formData.isPastQuestion}
+                      onCheckedChange={(v) => setFormData({ ...formData, isPastQuestion: v })}
+                    />
+                    <span className="text-sm text-muted-foreground">Past Question</span>
+                  </div>
+                  {!formData.isPastQuestion && (
+                    <Input
+                      placeholder="Enter origin (e.g. AI_GENERATED)"
+                      value={formData.origin}
+                      onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                      // style={{  width: "133px" }}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* 📸 Question Image Upload */}
@@ -784,87 +807,18 @@ export default function QuestionsPanel({
                 </div>
               </div>
 
-              {/* 📊 Diagrams Upload */}
-              {formData.diagrams.length > 0 ? (
-                <div className="space-y-3 mt-2">
-                  <Label>Diagrams</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {formData.diagrams.map((diagramUrl, idx) => (
-                      <div key={idx} className="border rounded-lg p-2 bg-muted/50">
-                        <img
-                          src={diagramUrl}
-                          alt="Diagram"
-                          className="max-w-full h-40 object-cover rounded"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => {
-                            const newDiagrams = [...formData.diagrams]
-                            newDiagrams.splice(idx, 1)
-                            setFormData({ ...formData, diagrams: newDiagrams })
-                          }}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3 mt-2">
-                  <Label>Diagrams</Label>
-                  <div className="border rounded-lg p-3 bg-muted/50 cursor-pointer hover:bg-muted/100 transition-colors">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const fileInput = document.createElement("input");
-                        fileInput.type = "file";
-                        fileInput.multiple = true;
-                        fileInput.accept = "image/*";
-                        fileInput.click();
-
-                        fileInput.onchange = async e => {
-                          const files = e.target.files || [];
-                          if (files.length === 0) return;
-
-                          setFormData({ ...formData, diagrams: [] });
-                          setIsSubmitting(true);
-
-                          const uploadedUrls = [];
-                          for (const file of files) {
-                            const result = await useTutorStore.getState().uploadQuestionImage(file);
-                            if (result.success && result.imageUrl) {
-                              uploadedUrls.push(result.imageUrl);
-                            } else if (result.error) {
-                              toast({
-                                title: "Error",
-                                description: result.error,
-                                variant: "destructive",
-                              });
-                            }
-                          }
-
-                          setFormData({ ...formData, diagrams: uploadedUrls });
-                          setIsSubmitting(false);
-                          toast({
-                            title: "Success",
-                            description: `${uploadedUrls.length} diagram(s) uploaded`,
-                          });
-                        };
-                      }}
-                    >
-                      Upload Diagrams
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Max 5MB each, PNG/JPG/JPEG
-                    </p>
-                  </div>
-                </div>
-              )}
+              {/* ✏️ Instruction */}
+              <div className="space-y-2">
+                <Label>Instruction</Label>
+                <Input
+                  placeholder="e.g. Solve for x."
+                  value={formData.instruction}
+                  onChange={(e) => setFormData({ ...formData, instruction: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  A short instruction for the question, e.g. &quot;Solve for x.&quot; It will be shown with the question image.
+                </p>
+              </div>
 
               {/* ✅ Rich Text — Question */}
               <div className="space-y-2">
@@ -918,7 +872,7 @@ export default function QuestionsPanel({
                 <RichTextEditor
                   value={formData.explanation}
                   onChange={(html) => setFormData({ ...formData, explanation: html })}
-                  placeholder="Explain the correct answer... You can include diagrams, images, or formatted text."
+                  placeholder="Explain the correct answer... You can include images, or formatted text."
                   minHeight="120px"
                 />
               </div>
@@ -985,6 +939,7 @@ export default function QuestionsPanel({
                         <Badge variant="secondary">{question.difficulty}</Badge>
                         <Badge>{question.category}</Badge>
                         <Badge variant="outline">{question.year}</Badge>
+                        {question.origin && <Badge variant="secondary">{question.origin.replace("_", " ")}</Badge>}
                       </div>
                     </div>
                   </div>
@@ -1012,6 +967,12 @@ export default function QuestionsPanel({
               </CardHeader>
 
               <CardContent>
+                {question.instruction && (
+                  <p className="text-xs font-medium text-blue-700 italic mb-2">
+                    {question.instruction}
+                  </p>
+                )}
+
                 {question.imageUrl && (
                   <div className="mb-3">
                     <img
@@ -1019,27 +980,6 @@ export default function QuestionsPanel({
                       alt="Question image"
                       className="max-w-full h-40 object-contain rounded-lg border border-muted mb-2"
                     />
-                    {question.instruction && (
-                      <p className="text-xs font-medium text-blue-700 italic mb-2">
-                        {question.instruction}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {question.diagrams && question.diagrams.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Diagrams:</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {question.diagrams.map((diagramUrl, idx) => (
-                        <img
-                          key={idx}
-                          src={diagramUrl}
-                          alt={`Diagram ${idx + 1}`}
-                          className="max-w-full h-32 object-cover rounded"
-                        />
-                      ))}
-                    </div>
                   </div>
                 )}
 
@@ -1135,22 +1075,6 @@ export default function QuestionsPanel({
                 />
               </div>
 
-              {viewingQuestion.diagrams && viewingQuestion.diagrams.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold">Diagrams</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {viewingQuestion.diagrams.map((diagramUrl, idx) => (
-                      <img
-                        key={idx}
-                        src={diagramUrl}
-                        alt={`Diagram ${idx + 1}`}
-                        className="max-w-full h-40 object-cover rounded-lg border border-muted"
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <Separator />
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1158,6 +1082,7 @@ export default function QuestionsPanel({
                 <div><p className="text-xs text-muted-foreground">Difficulty</p><Badge variant="secondary">{viewingQuestion.difficulty}</Badge></div>
                 <div><p className="text-xs text-muted-foreground">Category</p><Badge>{viewingQuestion.category}</Badge></div>
                 <div><p className="text-xs text-muted-foreground">Year</p><Badge variant="outline">{viewingQuestion.year}</Badge></div>
+                {viewingQuestion.origin && <div><p className="text-xs text-muted-foreground">Origin</p><Badge variant="secondary">{viewingQuestion.origin.replace("_", " ")}</Badge></div>}
               </div>
 
               {viewingQuestion.options && (
