@@ -27,6 +27,15 @@
     if (file) fd.append("image", file);
     return fd;
   }
+
+  // Strip null/undefined values from a plain object so they are not sent in the
+  // JSON body. This mirrors the multipart behavior above and prevents backend
+  // validation errors like "Image url must be a string." when imageUrl is null.
+  function stripNulls(obj) {
+    return Object.fromEntries(
+      Object.entries(obj).filter(([, value]) => value !== undefined && value !== null)
+    );
+  }
   const useTutorStore = create(
     persist(
       (set, get) => ({
@@ -506,7 +515,7 @@
             const isMultipart = !!file
             const result = await get().fetchWithAuth(`${API_BASE}/tutor/topics/${topicId}/questions`, {
               method: "POST",
-              body: isMultipart ? buildQuestionFormData(questionData, file) : JSON.stringify(questionData),
+              body: isMultipart ? buildQuestionFormData(questionData, file) : JSON.stringify(stripNulls(questionData)),
             })
 
             if (result.success) {
@@ -550,7 +559,7 @@
             const isMultipart = !!file
             const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions/${questionId}`, {
               method: "PATCH",
-              body: isMultipart ? buildQuestionFormData(questionData, file) : JSON.stringify(questionData),
+              body: isMultipart ? buildQuestionFormData(questionData, file) : JSON.stringify(stripNulls(questionData)),
             })
 
             if (result.success) {
