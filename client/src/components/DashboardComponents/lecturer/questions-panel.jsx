@@ -295,6 +295,7 @@ export default function QuestionsPanel({
     subjects: storeSubjects,
     topics: storeTopics,
     questions: storeQuestions,
+    questionsPagination,
     loading,
   } = useTutorStore()
 
@@ -326,12 +327,13 @@ export default function QuestionsPanel({
   const [localSelectedSubject, setLocalSelectedSubject] = useState(null)
   const [localSelectedTopic, setLocalSelectedTopic] = useState(null)
   const [isAllTopics, setIsAllTopics] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_LIMIT = 10
 
   useEffect(() => {
     if (!storeSubjects || storeSubjects.length === 0) fetchSubjects()
     if (!storeTopics || storeTopics.length === 0) fetchTopics()
-    if (!storeQuestions || storeQuestions.length === 0) fetchQuestions()
-  }, [storeSubjects, storeTopics, storeQuestions])
+  }, [storeSubjects, storeTopics])
 
   const fetchSubjects = async () => {
     try {
@@ -349,9 +351,24 @@ export default function QuestionsPanel({
     }
   }
 
-  const fetchQuestions = async () => {
+  const fetchQuestionsForPage = async ({
+    page = currentPage,
+    topicId = isAllTopics ? null : activeTopicId,
+    subjectId = activeSubjectId,
+    category = examBody,
+    yr = year,
+    q = globalSearch,
+  } = {}) => {
     try {
-      await getQuestions()
+      await getQuestions({
+        page,
+        limit: PAGE_LIMIT,
+        topicId: topicId || null,
+        subjectId: subjectId || null,
+        category: category || "",
+        year: yr || "",
+        search: q || "",
+      })
     } catch {
       toast({ title: "Error", description: "Failed to load questions", variant: "destructive" })
     }
@@ -389,6 +406,25 @@ export default function QuestionsPanel({
       setLocalSelectedSubject(firstSubject?.subjectId || firstSubject?.id || null)
     }
   }, [selectedSubjectId, localSelectedSubject, storeSubjects])
+
+  // Refetch from the server whenever the scoped topic/subject or any filter changes.
+  // Resets back to page 1 on filter change; advances pages only when `currentPage` changes.
+  const lastFilterSignalRef = useRef("")
+  const filterSignal = `${activeTopicId || ""}|${activeSubjectId || ""}|${examBody || ""}|${year || ""}|${globalSearch || ""}|all=${isAllTopics}`
+
+  useEffect(() => {
+    if (!activeTopicId && !isAllTopics) return
+
+    if (lastFilterSignalRef.current !== filterSignal) {
+      lastFilterSignalRef.current = filterSignal
+      setCurrentPage(1)
+      fetchQuestionsForPage({ page: 1 })
+      return
+    }
+
+    fetchQuestionsForPage({ page: currentPage })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterSignal, currentPage, activeTopicId, activeSubjectId, isAllTopics])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -436,7 +472,7 @@ export default function QuestionsPanel({
         resetForm()
         setIsDialogOpen(false)
         useTutorStore.setState({ questionsLoaded: false })
-        await fetchQuestions()
+        await fetchQuestionsForPage()
       } else {
         toast({ title: "Error", description: result.message || "Failed to save question", variant: "destructive" })
       }
@@ -501,7 +537,7 @@ export default function QuestionsPanel({
         setDeleteConfirmOpen(false)
         setQuestionToDelete(null)
         useTutorStore.setState({ questionsLoaded: false })
-        await fetchQuestions()
+        await fetchQuestionsForPage()
       } else {
         toast({ title: "Deletion Failed", description: result.message || "Failed to delete", variant: "destructive" })
       }
@@ -545,15 +581,22 @@ export default function QuestionsPanel({
     setOptions(newOpts)
   }
 
+  // Resolve which topic a question belongs to, regardless of API shape.
+  const getQuestionTopicId = (q) =>
+    q?.topic?.id || q?.topic?.topicId || q?.topicId || null
+
+  const getQuestionTopicColor = (q) =>
+    q?.topic?.subject?.color || q?.topicColor || null
+
   const filteredQuestions = (storeQuestions || []).filter((q) => {
-    if (activeTopicId && q.topic?.id !== activeTopicId) return false
+    if (activeTopicId && getQuestionTopicId(q) !== activeTopicId) return false
     if (globalSearch) {
       const s = globalSearch.toLowerCase()
       if (!stripHtml(q.text).toLowerCase().includes(s) && !stripHtml(q.explanation).toLowerCase().includes(s)) return false
     }
     if (year && q.year?.toString() !== year.toString()) return false
     if (examBody && examBody !== "all-catigories" && q.category?.toLowerCase() !== examBody.toLowerCase()) return false
-    if (color && color !== "all" && q.topic?.subject?.color !== color) return false
+    if (color && color !== "all" && getQuestionTopicColor(q) !== color) return false
     return true
   })
 
@@ -561,6 +604,8 @@ export default function QuestionsPanel({
     <div className="space-y-6">
 
       {/* Subject & Topic selectors */}
+      {/* Only show manual selectors when opening Questions directly (no inline drill-down topic) */}
+      {!selectedTopic && (
       <div className="grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label className="text-sm font-medium">Select Subject</Label>
@@ -617,6 +662,8 @@ export default function QuestionsPanel({
           </Select>
         </div>
       </div>
+
+      )}
 
       {/* Topic Header */}
       {isAllTopics ? (
@@ -1001,6 +1048,35 @@ export default function QuestionsPanel({
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {questionsPagination && (activeTopicId || isAllTopics) && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t">
+          <p className="text-sm text-muted-foreground">
+            Showing page <span className="font-semibold text-foreground">{questionsPagination.currentPage || currentPage}</span> of{" "}
+            <span className="font-semibold text-foreground">{questionsPagination.totalPages || 1}</span>
+            {" "}({questionsPagination.totalCount ?? 0} questions)
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!questionsPagination.hasPrevPage || loading}
+              onClick={() => setCurrentPage((p) => Math.max(1, (questionsPagination.currentPage || p) - 1))}
+            >
+              <span aria-hidden="true">&larr;</span>&nbsp;Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!questionsPagination.hasNextPage || loading}
+              onClick={() => setCurrentPage((p) => (questionsPagination.currentPage || p) + 1)}
+            >
+              Next&nbsp;<span aria-hidden="true">&rarr;</span>
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirm */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

@@ -58,12 +58,6 @@
         getAccessToken: () => {
           return useTutorAuthStore.getState().accessToken;
         },
-        
-        // ... rest of your code
-        // 🔹 GET ACCESS TOKEN FROM AUTH STORE
-        getAccessToken: () => {
-          return useTutorAuthStore.getState().accessToken;
-        },
 
         // 🔹 GET TUTOR FROM AUTH STORE
         getTutor: () => {
@@ -454,28 +448,42 @@
 
         // ========== QUESTIONS ==========
 
-        // Get all questions (with caching)
-        getQuestions: async () => {
-          const { questionsLoaded } = get()
-
-          if (questionsLoaded) {
-            return { 
-              success: true, 
-              data: { 
-                questions: get().questions, 
-                pagination: get().questionsPagination 
-              } 
-            }
-          }
-
+        // Get questions with server-side filtering + pagination.
+        // Accepts query params the backend supports: page, limit, subjectId,
+        // topicId, search, category, year, difficulty, type, origin.
+        getQuestions: async ({
+          page = 1,
+          limit = 10,
+          subjectId = null,
+          topicId = null,
+          search = "",
+          category = "",
+          year = "",
+          difficulty = "",
+          origin = "",
+        } = {}) => {
           set({ loading: true, error: "" })
 
           try {
-            const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions`)
+            const params = new URLSearchParams()
+            params.set("page", String(page))
+            params.set("limit", String(limit))
+            if (subjectId) params.set("subjectId", subjectId)
+            if (topicId) params.set("topicId", topicId)
+            if (search) params.set("search", search)
+            if (category && category !== "all-catigories") params.set("category", category)
+            if (year) params.set("year", String(year))
+            if (difficulty) params.set("difficulty", difficulty)
+            if (origin) params.set("origin", origin)
+
+            const qs = params.toString()
+            const result = await get().fetchWithAuth(`${API_BASE}/tutor/questions${qs ? `?${qs}` : ""}`)
 
             if (result.success) {
               const questions = result.data?.questions || result.data || []
-              const pagination = result.data?.pagination || null
+              // The questions endpoint returns pagination at the TOP level of the
+              // response (sibling of `data`), unlike subjects/topics. Support both.
+              const pagination = result.pagination || result.data?.pagination || null
 
               set({
                 questions,
@@ -483,7 +491,7 @@
                 questionsLoaded: true,
               })
 
-              console.log("✅ Questions stored in Zustand:", questions)
+              console.log("✅ Questions stored in Zustand:", questions, pagination)
             } else {
               set({ error: result.message || "Failed to fetch questions" })
             }
