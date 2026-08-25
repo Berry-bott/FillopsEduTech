@@ -80,12 +80,90 @@ function insertAnchoredImage(editor, src) {
     .run()
 }
 
-// ── Sanitizer-proof math storage ──────────────────────────────────────────────
-// The backend HTML sanitizer STRIPS <span data-type="inline-math" data-latex>
-// entirely (proven via [QSAVE]/[QFETCH] logs), so math is persisted as plain
-// text delimiters — $latex$ (inline) / $$latex$$ (block) — which sanitizers
-// never touch. Delimiters are converted back to live nodes / rendered KaTeX at
-// the editor and display boundaries respectively.
+// ── Sanitizer-proof list storage ──────────────────────────────────────────────
+// The backend HTML sanitizer also STRIPS <ul>, <ol>, <li> tags. We convert
+// lists to plain text markers before saving, then restore them on load/display.
+//
+// Unordered list items → "• Item 1"  (bullet U+2022)
+// Ordered list items  → "1. Item 1", "2. Item 2", etc.
+//
+// Delimiter format:
+//   [LIST:ul]• Item 1[/LIST]    — unordered list item
+//   [LIST:ol:1]1. Item 1[/LIST] — ordered list item (with start number)
+
+// Convert editor HTML lists → plain text markers (called before SAVE)
+function listsToDelimiters(html) {
+  if (!html || (html.indexOf("<ul") === -1 && html.indexOf("<ol") === -1)) return html
+  const box = document.createElement("div")
+  box.innerHTML = html
+
+  let listEl
+  while ((listEl = box.querySelector("ul, ol")) !== null) {
+    const isOrdered = listEl.tagName === "OL"
+    const items = []
+    let startNum = 1
+
+    if (isOrdered) {
+      const startAttr = listEl.getAttribute("start")
+      if (startAttr) startNum = parseInt(startAttr, 10) || 1
+    }
+
+    listEl.querySelectorAll("li").forEach((li, index) => {
+      const text = li.textContent.trim()
+      if (!text) return
+
+      if (isOrdered) {
+        const num = startNum + index
+        items.push(`[LIST:ol:${num}]${num}. ${text}[/LIST]`)
+      } else {
+        items.push(`[LIST:ul]• ${text}[/LIST]`)
+      }
+    })
+
+    const replacement = document.createTextNode(items.join("\n"))
+    listEl.replaceWith(replacement)
+  }
+
+  return box.innerHTML
+}
+
+// Render list markers back to proper HTML lists (called on LOAD/DISPLAY)
+function renderListsInHtml(html) {
+  if (!html || html.indexOf("[LIST:") === -1) return html
+  let result = html
+
+  // Handle consecutive [LIST:ul] markers - group into <ul>
+  const ulRegex = /((?:\[LIST:ul\]• [^\[]+\[\/LIST\]\s*)+)/g
+  result = result.replace(ulRegex, (match) => {
+    const items = match.match(/\[LIST:ul\]• ([^\[]+)\[\/LIST\]/g)
+    if (!items || items.length === 0) return match
+    const lis = items.map(item => {
+      const text = item.match(/\[LIST:ul\]• ([^\[]+)\[\/LIST\]/)[1]
+      return "<li>" + text + "</li>"
+    }).join("")
+    return "<ul>" + lis + "</ul>"
+  })
+
+  // Handle consecutive [LIST:ol:N] markers - group into <ol>
+  const olRegex = /((?:\[LIST:ol:\d+\]\d+\.\s[^\[]+\[\/LIST\]\s*)+)/g
+  result = result.replace(olRegex, (match) => {
+    const items = match.match(/\[LIST:ol:\d+\]\d+\.\s([^\[]+)\[\/LIST\]/g)
+    if (!items || items.length === 0) return match
+    const firstMatch = match.match(/\[LIST:ol:(\d+)\]/)
+    const startNum = firstMatch ? parseInt(firstMatch[1]) : 1
+    const lis = items.map(item => {
+      const text = item.match(/\[LIST:ol:\d+\]\d+\.\s([^\[]+)\[\/LIST\]/)[1]
+      return "<li>" + text + "</li>"
+    }).join("")
+    const startAttr = startNum !== 1 ? " start=\"" + startNum + "\"" : ""
+    return "<ol" + startAttr + ">" + lis + "</ol>"
+  })
+
+  // Clean up any remaining standalone markers
+  result = result.replace(/\[LIST:[^\]]*\][^\[]*\[\/LIST\]/g, "")
+
+  return result
+}
 
 const INLINE_MATH_TYPE = "inline-math"
 const BLOCK_MATH_TYPE = "block-math"
@@ -166,6 +244,21 @@ function migrateDelimiterMath(editor, onEmit) {
     const tr = createMathMigrateTransaction(editor, editor.state.tr, mathMigrationRegex)
     editor.view.dispatch(tr)
     onEmit?.(editor.getHTML())
+  } catch { /* nothing to migrate */ }
+}
+
+// Convert [LIST] markers back to proper HTML lists in the editor.
+// Called after loading saved content so lists render correctly.
+function migrateDelimiterLists(editor, onEmit) {
+  if (!editor) return
+  try {
+    const html = editor.getHTML()
+    if (!html.includes("[LIST:")) return
+    const migrated = renderListsInHtml(html)
+    if (migrated !== html) {
+      editor.commands.setContent(migrated)
+      onEmit?.(editor.getHTML())
+    }
   } catch { /* nothing to migrate */ }
 }
 
@@ -614,9 +707,13 @@ function RichTextEditor({ value, onChange, placeholder = "Start typing...", minH
     if (value !== editor.getHTML() && value !== lastEmittedRef.current) {
       lastEmittedRef.current = null
       editor.commands.setContent(value || "")
-      // Saved content stores math as $…$ text (sanitizer-proof); convert to
-      // live math nodes so the real symbols render in the editor.
+      // Saved content stores math as $…$ text and lists as [LIST] markers
+      // (sanitizer-proof); convert to live nodes so they render in the editor.
       migrateDelimiterMath(editor, (html) => {
+        lastEmittedRef.current = html
+        emitRef.current?.(html)
+      })
+      migrateDelimiterLists(editor, (html) => {
         lastEmittedRef.current = html
         emitRef.current?.(html)
       })
@@ -627,6 +724,10 @@ function RichTextEditor({ value, onChange, placeholder = "Start typing...", minH
   useEffect(() => {
     if (!editor) return
     migrateDelimiterMath(editor, (html) => {
+      lastEmittedRef.current = html
+      emitRef.current?.(html)
+    })
+    migrateDelimiterLists(editor, (html) => {
       lastEmittedRef.current = html
       emitRef.current?.(html)
     })
@@ -853,13 +954,15 @@ export default function QuestionsPanel({
     try {
       // Math is persisted as $…$ / $$…$$ plain text because the backend
       // sanitizer strips <span data-type="inline-math"> elements entirely.
+      // Lists are persisted as [LIST] markers because the backend strips
+      // <ul>, <ol>, <li> tags.
       const questionData = {
-        text: mathSpansToDelimiters(formData.text),
+        text: listsToDelimiters(mathSpansToDelimiters(formData.text)),
         type: formData.type,
         difficulty: formData.difficulty,
         year: parseInt(formData.year),
         category: formData.category,
-        explanation: mathSpansToDelimiters(formData.explanation),
+        explanation: listsToDelimiters(mathSpansToDelimiters(formData.explanation)),
         // If a new image file was selected it is sent as a multipart field,
         // otherwise the existing stored URL is preserved.
         imageUrl: formData.imageFile ? null : formData.imageUrl,
@@ -1376,7 +1479,7 @@ export default function QuestionsPanel({
                       {/* Render HTML question text */}
                       <CardTitle
                         className="rich-content text-base font-semibold [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
-                        dangerouslySetInnerHTML={{ __html: renderMathInHtml(question.text) }}
+                        dangerouslySetInnerHTML={{ __html: renderListsInHtml(renderMathInHtml(question.text)) }}
                       />
                       <div className="flex flex-wrap gap-2 pb-4">
                         <Badge variant="outline">{question.type.replace("_", " ")}</Badge>
@@ -1446,7 +1549,7 @@ export default function QuestionsPanel({
                     <p className="text-xs font-medium text-muted-foreground mb-1">Explanation:</p>
                     <div
                       className="rich-content text-sm [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: renderMathInHtml(question.explanation) }}
+                      dangerouslySetInnerHTML={{ __html: renderListsInHtml(renderMathInHtml(question.explanation)) }}
                     />
                   </div>
                 )}
@@ -1544,7 +1647,7 @@ export default function QuestionsPanel({
                 )}
                 <div
                   className="rich-content text-muted-foreground [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: renderMathInHtml(viewingQuestion.text) }}
+                  dangerouslySetInnerHTML={{ __html: renderListsInHtml(renderMathInHtml(viewingQuestion.text)) }}
                 />
               </div>
 
@@ -1585,7 +1688,7 @@ export default function QuestionsPanel({
                     <h4 className="font-semibold">Explanation</h4>
                     <div
                       className="rich-content bg-muted/50 rounded-lg p-4 [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: renderMathInHtml(viewingQuestion.explanation) }}
+                      dangerouslySetInnerHTML={{ __html: renderListsInHtml(renderMathInHtml(viewingQuestion.explanation)) }}
                     />
                   </div>
                 </>
