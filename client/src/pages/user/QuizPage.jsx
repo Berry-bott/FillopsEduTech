@@ -287,6 +287,15 @@ export default function QuizPage() {
 
         {/* Question Card */}
         <div className="bg-white rounded-lg shadow-md p-6 max-w-5xl">
+          {/* Subject and Topic Display */}
+          <div className="mb-6">
+            {currentQ.subject && currentQ.topic && (
+              <p className="text-sm text-gray-600 font-medium mb-4">
+                <span className="text-blue-700 font-extrabold text-2xl">Subject:</span> <span className="text-lg">{currentQ.subject.subjectName}</span>  <span className="text-purple-700 ml-4 text-2xl font-extrabold">Topic:</span> <span className="text-lg">{currentQ.topic.topicName}</span>
+              </p>
+            )}
+          </div>
+
           <div 
             className="text-xl font-semibold mb-6 prose prose-sm max-w-none [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
             dangerouslySetInnerHTML={{ __html: currentQ.text }}

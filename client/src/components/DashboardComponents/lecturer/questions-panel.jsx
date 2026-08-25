@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
-import Image from "@tiptap/extension-image"
+import TiptapImage from "@tiptap/extension-image"
 import Subscript from "@tiptap/extension-subscript"
 import Superscript from "@tiptap/extension-superscript"
 import Underline from "@tiptap/extension-underline"
@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label"
 import { Plus, Pencil, Trash2, HelpCircle, CheckCircle2, Loader2, Eye, MoreHorizontal, AlertTriangle, FileText, X,
   Bold, Italic, UnderlineIcon, Strikethrough, Subscript as SubIcon, Superscript as SupIcon,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, ImageIcon, List, ListOrdered,
-  Highlighter, Palette, Undo, Redo, Minus, Code, Link as LinkIcon,
+  Highlighter, Palette, Undo, Redo, Minus, Code, Link as LinkIcon, Sigma, PenTool,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -32,12 +32,179 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { Switch } from "@/components/ui/switch"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Mathematics, createMathMigrateTransaction, mathMigrationRegex } from "@tiptap/extension-mathematics"
+import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react"
+import { fileToCompressedDataUrl } from "./image-utils"
+import katex from "katex"
+import "katex/dist/katex.min.css"
+import DrawingPadModal from "./DrawingPadModal"
 import useTutorStore from "@/store/tutorStore"
 
 const DIFFICULTY_LEVELS = ["EASY", "MEDIUM", "HARD"]
 const QUESTION_TYPES = ["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]
 const CATEGORIES = ["JAMB", "WAEC", "NECO"]
 const ALL_TOPIC = "all-topics"
+
+// ── Editor helpers ─────────────────────────────────────────────────────────────
+
+// Image node handling. Uses the stock BLOCK image (inline images proved
+// unreliable for insertion in this setup). Inserted images/drawings render
+// full-size in the editor via scoped CSS below.
+const ResizableImage = TiptapImage.extend({
+  addAttributes() {
+    return {
+      src: { default: null },
+      alt: { default: null },
+      title: { default: null },
+    }
+  },
+})
+
+// Insert an image anchored to the end of the document so it always appears
+// (block image node). Uses editor.chain() so onUpdate fires and the parent's
+// questionText stays in sync.
+function insertAnchoredImage(editor, src) {
+  if (!editor) return false
+  const attrs = { src }
+
+  // 1. Try the straightforward caret insert first (fires onUpdate too)
+  if (editor.chain().focus("end").setImage(attrs).run()) {
+    if (JSON.stringify(editor.getJSON()).includes('"image"')) return true
+  }
+
+  // 2. Robust fallback: append a block image at the end of the document.
+  return editor.chain()
+    .focus("end")
+    .insertContent({ type: "image", attrs })
+    .run()
+}
+
+// ── Sanitizer-proof math storage ──────────────────────────────────────────────
+// The backend HTML sanitizer STRIPS <span data-type="inline-math" data-latex>
+// entirely (proven via [QSAVE]/[QFETCH] logs), so math is persisted as plain
+// text delimiters — $latex$ (inline) / $$latex$$ (block) — which sanitizers
+// never touch. Delimiters are converted back to live nodes / rendered KaTeX at
+// the editor and display boundaries respectively.
+
+const INLINE_MATH_TYPE = "inline-math"
+const BLOCK_MATH_TYPE = "block-math"
+
+// Convert editor math spans → $…$ / $$…$$ text (called before SAVE)
+function mathSpansToDelimiters(html) {
+  if (!html || html.indexOf("data-type=") === -1) return html
+  const box = document.createElement("div")
+  box.innerHTML = html
+  box.querySelectorAll(`[data-type="${INLINE_MATH_TYPE}"],[data-type="${BLOCK_MATH_TYPE}"]`).forEach((el) => {
+    const latex = (el.getAttribute("data-latex") || "").trim()
+    const delim = el.getAttribute("data-type") === BLOCK_MATH_TYPE ? "$$" : "$"
+    el.replaceWith(document.createTextNode(`${delim}${latex}${delim}`))
+  })
+  return box.innerHTML
+}
+
+// Render $…$ / $$…$$ delimiters AND any legacy data-type spans to visible
+// KaTeX (display side). Idempotent via the .katex guard.
+function renderMathInHtml(html) {
+  if (!html) return html
+  const hasSpans = html.indexOf("data-type=") !== -1
+  const hasDelims = /\$\$[^$]+\$\$|\$[^$\s][^$]*?\$/.test(html)
+  if (!hasSpans && !hasDelims) return html
+
+  const box = document.createElement("div")
+  box.innerHTML = html
+
+  // Legacy/alternate source: real math spans
+  box.querySelectorAll(`[data-type="${INLINE_MATH_TYPE}"],[data-type="${BLOCK_MATH_TYPE}"]`).forEach((el) => {
+    if (el.querySelector(".katex")) return
+    let latex = el.getAttribute("data-latex") || ""
+    latex = latex.replace(/\\\\/g, "\\")
+    try {
+      el.innerHTML = katex.renderToString(latex, {
+        throwOnError: false,
+        displayMode: el.getAttribute("data-type") === BLOCK_MATH_TYPE,
+        output: "html",
+      })
+    } catch { /* leave as-is */ }
+  })
+
+  // Delimiter form: walk text nodes, replace $…$ / $$…$$ with rendered KaTeX
+  const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT)
+  const textNodes = []
+  while (walker.nextNode()) {
+    if (/\$\$[^$]+\$\$|\$[^$\s][^$]*?\$/.test(walker.currentNode.nodeValue)) textNodes.push(walker.currentNode)
+  }
+  textNodes.forEach((tn) => {
+    const frag = document.createElement("span")
+    frag.innerHTML = tn.nodeValue.replace(
+      /\$\$([^$]+)\$\$|\$([^$\s][^$]*?)\$/g,
+      (_, blockLatex, inlineLatex) => {
+        const latex = (blockLatex ?? inlineLatex ?? "").replace(/\\\\/g, "\\").trim()
+        if (!latex) return _
+        try {
+          return katex.renderToString(latex, {
+            throwOnError: false,
+            displayMode: blockLatex != null,
+            output: "html",
+          })
+        } catch { return _ }
+      }
+    )
+    tn.replaceWith(...frag.childNodes)
+  })
+
+  return box.innerHTML
+}
+
+// Convert $…$ delimiter text in the document into live math nodes
+// (used after loading saved content into the editor). onEmit receives the
+// migrated HTML so the parent form state stays in sync.
+function migrateDelimiterMath(editor, onEmit) {
+  if (!editor) return
+  try {
+    if (!/\$[^$]*\$/.test(editor.getHTML())) return
+    const tr = createMathMigrateTransaction(editor, editor.state.tr, mathMigrationRegex)
+    editor.view.dispatch(tr)
+    onEmit?.(editor.getHTML())
+  } catch { /* nothing to migrate */ }
+}
+
+// Compress an image File to a dataURL for inline insertion (mirrors the
+// local file-pick experience of the main "Question Image" uploader).
+// Implementation lives in ./image-utils (budget-aware compression) and is
+// imported at the top of this file.
+
+// Quick-insert snippets for the formula popover.
+const MATH_PALETTE = [
+  { label: "a/b", latex: "\\frac{}{}", caretOffset: 3 },
+  { label: "x²", latex: "^{}", caretOffset: 1 },
+  { label: "x₂", latex: "_{}", caretOffset: 1 },
+  { label: "√", latex: "\\sqrt{}", caretOffset: 6 },
+  { label: "√ⁿ", latex: "\\sqrt[]{}", caretOffset: 7 },
+  { label: "∑", latex: "\\sum_{i=1}^{n}", caretOffset: 14 },
+  { label: "∫", latex: "\\int_{}^{}", caretOffset: 6 },
+  { label: "lim", latex: "\\lim_{x \\to \\infty}" },
+  { label: "≤", latex: "\\leq " },
+  { label: "≥", latex: "\\geq " },
+  { label: "≠", latex: "\\neq " },
+  { label: "≈", latex: "\\approx " },
+  { label: "±", latex: "\\pm " },
+  { label: "×", latex: "\\times " },
+  { label: "÷", latex: "\\div " },
+  { label: "∞", latex: "\\infty " },
+  { label: "°", latex: "^\\circ " },
+  { label: "α", latex: "\\alpha " },
+  { label: "β", latex: "\\beta " },
+  { label: "θ", latex: "\\theta " },
+  { label: "π", latex: "\\pi " },
+  { label: "Δ", latex: "\\Delta " },
+  { label: "∠", latex: "\\angle " },
+  { label: "△", latex: "\\triangle " },
+  { label: "sin", latex: "\\sin " },
+  { label: "cos", latex: "\\cos " },
+  { label: "tan", latex: "\\tan " },
+  { label: "log", latex: "\\log " },
+]
 
 // ── Rich Text Toolbar ──────────────────────────────────────────────────────────
 
@@ -63,40 +230,43 @@ function ToolbarDivider() {
   return <div className="w-px h-5 bg-border mx-0.5" />
 }
 
-function RichTextToolbar({ editor }) {
+function RichTextToolbar({ editor, onOpenDraw }) {
   const imageInputRef = useRef(null)
   const [uploadMsg, setUploadMsg] = useState(null)
 
+  const flashMsg = (type, msg, ms = 4000) => {
+    setUploadMsg({ type, msg })
+    setTimeout(() => setUploadMsg(null), ms)
+  }
+
+  // Pick a local file → compress → insert inline as dataURL. Same
+  // choose-file experience as the main "Question Image" uploader.
   const insertImage = useCallback(async (e) => {
     const file = e.target.files?.[0]
     if (!file || !editor) return
     e.target.value = ""
 
-    // Validate file
     if (!file.type.startsWith("image/")) {
-      setUploadMsg({ type: "error", msg: "Please select an image file." })
-      setTimeout(() => setUploadMsg(null), 4000)
+      flashMsg("error", "Please select an image file.")
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      setUploadMsg({ type: "error", msg: "Image must be under 5 MB." })
-      setTimeout(() => setUploadMsg(null), 4000)
+      flashMsg("error", "Image must be under 5 MB.")
       return
     }
 
-    // There is no standalone image-upload endpoint anymore (it returned 404).
-    // Inline images in the question text must be inserted via an image URL,
-    // or uploaded with the main question image. Prompt the user accordingly.
-    setUploadMsg({
-      type: "error",
-      msg: "Inline image upload is unavailable. Use the link button or upload a question image instead.",
-    })
-    setTimeout(() => setUploadMsg(null), 5000)
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file)
+      insertAnchoredImage(editor, dataUrl)
+      flashMsg("success", "Image inserted.")
+    } catch {
+      flashMsg("error", "Could not process that image.")
+    }
   }, [editor])
 
   const insertImageFromUrl = useCallback(() => {
     const url = prompt("Enter image URL:")
-    if (url) editor.chain().focus().setImage({ src: url }).run()
+    if (url) insertAnchoredImage(editor, url)
   }, [editor])
 
   if (!editor) return null
@@ -142,18 +312,11 @@ function RichTextToolbar({ editor }) {
 
       <ToolbarDivider />
 
-      {/* Highlight + Color */}
+            {/* Highlight + Color */}
       <ToolbarButton onClick={() => editor.chain().focus().toggleHighlight().run()} active={editor.isActive("highlight")} title="Highlight">
         <Highlighter className="w-3.5 h-3.5" />
       </ToolbarButton>
-      <label title="Text Color" className="p-1.5 rounded hover:bg-muted cursor-pointer flex items-center">
-        <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-        <input
-          type="color"
-          className="sr-only"
-          onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
-        />
-      </label>
+      <ColorPicker editor={editor} />
 
       <ToolbarDivider />
 
@@ -204,14 +367,22 @@ function RichTextToolbar({ editor }) {
 
       <ToolbarDivider />
 
-      {/* Image upload */}
-      <ToolbarButton onClick={() => imageInputRef.current?.click()} title="Upload Image">
+      {/* Image / Draw / Formula */}
+      <ToolbarButton onClick={() => imageInputRef.current?.click()} title="Insert Image (from device)">
         <ImageIcon className="w-3.5 h-3.5" />
       </ToolbarButton>
       <ToolbarButton onClick={insertImageFromUrl} title="Insert Image from URL">
         <LinkIcon className="w-3.5 h-3.5" />
       </ToolbarButton>
       <input ref={imageInputRef} type="file" accept="image/*" className="sr-only" onChange={insertImage} />
+
+      {onOpenDraw && (
+        <ToolbarButton onClick={() => onOpenDraw()} title="Draw a Diagram">
+          <PenTool className="w-3.5 h-3.5" />
+        </ToolbarButton>
+      )}
+
+      <FormulaButton editor={editor} />
 
       {/* Upload status message */}
       {uploadMsg && (
@@ -223,9 +394,185 @@ function RichTextToolbar({ editor }) {
   )
 }
 
+// ── Color Picker (reliable swatches — native input stole editor focus) ────────
+const SWATCHES = ["#111827", "#dc2626", "#ea580c", "#16a34a", "#2563eb", "#7c3aed", "#db2777", "#0891b2"]
+
+function ColorPicker({ editor }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title="Text Color"
+          className="p-1.5 rounded hover:bg-muted cursor-pointer flex items-center relative"
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-white dark:border-background" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="start" className="w-auto p-2 z-[9999]">
+        <div className="grid grid-cols-4 gap-1.5">
+          {SWATCHES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              title={c}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { editor.chain().focus().setColor(c).run(); setOpen(false) }}
+              className="w-6 h-6 rounded-md border border-border hover:scale-110 transition-transform"
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+        <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          Custom
+          <input
+            type="color"
+            className="w-8 h-6 cursor-pointer border rounded"
+            onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
+          />
+        </label>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+// ── Formula Button (LaTeX via KaTeX — inline or block) ────────────────────────
+function FormulaButton({ editor }) {
+  const [open, setOpen] = useState(false)
+  const [latex, setLatex] = useState("")
+  const [isBlock, setIsBlock] = useState(false)
+  const inputRef = useRef(null)
+  const editingRef = useRef(false)
+
+  const isActiveMath = editor.isActive("inlineMath") || editor.isActive("blockMath")
+
+  // Pre-fill when opening with a math node selected (edit mode)
+  const handleOpenChange = (next) => {
+    if (next) {
+      editingRef.current = isActiveMath
+      const existing =
+        editor.getAttributes("inlineMath")?.latex ??
+        editor.getAttributes("blockMath")?.latex ?? ""
+      setLatex(existing)
+      setIsBlock(editor.isActive("blockMath"))
+      setTimeout(() => inputRef.current?.focus(), 50)
+    }
+    setOpen(next)
+  }
+
+  const insertSnippet = (snippet, caretOffset = 0) => {
+    setLatex((prev) => prev + snippet)
+    setTimeout(() => {
+      const el = inputRef.current
+      if (!el) return
+      const pos = (el.value.length - snippet.length) + caretOffset
+      el.focus()
+      el.setSelectionRange(pos, pos)
+    }, 0)
+  }
+
+  const apply = () => {
+    const cleanLatex = latex.trim()
+    if (!cleanLatex) return
+    if (editingRef.current && isActiveMath) {
+      if (editor.isActive("inlineMath")) editor.chain().focus().updateInlineMath({ latex: cleanLatex }).run()
+      else editor.chain().focus().updateBlockMath({ latex: cleanLatex }).run()
+    } else if (isBlock) {
+      editor.chain().focus().insertBlockMath({ latex: cleanLatex }).run()
+    } else {
+      editor.chain().focus().insertInlineMath({ latex: cleanLatex }).run()
+    }
+    setOpen(false)
+  }
+
+  let previewHtml = ""
+  try {
+    previewHtml = katex.renderToString(latex || "\\frac{a}{b}", {
+      throwOnError: false,
+      displayMode: isBlock,
+      output: "html", // visual only
+    })
+  } catch {
+    previewHtml = ""
+  }
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title="Insert / Edit Formula (LaTeX)"
+          onMouseDown={(e) => e.preventDefault()}
+          className="p-1.5 rounded transition-colors hover:bg-muted text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+        >
+          <Sigma className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-serif italic">fx</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="start" className="w-[340px] p-3 space-y-2 z-[9999]">
+        <p className="text-xs font-medium">Formula — LaTeX</p>
+
+        {/* Live preview */}
+        <div
+          className="min-h-[46px] rounded-md border bg-muted/40 px-3 py-2 text-center overflow-x-auto"
+          dangerouslySetInnerHTML={{ __html: previewHtml }}
+        />
+
+        <input
+          ref={inputRef}
+          value={latex}
+          onChange={(e) => setLatex(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); apply() } }}
+          placeholder="e.g. \\frac{a}{b} + \\sqrt{x^2+1}"
+          className="w-full h-8 px-2 text-sm rounded-md border bg-transparent focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+        />
+
+        {/* Symbol palette */}
+        <div className="flex flex-wrap gap-1 max-h-[92px] overflow-y-auto">
+          {MATH_PALETTE.map((s) => (
+            <button
+              key={s.label}
+              type="button"
+              title={s.latex}
+              onClick={() => insertSnippet(s.latex, s.caretOffset)}
+              className="min-w-[34px] h-7 px-1 rounded border bg-card hover:bg-muted text-xs"
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isBlock}
+              onChange={(e) => setIsBlock(e.target.checked)}
+              className="accent-primary"
+            />
+            Block (own line)
+          </label>
+          <div className="flex gap-1.5">
+            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="button" size="sm" onClick={apply}>
+              {editingRef.current && isActiveMath ? "Update" : "Insert"}
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 // ── Rich Text Editor ───────────────────────────────────────────────────────────
 
 function RichTextEditor({ value, onChange, placeholder = "Start typing...", minHeight = "120px" }) {
+  const [drawOpen, setDrawOpen] = useState(false)
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ underline: false }),
@@ -236,32 +583,90 @@ function RichTextEditor({ value, onChange, placeholder = "Start typing...", minH
       Color,
       Highlight.configure({ multicolor: true }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Image.configure({ inline: false, allowBase64: true }),
+      ResizableImage.configure({ allowBase64: true }),
+      Mathematics,
       Placeholder.configure({ placeholder }),
     ],
     content: value || "",
     onUpdate: ({ editor }) => {
+      lastEmittedRef.current = editor.getHTML()
       onChange(editor.getHTML())
     },
+    // note: image/drawing inserts via a raw transaction don't fire onUpdate,
+    // so we also emit after those in insertAnchoredImage via the toolbars.
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none focus:outline-none px-3 py-2",
+        class: "rich-content prose prose-sm max-w-none focus:outline-none px-3 py-2",
+        "data-rich-content": "true",
         style: `min-height: ${minHeight}`,
       },
     },
   })
 
-  // Sync external value changes (e.g. when editing an existing question)
+  // Sync external value changes ONLY when they didn't originate from this editor
+  // (e.g. loading an existing question). Comparing against what we last emitted
+  // prevents the parent's state from wiping a just-inserted image/drawing.
+  const lastEmittedRef = useRef(value)
+  const emitRef = useRef(null)
+  emitRef.current = onChange
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    if (!editor) return
+    if (value !== editor.getHTML() && value !== lastEmittedRef.current) {
+      lastEmittedRef.current = null
       editor.commands.setContent(value || "")
+      // Saved content stores math as $…$ text (sanitizer-proof); convert to
+      // live math nodes so the real symbols render in the editor.
+      migrateDelimiterMath(editor, (html) => {
+        lastEmittedRef.current = html
+        emitRef.current?.(html)
+      })
     }
-  }, [value]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value, editor])
+
+  // One-time migration on mount too (covers the initial content value).
+  useEffect(() => {
+    if (!editor) return
+    migrateDelimiterMath(editor, (html) => {
+      lastEmittedRef.current = html
+      emitRef.current?.(html)
+    })
+  }, [editor])
+
+  // The pad hands over a flattened PNG dataURL. Insert it inline at the cursor
+  // position, just like the image uploader — it will be extracted and uploaded
+  // as a multipart field when the question is saved.
+  const insertDrawnImage = useCallback((dataUrl) => {
+    if (!dataUrl || !editor) return
+    insertAnchoredImage(editor, dataUrl)
+  }, [editor])
 
   return (
     <div className="border rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:border-transparent">
-      <RichTextToolbar editor={editor} />
+      {/* Scoped styles — class-based (.rich-content is applied to the ProseMirror
+          element itself, so these always apply). Tailwind preflight strips list
+          markers and the typography plugin isn't installed. */}
+      <style>{`
+        .rich-content ul { list-style: disc outside; padding-left: 1.5rem; margin: .4rem 0; }
+        .rich-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: .4rem 0; }
+        .rich-content li { margin: .2rem 0; display: list-item; }
+        .rich-content p { margin: .25rem 0; }
+        /* Inserted images/drawings render FULL SIZE so they are clearly visible */
+        .rich-content img { display: block; max-width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--border, #e2e8f0); margin: .4rem 0; }
+        .rich-content [data-type="inline-math"],
+        .rich-content [data-type="block-math"] { display: inline-block; min-width: .5em; min-height: 1em; }
+        .rich-content [data-type="block-math"] { display: block; text-align: center; margin: .35rem 0; }
+        .rich-content .katex { font-size: 1.05em; }
+      `}</style>
+
+      {/* Only show the draw tool when the parent can persist the result */}
+      <RichTextToolbar editor={editor} onOpenDraw={() => setDrawOpen(true)} />
       <EditorContent editor={editor} />
+
+      <DrawingPadModal
+        open={drawOpen}
+        onOpenChange={setDrawOpen}
+        onInsert={insertDrawnImage}
+      />
     </div>
   )
 }
@@ -446,13 +851,15 @@ export default function QuestionsPanel({
 
     setIsSubmitting(true)
     try {
+      // Math is persisted as $…$ / $$…$$ plain text because the backend
+      // sanitizer strips <span data-type="inline-math"> elements entirely.
       const questionData = {
-        text: formData.text,              // HTML
+        text: mathSpansToDelimiters(formData.text),
         type: formData.type,
         difficulty: formData.difficulty,
         year: parseInt(formData.year),
         category: formData.category,
-        explanation: formData.explanation, // HTML
+        explanation: mathSpansToDelimiters(formData.explanation),
         // If a new image file was selected it is sent as a multipart field,
         // otherwise the existing stored URL is preserved.
         imageUrl: formData.imageFile ? null : formData.imageUrl,
@@ -779,7 +1186,7 @@ export default function QuestionsPanel({
                       <img
                         src={formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl}
                         alt="Question image"
-                        className="max-w-full h-auto rounded-lg"
+                        className="w-50 h-[400px] rounded-lg border border-border object-cover bg-white"
                       />
                       <Button
                         type="button"
@@ -968,8 +1375,8 @@ export default function QuestionsPanel({
                     <div className="space-y-2 flex-1 min-w-0">
                       {/* Render HTML question text */}
                       <CardTitle
-                        className="text-base font-semibold [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
-                        dangerouslySetInnerHTML={{ __html: question.text }}
+                        className="rich-content text-base font-semibold [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
+                        dangerouslySetInnerHTML={{ __html: renderMathInHtml(question.text) }}
                       />
                       <div className="flex flex-wrap gap-2 pb-4">
                         <Badge variant="outline">{question.type.replace("_", " ")}</Badge>
@@ -1038,8 +1445,8 @@ export default function QuestionsPanel({
                   <div className="border-t pt-3">
                     <p className="text-xs font-medium text-muted-foreground mb-1">Explanation:</p>
                     <div
-                      className="text-sm [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: question.explanation }}
+                      className="rich-content text-sm [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: renderMathInHtml(question.explanation) }}
                     />
                   </div>
                 )}
@@ -1136,8 +1543,8 @@ export default function QuestionsPanel({
                   </div>
                 )}
                 <div
-                  className="text-muted-foreground [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: viewingQuestion.text }}
+                  className="rich-content text-muted-foreground [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: renderMathInHtml(viewingQuestion.text) }}
                 />
               </div>
 
@@ -1177,8 +1584,8 @@ export default function QuestionsPanel({
                   <div className="space-y-2">
                     <h4 className="font-semibold">Explanation</h4>
                     <div
-                      className="bg-muted/50 rounded-lg p-4 [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: viewingQuestion.explanation }}
+                      className="rich-content bg-muted/50 rounded-lg p-4 [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: renderMathInHtml(viewingQuestion.explanation) }}
                     />
                   </div>
                 </>

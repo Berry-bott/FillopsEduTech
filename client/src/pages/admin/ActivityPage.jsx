@@ -41,15 +41,6 @@ const CATEGORY_STYLES = {
   NECO:  "border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-400",
 };
 
-// Extract a normalized lowercase tutor/creator name from a subject/topic object,
-// used both for sorting and for matching against the selected tutor filter.
-const tutorNameOf = (item) =>
-  (((item?.createdBy?.firstName ?? "") + " " + (item?.createdBy?.lastName ?? "")).trim().toLowerCase());
-
-// Build a display + match key from a raw tutor record { firstName, lastName }.
-const tutorFullName = (t) =>
-  `${t?.firstName ?? ""} ${t?.lastName ?? ""}`.trim();
-
 function SkeletonRows({ rows = 5 }) {
   return (
     <div className="space-y-2">
@@ -344,7 +335,7 @@ function TopicDrawer({ topicId, onClose }) {
 // ═══════════════════════════════════════════════════════════════
 //  SUBJECTS VIEW
 // ═══════════════════════════════════════════════════════════════
-function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopics }) {
+function SubjectsView({ subjects, topics, loading, onRefresh, onViewTopics }) {
   const { deleteSubject } = useAdminStore();
   const { toast } = useToast();
   const [search, setSearch]                       = useState("");
@@ -352,38 +343,20 @@ function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopi
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
   const [subjectToDelete, setSubjectToDelete]     = useState(null);
   const [isDeletingSubject, setIsDeletingSubject] = useState(false);
-  const [tutorSort, setTutorSort]                 = useState("all"); // "all" = no preference, or a tutor full name to sort to the top
 
   const subjectList = subjects ?? [];
   const topicList   = topics   ?? [];
-  const tutorList   = tutors   ?? [];
-  // Unique normalized tutor names (from the fetched endpoint) for the dropdown.
-  const tutorOptions = [...new Set(tutorList.map((t) => tutorFullName(t).toLowerCase()).filter(Boolean))].sort();
 
-  const filteredSubjects = subjectList
-    .filter((s) => {
-      const name = s.subjectName ?? s.name ?? "";
-      const desc = s.description ?? "";
-      const code = s.subjectCode ?? "";
-      const matchesSearch =
-        name.toLowerCase().includes(search.toLowerCase()) ||
-        desc.toLowerCase().includes(search.toLowerCase()) ||
-        code.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = categoryFilter === "all" || s.category === categoryFilter;
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      // If a tutor is selected, sort that tutor's items to the top first.
-      if (tutorSort && tutorSort !== "all") {
-        const aMatch = tutorNameOf(a) === tutorSort ? 0 : 1;
-        const bMatch = tutorNameOf(b) === tutorSort ? 0 : 1;
-        if (aMatch !== bMatch) return aMatch - bMatch;
-      }
-      const na = tutorNameOf(a);
-      const nb = tutorNameOf(b);
-      if (na === nb) return 0;
-      return na < nb ? -1 : 1;
-    });
+  const filteredSubjects = subjectList.filter((s) => {
+    const name = s.subjectName ?? s.name ?? "";
+    const desc = s.description ?? "";
+    const code = s.subjectCode ?? "";
+    const matchesSearch =
+      name.toLowerCase().includes(search.toLowerCase()) ||
+      desc.toLowerCase().includes(search.toLowerCase()) ||
+      code.toLowerCase().includes(search.toLowerCase());
+    return matchesSearch && (categoryFilter === "all" || s.category === categoryFilter);
+  });
 
   const totalQuestions = subjectList.reduce((sum, s) => sum + (s._count?.question ?? 0), 0);
   const totalSessions  = subjectList.reduce((sum, s) => sum + (s._count?.studySession ?? 0), 0);
@@ -416,17 +389,6 @@ function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopi
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
             {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={tutorSort} onValueChange={setTutorSort}>
-          <SelectTrigger className="h-8 w-48 text-xs"><SelectValue placeholder="Sort by tutor" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All tutors</SelectItem>
-            {tutorOptions.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name.split(" ").map((w) => (w[0] ?? "").toUpperCase() + w.slice(1)).join(" ")}
-              </SelectItem>
-            ))}
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={onRefresh} className="h-8 gap-1.5 text-xs px-3">
@@ -536,9 +498,9 @@ function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopi
               </Table>
             </div>
           ) : (
-                                <EmptyState icon={BookOpen} label="No subjects found" />
+            <EmptyState icon={BookOpen} label="No subjects found" />
           )}
-          </CardContent>
+                </CardContent>
       </Card>
 
       {subjectToDelete && (
@@ -593,7 +555,7 @@ function SubjectsView({ subjects, topics, tutors, loading, onRefresh, onViewTopi
 // ═══════════════════════════════════════════════════════════════
 //  TOPICS VIEW
 // ═══════════════════════════════════════════════════════════════
-function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilter: initialSubjectFilter }) {
+function TopicsView({ topics, subjects, loading, onRefresh, subjectFilter: initialSubjectFilter }) {
   const { deleteTopic } = useAdminStore();
   const { toast } = useToast();
   const [search, setSearch]                   = useState("");
@@ -601,45 +563,28 @@ function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilte
   const [selectedTopicId, setSelectedTopicId] = useState(null);
   const [topicToDelete, setTopicToDelete]     = useState(null);
   const [isDeletingTopic, setIsDeletingTopic] = useState(false);
-  const [tutorSort, setTutorSort]         = useState("all"); // "all" = no preference, or a tutor full name to sort to the top
 
   const topicList   = topics   ?? [];
   const subjectList = subjects ?? [];
-  const tutorList   = tutors   ?? [];
-  // Unique normalized tutor names (from the fetched endpoint) for the dropdown.
-  const tutorOptions = [...new Set(tutorList.map((t) => tutorFullName(t).toLowerCase()).filter(Boolean))].sort();
 
   useEffect(() => {
     if (initialSubjectFilter) setSubjectFilter(initialSubjectFilter);
   }, [initialSubjectFilter]);
 
-  const filteredTopics = topicList
-    .filter((t) => {
-      const name     = t.topicName ?? t.name ?? "";
-      const desc     = t.description ?? "";
-      const subjName = t.subject?.subjectName ?? "";
-      const matchesSearch =
-        name.toLowerCase().includes(search.toLowerCase())     ||
-        desc.toLowerCase().includes(search.toLowerCase())     ||
-        subjName.toLowerCase().includes(search.toLowerCase());
-      const matchesSubject =
-        subjectFilter === "all" ||
-        t.subjectId === subjectFilter ||
-        t.subject?.id === subjectFilter;
-      return matchesSearch && matchesSubject;
-    })
-    .sort((a, b) => {
-      // If a tutor is selected, sort that tutor's items to the top first.
-      if (tutorSort && tutorSort !== "all") {
-        const aMatch = tutorNameOf(a) === tutorSort ? 0 : 1;
-        const bMatch = tutorNameOf(b) === tutorSort ? 0 : 1;
-        if (aMatch !== bMatch) return aMatch - bMatch;
-      }
-      const na = tutorNameOf(a);
-      const nb = tutorNameOf(b);
-      if (na === nb) return 0;
-      return na < nb ? -1 : 1;
-    });
+  const filteredTopics = topicList.filter((t) => {
+    const name     = t.topicName ?? t.name ?? "";
+    const desc     = t.description ?? "";
+    const subjName = t.subject?.subjectName ?? "";
+    const matchesSearch =
+      name.toLowerCase().includes(search.toLowerCase())     ||
+      desc.toLowerCase().includes(search.toLowerCase())     ||
+      subjName.toLowerCase().includes(search.toLowerCase());
+    const matchesSubject =
+      subjectFilter === "all" ||
+      t.subjectId === subjectFilter ||
+      t.subject?.id === subjectFilter;
+    return matchesSearch && matchesSubject;
+  });
 
   const totalQuestions = topicList.reduce((sum, t) => sum + (t._count?.question ?? 0), 0);
   const withContent    = topicList.filter((t) => t.content).length;
@@ -675,17 +620,6 @@ function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilte
             {subjectList.map((s) => (
               <SelectItem key={s.id ?? s._id} value={s.id ?? s._id}>
                 {s.subjectName ?? s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={tutorSort} onValueChange={setTutorSort}>
-          <SelectTrigger className="h-8 w-48 text-xs"><SelectValue placeholder="Sort by tutor" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All tutors</SelectItem>
-            {tutorOptions.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name.split(" ").map((w) => (w[0] ?? "").toUpperCase() + w.slice(1)).join(" ")}
               </SelectItem>
             ))}
           </SelectContent>
@@ -790,10 +724,10 @@ function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilte
               </Table>
             </div>
           ) : (
-                                <EmptyState icon={Layers} label="No topics found" />
+            <EmptyState icon={Layers} label="No topics found" />
           )}
         </CardContent>
-      </Card>
+            </Card>
 
       {topicToDelete && (
         <AlertDialog open={!!topicToDelete} onOpenChange={(open) => { if (!open) setTopicToDelete(null); }}>
@@ -848,7 +782,7 @@ function TopicsView({ topics, subjects, tutors, loading, onRefresh, subjectFilte
 //  MAIN PAGE
 // ═══════════════════════════════════════════════════════════════
 export default function SubjectsPage() {
-  const { fetchSubjects, fetchTopics, fetchTutors, tutors, subjects, topics, loading } = useAdminStore();
+  const { fetchSubjects, fetchTopics, subjects, topics, loading } = useAdminStore();
 
   const [activeTab, setActiveTab]                   = useState("subjects");
   const [topicSubjectFilter, setTopicSubjectFilter] = useState("all");
@@ -856,8 +790,6 @@ export default function SubjectsPage() {
   useEffect(() => {
     fetchSubjects();
     fetchTopics();
-    if (!tutors || tutors.length === 0) fetchTutors({ page: 1, limit: 100 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleViewTopics = (subjectId) => {
@@ -899,7 +831,6 @@ export default function SubjectsPage() {
             <SubjectsView
               subjects={subjects}
               topics={topics}
-              tutors={tutors}
               loading={loading}
               onRefresh={() => { fetchSubjects(); fetchTopics(); }}
               onViewTopics={handleViewTopics}
@@ -909,7 +840,6 @@ export default function SubjectsPage() {
             <TopicsView
               topics={topics}
               subjects={subjects}
-              tutors={tutors}
               loading={loading}
               onRefresh={fetchTopics}
               subjectFilter={topicSubjectFilter}
