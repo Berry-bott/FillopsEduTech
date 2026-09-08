@@ -332,6 +332,13 @@ const handleEndExam = async () => {
                   There are no questions available for this {saved?.mode === "topic" ? "topic" : "subject"}.
                   Please select a different {saved?.mode === "topic" ? "topic" : "subject"}.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => navigate("/user/dashboard")}
+                  className="mt-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                >
+                  Back to Dashboard
+                </button>
               </div>
             </main>
             <aside>
@@ -654,10 +661,6 @@ const handleEndExam = async () => {
                 </div>
             )}
             
-            <p className="mb-2">
-                You have answered <strong>{answeredCount}</strong> out of <strong>{questions.length}</strong> questions in this section.
-            </p>
-            
             {answeredCount < questions.length && (
                 <p className="text-orange-600 mb-4">
                 ⚠️ You still have {questions.length - answeredCount} unanswered question(s) in this section.
@@ -707,10 +710,6 @@ const handleEndExam = async () => {
             </div>
             
             <div className="mb-6 space-y-2">
-              <p className="text-gray-600 dark:text-gray-400">
-                You have answered <strong>{answeredCount}</strong> out of <strong>{questions.length}</strong> questions.
-              </p>
-              
               {timeRemaining !== null && (
                 <p className="text-gray-600 dark:text-gray-400">
                   Time remaining: <strong className="font-mono">{formatTime(timeRemaining)}</strong>

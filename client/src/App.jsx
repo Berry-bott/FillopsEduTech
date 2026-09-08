@@ -42,6 +42,7 @@ const ForgotPassword = lazy(() => import("@/pages/index/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/index/ResetPassword"));
 const Register = lazy(() => import("@/pages/index/Register"));
 const TermsOfUse = lazy(() => import("@/pages/index/TermsOfUse"));
+const CookiesPage = lazy(() => import("@/pages/index/CookiesPage"));
 const Unauthorized = lazy(() => import("@/pages/index/Unauthorized"));
 const Fillopwelcome = lazy(() => import("@/pages/index/Fillopwelcome"));
 const RefundPolicyPage = lazy(() => import("@/pages/user/RefundPolicyPage.jsx"));
@@ -104,6 +105,7 @@ function App() {
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="/tutor/welcomeTutor" element={<Fillopwelcome />} />
               <Route path="/terms" element={<TermsOfUse />} />
+              <Route path="/cookies" element={<CookiesPage />} />
               <Route path="/payments/refunds" element={<RefundPolicyPage />} />
 
               {/* ========== USER AUTH (PUBLIC) ========== */}

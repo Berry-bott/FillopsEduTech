@@ -8,9 +8,9 @@ import { Separator } from "@/components/ui/separator"
 import useAuthStore from "@/store/authStore";
 import { usePaymentStore } from "@/store/paymentStore"
 import { useToast } from "@/components/ui/use-toast";
-import {  Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  Check, ShieldCheck, Star, Sparkles,
+  Check, ShieldCheck, Star, Sparkles, ArrowLeft,
   Clock, ChevronRight,
     ShoppingCart, X, Trash2, Tag, Loader2,
   Crown, TrendingUp
@@ -18,6 +18,7 @@ import {
 import Logo from "../assets/images/fillopsLogo.png"
 
 export default function Checkout() {
+  const navigate = useNavigate();
   const { accessToken } = useAuthStore();
   const {
     plans: apiPlans,
@@ -334,17 +335,18 @@ export default function Checkout() {
     <div className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-md shadow-sm z-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex items-center justify-between gap-3">
         <Link to="/user/dashboard" className="flex items-center gap-2 group">
-          <img src={Logo} alt="Fillop Tech" width={36} height={36} className="flex-shrink-0 group-hover:scale-105 transition-transform" />
-          <div>
-            <span className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
-              Fillop
-            </span>
-          </div>
+            <img src={Logo} alt="Fillop Tech" width={36} height={36} className="flex-shrink-0 group-hover:scale-105 transition-transform" />
+            <div>
+              <span className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
+                Fillop
+              </span>
+            </div>
         </Link>
       
 
         {/* Cart */}
-        <div className="relative cart-container flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="relative cart-container flex-shrink-0">
           <button
             onClick={() => setIsCartOpen(!isCartOpen)}
             className="relative bg-white hover:bg-gray-50 text-gray-900 rounded-full p-2.5 shadow-md border-2 border-gray-200 transition-all hover:scale-105"
@@ -429,6 +431,15 @@ export default function Checkout() {
               )}
             </div>
           )}
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
         </div>
       </div>
     </div>
@@ -620,13 +631,20 @@ export default function Checkout() {
                 )}
 
                 {/* Security Badge */}
-                <div className="flex items-center justify-center gap-3 rounded-xl border-2 border-primary/20 bg-card p-4 shadow-sm">
+                <Link
+                  to="/terms#using-filloptech"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Read the terms of use"
+                  className="flex items-center justify-center gap-3 rounded-xl border-2 border-primary/20 bg-card p-4 shadow-sm transition hover:border-primary/40 hover:bg-primary/5"
+                >
                   <ShieldCheck className="h-6 w-6 text-primary flex-shrink-0" />
                   <div>
                     <p className="text-sm font-semibold">Secure & Encrypted</p>
                     <p className="text-xs text-muted-foreground">Your payment information is protected</p>
+                    <p className="mt-1 text-xs text-primary">Privacy & Terms of Use</p>
                   </div>
-                </div>
+                </Link>
               </div>
 
               {/* ── Order Summary ── */}

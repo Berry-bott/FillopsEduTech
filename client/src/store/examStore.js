@@ -701,11 +701,12 @@ getSubjectProgress: () => {
       subjects.forEach(subject => {
         subject.modules?.forEach(module => {
           module.topics?.forEach(topic => {
-            if (savedTopicIds.includes(topic.topicId)) {
-              topicNames[topic.topicId] = topic.topicName;
+            const topicId = topic.topicId || topic.id || topic._id;
+            if (topicId && savedTopicIds.includes(topicId)) {
+              topicNames[topicId] = topic.topicName || topic.name || topicId;
 
               Object.keys(saved.topics).forEach(subjectId => {
-                if (saved.topics[subjectId].includes(topic.topicId)) {
+                if (saved.topics[subjectId].includes(topicId)) {
                   subjectNames[subjectId] = subject.subjectName;
                 }
               });
@@ -861,6 +862,18 @@ startExam: async () => {
             const topicQuestions = questions.filter(q => q.topicId === topicId);
 
             if (topicQuestions.length > 0) {
+              const returnedTopicName =
+                topicQuestions[0]?.topic?.topicName ||
+                topicQuestions[0]?.topic?.name ||
+                topicName;
+
+              set((state) => ({
+                topicNames: {
+                  ...state.topicNames,
+                  [topicId]: returnedTopicName || topicId,
+                },
+              }));
+
               newUnits[topicId] = {
                 items: topicQuestions,
                 skip: topicQuestions.length,

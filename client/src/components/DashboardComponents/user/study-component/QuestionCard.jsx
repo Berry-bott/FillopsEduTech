@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ExternalLink, Youtube, Lock, Unlock } from "lucide-react";
 
 // ─── End Session Confirmation Modal ───────────────────────────────────────────
-function EndSessionModal({ isOpen, onConfirm, onCancel, questionsAnswered, totalQuestions }) {
+function EndSessionModal({ isOpen, onConfirm, onCancel }) {
   if (!isOpen) return null;
 
   return (
@@ -43,15 +43,6 @@ function EndSessionModal({ isOpen, onConfirm, onCancel, questionsAnswered, total
             Are you sure you want to end this session? Your progress will be saved
             and you'll be taken to the summary screen.
           </p>
-        </div>
-
-        {/* Progress pill */}
-        <div className="mx-6 mb-5 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-700/50
-          border border-gray-200 dark:border-gray-600 flex items-center justify-between">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Questions answered</span>
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-            {questionsAnswered} / {totalQuestions}
-          </span>
         </div>
 
         {/* Action buttons */}
@@ -349,6 +340,13 @@ export default function QuestionCard() {
                   There are no questions available for this {saved?.mode === "topic" ? "topic" : "subject"}.
                   Please select a different {saved?.mode === "topic" ? "topic" : "subject"}.
                 </p>
+                <button
+                  type="button"
+                  onClick={handleReturnToDashboard}
+                  className="mt-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                >
+                  Back to Dashboard
+                </button>
               </div>
             </main>
             <aside>
@@ -587,8 +585,6 @@ export default function QuestionCard() {
         isOpen={showEndModal}
         onConfirm={handleEndSession}
         onCancel={() => setShowEndModal(false)}
-        questionsAnswered={Object.keys(selectedOptions).length}
-        totalQuestions={questions.length}
       />
     </section>
   );

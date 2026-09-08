@@ -8,6 +8,7 @@ import Logo from "../../assets/images/fillopsLogo.png";
 import useTutorAuthStore from "@/store/tutorAuthStore";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import CookieConsent, { hasCookieConsent } from "@/components/CookieConsent";
 
 const tutorLoginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -37,6 +38,10 @@ const TutorLogin = () => {
   }, [isAuthenticated]);
 
   const onSubmit = async (formData) => {
+  if (!hasCookieConsent()) {
+    setError("Please accept the Cookie Policy before signing in.");
+    return;
+  }
   setError("");
 
   try {
@@ -255,6 +260,19 @@ const TutorLogin = () => {
             </p>
           </div>
 
+          {/* Terms of Use */}
+          <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-3">
+            By signing in, you agree to our{" "}
+            <a
+              href="/terms#your-content"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline font-medium"
+            >
+              Terms of Use
+            </a>
+          </p>
+
           {/* Switch to Student Login */}
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-center text-xs text-gray-500 dark:text-gray-400">
@@ -274,6 +292,7 @@ const TutorLogin = () => {
           © {new Date().getFullYear()} CBT Project. All rights reserved.
         </p>
       </motion.div>
+      <CookieConsent />
     </section>
   );
 };

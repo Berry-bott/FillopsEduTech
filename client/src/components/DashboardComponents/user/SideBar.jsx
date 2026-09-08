@@ -72,7 +72,7 @@ const menuData = [
       {
         id: "dashboard",
         label: "Dashboard",
-        href: "/dashboard",
+        href: "/user/dashboard",
         icon: Home,
         badge: "1",
         children: [
@@ -246,7 +246,23 @@ export default function SideBar() {
   const [isHovered, setIsHovered] = useState(false);
   const [previousDesktopState, setPreviousDesktopState] = useState("full");
   const [isMobile, setIsMobile] = useState(false);
-  const [expandedItems, setExpandedItems] = useState(new Set());
+  const [expandedItems, setExpandedItems] = useState(() => {
+    const initiallyExpanded = new Set();
+
+    const expandChildren = (items, parentId) => {
+      items.forEach((item) => {
+        const itemId = `${parentId}-${item.id}`;
+        if (!item.children?.length) return;
+
+        initiallyExpanded.add(itemId);
+        expandChildren(item.children, itemId);
+      });
+    };
+
+    menuData.forEach((section) => expandChildren(section.items, section.id));
+
+    return initiallyExpanded;
+  });
 
   const toggleMenuState = () => {
     setMenuState((prev) => {
@@ -335,13 +351,11 @@ export default function SideBar() {
     const content = (
       <div
         className={cn(
-          "flex items-center py-2 text-sm rounded-md transition-colors hover:bg-blue-200 dark:hover:bg-blue-900 relative group cursor-pointer",
+          "flex items-center py-2 text-sm rounded-md transition-colors hover:bg-blue-200 dark:hover:bg-blue-900 relative group",
           paddingLeft
         )}
         onClick={() => {
-          if (hasChildren) {
-            toggleExpanded(itemId);
-          } else if (item.href) {
+          if (!hasChildren && item.href) {
             handleNavigation(item.href);
           }
         }}
