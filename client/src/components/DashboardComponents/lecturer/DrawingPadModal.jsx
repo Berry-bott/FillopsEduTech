@@ -5,8 +5,8 @@ import { Eraser, Pen, Undo2, Trash2 } from "lucide-react"
 
 const PAD_COLORS = ["#111827", "#dc2626", "#2563eb", "#16a34a"]
 const PAD_WIDTHS = [2, 4, 8]
-const CANVAS_W = 640
-const CANVAS_H = 420
+const CANVAS_W = 400
+const CANVAS_H = 220
 
 // Simple drawing pad: pen / eraser / colors / widths / undo / redo / clear.
 // Exports a flattened white-background PNG dataURL (downscaled to <= 1000px).
@@ -123,7 +123,7 @@ export default function DrawingPadModal({ open, onOpenChange, onInsert }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[720px]" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[560px]" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Draw a Diagram</DialogTitle>
           <DialogDescription>

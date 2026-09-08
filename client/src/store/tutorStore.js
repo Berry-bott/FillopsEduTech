@@ -14,8 +14,31 @@
   // (the separate /tutor/questions/upload-image endpoint does not exist).
   function buildQuestionFormData(questionData, file) {
     const fd = new FormData();
-    Object.entries(questionData).forEach(([key, value]) => {
+    const safeData = { ...questionData };
+    delete safeData.imageUrl;
+    delete safeData.imageFile;
+    delete safeData.imageFiles;
+
+    const uploadedFiles = [];
+    if (Array.isArray(safeData.files)) {
+      uploadedFiles.push(...safeData.files.filter(Boolean));
+      delete safeData.files;
+    }
+    if (Array.isArray(questionData?.imageFiles)) {
+      uploadedFiles.push(...questionData.imageFiles.filter(Boolean));
+    }
+    if (Array.isArray(file)) {
+      uploadedFiles.push(...file.filter(Boolean));
+    } else if (file) {
+      uploadedFiles.push(file);
+    }
+
+    Object.entries(safeData).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
+      if (key === "imageUrls") {
+        fd.append(key, JSON.stringify(value));
+        return;
+      }
       if (Array.isArray(value)) {
         value.forEach((item) => fd.append(key, String(item)));
       } else if (typeof value === "object") {
@@ -24,7 +47,10 @@
         fd.append(key, String(value));
       }
     });
-    if (file) fd.append("image", file);
+
+    uploadedFiles.forEach((uploadedFile) => {
+      if (uploadedFile) fd.append("files", uploadedFile);
+    });
     return fd;
   }
 
@@ -33,7 +59,12 @@
   // validation errors like "Image url must be a string." when imageUrl is null.
   function stripNulls(obj) {
     return Object.fromEntries(
-      Object.entries(obj).filter(([, value]) => value !== undefined && value !== null)
+      Object.entries(obj).filter(([key, value]) => {
+        if (key === "imageUrl") return false;
+        if (key === "imageFile") return false;
+        if (key === "imageFiles") return false;
+        return value !== undefined && value !== null;
+      })
     );
   }
   const useTutorStore = create(

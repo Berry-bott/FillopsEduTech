@@ -1,24 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from "react"
-import { useEditor, EditorContent } from "@tiptap/react"
-import StarterKit from "@tiptap/starter-kit"
-import TiptapImage from "@tiptap/extension-image"
-import Subscript from "@tiptap/extension-subscript"
-import Superscript from "@tiptap/extension-superscript"
-import Underline from "@tiptap/extension-underline"
-import TextAlign from "@tiptap/extension-text-align"
-import {TextStyle} from "@tiptap/extension-text-style"
-import { Color } from "@tiptap/extension-color"
-import Highlight from "@tiptap/extension-highlight"
-import Placeholder from "@tiptap/extension-placeholder"
+import React, { useState, useEffect, useRef } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Pencil, Trash2, HelpCircle, CheckCircle2, Loader2, Eye, MoreHorizontal, AlertTriangle, FileText, X,
-  Bold, Italic, UnderlineIcon, Strikethrough, Subscript as SubIcon, Superscript as SupIcon,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify, ImageIcon, List, ListOrdered,
-  Highlighter, Palette, Undo, Redo, Minus, Code, Link as LinkIcon, Sigma, PenTool,
+  List,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -32,749 +19,98 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { Switch } from "@/components/ui/switch"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Mathematics, createMathMigrateTransaction, mathMigrationRegex } from "@tiptap/extension-mathematics"
-import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react"
-import { fileToCompressedDataUrl } from "./image-utils"
-import katex from "katex"
-import "katex/dist/katex.min.css"
-import DrawingPadModal from "./DrawingPadModal"
 import useTutorStore from "@/store/tutorStore"
+import RichTextEditor from "./RichTextEditor"
+import {
+  normalizeRichTextForBackend,
+  listsToDelimiters,
+  renderListsInHtml,
+  mathSpansToDelimiters,
+  renderMathInHtml,
+    renderImageMarkersInHtml,
+    renderLineBreaksInHtml,
+  stripHtml,
+} from "./rich-text-utils"
 
 const DIFFICULTY_LEVELS = ["EASY", "MEDIUM", "HARD"]
 const QUESTION_TYPES = ["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]
 const CATEGORIES = ["JAMB", "WAEC", "NECO"]
 const ALL_TOPIC = "all-topics"
 
-// ── Editor helpers ─────────────────────────────────────────────────────────────
+function extractEditorImageUrls(...htmlValues) {
+  const imageUrls = []
 
-// Image node handling. Uses the stock BLOCK image (inline images proved
-// unreliable for insertion in this setup). Inserted images/drawings render
-// full-size in the editor via scoped CSS below.
-const ResizableImage = TiptapImage.extend({
-  addAttributes() {
-    return {
-      src: { default: null },
-      alt: { default: null },
-      title: { default: null },
-    }
-  },
-})
-
-// Insert an image anchored to the end of the document so it always appears
-// (block image node). Uses editor.chain() so onUpdate fires and the parent's
-// questionText stays in sync.
-function insertAnchoredImage(editor, src) {
-  if (!editor) return false
-  const attrs = { src }
-
-  // 1. Try the straightforward caret insert first (fires onUpdate too)
-  if (editor.chain().focus("end").setImage(attrs).run()) {
-    if (JSON.stringify(editor.getJSON()).includes('"image"')) return true
-  }
-
-  // 2. Robust fallback: append a block image at the end of the document.
-  return editor.chain()
-    .focus("end")
-    .insertContent({ type: "image", attrs })
-    .run()
-}
-
-// ── Sanitizer-proof list storage ──────────────────────────────────────────────
-// The backend HTML sanitizer also STRIPS <ul>, <ol>, <li> tags. We convert
-// lists to plain text markers before saving, then restore them on load/display.
-//
-// Unordered list items → "• Item 1"  (bullet U+2022)
-// Ordered list items  → "1. Item 1", "2. Item 2", etc.
-//
-// Delimiter format:
-//   [LIST:ul]• Item 1[/LIST]    — unordered list item
-//   [LIST:ol:1]1. Item 1[/LIST] — ordered list item (with start number)
-
-// Convert editor HTML lists → plain text markers (called before SAVE)
-function listsToDelimiters(html) {
-  if (!html || (html.indexOf("<ul") === -1 && html.indexOf("<ol") === -1)) return html
-  const box = document.createElement("div")
-  box.innerHTML = html
-
-  let listEl
-  while ((listEl = box.querySelector("ul, ol")) !== null) {
-    const isOrdered = listEl.tagName === "OL"
-    const items = []
-    let startNum = 1
-
-    if (isOrdered) {
-      const startAttr = listEl.getAttribute("start")
-      if (startAttr) startNum = parseInt(startAttr, 10) || 1
-    }
-
-    listEl.querySelectorAll("li").forEach((li, index) => {
-      const text = li.textContent.trim()
-      if (!text) return
-
-      if (isOrdered) {
-        const num = startNum + index
-        items.push(`[LIST:ol:${num}]${num}. ${text}[/LIST]`)
-      } else {
-        items.push(`[LIST:ul]• ${text}[/LIST]`)
-      }
+  htmlValues.forEach((html) => {
+    if (!html) return
+    const document = new DOMParser().parseFromString(html, "text/html")
+    document.querySelectorAll("img[src]").forEach((image) => {
+      const src = image.getAttribute("src")
+      if (src && !imageUrls.includes(src)) imageUrls.push(src)
     })
-
-    const replacement = document.createTextNode(items.join("\n"))
-    listEl.replaceWith(replacement)
-  }
-
-  return box.innerHTML
-}
-
-// Render list markers back to proper HTML lists (called on LOAD/DISPLAY)
-function renderListsInHtml(html) {
-  if (!html || html.indexOf("[LIST:") === -1) return html
-  let result = html
-
-  // Handle consecutive [LIST:ul] markers - group into <ul>
-  const ulRegex = /((?:\[LIST:ul\]• [^\[]+\[\/LIST\]\s*)+)/g
-  result = result.replace(ulRegex, (match) => {
-    const items = match.match(/\[LIST:ul\]• ([^\[]+)\[\/LIST\]/g)
-    if (!items || items.length === 0) return match
-    const lis = items.map(item => {
-      const text = item.match(/\[LIST:ul\]• ([^\[]+)\[\/LIST\]/)[1]
-      return "<li>" + text + "</li>"
-    }).join("")
-    return "<ul>" + lis + "</ul>"
   })
 
-  // Handle consecutive [LIST:ol:N] markers - group into <ol>
-  const olRegex = /((?:\[LIST:ol:\d+\]\d+\.\s[^\[]+\[\/LIST\]\s*)+)/g
-  result = result.replace(olRegex, (match) => {
-    const items = match.match(/\[LIST:ol:\d+\]\d+\.\s([^\[]+)\[\/LIST\]/g)
-    if (!items || items.length === 0) return match
-    const firstMatch = match.match(/\[LIST:ol:(\d+)\]/)
-    const startNum = firstMatch ? parseInt(firstMatch[1]) : 1
-    const lis = items.map(item => {
-      const text = item.match(/\[LIST:ol:\d+\]\d+\.\s([^\[]+)\[\/LIST\]/)[1]
-      return "<li>" + text + "</li>"
-    }).join("")
-    const startAttr = startNum !== 1 ? " start=\"" + startNum + "\"" : ""
-    return "<ol" + startAttr + ">" + lis + "</ol>"
-  })
-
-  // Clean up any remaining standalone markers
-  result = result.replace(/\[LIST:[^\]]*\][^\[]*\[\/LIST\]/g, "")
-
-  return result
+  return imageUrls
 }
 
-const INLINE_MATH_TYPE = "inline-math"
-const BLOCK_MATH_TYPE = "block-math"
-
-// Convert editor math spans → $…$ / $$…$$ text (called before SAVE)
-function mathSpansToDelimiters(html) {
-  if (!html || html.indexOf("data-type=") === -1) return html
-  const box = document.createElement("div")
-  box.innerHTML = html
-  box.querySelectorAll(`[data-type="${INLINE_MATH_TYPE}"],[data-type="${BLOCK_MATH_TYPE}"]`).forEach((el) => {
-    const latex = (el.getAttribute("data-latex") || "").trim()
-    const delim = el.getAttribute("data-type") === BLOCK_MATH_TYPE ? "$$" : "$"
-    el.replaceWith(document.createTextNode(`${delim}${latex}${delim}`))
-  })
-  return box.innerHTML
+function normalizeImageUrl(image) {
+  if (typeof image === "string") return image
+  if (!image || typeof image !== "object") return ""
+  return image.url || image.imageUrl || image.src || image.path || image.location || ""
 }
 
-// Render $…$ / $$…$$ delimiters AND any legacy data-type spans to visible
-// KaTeX (display side). Idempotent via the .katex guard.
-function renderMathInHtml(html) {
-  if (!html) return html
-  const hasSpans = html.indexOf("data-type=") !== -1
-  const hasDelims = /\$\$[^$]+\$\$|\$[^$\s][^$]*?\$/.test(html)
-  if (!hasSpans && !hasDelims) return html
+function getQuestionImageUrls(question) {
+  const values = [
+    question?.imageUrl,
+    ...(Array.isArray(question?.imageUrls) ? question.imageUrls : question?.imageUrls ? [question.imageUrls] : []),
+    ...(Array.isArray(question?.images) ? question.images : question?.images ? [question.images] : []),
+    ...(Array.isArray(question?.data?.imageUrls) ? question.data.imageUrls : question?.data?.imageUrls ? [question.data.imageUrls] : []),
+    ...(Array.isArray(question?.data?.images) ? question.data.images : question?.data?.images ? [question.data.images] : []),
+  ]
 
-  const box = document.createElement("div")
-  box.innerHTML = html
-
-  // Legacy/alternate source: real math spans
-  box.querySelectorAll(`[data-type="${INLINE_MATH_TYPE}"],[data-type="${BLOCK_MATH_TYPE}"]`).forEach((el) => {
-    if (el.querySelector(".katex")) return
-    let latex = el.getAttribute("data-latex") || ""
-    latex = latex.replace(/\\\\/g, "\\")
-    try {
-      el.innerHTML = katex.renderToString(latex, {
-        throwOnError: false,
-        displayMode: el.getAttribute("data-type") === BLOCK_MATH_TYPE,
-        output: "html",
-      })
-    } catch { /* leave as-is */ }
-  })
-
-  // Delimiter form: walk text nodes, replace $…$ / $$…$$ with rendered KaTeX
-  const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT)
-  const textNodes = []
-  while (walker.nextNode()) {
-    if (/\$\$[^$]+\$\$|\$[^$\s][^$]*?\$/.test(walker.currentNode.nodeValue)) textNodes.push(walker.currentNode)
-  }
-  textNodes.forEach((tn) => {
-    const frag = document.createElement("span")
-    frag.innerHTML = tn.nodeValue.replace(
-      /\$\$([^$]+)\$\$|\$([^$\s][^$]*?)\$/g,
-      (_, blockLatex, inlineLatex) => {
-        const latex = (blockLatex ?? inlineLatex ?? "").replace(/\\\\/g, "\\").trim()
-        if (!latex) return _
-        try {
-          return katex.renderToString(latex, {
-            throwOnError: false,
-            displayMode: blockLatex != null,
-            output: "html",
-          })
-        } catch { return _ }
-      }
-    )
-    tn.replaceWith(...frag.childNodes)
-  })
-
-  return box.innerHTML
+  return [...new Set(values.map(normalizeImageUrl).filter(Boolean))]
 }
 
-// Convert $…$ delimiter text in the document into live math nodes
-// (used after loading saved content into the editor). onEmit receives the
-// migrated HTML so the parent form state stays in sync.
-function migrateDelimiterMath(editor, onEmit) {
-  if (!editor) return
-  try {
-    if (!/\$[^$]*\$/.test(editor.getHTML())) return
-    const tr = createMathMigrateTransaction(editor, editor.state.tr, mathMigrationRegex)
-    editor.view.dispatch(tr)
-    onEmit?.(editor.getHTML())
-  } catch { /* nothing to migrate */ }
+function renderQuestionContent(html, imageUrls) {
+  return renderLineBreaksInHtml(renderImageMarkersInHtml(renderListsInHtml(renderMathInHtml(html)), imageUrls))
 }
 
-// Convert [LIST] markers back to proper HTML lists in the editor.
-// Called after loading saved content so lists render correctly.
-function migrateDelimiterLists(editor, onEmit) {
-  if (!editor) return
-  try {
-    const html = editor.getHTML()
-    if (!html.includes("[LIST:")) return
-    const migrated = renderListsInHtml(html)
-    if (migrated !== html) {
-      editor.commands.setContent(migrated)
-      onEmit?.(editor.getHTML())
-    }
-  } catch { /* nothing to migrate */ }
-}
-
-// Compress an image File to a dataURL for inline insertion (mirrors the
-// local file-pick experience of the main "Question Image" uploader).
-// Implementation lives in ./image-utils (budget-aware compression) and is
-// imported at the top of this file.
-
-// Quick-insert snippets for the formula popover.
-const MATH_PALETTE = [
-  { label: "a/b", latex: "\\frac{}{}", caretOffset: 3 },
-  { label: "x²", latex: "^{}", caretOffset: 1 },
-  { label: "x₂", latex: "_{}", caretOffset: 1 },
-  { label: "√", latex: "\\sqrt{}", caretOffset: 6 },
-  { label: "√ⁿ", latex: "\\sqrt[]{}", caretOffset: 7 },
-  { label: "∑", latex: "\\sum_{i=1}^{n}", caretOffset: 14 },
-  { label: "∫", latex: "\\int_{}^{}", caretOffset: 6 },
-  { label: "lim", latex: "\\lim_{x \\to \\infty}" },
-  { label: "≤", latex: "\\leq " },
-  { label: "≥", latex: "\\geq " },
-  { label: "≠", latex: "\\neq " },
-  { label: "≈", latex: "\\approx " },
-  { label: "±", latex: "\\pm " },
-  { label: "×", latex: "\\times " },
-  { label: "÷", latex: "\\div " },
-  { label: "∞", latex: "\\infty " },
-  { label: "°", latex: "^\\circ " },
-  { label: "α", latex: "\\alpha " },
-  { label: "β", latex: "\\beta " },
-  { label: "θ", latex: "\\theta " },
-  { label: "π", latex: "\\pi " },
-  { label: "Δ", latex: "\\Delta " },
-  { label: "∠", latex: "\\angle " },
-  { label: "△", latex: "\\triangle " },
-  { label: "sin", latex: "\\sin " },
-  { label: "cos", latex: "\\cos " },
-  { label: "tan", latex: "\\tan " },
-  { label: "log", latex: "\\log " },
-]
-
-// ── Rich Text Toolbar ──────────────────────────────────────────────────────────
-
-function ToolbarButton({ onClick, active, title, children, disabled }) {
-  return (
-    <button
-      type="button"
-      onMouseDown={(e) => { e.preventDefault(); onClick(); }}
-      disabled={disabled}
-      title={title}
-      className={`p-1.5 rounded text-sm transition-colors ${
-        active
-          ? "bg-primary text-primary-foreground"
-          : "hover:bg-muted text-muted-foreground hover:text-foreground"
-      } disabled:opacity-40 disabled:cursor-not-allowed`}
-    >
-      {children}
-    </button>
-  )
-}
-
-function ToolbarDivider() {
-  return <div className="w-px h-5 bg-border mx-0.5" />
-}
-
-function RichTextToolbar({ editor, onOpenDraw }) {
-  const imageInputRef = useRef(null)
-  const [uploadMsg, setUploadMsg] = useState(null)
-
-  const flashMsg = (type, msg, ms = 4000) => {
-    setUploadMsg({ type, msg })
-    setTimeout(() => setUploadMsg(null), ms)
-  }
-
-  // Pick a local file → compress → insert inline as dataURL. Same
-  // choose-file experience as the main "Question Image" uploader.
-  const insertImage = useCallback(async (e) => {
-    const file = e.target.files?.[0]
-    if (!file || !editor) return
-    e.target.value = ""
-
-    if (!file.type.startsWith("image/")) {
-      flashMsg("error", "Please select an image file.")
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      flashMsg("error", "Image must be under 5 MB.")
-      return
-    }
-
-    try {
-      const dataUrl = await fileToCompressedDataUrl(file)
-      insertAnchoredImage(editor, dataUrl)
-      flashMsg("success", "Image inserted.")
-    } catch {
-      flashMsg("error", "Could not process that image.")
-    }
-  }, [editor])
-
-  const insertImageFromUrl = useCallback(() => {
-    const url = prompt("Enter image URL:")
-    if (url) insertAnchoredImage(editor, url)
-  }, [editor])
-
-  if (!editor) return null
+function RichContentPreview({ html, className = "" }) {
+  const [previewUrls, setPreviewUrls] = React.useState([])
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 p-2 border-b bg-muted/30 rounded-t-md">
-      {/* Undo / Redo */}
-      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} title="Undo">
-        <Undo className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} title="Redo">
-        <Redo className="w-3.5 h-3.5" />
-      </ToolbarButton>
+    <>
+      <div
+        className={`rich-content whitespace-pre-wrap break-words [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_.inline-image-paragraph]:inline-block [&_.inline-image-paragraph]:align-middle [&_.inline-image-paragraph]:m-0 [&_.inline-image-paragraph>img]:inline-block [&_img]:h-[150px] [&_img]:w-[150px] [&_img]:object-contain [&_img]:cursor-zoom-in [&_img]:rounded-md [&_img]:border [&_img]:border-slate-300 [&_[data-image-kind="drawing"]]:h-[64px] [&_[data-image-kind="drawing"]]:w-[100px] ${className}`}
+        onClick={(event) => {
+          const image = event.target.closest("img")
+          if (!image?.src) return
 
-      <ToolbarDivider />
+          const imageGroup = image.closest(".inline-image-paragraph")
+          const groupUrls = imageGroup
+            ? [...imageGroup.querySelectorAll("img")].map((groupImage) => groupImage.src).filter(Boolean)
+            : [image.src]
 
-      {/* Text formatting */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="Bold">
-        <Bold className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title="Italic">
-        <Italic className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} title="Underline">
-        <UnderlineIcon className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} title="Strikethrough">
-        <Strikethrough className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive("code")} title="Inline Code">
-        <Code className="w-3.5 h-3.5" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Sub / Sup */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} title="Subscript (H₂O)">
-        <SubIcon className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} title="Superscript (x²)">
-        <SupIcon className="w-3.5 h-3.5" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-            {/* Highlight + Color */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHighlight().run()} active={editor.isActive("highlight")} title="Highlight">
-        <Highlighter className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ColorPicker editor={editor} />
-
-      <ToolbarDivider />
-
-      {/* Alignment */}
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} title="Align Left">
-        <AlignLeft className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} title="Align Center">
-        <AlignCenter className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} title="Align Right">
-        <AlignRight className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} title="Justify">
-        <AlignJustify className="w-3.5 h-3.5" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Lists */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title="Bullet List">
-        <List className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Numbered List">
-        <ListOrdered className="w-3.5 h-3.5" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Headings */}
-      {[1, 2, 3].map((level) => (
-        <ToolbarButton
-          key={level}
-          onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
-          active={editor.isActive("heading", { level })}
-          title={`Heading ${level}`}
-        >
-          <span className="text-xs font-bold">H{level}</span>
-        </ToolbarButton>
-      ))}
-
-      <ToolbarDivider />
-
-      {/* Horizontal rule */}
-      <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Rule">
-        <Minus className="w-3.5 h-3.5" />
-      </ToolbarButton>
-
-      <ToolbarDivider />
-
-      {/* Image / Draw / Formula */}
-      <ToolbarButton onClick={() => imageInputRef.current?.click()} title="Insert Image (from device)">
-        <ImageIcon className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <ToolbarButton onClick={insertImageFromUrl} title="Insert Image from URL">
-        <LinkIcon className="w-3.5 h-3.5" />
-      </ToolbarButton>
-      <input ref={imageInputRef} type="file" accept="image/*" className="sr-only" onChange={insertImage} />
-
-      {onOpenDraw && (
-        <ToolbarButton onClick={() => onOpenDraw()} title="Draw a Diagram">
-          <PenTool className="w-3.5 h-3.5" />
-        </ToolbarButton>
-      )}
-
-      <FormulaButton editor={editor} />
-
-      {/* Upload status message */}
-      {uploadMsg && (
-        <span className={`text-xs font-medium ${uploadMsg.type === "success" ? "text-emerald-600" : "text-red-600"}`}>
-          {uploadMsg.msg}
-        </span>
-      )}
-    </div>
-  )
-}
-
-// ── Color Picker (reliable swatches — native input stole editor focus) ────────
-const SWATCHES = ["#111827", "#dc2626", "#ea580c", "#16a34a", "#2563eb", "#7c3aed", "#db2777", "#0891b2"]
-
-function ColorPicker({ editor }) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          title="Text Color"
-          className="p-1.5 rounded hover:bg-muted cursor-pointer flex items-center relative"
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-white dark:border-background" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent side="bottom" align="start" className="w-auto p-2 z-[9999]">
-        <div className="grid grid-cols-4 gap-1.5">
-          {SWATCHES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              title={c}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { editor.chain().focus().setColor(c).run(); setOpen(false) }}
-              className="w-6 h-6 rounded-md border border-border hover:scale-110 transition-transform"
-              style={{ backgroundColor: c }}
-            />
-          ))}
-        </div>
-        <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-          Custom
-          <input
-            type="color"
-            className="w-8 h-6 cursor-pointer border rounded"
-            onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
-          />
-        </label>
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-// ── Formula Button (LaTeX via KaTeX — inline or block) ────────────────────────
-function FormulaButton({ editor }) {
-  const [open, setOpen] = useState(false)
-  const [latex, setLatex] = useState("")
-  const [isBlock, setIsBlock] = useState(false)
-  const inputRef = useRef(null)
-  const editingRef = useRef(false)
-
-  const isActiveMath = editor.isActive("inlineMath") || editor.isActive("blockMath")
-
-  // Pre-fill when opening with a math node selected (edit mode)
-  const handleOpenChange = (next) => {
-    if (next) {
-      editingRef.current = isActiveMath
-      const existing =
-        editor.getAttributes("inlineMath")?.latex ??
-        editor.getAttributes("blockMath")?.latex ?? ""
-      setLatex(existing)
-      setIsBlock(editor.isActive("blockMath"))
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
-    setOpen(next)
-  }
-
-  const insertSnippet = (snippet, caretOffset = 0) => {
-    setLatex((prev) => prev + snippet)
-    setTimeout(() => {
-      const el = inputRef.current
-      if (!el) return
-      const pos = (el.value.length - snippet.length) + caretOffset
-      el.focus()
-      el.setSelectionRange(pos, pos)
-    }, 0)
-  }
-
-  const apply = () => {
-    const cleanLatex = latex.trim()
-    if (!cleanLatex) return
-    if (editingRef.current && isActiveMath) {
-      if (editor.isActive("inlineMath")) editor.chain().focus().updateInlineMath({ latex: cleanLatex }).run()
-      else editor.chain().focus().updateBlockMath({ latex: cleanLatex }).run()
-    } else if (isBlock) {
-      editor.chain().focus().insertBlockMath({ latex: cleanLatex }).run()
-    } else {
-      editor.chain().focus().insertInlineMath({ latex: cleanLatex }).run()
-    }
-    setOpen(false)
-  }
-
-  let previewHtml = ""
-  try {
-    previewHtml = katex.renderToString(latex || "\\frac{a}{b}", {
-      throwOnError: false,
-      displayMode: isBlock,
-      output: "html", // visual only
-    })
-  } catch {
-    previewHtml = ""
-  }
-
-  return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          title="Insert / Edit Formula (LaTeX)"
-          onMouseDown={(e) => e.preventDefault()}
-          className="p-1.5 rounded transition-colors hover:bg-muted text-muted-foreground hover:text-foreground flex items-center gap-0.5"
-        >
-          <Sigma className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-serif italic">fx</span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent side="bottom" align="start" className="w-[340px] p-3 space-y-2 z-[9999]">
-        <p className="text-xs font-medium">Formula — LaTeX</p>
-
-        {/* Live preview */}
-        <div
-          className="min-h-[46px] rounded-md border bg-muted/40 px-3 py-2 text-center overflow-x-auto"
-          dangerouslySetInnerHTML={{ __html: previewHtml }}
-        />
-
-        <input
-          ref={inputRef}
-          value={latex}
-          onChange={(e) => setLatex(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); apply() } }}
-          placeholder="e.g. \\frac{a}{b} + \\sqrt{x^2+1}"
-          className="w-full h-8 px-2 text-sm rounded-md border bg-transparent focus:outline-none focus:ring-1 focus:ring-ring font-mono"
-        />
-
-        {/* Symbol palette */}
-        <div className="flex flex-wrap gap-1 max-h-[92px] overflow-y-auto">
-          {MATH_PALETTE.map((s) => (
-            <button
-              key={s.label}
-              type="button"
-              title={s.latex}
-              onClick={() => insertSnippet(s.latex, s.caretOffset)}
-              className="min-w-[34px] h-7 px-1 rounded border bg-card hover:bg-muted text-xs"
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between pt-1">
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isBlock}
-              onChange={(e) => setIsBlock(e.target.checked)}
-              className="accent-primary"
-            />
-            Block (own line)
-          </label>
-          <div className="flex gap-1.5">
-            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="button" size="sm" onClick={apply}>
-              {editingRef.current && isActiveMath ? "Update" : "Insert"}
-            </Button>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-// ── Rich Text Editor ───────────────────────────────────────────────────────────
-
-function RichTextEditor({ value, onChange, placeholder = "Start typing...", minHeight = "120px" }) {
-  const [drawOpen, setDrawOpen] = useState(false)
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({ underline: false }),
-      Underline,
-      Subscript,
-      Superscript,
-      TextStyle,
-      Color,
-      Highlight.configure({ multicolor: true }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      ResizableImage.configure({ allowBase64: true }),
-      Mathematics,
-      Placeholder.configure({ placeholder }),
-    ],
-    content: value || "",
-    onUpdate: ({ editor }) => {
-      lastEmittedRef.current = editor.getHTML()
-      onChange(editor.getHTML())
-    },
-    // note: image/drawing inserts via a raw transaction don't fire onUpdate,
-    // so we also emit after those in insertAnchoredImage via the toolbars.
-    editorProps: {
-      attributes: {
-        class: "rich-content prose prose-sm max-w-none focus:outline-none px-3 py-2",
-        "data-rich-content": "true",
-        style: `min-height: ${minHeight}`,
-      },
-    },
-  })
-
-  // Sync external value changes ONLY when they didn't originate from this editor
-  // (e.g. loading an existing question). Comparing against what we last emitted
-  // prevents the parent's state from wiping a just-inserted image/drawing.
-  const lastEmittedRef = useRef(value)
-  const emitRef = useRef(null)
-  emitRef.current = onChange
-  useEffect(() => {
-    if (!editor) return
-    if (value !== editor.getHTML() && value !== lastEmittedRef.current) {
-      lastEmittedRef.current = null
-      editor.commands.setContent(value || "")
-      // Saved content stores math as $…$ text and lists as [LIST] markers
-      // (sanitizer-proof); convert to live nodes so they render in the editor.
-      migrateDelimiterMath(editor, (html) => {
-        lastEmittedRef.current = html
-        emitRef.current?.(html)
-      })
-      migrateDelimiterLists(editor, (html) => {
-        lastEmittedRef.current = html
-        emitRef.current?.(html)
-      })
-    }
-  }, [value, editor])
-
-  // One-time migration on mount too (covers the initial content value).
-  useEffect(() => {
-    if (!editor) return
-    migrateDelimiterMath(editor, (html) => {
-      lastEmittedRef.current = html
-      emitRef.current?.(html)
-    })
-    migrateDelimiterLists(editor, (html) => {
-      lastEmittedRef.current = html
-      emitRef.current?.(html)
-    })
-  }, [editor])
-
-  // The pad hands over a flattened PNG dataURL. Insert it inline at the cursor
-  // position, just like the image uploader — it will be extracted and uploaded
-  // as a multipart field when the question is saved.
-  const insertDrawnImage = useCallback((dataUrl) => {
-    if (!dataUrl || !editor) return
-    insertAnchoredImage(editor, dataUrl)
-  }, [editor])
-
-  return (
-    <div className="border rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:border-transparent">
-      {/* Scoped styles — class-based (.rich-content is applied to the ProseMirror
-          element itself, so these always apply). Tailwind preflight strips list
-          markers and the typography plugin isn't installed. */}
-      <style>{`
-        .rich-content ul { list-style: disc outside; padding-left: 1.5rem; margin: .4rem 0; }
-        .rich-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: .4rem 0; }
-        .rich-content li { margin: .2rem 0; display: list-item; }
-        .rich-content p { margin: .25rem 0; }
-        /* Inserted images/drawings render FULL SIZE so they are clearly visible */
-        .rich-content img { display: block; max-width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--border, #e2e8f0); margin: .4rem 0; }
-        .rich-content [data-type="inline-math"],
-        .rich-content [data-type="block-math"] { display: inline-block; min-width: .5em; min-height: 1em; }
-        .rich-content [data-type="block-math"] { display: block; text-align: center; margin: .35rem 0; }
-        .rich-content .katex { font-size: 1.05em; }
-      `}</style>
-
-      {/* Only show the draw tool when the parent can persist the result */}
-      <RichTextToolbar editor={editor} onOpenDraw={() => setDrawOpen(true)} />
-      <EditorContent editor={editor} />
-
-      <DrawingPadModal
-        open={drawOpen}
-        onOpenChange={setDrawOpen}
-        onInsert={insertDrawnImage}
+          setPreviewUrls(groupUrls)
+        }}
+        dangerouslySetInnerHTML={{ __html: html }}
       />
-    </div>
+      <Dialog open={previewUrls.length > 0} onOpenChange={(open) => !open && setPreviewUrls([])}>
+        <DialogContent className="max-w-5xl p-3">
+          <DialogTitle className="sr-only">Full image preview</DialogTitle>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {previewUrls.map((src, index) => (
+              <img
+                key={`${src}-${index}`}
+                src={src}
+                alt={`Full image preview ${index + 1}`}
+                className="max-h-[80vh] max-w-full object-contain"
+              />
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
-}
-
-// Helper to strip HTML tags for plain text comparisons / previews
-function stripHtml(html) {
-  return html?.replace(/<[^>]*>/g, "") || ""
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────────
@@ -815,11 +151,10 @@ export default function QuestionsPanel({
     year: new Date().getFullYear(),
     category: "JAMB",
     explanation: "",    // HTML string from rich editor
-    imageUrl: null,      // Main question image URL (uploaded to server)
+    imageUrls: [],       // Images inserted inside the rich editors
     instruction: "",     // e.g. "Solve for x."
     isPastQuestion: true, // toggle ON by default → origin is "PAST_QUESTION"
     origin: "PAST_QUESTION",
-    imageFile: null,      // selected image File object (sent with the question body)
   })
   const [options, setOptions] = useState(["", "", "", ""])
   const [correctAnswer, setCorrectAnswer] = useState("")
@@ -952,30 +287,36 @@ export default function QuestionsPanel({
 
     setIsSubmitting(true)
     try {
-      // Math is persisted as $…$ / $$…$$ plain text because the backend
-      // sanitizer strips <span data-type="inline-math"> elements entirely.
-      // Lists are persisted as [LIST] markers because the backend strips
-      // <ul>, <ol>, <li> tags.
+      const questionImageUrls = extractEditorImageUrls(formData.text)
+      const explanationImageUrls = extractEditorImageUrls(formData.explanation)
+      const extractedImageUrls = [...questionImageUrls, ...explanationImageUrls]
+      const normalizedText = normalizeRichTextForBackend(formData.text)
+      const normalizedExplanation = normalizeRichTextForBackend(formData.explanation, questionImageUrls.length)
+      const finalImageUrls = [...new Set([
+        ...(formData.imageUrls || []),
+        ...extractedImageUrls,
+      ])].filter(Boolean)
+
+      const safeOrigin = formData.isPastQuestion
+        ? "PAST_QUESTION"
+        : "SAMPLE_QUESTION"
+
       const questionData = {
-        text: listsToDelimiters(mathSpansToDelimiters(formData.text)),
+        text: normalizedText,
         type: formData.type,
         difficulty: formData.difficulty,
-        year: parseInt(formData.year),
+        year: formData.isPastQuestion ? Number(formData.year || new Date().getFullYear()) : null,
         category: formData.category,
-        explanation: listsToDelimiters(mathSpansToDelimiters(formData.explanation)),
-        // If a new image file was selected it is sent as a multipart field,
-        // otherwise the existing stored URL is preserved.
-        imageUrl: formData.imageFile ? null : formData.imageUrl,
+        explanation: normalizedExplanation,
+        imageUrls: finalImageUrls,
         instruction: formData.instruction, // e.g. "Solve for x."
-        origin: formData.isPastQuestion ? "PAST_QUESTION" : (formData.origin || "MANUAL"),
+        origin: safeOrigin,
         options: formData.type === "MULTIPLE_CHOICE" ? options.filter((o) => o.trim()) : [],
-        correctAnswer: formData.type === "MULTIPLE_CHOICE" ? correctAnswer : formData.text,
+        correctAnswer: formData.type === "MULTIPLE_CHOICE" ? correctAnswer : stripHtml(normalizedText || formData.text || ""),
       }
-      const imageFile = formData.imageFile || null
-
       const result = editingQuestion
-        ? await updateQuestion(editingQuestion.id, questionData, imageFile)
-        : await createQuestion(activeTopicId, questionData, imageFile)
+        ? await updateQuestion(editingQuestion.id, questionData)
+        : await createQuestion(activeTopicId, questionData)
 
       if (result.success) {
         toast({ title: "Success", description: editingQuestion ? "Question updated" : "Question created" })
@@ -996,11 +337,10 @@ export default function QuestionsPanel({
   function resetForm() {
   setFormData({ text: "", type: "MULTIPLE_CHOICE", difficulty: "MEDIUM",
     year: new Date().getFullYear(), category: "JAMB", explanation: "",
-    imageUrl: null,
+    imageUrls: [],
     instruction: "",
     isPastQuestion: true,
     origin: "PAST_QUESTION",
-    imageFile: null,
   })
 
   setOptions(["", "", "", ""])
@@ -1024,11 +364,10 @@ export default function QuestionsPanel({
       year: question.year,
       category: question.category,
       explanation: question.explanation || "",
-      imageUrl: question.imageUrl || null,
+      imageUrls: question.imageUrls || [],
       instruction: question.instruction || "",
       isPastQuestion: (question.origin || "PAST_QUESTION") === "PAST_QUESTION",
       origin: question.origin || "PAST_QUESTION",
-      imageFile: null, // cannot pre-populate a file when editing
     })
     setOptions(question.options || ["", "", "", ""])
     setCorrectAnswer(question.correctAnswer || "")
@@ -1271,85 +610,15 @@ export default function QuestionsPanel({
                   </div>
                   {!formData.isPastQuestion && (
                     <Input
-                      placeholder="Enter origin (e.g. AI_GENERATED)"
-                      value={formData.origin}
-                      onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                      // style={{  width: "133px" }}
+                      placeholder="Sample question"
+                      value={formData.origin === "SAMPLE_QUESTION" ? "SAMPLE_QUESTION" : formData.origin}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          origin: e.target.value.toUpperCase() || "SAMPLE_QUESTION",
+                        })
+                      }
                     />
-                  )}
-                </div>
-              </div>
-
-              {/* 📸 Question Image Upload */}
-              <div className="space-y-3">
-                <Label>Question Image</Label>
-                <div className="border rounded-lg p-3 bg-muted/50 cursor-pointer hover:bg-muted/100 transition-colors">
-                  {formData.imageFile || formData.imageUrl ? (
-                    <div className="mb-2">
-                      <img
-                        src={formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl}
-                        alt="Question image"
-                        className="w-50 h-[400px] rounded-lg border border-border object-cover bg-white"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setFormData({ ...formData, imageUrl: null, imageFile: null })
-                        }
-                        className="text-xs text-red-600"
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ) : (
-                    <div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const fileInput = document.createElement("input");
-                          fileInput.type = "file";
-                          fileInput.accept = "image/*";
-                          fileInput.click();
-
-                          fileInput.onchange = e => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            if (!file.type.startsWith("image/")) {
-                              toast({
-                                title: "Error",
-                                description: "Please select an image file.",
-                                variant: "destructive",
-                              });
-                              return;
-                            }
-                            if (file.size > 5 * 1024 * 1024) {
-                              toast({
-                                title: "Error",
-                                description: "Image must be under 5 MB.",
-                                variant: "destructive",
-                              });
-                              return;
-                            }
-                            // Hold the file locally; it is uploaded together with the
-                            // question when the form is submitted.
-                            setFormData({ ...formData, imageUrl: null, imageFile: file });
-                            toast({
-                              title: "Pending",
-                              description: "Image attached — it will be uploaded when you save the question.",
-                            });
-                          };
-                        }}
-                      >
-                        Upload Image
-                      </Button>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Max 5MB, PNG/JPG/JPEG
-                      </p>
-                    </div>
                   )}
                 </div>
               </div>
@@ -1363,7 +632,7 @@ export default function QuestionsPanel({
                   onChange={(e) => setFormData({ ...formData, instruction: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground">
-                  A short instruction for the question, e.g. &quot;Solve for x.&quot; It will be shown with the question image.
+                  A short instruction for the question, e.g. &quot;Solve for x.&quot;
                 </p>
               </div>
 
@@ -1373,6 +642,7 @@ export default function QuestionsPanel({
                 <RichTextEditor
                   value={formData.text}
                   onChange={(html) => setFormData({ ...formData, text: html })}
+                  imageUrls={formData.imageUrls}
                   placeholder="Enter your question here... Use the toolbar for formatting, subscript (H₂O), superscript (x²), images, etc."
                   minHeight="140px"
                 />
@@ -1419,6 +689,7 @@ export default function QuestionsPanel({
                 <RichTextEditor
                   value={formData.explanation}
                   onChange={(html) => setFormData({ ...formData, explanation: html })}
+                  imageUrls={formData.imageUrls}
                   placeholder="Explain the correct answer... You can include images, or formatted text."
                   minHeight="120px"
                 />
@@ -1476,18 +747,9 @@ export default function QuestionsPanel({
                       <HelpCircle className="h-6 w-6 text-primary" />
                     </div>
                     <div className="space-y-2 flex-1 min-w-0">
-                      {/* Render HTML question text */}
-                      <CardTitle
-                        className="rich-content text-base font-semibold [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
-                        dangerouslySetInnerHTML={{ __html: renderListsInHtml(renderMathInHtml(question.text)) }}
-                      />
-                      <div className="flex flex-wrap gap-2 pb-4">
-                        <Badge variant="outline">{question.type.replace("_", " ")}</Badge>
-                        <Badge variant="secondary">{question.difficulty}</Badge>
-                        <Badge>{question.category}</Badge>
-                        <Badge variant="outline">{question.year}</Badge>
-                        {question.origin && <Badge variant="secondary">{question.origin.replace("_", " ")}</Badge>}
-                      </div>
+                      <CardTitle className="text-[1rem]  text-blue-500 font-extrabold">
+                        Instruction:  <span className="text-sm font-medium">{question.instruction?.trim() || "none"}</span>
+                      </CardTitle>
                     </div>
                   </div>
 
@@ -1514,21 +776,10 @@ export default function QuestionsPanel({
               </CardHeader>
 
               <CardContent>
-                {question.instruction && (
-                  <p className="text-xs font-medium text-blue-700 italic mb-2">
-                    {question.instruction}
-                  </p>
-                )}
-
-                {question.imageUrl && (
-                  <div className="mb-3">
-                    <img
-                      src={question.imageUrl}
-                      alt="Question image"
-                      className="max-w-full h-40 object-contain rounded-lg border border-muted mb-2"
-                    />
-                  </div>
-                )}
+                <RichContentPreview
+                  html={renderQuestionContent(question.text, getQuestionImageUrls(question))}
+                  className="text-base font-semibold [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs"
+                />
 
                 {question.type === "MULTIPLE_CHOICE" && question.options && (
                   <div className="space-y-2 mb-3">
@@ -1547,12 +798,20 @@ export default function QuestionsPanel({
                 {question.explanation && (
                   <div className="border-t pt-3">
                     <p className="text-xs font-medium text-muted-foreground mb-1">Explanation:</p>
-                    <div
-                      className="rich-content text-sm [&_img]:max-w-full [&_img]:rounded [&_img]:my-1 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: renderListsInHtml(renderMathInHtml(question.explanation)) }}
+                    <RichContentPreview
+                      html={renderQuestionContent(question.explanation, getQuestionImageUrls(question))}
+                      className="text-sm [&_img]:my-1 prose prose-sm max-w-none"
                     />
                   </div>
                 )}
+
+                <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
+                  <Badge variant="outline">{question.type.replace("_", " ")}</Badge>
+                  <Badge variant="secondary">{question.difficulty}</Badge>
+                  <Badge>{question.category}</Badge>
+                  <Badge variant="outline">{question.year}</Badge>
+                  {question.origin && <Badge variant="secondary">{question.origin.replace("_", " ")}</Badge>}
+                </div>
               </CardContent>
             </Card>
           ))
@@ -1636,18 +895,9 @@ export default function QuestionsPanel({
                     {viewingQuestion.instruction}
                   </p>
                 )}
-                {viewingQuestion.imageUrl && (
-                  <div className="my-3">
-                    <img
-                      src={viewingQuestion.imageUrl}
-                      alt="Question image"
-                      className="max-w-full h-auto rounded-lg border border-muted"
-                    />
-                  </div>
-                )}
-                <div
-                  className="rich-content text-muted-foreground [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: renderListsInHtml(renderMathInHtml(viewingQuestion.text)) }}
+                <RichContentPreview
+                  html={renderQuestionContent(viewingQuestion.text, getQuestionImageUrls(viewingQuestion))}
+                  className="text-muted-foreground [&_img]:my-2 prose prose-sm max-w-none"
                 />
               </div>
 
@@ -1686,9 +936,9 @@ export default function QuestionsPanel({
                   <Separator />
                   <div className="space-y-2">
                     <h4 className="font-semibold">Explanation</h4>
-                    <div
-                      className="rich-content bg-muted/50 rounded-lg p-4 [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_sup]:text-xs [&_sub]:text-xs prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: renderListsInHtml(renderMathInHtml(viewingQuestion.explanation)) }}
+                    <RichContentPreview
+                      html={renderQuestionContent(viewingQuestion.explanation, getQuestionImageUrls(viewingQuestion))}
+                      className="bg-muted/50 rounded-lg p-4 [&_img]:my-2 prose prose-sm max-w-none"
                     />
                   </div>
                 </>
