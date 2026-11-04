@@ -1,4 +1,5 @@
 import { getAdminConfig, getAdminTypeIcon, adminTimeAgo, AdminBackIcon, AdminCloseIcon, AdminCheckIcon } from "./adminNotificationUtils";
+import { stripHtmlToText } from "@/lib/formatText";
 
 export default function AdminNotificationDetail({ notification, onBack, onMarkRead, onRequestDelete }) {
   const id     = notification._id || notification.id;
@@ -68,7 +69,7 @@ export default function AdminNotificationDetail({ notification, onBack, onMarkRe
 
         {/* Message */}
         <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-          {notification.message || notification.body || notification.description || "No content."}
+          {stripHtmlToText(notification.message || notification.body || notification.description) || "No content."}
         </p>
 
         {/* Meta */}

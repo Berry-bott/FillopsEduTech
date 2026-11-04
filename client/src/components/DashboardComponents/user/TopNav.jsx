@@ -17,6 +17,7 @@ import { ThemeToggle } from "../theme-toggle"
 import { Link, useNavigate } from "react-router-dom"
 import useAuthStore from "../../../store/authStore"
 import useNotificationStore from "../../../store/userNotificationStore"
+import { stripHtmlToText } from "@/lib/formatText"
 
 // ─── Map API notification types to icons / colours ───────────────────────────
 const TYPE_META = {
@@ -70,7 +71,7 @@ function NotificationRow({ notification, onMarkRead, onNavigate }) {
           {notification.title}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">
-          {notification.message}
+          {stripHtmlToText(notification.message || notification.body || notification.description)}
         </p>
         <div className="flex items-center gap-1 mt-1">
           <Clock className="w-3 h-3 text-gray-400" />

@@ -31,6 +31,14 @@ function readTime(html) {
   return Math.max(1, Math.ceil(stripHtml(html).trim().split(/\s+/).filter(Boolean).length / 200));
 }
 
+function decodeHtmlEntities(html) {
+  if (!html) return "";
+
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = String(html);
+  return textarea.value;
+}
+
 function convertBareImageUrls(html) {
   if (!html) return html;
   const IMAGE_URL_RE =
@@ -232,9 +240,10 @@ export default function BlogDetailPage() {
   const isHtml = /<[a-z][\s\S]*>/i.test(selectedBlog.content || "");
 
   const renderedContent = convertBareImageUrls(
-    (selectedBlog.content || "")
+    decodeHtmlEntities((selectedBlog.content || ""))
       .replace(/(&amp;)+nbsp;/g, " ")
       .replace(/&nbsp;/g, " ")
+      .replace(/\u00a0/g, " ")
   );
 
   return (

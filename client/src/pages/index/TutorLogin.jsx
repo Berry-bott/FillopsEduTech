@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Logo from "../../assets/images/fillopsLogo.png";
 import useTutorAuthStore from "@/store/tutorAuthStore";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
 import CookieConsent, { hasCookieConsent } from "@/components/CookieConsent";
 
 const tutorLoginSchema = z.object({
@@ -18,9 +19,14 @@ const tutorLoginSchema = z.object({
 const TutorLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading, isAuthenticated } = useTutorAuthStore(); 
+  const [captchaToken, setCaptchaToken] = useState(null);
+
+  const recaptchaRef = useRef(null);
+
+  const { login, loading, isAuthenticated } = useTutorAuthStore();
 
   const {
     register,
@@ -30,49 +36,73 @@ const TutorLogin = () => {
     resolver: zodResolver(tutorLoginSchema),
   });
 
-  // ✅ Auto-redirect if already authenticated
+  // Auto-redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/tutor/dashboard", { replace: true });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
+
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+    setError("");
+  };
 
   const onSubmit = async (formData) => {
-  if (!hasCookieConsent()) {
-    setError("Please accept the Cookie Policy before signing in.");
-    return;
-  }
-  setError("");
-
-  try {
-    const res = await login(formData);
-
-    if (res?.success) {
-      toast({
-        title: "Welcome back! 👨‍🏫",
-        description: "Successfully logged in as tutor.",
-      });
-
-      // ✅ Only fetch profile if login succeeded
-      const profileRes = await getProfile(res.data.accessToken);
-      if (profileRes.success) {
-        useTutorAuthStore.getState().setTutor(profileRes.data);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 100));
-      navigate("/tutor/dashboard", { replace: true });
+    // Check cookie consent
+    if (!hasCookieConsent()) {
+      setError("Please accept the Cookie Policy before signing in.");
       return;
     }
 
-    // ✅ Handle failed login properly
-    setError(res?.message || "Invalid email or password");
-  } catch (error) {
-    console.error("Tutor login error:", error);
-    setError("Network error. Please check your connection.");
-  }
-};
+    // Check reCAPTCHA
+    if (!captchaToken) {
+      setError("Please complete the reCAPTCHA before signing in.");
+      return;
+    }
 
-  // ✅ Don't render form if already authenticated
+    setError("");
+
+    try {
+      const res = await login(formData);
+
+      if (res?.success) {
+        toast({
+          title: "Welcome back! 👨‍🏫",
+          description: "Successfully logged in as tutor.",
+        });
+
+        // Only fetch profile if login succeeded
+        const profileRes = await getProfile(res.data.accessToken);
+
+        if (profileRes.success) {
+          useTutorAuthStore.getState().setTutor(profileRes.data);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        navigate("/tutor/dashboard", { replace: true });
+        return;
+      }
+
+      // Handle failed login properly
+      setError(res?.message || "Invalid email or password");
+
+      // Reset CAPTCHA after failed login
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
+    } catch (error) {
+      console.error("Tutor login error:", error);
+
+      setError("Network error. Please check your connection.");
+
+      // Reset CAPTCHA after error
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
+    }
+  };
+
+  // Don't render form if already authenticated
   if (isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-background">
@@ -98,6 +128,7 @@ const TutorLogin = () => {
             className="relative"
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-purple-200 via-blue-200 to-transparent blur-2xl opacity-100 rounded-full"></div>
+
             {[...Array(6)].map((_, i) => (
               <motion.span
                 key={i}
@@ -117,6 +148,7 @@ const TutorLogin = () => {
                 }}
               />
             ))}
+
             <div
               className="relative w-32 h-32"
               style={{
@@ -141,6 +173,7 @@ const TutorLogin = () => {
               alt="App Logo"
               className="h-14 w-14 rounded-full shadow-md object-cover"
             />
+
             {/* Tutor Badge */}
             <div className="absolute -bottom-1 -right-1 bg-purple-600 rounded-full p-1.5 shadow-lg">
               <GraduationCap className="h-4 w-4 text-white" />
@@ -151,8 +184,12 @@ const TutorLogin = () => {
         {/* ===== Header ===== */}
         <div className="text-center mb-3">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-            Welcome Back <span className="text-purple-600 dark:text-purple-400">Tutor</span>
+            Welcome Back{" "}
+            <span className="text-purple-600 dark:text-purple-400">
+              Tutor
+            </span>
           </h1>
+
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             Sign in to your tutor dashboard
           </p>
@@ -163,6 +200,7 @@ const TutorLogin = () => {
           {/* Email */}
           <div className="relative">
             <Mail className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+
             <input
               type="email"
               placeholder="Tutor Email Address"
@@ -173,6 +211,7 @@ const TutorLogin = () => {
                   : "border-gray-300 dark:border-gray-700"
               }`}
             />
+
             {errors.email && (
               <p className="text-xs text-red-500 mt-1">
                 {errors.email.message}
@@ -183,6 +222,7 @@ const TutorLogin = () => {
           {/* Password with Eye Toggle */}
           <div className="relative">
             <Lock className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
+
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
@@ -193,6 +233,7 @@ const TutorLogin = () => {
                   : "border-gray-300 dark:border-gray-700"
               }`}
             />
+
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
@@ -204,11 +245,21 @@ const TutorLogin = () => {
                 <Eye className="h-5 w-5" />
               )}
             </button>
+
             {errors.password && (
               <p className="text-xs text-red-500 mt-1">
                 {errors.password.message}
               </p>
             )}
+          </div>
+
+          {/* ===== reCAPTCHA ===== */}
+          <div className="flex justify-center pt-1">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+              onChange={handleCaptchaChange}
+            />
           </div>
 
           {/* Error Message */}
@@ -227,9 +278,9 @@ const TutorLogin = () => {
           {/* Login Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !captchaToken}
             className={`w-full flex items-center justify-center gap-2 ${
-              loading
+              loading || !captchaToken
                 ? "bg-purple-400 cursor-not-allowed"
                 : "bg-purple-600 hover:bg-purple-700"
             } text-white font-semibold py-2.5 rounded-lg shadow-md transition duration-200`}
@@ -252,6 +303,7 @@ const TutorLogin = () => {
             <p className="hover:text-purple-600 dark:hover:text-purple-400 cursor-pointer">
               Forgot Password?
             </p>
+
             <p
               onClick={() => navigate("/tutor/register")}
               className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline cursor-pointer"
@@ -292,9 +344,11 @@ const TutorLogin = () => {
           © {new Date().getFullYear()} CBT Project. All rights reserved.
         </p>
       </motion.div>
+
       <CookieConsent />
     </section>
   );
 };
 
 export default TutorLogin;
+

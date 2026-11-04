@@ -11,8 +11,15 @@ const AUDIENCE_COLOR = {
   TUTORS_ONLY: "bg-amber-100 text-amber-700",
 };
 
+function decodeHtmlEntities(html) {
+  if (!html) return "";
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = String(html);
+  return textarea.value;
+}
+
 function stripHtml(html) {
-  return (html || "")
+  return (decodeHtmlEntities(html) || "")
     .replace(/&amp;nbsp;/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -121,9 +128,10 @@ export default function NewsDetailPage() {
   const authorName = author ? `${author.firstName} ${author.lastName}` : "FillOps";
   const authorInit = author ? `${author.firstName?.[0] ?? ""}${author.lastName?.[0] ?? ""}` : "F";
   const date       = fmtDate(selectedNews.publishedAt || selectedNews.createdAt);
-  const rt         = readTime(selectedNews.content);
-  const isHtml     = /<[a-z][\s\S]*>/i.test(selectedNews.content || "");
-  const plainText  = stripHtml(selectedNews.content);
+  const decodedContent = decodeHtmlEntities(selectedNews.content || "");
+  const rt         = readTime(decodedContent);
+  const isHtml     = /<[a-z][\s\S]*>/i.test(decodedContent);
+  const plainText  = stripHtml(decodedContent);
   const excerpt    = plainText.slice(0, 180);
 
   return (
@@ -211,9 +219,10 @@ export default function NewsDetailPage() {
               [&_blockquote]:border-l-4 [&_blockquote]:border-indigo-400 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-slate-500 [&_blockquote]:my-6
               [&_hr]:border-slate-200 [&_hr]:my-8
             "
-            dangerouslySetInnerHTML={{ __html: (selectedNews.content || "")
+            dangerouslySetInnerHTML={{ __html: decodedContent
               .replace(/(&amp;)+nbsp;/g, " ")
               .replace(/&nbsp;/g, " ")
+              .replace(/\u00a0/g, " ")
             }}
           />
         ) : (

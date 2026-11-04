@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { stripHtmlToText } from "../../lib/formatText";
 import { useQuizStore } from "../../store/quizStore";
 
 export default function QuizResultsPage() {
@@ -63,9 +64,21 @@ export default function QuizResultsPage() {
     navigate("/user/dashboard");
   };
 
-  // Strip any HTML tags from question text so raw <p> etc. never show literally
-  const stripHtml = (str = "") =>
-    typeof str === "string" ? str.replace(/<[^>]*>/g, "").trim() : str;
+  const decodeHtmlEntities = (value = "") => {
+    if (typeof value !== "string") return value;
+
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = value;
+    return textarea.value;
+  };
+
+  const stripHtml = (str = "") => {
+    if (typeof str !== "string") return str;
+
+    return stripHtmlToText(decodeHtmlEntities(str));
+  };
+
+  const failedQuestions = questions.filter(q => q.userAnswer !== q.correctAnswer);
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 md:p-5">
@@ -141,6 +154,35 @@ export default function QuizResultsPage() {
         {/* Questions Review Card */}
         <div className="bg-white rounded-2xl shadow-lg p-2">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 ml-6">Review Answers</h2>
+
+          {failedQuestions.length > 0 && (
+            <div className="mx-6 mb-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+              <div className="space-y-3">
+                {failedQuestions.map((q, idx) => {
+                  const qId = q._id || q.id || q.questionId || idx;
+                  const questionNumber = questions.findIndex(item => (item._id || item.id || item.questionId || "") === qId) + 1;
+                  const label = questionNumber > 0 ? `Q${questionNumber}` : `Q${idx + 1}`;
+
+                  return (
+                    <div key={`${qId}-missed`} className="rounded-xl border border-red-200 bg-white p-3">
+                      <div className="flex items-start gap-3">
+                        <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-100 text-xs font-bold text-red-700">
+                          {label.replace("Q", "")}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-700">{stripHtml(q.question)}</p>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            <span className="rounded-full bg-gray-100 px-2 py-1 text-gray-700">Your answer: {q.userAnswer || "Not answered"}</span>
+                            <span className="rounded-full bg-green-100 px-2 py-1 text-green-700">Correct answer: {q.correctAnswer}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           
           {questions.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
@@ -223,7 +265,7 @@ export default function QuizResultsPage() {
                       {isExpanded && (
                         <div 
                           className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200"
-                          dangerouslySetInnerHTML={{ __html: q.explanation }}
+                          dangerouslySetInnerHTML={{ __html: decodeHtmlEntities(String(q.explanation || "")) }}
                         />
                       )}
                     </div>

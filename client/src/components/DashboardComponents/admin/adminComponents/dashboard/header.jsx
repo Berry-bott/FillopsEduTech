@@ -55,6 +55,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import useAdminNotificationStore from "@/store/adminNotificationStore";
+import { stripHtmlToText } from "@/lib/formatText";
 
 // ─── Type → icon / colour map ─────────────────────────────────────────────────
 const TYPE_META = {
@@ -109,7 +110,7 @@ function NotificationRow({ notification, onMarkRead, onNavigate }) {
           {notification.title || notification.subject || "Notification"}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">
-          {notification.message || notification.body || notification.description}
+          {stripHtmlToText(notification.message || notification.body || notification.description)}
         </p>
         <div className="flex items-center gap-1 mt-1">
           <Clock className="w-3 h-3 text-gray-400" />

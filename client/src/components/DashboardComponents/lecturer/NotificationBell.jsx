@@ -7,11 +7,10 @@ import { getConfig, getTypeIcon, timeAgo } from "@/components/DashboardComponent
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+import { stripHtmlToText } from "@/lib/formatText";
+
 function stripHtml(html) {
-  if (!html) return "";
-  const txt = document.createElement("textarea");
-  txt.innerHTML = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  return txt.value;
+  return stripHtmlToText(html);
 }
 
 // ─── BellNotificationRow ──────────────────────────────────────────────────────

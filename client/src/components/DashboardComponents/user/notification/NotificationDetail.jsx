@@ -132,9 +132,20 @@ import { useEffect, useRef } from "react";
 import { BackIcon, CheckIcon, TrashIcon, getConfig, getTypeIcon, formatFullDate } from "./NotificationUtils";
 
 function decodeHtml(html) {
+  if (!html) return "";
+
+  const normalized = String(html)
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<(\/)?(p|div|li|ul|ol|h[1-6]|blockquote|pre|table|tr|td|th)[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
   const txt = document.createElement("textarea");
-  txt.innerHTML = html;
-  return txt.value;
+  txt.innerHTML = normalized;
+  return txt.value.replace(/\u00a0/g, " ").trim();
 }
 
 const HIDDEN_DATA_KEYS = /(id|Id|ID)$|^slug$|^url$|^coverImage$/;

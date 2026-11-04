@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAdminNotificationStore from "../../store/adminNotificationStore"
+import { stripHtmlToText } from "@/lib/formatText";
 import {
   AdminBellIcon,
   AdminBackIcon,
@@ -49,9 +50,9 @@ function NotificationItem({ notification, index, onOpen, onRequestDelete, isPend
             {adminTimeAgo(notification.createdAt || notification.created_at || notification.date)}
           </span>
         </div>
-        {(notification.message || notification.body || notification.description) && (
+        {stripHtmlToText(notification.message || notification.body || notification.description) && (
           <p className="text-xs text-slate-500 mt-1 leading-relaxed truncate">
-            {notification.message || notification.body || notification.description}
+            {stripHtmlToText(notification.message || notification.body || notification.description)}
           </p>
         )}
         <p className="text-[10px] text-slate-300 mt-1.5 font-medium">Tap to read →</p>
